@@ -436,6 +436,25 @@ Please complete the following steps before upgrading Cumulus.
 - **CUMULUS-4458**
   - Fixed a small bug with `message_consumer` lambda env and function variable names to match so the lambda env var `allowProviderMismatchOnRuleFilter` can be properly used when set
 
+## [v21.2.1] 2025-03-17
+
+### Notable Changes
+- **CSD-85**
+  - Changed `update-granules-cmr-metadata-file-links` task config to accept a variable `excludeDataGranule`
+    for whether or not to add or update a `Granule.DataGranule` to the granule's metadata, for users who do not want one added or updated from what their granule metadata already is (defaults to `false`). See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
+
+- **CSD-91**
+  - Added a task config var to update-granules-cmr-metadata-file-links `updateGranuleIdentifiers` for whether or not to update the Granule metadata's identifiers and `GranuleUR`, defaults to true. See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
+
+### Changed
+
+- **CSD-85**
+  - Changed `update-granules-cmr-metadata-file-links` task config to accept a variable `excludeDataGranule`
+    for whether or not to add or update a `Granule.DataGranule` to the granule's metadata, for users who do not want one added or updated from what their granule metadata already is (defaults to `false`). See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
+
+- **CSD-91**
+  - Added a task config var to update-granules-cmr-metadata-file-links `updateGranuleIdentifiers` for whether or not to update the Granule metadata's identifiers and `GranuleUR`, defaults to true. See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
+
 ## [v21.2.0] 2025-12-06
 
 ### Migration Notes
@@ -9774,7 +9793,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 [Unreleased]: https://github.com/nasa/cumulus/compare/v21.3.2...HEAD
 [v21.3.2]: https://github.com/nasa/cumulus/compare/v21.3.1...v21.3.2
 [v21.3.1]: https://github.com/nasa/cumulus/compare/v21.3.0...v21.3.1
-[v21.3.0]: https://github.com/nasa/cumulus/compare/v21.2.0...v21.3.0
+[v21.3.0]: https://github.com/nasa/cumulus/compare/v21.2.1...v21.3.0
+[v21.2.1]: https://github.com/nasa/cumulus/compare/v21.2.0...v21.2.1
 [v21.2.0]: https://github.com/nasa/cumulus/compare/v21.0.1...v21.2.0
 [v21.0.1]: https://github.com/nasa/cumulus/compare/v21.0.0...v21.0.1
 [v21.0.0]: https://github.com/nasa/cumulus/compare/v20.3.2...v21.0.0
