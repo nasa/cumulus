@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **CSD-99**
+  - Added a lambda `recreate-launchpad-token` that runs during CMR launchpad 401 failures to try to get
+  generate a new launchpad token
+  - Changed CMR class object to a singleton
+  - Changed `getCMRSettings` run the `recreate-launchpad-token` lambda upon a 401 launchpad token failure and retry
+
 ## [v21.3.2] 2026-03-20
 
 ### Migration Notes

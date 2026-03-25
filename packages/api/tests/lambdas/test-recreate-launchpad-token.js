@@ -2,12 +2,14 @@
 
 const test = require('ava');
 const sinon = require('sinon');
+const rewire = require('rewire');
 const S3 = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const launchpad = require('@cumulus/launchpad-auth');
-const secretsManager = require('@cumulus/aws-client/SecretsManager');
 
 process.env.system_bucket = randomString();
+
+const recreateLaunchpadToken = rewire('../../lambdas/recreate-launchpad-token');
 
 const {
   handler,
@@ -16,7 +18,7 @@ const {
   createLockFile,
   putTokenInS3,
   removeLockFile,
-} = require('../../lambdas/recreate-launchpad-token');
+} = recreateLaunchpadToken;
 
 test.before(async () => {
   await S3.createBucket(process.env.system_bucket);
@@ -31,11 +33,12 @@ test.serial('generateLaunchpadToken calls launchpad with correct config', async 
   const fakePassphrase = 'fake-passphrase';
 
   const getLaunchpadTokenStub = sinon.stub(launchpad, 'getLaunchpadToken').resolves(fakeToken);
-  const getSecretStringStub = sinon.stub(secretsManager, 'getSecretString').resolves(fakePassphrase);
+  const getSecretStringStub = sinon.stub().resolves(fakePassphrase);
+  const revert = recreateLaunchpadToken.__set__('getSecretString', getSecretStringStub);
 
   t.teardown(() => {
     getLaunchpadTokenStub.restore();
-    getSecretStringStub.restore();
+    revert();
   });
 
   const config = {
@@ -62,11 +65,12 @@ test.serial('generateLaunchpadToken falls back to env vars when config is empty'
   process.env.launchpad_certificate = 'env-cert';
 
   const getLaunchpadTokenStub = sinon.stub(launchpad, 'getLaunchpadToken').resolves(fakeToken);
-  const getSecretStringStub = sinon.stub(secretsManager, 'getSecretString').resolves('passphrase');
+  const getSecretStringStub = sinon.stub().resolves('passphrase');
+  const revert = recreateLaunchpadToken.__set__('getSecretString', getSecretStringStub);
 
   t.teardown(() => {
     getLaunchpadTokenStub.restore();
-    getSecretStringStub.restore();
+    revert();
     delete process.env.launchpad_passphrase_secret_name;
     delete process.env.launchpad_api;
     delete process.env.launchpad_certificate;
@@ -117,11 +121,11 @@ test.serial('putTokenInS3 writes token to S3', async (t) => {
 test.serial('handler generates token, stores it in S3, and returns it', async (t) => {
   const fakeToken = 'handler-test-token';
   const getLaunchpadTokenStub = sinon.stub(launchpad, 'getLaunchpadToken').resolves(fakeToken);
-  const getSecretStringStub = sinon.stub(secretsManager, 'getSecretString').resolves('passphrase');
+  const revert = recreateLaunchpadToken.__set__('getSecretString', sinon.stub().resolves('passphrase'));
 
   t.teardown(() => {
     getLaunchpadTokenStub.restore();
-    getSecretStringStub.restore();
+    revert();
   });
 
   const result = await handler({ config: { passphraseSecretName: 'secret' } });
@@ -136,11 +140,11 @@ test.serial('handler generates token, stores it in S3, and returns it', async (t
 
 test.serial('handler removes lock file even when token generation fails', async (t) => {
   const getLaunchpadTokenStub = sinon.stub(launchpad, 'getLaunchpadToken').rejects(new Error('generation failed'));
-  const getSecretStringStub = sinon.stub(secretsManager, 'getSecretString').resolves('passphrase');
+  const revert = recreateLaunchpadToken.__set__('getSecretString', sinon.stub().resolves('passphrase'));
 
   t.teardown(() => {
     getLaunchpadTokenStub.restore();
-    getSecretStringStub.restore();
+    revert();
   });
 
   await t.throwsAsync(
@@ -158,11 +162,11 @@ test.serial('handler creates lock file during execution', async (t) => {
     lockExistedDuringExecution = await lockFileExists();
     return 'token';
   });
-  const getSecretStringStub = sinon.stub(secretsManager, 'getSecretString').resolves('passphrase');
+  const revert = recreateLaunchpadToken.__set__('getSecretString', sinon.stub().resolves('passphrase'));
 
   t.teardown(() => {
     getLaunchpadTokenStub.restore();
-    getSecretStringStub.restore();
+    revert();
   });
 
   await handler({ config: { passphraseSecretName: 'secret' } });
