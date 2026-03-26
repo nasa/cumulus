@@ -5,6 +5,7 @@ const hsts = require('hsts');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const express = require('express');
+const pRetry = require('p-retry');
 const morgan = require('morgan');
 
 const awsServerlessExpress = require('aws-serverless-express');
@@ -29,21 +30,35 @@ const initEnvVarsFunction = async () => {
   }
   log.info('Initializing environment variables');
   const apiConfigSecretId = getRequiredEnvVar('api_config_secret_id');
-  try {
-    const response = await secretsManager().getSecretValue(
-      { SecretId: apiConfigSecretId }
-    );
-    let envSecret;
-    try {
-      envSecret = JSON.parse(response.SecretString);
-    } catch (error) {
-      throw new SyntaxError(`Secret string returned for SecretId ${apiConfigSecretId} could not be parsed`, error);
-    }
-    process.env = { ...envSecret, ...process.env };
-  } catch (error) {
-    log.error(`Encountered error trying to set environment variables from secret ${apiConfigSecretId}`, error);
-    throw error;
-  }
+
+  await pRetry(
+    async () => {
+      try {
+        const response = await secretsManager().getSecretValue(
+          { SecretId: apiConfigSecretId }
+        );
+        let envSecret;
+        try {
+          envSecret = JSON.parse(response.SecretString);
+        } catch (error) {
+          throw new SyntaxError(`Secret string returned for SecretId ${apiConfigSecretId} could not be parsed`, error);
+        }
+        process.env = { ...envSecret, ...process.env };
+      } catch (error) {
+        if (error.errorType === 'InvalidSignatureException') {
+          // does this count as removing it from the cache?
+          // if not need to clear cache
+          await secretsManager().deleteSecret(
+            { SecretId: apiConfigSecretId }
+          );
+          throw error;
+        }
+        log.error(`Encountered error trying to set environment variables from secret ${apiConfigSecretId}`, error);
+        throw error;
+      }
+    },
+    { retries: 1 }
+  );
   return undefined;
 };
 const initEnvVars = initEnvVarsFunction();

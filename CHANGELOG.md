@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **CSD-100**
+  - Added `correctClockSkew` to the awsclient to prevent `InvlaidSignatureException` errors
+  - Added retry logic to `initEnvVarsFunction` for the `PrivateApiEndpoints` lambda in case of the aforementioned exception
+
+
 ## [v21.3.2] 2026-03-20
 
 ### Migration Notes

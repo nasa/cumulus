@@ -40,11 +40,12 @@ const awsClient = <T extends AWSClientTypes>(
   version?: string,
   serviceOptions?: object
 ): (params?: object) => T => {
-  const options: { region: string, apiVersion?: string } = {
+  const options: { region: string, apiVersion?: string, correctClockSkew?: boolean } = {
     region: getRegion(),
     ...serviceOptions,
   };
   if (version) options.apiVersion = version;
+  options.correctClockSkew ??= true;
 
   return getServiceClient(Service, options);
 };
