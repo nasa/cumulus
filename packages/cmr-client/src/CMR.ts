@@ -311,12 +311,14 @@ export class CMR {
       provider_short_name: this.provider,
       ...params,
     });
-
-    return await this.searchConcept(
+    console.log(searchParams);
+    const output = await this.searchConcept(
       'collections',
       searchParams,
       format
     );
+    console.log(output);
+    return output;
   }
 
   /**
