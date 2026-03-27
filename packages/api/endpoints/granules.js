@@ -1046,7 +1046,9 @@ async function bulkChangeCollection(req, res) {
 
   input.cumulus_meta = { ...input.template?.cumulus_meta, ...input.cumulus_meta };
   input.meta = { ...input.template?.meta, ...input.meta };
-  input.meta.cmr.provider = 'CUMULUS';
+  if (input.meta.cmr) {
+    input.meta.cmr.provider = 'CUMULUS'
+  }
   input.replace = {
     TargetPath: '$.payload',
     ...remoteObjectKey,
