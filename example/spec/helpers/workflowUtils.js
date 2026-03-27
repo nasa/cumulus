@@ -142,7 +142,7 @@ async function buildWorkflow(
   provider,
   payload,
   meta,
-  cmrProvider = 'PODAAC_SWOT'
+  cmrProvider = 'CUMULUS'
 ) {
   const template = await getJsonS3Object(bucketName, templateKey(stackName));
 
