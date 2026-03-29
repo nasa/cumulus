@@ -24,8 +24,8 @@ class CMRProviderNotConfiguredError extends Error {
 }
 /**
  * @typedef { import('@cumulus/types/api/collections').CollectionRecord } CollectionRecord
- * @param {object} messageTemplate 
- * @param {CollectionRecord | undefined} collection 
+ * @param {object} messageTemplate
+ * @param {CollectionRecord | undefined} collection
  */
 function joinCollectionProviderToTemplateCmrMeta(messageTemplate, collection) {
 
