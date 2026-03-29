@@ -331,7 +331,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
     describe('the TranslateMessage Lambda', () => {
       let lambdaOutput;
       beforeAll(async () => {
-        lambdaOutput = await lambdaStep.getStepOutput(initialWorkflowExecution.executionArn, 'CNMToCMA');
+        lambdaOutput = await lambdaStep.getStepOutput(initialWorkflowExecution.executionArn, 'TranslateMessage');
       });
 
       it('outputs the expectedTranslatePayload object', () => {
@@ -357,7 +357,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow with Unique GranuleI
       let startStep;
       let endStep;
       beforeAll(async () => {
-        startStep = await lambdaStep.getStepInput(initialWorkflowExecution.executionArn, 'CNMToCMA');
+        startStep = await lambdaStep.getStepInput(initialWorkflowExecution.executionArn, 'TranslateMessage');
         endStep = await lambdaStep.getStepOutput(initialWorkflowExecution.executionArn, 'CnmResponse');
       });
 
