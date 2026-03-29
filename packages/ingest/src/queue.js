@@ -11,6 +11,37 @@ const {
   templateKey,
 } = require('@cumulus/common/workflows');
 
+const CmrProviderNotConfiguredMessage = 'all collections must configure a cmr_provider for sf to be scheduled';
+class CMRProviderNotConfiguredError extends Error {
+  constructor(error) {
+    super(`${error.message} ${CmrProviderNotConfiguredMessage}`);
+
+    this.name = 'CMRProviderNotConfiguredError';
+    this.code = error.code;
+
+    Error.captureStackTrace(this, CMRProviderNotConfiguredError);
+  }
+}
+/**
+ * @typedef { import('@cumulus/types/api/collections').CollectionRecord } CollectionRecord
+ * @param {object} messageTemplate 
+ * @param {CollectionRecord | undefined} collection 
+ */
+function joinCollectionProviderToTemplateCmrMeta(messageTemplate, collection) {
+
+  const cmrProvider = collection?.cmrProvider || '';
+  if (cmrProvider == null || cmrProvider == undefined) {
+    throw new CMRProviderNotConfiguredError({
+      message: `no cmr_provider found for collection ${collection.name}___${collection.version}`,
+    });
+  }
+  const templateCmr = messageTemplate?.meta?.cmr || {}
+  return {
+    ...templateCmr,
+    provider: cmrProvider
+  }
+}
+exports.joinCollectionProviderToTemplateCmrMeta = joinCollectionProviderToTemplateCmrMeta
 /**
  * Enqueue a PDR to be parsed
  *
@@ -43,6 +74,7 @@ async function enqueueParsePdrMessage({
   additionalCustomMeta = {},
 }) {
   const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
+  const cmrMeta = joinCollectionProviderToTemplateCmrMeta(collection, messageTemplate);
   const { arn: parsePdrArn } = await getJsonS3Object(
     systemBucket,
     getWorkflowFileKey(stack, parsePdrWorkflow)
@@ -62,6 +94,7 @@ async function enqueueParsePdrMessage({
       ...additionalCustomMeta,
       collection,
       provider,
+      cmr: cmrMeta,
     },
     executionNamePrefix,
   });
