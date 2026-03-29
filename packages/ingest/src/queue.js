@@ -29,8 +29,12 @@ class CMRProviderNotConfiguredError extends Error {
  * @param {CollectionRecord | undefined} collection
  */
 function joinCollectionProviderToTemplateCmrMeta(messageTemplate, collection) {
-  const cmrProvider = collection?.cmrProvider || '';
-
+  let cmrProvider;
+  if (collection) {
+    cmrProvider = collection.cmrProvider;
+  } else {
+    cmrProvider = '';
+  }
   if (isNil(cmrProvider)) {
     throw new CMRProviderNotConfiguredError({
       message: `no cmr_provider found for collection ${collection.name}___${collection.version}`,
