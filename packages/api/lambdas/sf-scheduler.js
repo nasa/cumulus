@@ -11,7 +11,6 @@ const { joinCollectionProviderToTemplateCmrMeta } = require('@cumulus/ingest/que
 const Logger = require('@cumulus/logger');
 const logger = new Logger({ sender: '@cumulus/api/lambdas/sf-scheduler' });
 
-
 const getApiProvider = (providerId) => {
   if (isNil(providerId)) return undefined;
   return getProvider({
@@ -57,7 +56,7 @@ async function handleScheduleEvent(event) {
   const eventCustomMeta = get(event, 'meta', {});
   const cmrMeta = joinCollectionProviderToTemplateCmrMeta(
     messageTemplate, collection
-  )
+  );
   const message = buildQueueMessageFromTemplate({
     messageTemplate,
     asyncOperationId: get(event, 'asyncOperationId'),
@@ -66,7 +65,7 @@ async function handleScheduleEvent(event) {
       ...eventCustomMeta,
       collection,
       provider,
-      cmr: cmrMeta
+      cmr: cmrMeta,
     },
     payload: get(event, 'payload', {}),
     workflow,

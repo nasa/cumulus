@@ -10,6 +10,7 @@ const {
   getWorkflowFileKey,
   templateKey,
 } = require('@cumulus/common/workflows');
+const isNil = require('lodash/isNil');
 
 const CmrProviderNotConfiguredMessage = 'all collections must configure a cmr_provider for sf to be scheduled';
 class CMRProviderNotConfiguredError extends Error {
@@ -28,20 +29,21 @@ class CMRProviderNotConfiguredError extends Error {
  * @param {CollectionRecord | undefined} collection
  */
 function joinCollectionProviderToTemplateCmrMeta(messageTemplate, collection) {
-
   const cmrProvider = collection?.cmrProvider || '';
-  if (cmrProvider == null || cmrProvider == undefined) {
+
+  if (isNil(cmrProvider)) {
     throw new CMRProviderNotConfiguredError({
       message: `no cmr_provider found for collection ${collection.name}___${collection.version}`,
     });
   }
-  const templateCmr = messageTemplate?.meta?.cmr || {}
+  const templateCmr = messageTemplate?.meta?.cmr || {};
   return {
     ...templateCmr,
-    provider: cmrProvider
-  }
+    provider: cmrProvider,
+  };
 }
-exports.joinCollectionProviderToTemplateCmrMeta = joinCollectionProviderToTemplateCmrMeta
+exports.joinCollectionProviderToTemplateCmrMeta = joinCollectionProviderToTemplateCmrMeta;
+
 /**
  * Enqueue a PDR to be parsed
  *
