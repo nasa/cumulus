@@ -1,6 +1,6 @@
 [project]
 name = "granule-invalidator"
-version = "0.1.0"
+version = "21.3.2"
 description = "Identifies granules that fulfill specific criteria"
 readme = "README.md"
 requires-python = ">=3.12"

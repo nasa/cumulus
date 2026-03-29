@@ -139,7 +139,7 @@ export const omitDeepBy: OmitDeepBy = (object: any, cb: any) => {
  * Returns the parsed collection or the original input.
  *
  * @param val
- * @returns
+ * @returns {any}
  */
 export const parseIfJson = (val: unknown): any => {
   if (!isString(val)) return val;

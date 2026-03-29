@@ -1,5 +1,5 @@
 locals {
-  lambda_path      = "${path.module}/dist/webpack/lambda.zip"
+  lambda_path = "${path.module}/dist/webpack/lambda.zip"
 }
 resource "aws_lambda_function" "migration_helper_async_operation" {
   function_name    = "${var.prefix}-migrationHelperAsyncOperation"
