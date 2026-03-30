@@ -140,9 +140,9 @@ async function buildWorkflow(
   workflowName,
   collection,
   provider,
+  cmrProvider,
   payload,
-  meta,
-  cmrProvider = 'CUMULUS'
+  meta
 ) {
   const template = await getJsonS3Object(bucketName, templateKey(stackName));
 
@@ -233,7 +233,8 @@ async function buildAndExecuteWorkflow(
   provider,
   payload,
   meta = {},
-  timeout = 600
+  timeout = 600,
+  cmrProvider = 'CUMULUS'
 ) {
   const workflowMsg = await buildWorkflow(
     stackName,
@@ -241,8 +242,9 @@ async function buildAndExecuteWorkflow(
     workflowName,
     collection,
     provider,
+    cmrProvider,
     payload,
-    meta
+    meta,
   );
   return executeWorkflow(stackName, bucketName, workflowName, workflowMsg, timeout);
 }
@@ -270,10 +272,19 @@ async function buildAndStartWorkflow(
   collection,
   provider,
   payload,
-  meta = {}
+  meta = {},
+  cmrProvider,
 ) {
-  const workflowMsg = await
-  buildWorkflow(stackName, bucketName, workflowName, collection, provider, payload, meta);
+  const workflowMsg = await buildWorkflow(
+    stackName,
+    bucketName,
+    workflowName,
+    collection,
+    provider,
+    cmrProvider,
+    payload,
+    meta
+  );
   return startWorkflow(stackName, bucketName, workflowName, workflowMsg);
 }
 
