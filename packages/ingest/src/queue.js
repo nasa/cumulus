@@ -25,16 +25,11 @@ class CMRProviderNotConfiguredError extends Error {
 }
 /**
  * @typedef { import('@cumulus/types/api/collections').CollectionRecord } CollectionRecord
- * @param {object} messageTemplate
- * @param {CollectionRecord | undefined} collection
+ * @param {object | undefined} messageTemplate
+ * @param {CollectionRecord} collection
  */
 function joinCollectionProviderToTemplateCmrMeta(messageTemplate, collection) {
-  let cmrProvider;
-  if (collection) {
-    cmrProvider = collection.cmrProvider;
-  } else {
-    cmrProvider = '';
-  }
+  const { cmrProvider } = collection;
   if (isNil(cmrProvider)) {
     throw new CMRProviderNotConfiguredError({
       message: `no cmr_provider found for collection ${collection.name}___${collection.version}`,
@@ -80,7 +75,10 @@ async function enqueueParsePdrMessage({
   additionalCustomMeta = {},
 }) {
   const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
-  const cmrMeta = joinCollectionProviderToTemplateCmrMeta(collection, messageTemplate);
+  let cmrMeta = {};
+  if (collection) {
+    cmrMeta = joinCollectionProviderToTemplateCmrMeta(messageTemplate, collection);
+  }
   const { arn: parsePdrArn } = await getJsonS3Object(
     systemBucket,
     getWorkflowFileKey(stack, parsePdrWorkflow)
@@ -149,6 +147,10 @@ async function enqueueGranuleIngestMessage({
   executionNamePrefix,
   additionalCustomMeta = {},
 }) {
+  let cmrMeta = {};
+  if (collection) {
+    cmrMeta = joinCollectionProviderToTemplateCmrMeta(messageTemplate, collection);
+  }
   const message = buildQueueMessageFromTemplate({
     messageTemplate,
     parentExecutionArn,
@@ -159,6 +161,7 @@ async function enqueueGranuleIngestMessage({
       ...(pdr ? { pdr } : {}),
       collection,
       provider,
+      cmr: cmrMeta,
     },
     executionNamePrefix,
   });
@@ -202,6 +205,10 @@ async function enqueueWorkflowMessage({
   additionalCustomMeta = {},
 }) {
   const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
+  let cmrMeta = {};
+  if (collection) {
+    cmrMeta = joinCollectionProviderToTemplateCmrMeta(messageTemplate, collection);
+  }
   const { arn: queuedWorkflowArn } = await getJsonS3Object(
     systemBucket,
     getWorkflowFileKey(stack, workflow)
@@ -227,6 +234,7 @@ async function enqueueWorkflowMessage({
       ...additionalCustomMeta,
       collection,
       provider,
+      cmr: cmrMeta,
     },
   });
 
