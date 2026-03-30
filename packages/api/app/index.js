@@ -21,6 +21,8 @@ const boom = require('../lib/expressBoom');
 
 const log = new Logger({ sender: '@api/index' });
 
+let initPromise;
+
 // Load Environment Variables
 // This should be done outside of the handler to minimize Secrets Manager calls.
 const initEnvVarsFunction = async () => {
@@ -46,7 +48,13 @@ const initEnvVarsFunction = async () => {
   }
   return undefined;
 };
-const initEnvVars = initEnvVarsFunction();
+
+const ensureEnvVarsInitialized = async () => {
+  if (!initPromise) {
+    initPromise = await initEnvVarsFunction();
+  }
+  return initPromise;
+};
 
 // Setup express app
 const app = express();
@@ -95,7 +103,7 @@ app.use((err, _req, res, _next) => {
 const server = awsServerlessExpress.createServer(app);
 
 const handler = async (event, context) => {
-  await initEnvVars; // Wait for environment vars to resolve from initEnvVarsFunction
+  await ensureEnvVarsInitialized(); // Wait for environment vars to resolve from initEnvVarsFunction
   const dynamoTableNames = JSON.parse(getRequiredEnvVar('dynamoTableNameString'));
   // Set Dynamo table names as environment variables for Lambda
   Object.keys(dynamoTableNames).forEach((tableEnvVarName) => {
