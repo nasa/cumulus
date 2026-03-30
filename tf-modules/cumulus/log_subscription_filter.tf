@@ -1,17 +1,17 @@
 module "log_subscription_filter" {
-  count = var.log_destination_arn != null ? 1 : 0
+  count  = var.log_destination_arn != null ? 1 : 0
   source = "../log-subscription-filter"
 
-  prefix                                = var.prefix
-  log_destination_arn                   = var.log_destination_arn
-  additional_log_groups_to_elk          = var.additional_log_groups_to_elk
+  prefix                       = var.prefix
+  log_destination_arn          = var.log_destination_arn
+  additional_log_groups_to_elk = var.additional_log_groups_to_elk
 
   # Ingest Log Groups
-  discover_pdrs_task = module.ingest.discover_pdrs_task.task_log_group
-  parse_pdr_task     = module.ingest.parse_pdr_task.task_log_group
-  post_to_cmr_task   = module.ingest.post_to_cmr_task.task_log_group
-  queue_pdrs_task    = module.ingest.queue_pdrs_task.task_log_group
-  sync_granule_task  = module.ingest.sync_granule_task.task_log_group
+  discover_pdrs_task          = module.ingest.discover_pdrs_task.task_log_group
+  parse_pdr_task              = module.ingest.parse_pdr_task.task_log_group
+  post_to_cmr_task            = module.ingest.post_to_cmr_task.task_log_group
+  queue_pdrs_task             = module.ingest.queue_pdrs_task.task_log_group
+  sync_granule_task           = module.ingest.sync_granule_task.task_log_group
   hyrax_metadata_updates_task = module.ingest.hyrax_metadata_updates_task.task_log_group
 
   # Async Operation Log Group

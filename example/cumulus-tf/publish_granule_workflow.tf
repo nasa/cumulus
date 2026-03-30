@@ -10,7 +10,7 @@ module "publish_granule_workflow" {
   state_machine_definition = templatefile(
     "${path.module}/publish_granule_workflow.asl.json",
     {
-      post_to_cmr_task_arn: module.cumulus.post_to_cmr_task.task_arn
+      post_to_cmr_task_arn : module.cumulus.post_to_cmr_task.task_arn
     }
   )
 }

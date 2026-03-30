@@ -1,1 +1,1 @@
-prefix="dms-opex-sbx-ci-tf"
+prefix = "dms-opex-sbx-ci-tf"

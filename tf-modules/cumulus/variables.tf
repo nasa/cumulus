@@ -2,8 +2,8 @@
 
 variable "async_operation_image" {
   description = "docker image to use for Cumulus async operations tasks"
-  type = string
-  default = "cumuluss/async-operation:56"
+  type        = string
+  default     = "cumuluss/async-operation:55"
 }
 
 variable "cmr_client_id" {
@@ -84,14 +84,14 @@ variable "ecs_cluster_min_size" {
 
 variable "lambda_memory_sizes" {
   description = "Configurable map of memory sizes for lambdas"
-  type = map(number)
-  default = {}
+  type        = map(number)
+  default     = {}
 }
 
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
-  type = map(number)
-  default = {}
+  type        = map(number)
+  default     = {}
 }
 
 variable "prefix" {
@@ -165,8 +165,8 @@ variable "archive_api_port" {
 
 variable "archive_api_reserved_concurrency" {
   description = "Reserved Concurrency for the API lambda function"
-  type = number
-  default = 15
+  type        = number
+  default     = 15
 }
 
 variable "archive_api_users" {
@@ -219,8 +219,8 @@ variable "custom_queues" {
 
 variable "default_s3_multipart_chunksize_mb" {
   description = "default S3 multipart upload chunk size in MB"
-  type = number
-  default = 256
+  type        = number
+  default     = 256
 }
 
 variable "sync_granule_s3_jitter_max_ms" {
@@ -299,8 +299,8 @@ variable "ecs_service_alarms" {
 
 variable "allow_provider_mismatch_on_rule_filter" {
   description = "optional variable to be used in message_consumer lambdas for disabling rule/message provider mismatches"
-  type = bool
-  default = false
+  type        = bool
+  default     = false
 }
 
 variable "key_name" {
@@ -352,8 +352,8 @@ variable "lzards_provider" {
 
 variable "lzards_api" {
   description = "LZARDS backup API endpoint"
-  type = string
-  default = ""
+  type        = string
+  default     = ""
 }
 
 variable "lzards_s3_link_timeout" {
@@ -382,8 +382,8 @@ variable "log_destination_arn" {
 
 variable "metrics_es_host" {
   description = "Domain name (not URL) of the Cloud Metrics API."
-  type    = string
-  default = null
+  type        = string
+  default     = null
 }
 
 variable "metrics_es_password" {
@@ -428,13 +428,13 @@ variable "private_archive_api_gateway" {
 
 variable "rds_connection_timing_configuration" {
   description = "Cumulus rds connection timeout retry timing object -- these values map to knex.js's internal use of  https://github.com/vincit/tarn.js/ for connection acquisition"
-  type = map(number)
+  type        = map(number)
   default = {
-      acquireTimeoutMillis: 90000
-      createRetryIntervalMillis: 30000,
-      createTimeoutMillis: 20000,
-      idleTimeoutMillis: 1000,
-      reapIntervalMillis: 1000,
+    acquireTimeoutMillis : 90000
+    createRetryIntervalMillis : 30000,
+    createTimeoutMillis : 20000,
+    idleTimeoutMillis : 1000,
+    reapIntervalMillis : 1000,
   }
 }
 
@@ -488,11 +488,11 @@ variable "tea_rest_api_root_resource_id" {
 
 variable "throttled_queues" {
   description = "Array of configuration for custom queues with execution limits"
-  type        = list(object({
-    url = string,
+  type = list(object({
+    url             = string,
     execution_limit = number
   }))
-  default     = []
+  default = []
 }
 
 variable "urs_url" {
@@ -502,8 +502,8 @@ variable "urs_url" {
 }
 
 variable "cmr_acl_based_credentials" {
-  type = bool
-  default = false
+  type        = bool
+  default     = false
   description = "Option to enable/disable user based CMR ACLs to derive permission for s3 credential access tokens"
 }
 
@@ -522,26 +522,26 @@ variable "daily_execution_payload_cleanup_schedule_expression" {
 }
 
 variable "cleanup_running" {
-  type    = bool
-  default = false
+  type        = bool
+  default     = false
   description = "Boolean flag that when set to true will enable 'running' execution cleanup"
 }
 
 variable "cleanup_non_running" {
-  type    = bool
-  default = true
+  type        = bool
+  default     = true
   description = "Boolean flag that when set to true will enable non 'running' execution cleanup"
 }
 
 variable "payload_timeout" {
-  type    = number
-  default = 10
+  type        = number
+  default     = 10
   description = "Number of days to retain execution payload records in the database"
 }
 
 variable "update_limit" {
-  type = number
-  default = 10000
+  type        = number
+  default     = 10000
   description = "number of executions to cleanup in one lambda run"
 }
 
@@ -553,14 +553,14 @@ variable "archive_api_url" {
 
 variable "additional_log_groups_to_elk" {
   description = "Map of Cloudwatch Log Groups. The key is a descriptor and the value is the log group"
-  type = map(string)
-  default = {}
+  type        = map(string)
+  default     = {}
 }
 
 variable "ecs_custom_sg_ids" {
   description = "User defined security groups to add to the Core ECS cluster"
-  type = list(string)
-  default = []
+  type        = list(string)
+  default     = []
 }
 
 variable "deploy_cumulus_distribution" {
@@ -570,25 +570,25 @@ variable "deploy_cumulus_distribution" {
 }
 
 variable "cloudwatch_log_retention_periods" {
-  type = map(number)
+  type        = map(number)
   description = "retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"
-  default = {}
+  default     = {}
 }
 
 variable "default_log_retention_days" {
-  type = number
+  type        = number
   description = "default value that user chooses for their log retention periods"
-  default = 30
+  default     = 30
 }
 variable "report_sns_topic_subscriber_arns" {
-  type = list
-  default = null
+  type        = list(any)
+  default     = null
   description = "Account ARNs to supply to report SNS topics policy with subscribe action"
 }
 
 variable "sqs_message_consumer_watcher_message_limit" {
-  type = number
-  default = 500
+  type        = number
+  default     = 500
   description = <<EOF
     Number of messages the SQS message consumer Lambda will attempt to read from SQS in a single execution.
     Note that increasing this value may result in a direct increase/decrease in triggered workflows. Users should
@@ -598,8 +598,8 @@ variable "sqs_message_consumer_watcher_message_limit" {
 }
 
 variable "sqs_message_consumer_watcher_time_limit" {
-  type = number
-  default = 60
+  type        = number
+  default     = 60
   description = <<EOF
     Number of seconds the SQS message consumer Lambda will remain active and polling for new messages. Note that this value
     should be less than the overall Lambda invocation timeout or else the Lambda may be terminated while still actively
@@ -610,20 +610,20 @@ variable "sqs_message_consumer_watcher_time_limit" {
 ## Dead Letter Recovery Configuration
 
 variable "dead_letter_recovery_cpu" {
-  type = number
-  default = 256
+  type        = number
+  default     = 256
   description = "The amount of CPU units to reserve for the dead letter recovery Async Operation Fargate Task"
 }
 
 variable "dead_letter_recovery_memory" {
-  type = number
-  default = 1024
+  type        = number
+  default     = 1024
   description = "The amount of memory in MB to reserve for the dead letter recovery Async Operation Fargate Task"
 }
 
 variable "deploy_cumulus_workflows" {
-  type = map(string)
-  default = { change_granule_collections_workflow: true }
+  type        = map(string)
+  default     = { change_granule_collections_workflow : true }
   description = "for each workflow, if true deploy that workflow"
 }
 
@@ -672,18 +672,18 @@ variable "workflow_configurations" {
 
 variable "archive_records_config" {
   type = object({
-    deploy_rule = optional(bool, true), # deploy the archive records cron eventBridgeRule
-    update_limit = optional(number, 100000), # number of granules or executions to archive in one run
-    batch_size = optional(number, 10000), # number of granules or executions to archive call to the /archive endpoint
-    expiration_days = optional(number, 365), # age (in days) after which granules or executions should be archived
+    deploy_rule         = optional(bool, true),                  # deploy the archive records cron eventBridgeRule
+    update_limit        = optional(number, 100000),              # number of granules or executions to archive in one run
+    batch_size          = optional(number, 10000),               # number of granules or executions to archive call to the /archive endpoint
+    expiration_days     = optional(number, 365),                 # age (in days) after which granules or executions should be archived
     schedule_expression = optional(string, "cron(0 4 * * ? *)"), # CloudWatch cron schedule for the record archival lambda
   })
   description = "config object for archive-records tooling"
   default = {
-    deploy_rule = true,
-    update_limit = 100000,
-    batch_size = 10000,
-    expiration_days = 365,
+    deploy_rule         = true,
+    update_limit        = 100000,
+    batch_size          = 10000,
+    expiration_days     = 365,
     schedule_expression = "cron(0 4 * * ? *)",
   }
 }

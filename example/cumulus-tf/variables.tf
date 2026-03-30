@@ -155,7 +155,7 @@ variable "urs_client_password" {
 # Optional
 
 variable "vpc_id" {
-  type = string
+  type    = string
   default = null
 }
 
@@ -166,14 +166,14 @@ variable "api_gateway_stage" {
 }
 
 variable "ftp_host_configuration_bucket" {
-  type = string
-  default = "cumulus-test-sandbox-internal"
+  type        = string
+  default     = "cumulus-test-sandbox-internal"
   description = "Bucket containing ftp test host configuration"
 }
 
 variable "api_reserved_concurrency" {
-  type = number
-  default = 5
+  type        = number
+  default     = 5
   description = "Archive API Lambda reserved concurrency"
 }
 
@@ -196,14 +196,14 @@ variable "cumulus_distribution_url" {
 
 variable "default_s3_multipart_chunksize_mb" {
   description = "default S3 multipart upload chunk size in MB"
-  type = number
-  default = 256
+  type        = number
+  default     = 256
 }
 
 variable "allow_provider_mismatch_on_rule_filter" {
   description = "optional variable to be used in message_consumer lambdas for disabling rule/message provider mismatches"
-  type = bool
-  default = false
+  type        = bool
+  default     = false
 }
 
 variable "tea_distribution_url" {
@@ -218,7 +218,7 @@ variable "sync_granule_s3_jitter_max_ms" {
 }
 
 variable "ecs_cluster_instance_subnet_ids" {
-  type = list(string)
+  type    = list(string)
   default = []
 }
 
@@ -248,7 +248,7 @@ variable "aws_profile" {
 }
 
 variable "lambda_subnet_ids" {
-  type = list(string)
+  type    = list(string)
   default = []
 }
 
@@ -278,7 +278,7 @@ variable "archive_api_url" {
 variable "archive_api_users" {
   description = "Earthdata (URS) usernames that should be allowed to access the archive API"
   type        = list(string)
-  default     = [
+  default = [
     "acyu",
     "atisdale",
     "awisdom",
@@ -321,8 +321,8 @@ variable "thin_egress_jwt_secret_name" {
 
 variable "metrics_es_host" {
   description = "Domain name (not URL) of the Cloud Metrics API."
-  type    = string
-  default = null
+  type        = string
+  default     = null
 }
 
 variable "metrics_es_password" {
@@ -347,20 +347,20 @@ variable "tags" {
 }
 
 variable "pdr_node_name_provider_bucket" {
-  type = string
+  type        = string
   description = "The name of the common bucket used as an S3 provider for PDR NODE_NAME tests"
-  default = "cumulus-sandbox-pdr-node-name-provider"
+  default     = "cumulus-sandbox-pdr-node-name-provider"
 }
 
 variable "rds_connection_timing_configuration" {
   description = "Cumulus rds connection timeout retry timing object -- these values map to knex.js's internal use of  https://github.com/vincit/tarn.js/ for connection acquisition"
-  type = map(number)
+  type        = map(number)
   default = {
-      acquireTimeoutMillis: 90000
-      createRetryIntervalMillis: 30000,
-      createTimeoutMillis: 20000,
-      idleTimeoutMillis: 1000,
-      reapIntervalMillis: 1000,
+    acquireTimeoutMillis : 90000
+    createRetryIntervalMillis : 30000,
+    createTimeoutMillis : 20000,
+    idleTimeoutMillis : 1000,
+    reapIntervalMillis : 1000,
   }
 }
 
@@ -371,38 +371,38 @@ variable "rds_admin_access_secret_arn" {
 
 variable "async_operation_image_version" {
   description = "docker image version to use for Cumulus async operations tasks"
-  type = string
-  default = "56"
+  type        = string
+  default     = "55"
 }
 
 variable "cumulus_process_activity_version" {
-    description = "docker image version to use for python processing service"
-    type = string
-    default = "6"
+  description = "docker image version to use for python processing service"
+  type        = string
+  default     = "6"
 }
 
 variable "ecs_task_image_version" {
   description = "docker image version to use for Cumulus hello world task"
-    type = string
-    default = "2.1.0"
+  type        = string
+  default     = "2.1.0"
 }
 
 variable "cumulus_test_ingest_image_version" {
-    description = "docker image version to use for python test ingest processing service"
-    type = string
-    default = "19"
+  description = "docker image version to use for python test ingest processing service"
+  type        = string
+  default     = "19"
 }
 variable "ecs_custom_sg_ids" {
   description = "User defined security groups to add to the Core ECS cluster"
-  type = list(string)
-  default = []
+  type        = list(string)
+  default     = []
 }
 
 ## ORCA Variables Definitions
 
 variable "orca_db_user_password" {
   description = "Password for RDS orca database user authentication"
-  type = string
+  type        = string
 }
 
 variable "orca_default_bucket" {
@@ -413,38 +413,38 @@ variable "orca_default_bucket" {
 variable "orca_dlq_subscription_email" {
   type        = string
   description = "The email to notify users when messages are received in dead letter SQS queue due to orca restore failure."
-  default = "test@email.com"
+  default     = "test@email.com"
 }
 
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
-  type = map(number)
+  type        = map(number)
   default = {
-    cleanExecutions = 400           # archive
-    DistributionApiEndpoints = 400  # cumulus_distribution
-    s3-credentials-endpoint  = 400  # distribution
-    HelloWorld = 400                # ingest
-    s3-replicator = 400             # s3-replicator
-    TeaCache = 400                  # tea-map-cache
+    cleanExecutions          = 400 # archive
+    DistributionApiEndpoints = 400 # cumulus_distribution
+    s3-credentials-endpoint  = 400 # distribution
+    HelloWorld               = 400 # ingest
+    s3-replicator            = 400 # s3-replicator
+    TeaCache                 = 400 # tea-map-cache
   }
 }
 
 variable "lambda_memory_sizes" {
   description = "Configurable map of memory sizes for lambdas"
-  type = map(number)
+  type        = map(number)
   default = {
-    cleanExecutions = 512           # archive
-    DistributionApiEndpoints = 512  # cumulus_distribution
-    HelloWorld = 512                # ingest
-    s3-credentials-endpoint  = 512  # distribution
-    s3-replicator = 512             # s3-replicator
-    TeaCache = 512                  # tea-map-cache
+    cleanExecutions          = 512 # archive
+    DistributionApiEndpoints = 512 # cumulus_distribution
+    HelloWorld               = 512 # ingest
+    s3-credentials-endpoint  = 512 # distribution
+    s3-replicator            = 512 # s3-replicator
+    TeaCache                 = 512 # tea-map-cache
   }
 }
 
 variable "optional_dynamo_tables" {
-  type = map(object({ name = string, arn = string }))
-  default = {}
+  type        = map(object({ name = string, arn = string }))
+  default     = {}
   description = "A map of objects with the `arn` and `name` of every additional DynamoDB table your Cumulus deployment can reference."
 }
 
@@ -462,63 +462,63 @@ variable "deploy_cumulus_distribution" {
 
 variable "vpc_tag_name" {
   description = "Tag name to use for looking up VPC"
-  type = string
-  default = "Application VPC"
+  type        = string
+  default     = "Application VPC"
 }
 
 variable "subnets_tag_name" {
   description = "Tag name to use for looking up VPC subnets"
-  type = string
-  default = "Private application us-east-1a *"
+  type        = string
+  default     = "Private application us-east-1a *"
 }
 
 variable "cloudwatch_log_retention_periods" {
-  type = map(number)
+  type        = map(number)
   description = "retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"
   default = {
     thin-egress-app-EgressLambda = 7
-    ApiEndpoints = 7
-    AsyncOperationEcsLogs = 7
-    DiscoverPdrs = 7
-    DistributionApiEndpoints = 7
-    EcsLogs = 7
-    granuleFilesCacheUpdater = 7
-    HyraxMetadataUpdates = 7
-    ParsePdr = 7
-    PostToCmr = 7
-    PrivateApiLambda = 7
-    publishExecutions = 7
-    publishGranules = 7
-    QueuePdrs = 7
-    QueueWorkflow = 7
-    replaySqsMessages = 7
-    SyncGranule = 7
-    UpdateCmrAccessConstraints = 7
+    ApiEndpoints                 = 7
+    AsyncOperationEcsLogs        = 7
+    DiscoverPdrs                 = 7
+    DistributionApiEndpoints     = 7
+    EcsLogs                      = 7
+    granuleFilesCacheUpdater     = 7
+    HyraxMetadataUpdates         = 7
+    ParsePdr                     = 7
+    PostToCmr                    = 7
+    PrivateApiLambda             = 7
+    publishExecutions            = 7
+    publishGranules              = 7
+    QueuePdrs                    = 7
+    QueueWorkflow                = 7
+    replaySqsMessages            = 7
+    SyncGranule                  = 7
+    UpdateCmrAccessConstraints   = 7
   }
 }
 
 variable "default_log_retention_days" {
-  type = number
-  default = 14
+  type        = number
+  default     = 14
   description = "default value that user chooses for their log retention periods"
 }
 
 variable "report_sns_topic_subscriber_arns" {
-  type = list
+  type    = list(any)
   default = null
 }
 
 ## Dead Letter Recovery Configuration
 
 variable "dead_letter_recovery_cpu" {
-  type = number
-  default = 256
+  type        = number
+  default     = 256
   description = "The amount of CPU units to reserve for the dead letter recovery Async Operation Fargate Task"
 }
 
 variable "dead_letter_recovery_memory" {
-  type = number
-  default = 1024
+  type        = number
+  default     = 1024
   description = "The amount of memory in MB to reserve for the dead letter recovery Async Operation Fargate Task"
 }
 
