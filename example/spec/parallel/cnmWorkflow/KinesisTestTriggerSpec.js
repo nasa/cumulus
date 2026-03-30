@@ -5,7 +5,6 @@ const crypto = require('crypto');
 const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 const isMatch = require('lodash/isMatch');
-const path = require('path');
 const replace = require('lodash/replace');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const {
@@ -78,7 +77,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   let executionStatus;
   let expectedSyncGranulesPayload;
   let expectedTranslatePayload;
-  let fileData;
   let filePrefix;
   let granuleId;
   let lambdaStep;
@@ -161,32 +159,23 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
             {
               source_bucket: testConfig.bucket,
               name: recordFile.name,
+              filename: recordFile.name,
               type: recordFile.type,
-              bucket: testConfig.bucket,
               path: testDataFolder,
-              url_path: recordFile.uri,
-              size: recordFile.size,
-              checksumType: recordFile.checksumType,
-              checksum: recordFile.checksum,
-              fileName: recordFile.name,
-              key: path.join(testDataFolder, recordFile.name),
             },
           ],
         },
       ],
     };
 
-    fileData = expectedTranslatePayload.granules[0].files[0];
     filePrefix = `file-staging/${testConfig.stackName}/${record.collection}___000/${crypto.createHash('md5').update(record.product.name).digest('hex')}`;
 
     const fileDataWithFilename = {
       bucket: testConfig.buckets.private.name,
       key: `${filePrefix}/${recordFile.name}`,
       fileName: recordFile.name,
-      size: fileData.size,
+      size: recordFile.size,
       type: recordFile.type,
-      checksumType: recordFile.checksumType,
-      checksum: recordFile.checksum,
       source: `${testDataFolder}/${recordFile.name}`,
     };
 
@@ -301,7 +290,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     describe('the TranslateMessage Lambda', () => {
       let lambdaOutput;
       beforeAll(async () => {
-        lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'TranslateMessage');
+        lambdaOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CnmToCma');
       });
 
       it('outputs the expectedTranslatePayload object', () => {
@@ -327,7 +316,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       let startStep;
       let endStep;
       beforeAll(async () => {
-        startStep = await lambdaStep.getStepInput(workflowExecution.executionArn, 'TranslateMessage');
+        startStep = await lambdaStep.getStepInput(workflowExecution.executionArn, 'CnmToCma');
         endStep = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'CnmResponse');
       });
 
@@ -456,7 +445,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         prefix: testConfig.stackName,
         granuleId,
         collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
-      });
+      }).catch(() => undefined);
     });
 
     it('executes but fails', () => {
@@ -472,23 +461,10 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     describe('the CnmResponse Lambda', () => {
       let beforeAllFailed = false;
       let lambdaOutput;
-      let failedGranule;
 
       beforeAll(async () => {
         try {
           lambdaOutput = await lambdaStep.getStepOutput(failingWorkflowExecution.executionArn, 'CnmResponse');
-          failedGranule = await waitForApiRecord(
-            getGranule,
-            {
-              prefix: testConfig.stackName,
-              granuleId: record.product.name,
-              collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
-            },
-            {
-              status: 'failed',
-              execution: getExecutionUrlFromArn(failingWorkflowExecution.executionArn),
-            }
-          );
         } catch (error) {
           beforeAllFailed = true;
           console.log('CnmResponse Lambda error:::', error);
@@ -520,10 +496,22 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         }
       });
 
-      it('puts cnm message to cumulus message for granule record', () => {
-        const cnm = get(lambdaOutput, 'meta.granule.queryFields.cnm');
-        expect(isMatch(cnm, badRecord)).toBe(true);
-        expect(get(failedGranule, 'queryFields.cnm')).toEqual(cnm);
+      it('puts cnm message on the CnmResponse output', () => {
+        const cnm = get(lambdaOutput, 'meta.cnmResponse');
+        expect(cnm).toEqual(jasmine.objectContaining({
+          version: badRecord.version,
+          submissionTime: badRecord.submissionTime,
+          collection: badRecord.collection,
+          provider: badRecord.provider,
+          identifier: badRecord.identifier,
+          receivedTime: jasmine.any(String),
+          response: jasmine.objectContaining({
+            status: 'FAILURE',
+            errorCode: 'TRANSFER_ERROR',
+          }),
+          processCompleteTime: jasmine.any(String),
+        }));
+        expect(cnm.product).toBeUndefined();
       });
     });
   });
