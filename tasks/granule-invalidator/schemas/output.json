@@ -1,0 +1,36 @@
+{
+  "description": "Output schema for granule invalidator task.",
+  "properties": {
+    "granules": {
+      "description": "Array of granuleId's identified for removal",
+      "items": {
+        "type": "string"
+      },
+      "title": "Granules",
+      "type": "array"
+    },
+    "forceRemoveFromCmr": {
+      "description": "Flag indicating whether to force remove granules from CMR",
+      "title": "Forceremovefromcmr",
+      "type": "boolean"
+    },
+    "granules_to_be_deleted_count": {
+      "description": "Total count of granules to be deleted",
+      "title": "Granules To Be Deleted Count",
+      "type": "integer"
+    },
+    "aggregated_stats": {
+      "description": "Summary statistics including counts of granules to be removed and retained, broken down by invalidation type",
+      "title": "Aggregated Stats",
+      "type": "string"
+    }
+  },
+  "required": [
+    "granules",
+    "forceRemoveFromCmr",
+    "granules_to_be_deleted_count",
+    "aggregated_stats"
+  ],
+  "title": "GranuleInvalidatorOutput",
+  "type": "object"
+}

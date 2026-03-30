@@ -1,12 +1,12 @@
 """Get CNM task for Cumulus.
 
-This module retrieves the originating CNM message for a specified granule.  This is
+This module retrieves the originating CNM message for a specified granule. This is
 accomplished by;
 1. Searching for executions associated with the incoming granules
 2. Binning the executions by granule ID
 3. Sorting the executions for each granule by timestamp
 4. If the oldest execution has `parentArn`, retrieve the parent execution and return
-its input as the CNM message.  If not, return the input of the oldest execution as the
+its input as the CNM message. If not, return the input of the oldest execution as the
 CNM message.
 
 This assumes that the oldest execution associated with a granule is the one that was
@@ -87,9 +87,9 @@ def lambda_adapter(event: dict, _: Any) -> dict[str, Any]:
 
     execution_map = {}
     for granule_id, executions in executions_by_granule.items():
-        if not executions:
-            raise RuntimeError(f"No executions found for granule {granule_id}")
         oldest_execution = get_oldest_execution(executions)
+        if not oldest_execution:
+            raise RuntimeError(f"No executions found for granule {granule_id}")
         execution_map[granule_id] = (
             handle_parent_execution(oldest_execution, api)
             or oldest_execution["originalPayload"]

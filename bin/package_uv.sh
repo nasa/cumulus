@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FULL_DIST_DIR=${TASK_DIR}/${DIST_DIR}
 
 
-mkdir -p "${FULL_DIST_DIR}"/{build,packages,final};
+mkdir -p "${FULL_DIST_DIR}"/{build,stage/schemas,final};
 
 uv export \
     --frozen \
@@ -29,14 +29,17 @@ uv pip install \
     --python-platform x86_64-manylinux_2_17 \
     --python "${PYTHON_VERSION}" \
     --requirements "${FULL_DIST_DIR}/requirements.txt" \
-    --target "${FULL_DIST_DIR}/packages";
+    --target "${FULL_DIST_DIR}/stage";
 
 uv pip install \
     --only-binary :all: \
     --python-platform x86_64-manylinux_2_17 \
     --python "${PYTHON_VERSION}" \
-    --target "${FULL_DIST_DIR}/packages" \
+    --target "${FULL_DIST_DIR}/stage" \
     "${FULL_DIST_DIR}/build/"*.whl;
 
-cd "${FULL_DIST_DIR}/packages" &&
-node "${SCRIPT_DIR}/zip.js" "${FULL_DIST_DIR}/final/lambda.zip" $(ls | grep -v lambda.zip)
+
+cp schemas/*.json "${FULL_DIST_DIR}/stage/schemas/"
+
+cd "${FULL_DIST_DIR}/stage" &&
+    node "${SCRIPT_DIR}/zip.js" "${FULL_DIST_DIR}/final/lambda.zip" $(ls | grep -v lambda.zip)

@@ -1,0 +1,37 @@
+[build-system]
+requires = ["uv_build>=0.10.2,<0.11.0"]
+build-backend = "uv_build"
+
+[project]
+name = "python-schemas"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Rohan Weeden", email = "reweeden@alaska.edu" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic~=2.12",
+]
+
+[dependency-groups]
+dev = [
+    "python-common-dev-dependencies",
+]
+
+[project.scripts]
+generate-task-schemas = "python_schemas.main:main"
+
+
+[tool.pytest]
+minversion = "9.0"
+addopts = [
+    "--cov=python_schemas",
+    "--cov-report=lcov:.nyc_output",
+]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.uv.sources]
+python-common-dev-dependencies = { path = "../python-common-dev-dependencies" }

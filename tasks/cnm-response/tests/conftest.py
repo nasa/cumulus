@@ -102,7 +102,7 @@ def cnm_s():
             "files": [
                 {
                     "checksumType": "md5",
-                    "checksum": "",
+                    "checksum": "00000000000000000000000000000000",
                     "uri": "s3://podaac-sndbx-staging/c1f1be11-9cbd-4620-ad07-9a7f2afb8349/store/merged_alt/open/L2/TP_J1_OSTM/cycles/Merged_TOPEX_Jason_OSTM_Jason-3_Cycle_945.V4_2.nc",
                     "name": "Merged_TOPEX_Jason_OSTM_Jason-3_Cycle_945.V4_2.nc",
                     "type": "data",
@@ -110,7 +110,7 @@ def cnm_s():
                 },
                 {
                     "checksumType": "md5",
-                    "checksum": "",
+                    "checksum": "00000000000000000000000000000000",
                     "uri": "s3://podaac-sndbx-staging/c1f1be11-9cbd-4620-ad07-9a7f2afb8349/store/merged_alt/open/L2/TP_J1_OSTM/cycles/Merged_TOPEX_Jason_OSTM_Jason-3_Cycle_945.V4_2.nc.md5",
                     "name": "Merged_TOPEX_Jason_OSTM_Jason-3_Cycle_945.V4_2.nc.md5",
                     "type": "metadata",

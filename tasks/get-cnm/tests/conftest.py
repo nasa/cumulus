@@ -1,7 +1,6 @@
 """Pytest configuration for get-cnm tests."""
 
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -19,11 +18,10 @@ def data_path(task_path):
 
 
 @pytest.fixture
-def mocked_api():
+def mocked_api(mocker):
     """Patch ``get_cnm.get_cnm.CumulusApi`` for tests.
 
     Returns the mocked class so tests can configure behaviors via
     ``mocked_api.return_value``.
     """
-    with patch("get_cnm.get_cnm.CumulusApi") as api_mock:
-        yield api_mock
+    return mocker.patch("get_cnm.get_cnm.CumulusApi")

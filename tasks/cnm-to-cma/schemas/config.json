@@ -1,0 +1,40 @@
+{
+  "$defs": {
+    "Collection": {
+      "properties": {
+        "name": {
+          "description": "collection short name.",
+          "title": "Name",
+          "type": "string"
+        },
+        "version": {
+          "description": "collection version.",
+          "title": "Version",
+          "type": "string"
+        },
+        "granuleIdExtraction": {
+          "description": "GranuleId Extraction Regex",
+          "title": "Granuleidextraction",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ],
+      "title": "Collection",
+      "type": "object"
+    }
+  },
+  "description": "Configuration schema for the CnmToCma task.",
+  "properties": {
+    "collection": {
+      "$ref": "#/$defs/Collection"
+    }
+  },
+  "required": [
+    "collection"
+  ],
+  "title": "CnmToCmaConfig",
+  "type": "object"
+}

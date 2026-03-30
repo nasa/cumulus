@@ -184,10 +184,7 @@ describe('The Get CNM workflow setup', () => {
       const meta = {};
       meta.collection = collection;
 
-      const granule = getGranule({ prefix: config.stackName, granuleId: granuleId });
-      granule.dataType = collection.name;
-      granule.version = collection.version;
-      granule.granuleId = granuleId;
+      const granule = await getGranule({ prefix: config.stackName, granuleId: granuleId });
 
       for (let index = 0; index < 3; index += 1) {
         // eslint-disable-next-line no-await-in-loop

@@ -1,0 +1,105 @@
+{
+  "$defs": {
+    "GranuleInvalidationsCrossCollection": {
+      "description": "Schema for cross-collection granule invalidations.",
+      "properties": {
+        "type": {
+          "const": "cross_collection",
+          "title": "Type",
+          "type": "string"
+        },
+        "invalidating_collection": {
+          "title": "Invalidating Collection",
+          "type": "string"
+        },
+        "invalidating_version": {
+          "title": "Invalidating Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "invalidating_collection",
+        "invalidating_version"
+      ],
+      "title": "GranuleInvalidationsCrossCollection",
+      "type": "object"
+    },
+    "GranuleInvalidationsIngestDate": {
+      "description": "Schema for ingest date-based granule invalidations.",
+      "properties": {
+        "type": {
+          "const": "ingest_date",
+          "title": "Type",
+          "type": "string"
+        },
+        "maximum_minutes_old": {
+          "title": "Maximum Minutes Old",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "type",
+        "maximum_minutes_old"
+      ],
+      "title": "GranuleInvalidationsIngestDate",
+      "type": "object"
+    },
+    "GranuleInvalidationsScienceDate": {
+      "description": "Schema for science date-based granule invalidations.",
+      "properties": {
+        "type": {
+          "const": "science_date",
+          "title": "Type",
+          "type": "string"
+        },
+        "maximum_minutes_old": {
+          "title": "Maximum Minutes Old",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "type",
+        "maximum_minutes_old"
+      ],
+      "title": "GranuleInvalidationsScienceDate",
+      "type": "object"
+    }
+  },
+  "description": "Configuration schema for granule invalidator task.",
+  "properties": {
+    "granule_invalidations": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/GranuleInvalidationsIngestDate"
+          },
+          {
+            "$ref": "#/$defs/GranuleInvalidationsScienceDate"
+          },
+          {
+            "$ref": "#/$defs/GranuleInvalidationsCrossCollection"
+          }
+        ]
+      },
+      "minItems": 1,
+      "title": "Granule Invalidations",
+      "type": "array"
+    },
+    "collection": {
+      "title": "Collection",
+      "type": "string"
+    },
+    "version": {
+      "title": "Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "granule_invalidations",
+    "collection",
+    "version"
+  ],
+  "title": "GranuleInvalidatorConfig",
+  "type": "object"
+}

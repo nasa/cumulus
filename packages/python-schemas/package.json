@@ -1,0 +1,16 @@
+{
+  "name": "@cumulus/python-schemas",
+  "version": "21.3.2",
+  "description": "Helpers for managing Cumulus task schemas",
+  "license": "Apache-2.0",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "clean": "rm -rf .venv",
+    "lint": "uv run ruff check . && uv run ruff format --diff . && uv run mypy src/python_schemas",
+    "update-python-version": "uv version --",
+    "test": "uv run pytest -q"
+  },
+  "author": "Cumulus Author : Cumulus Coreification Team"
+}

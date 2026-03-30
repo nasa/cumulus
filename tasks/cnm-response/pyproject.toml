@@ -10,13 +10,8 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "freezegun~=1.5",
-    "moto~=5.1",
-    "mypy~=1.19",
-    "pytest~=9.0",
-    "pytest-cov~=7.0",
-    "pytest-mock~=3.15",
-    "ruff~=0.14.0",
+    "python-common-dev-dependencies",
+    "python-schemas",
 ]
 
 [tool.pytest]
@@ -29,3 +24,7 @@ pythonpath = ["src"]
 testpaths = [
     "tests",
 ]
+
+[tool.uv.sources]
+python-common-dev-dependencies = { path = "../../packages/python-common-dev-dependencies" }
+python-schemas = { path = "../../packages/python-schemas" }
