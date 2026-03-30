@@ -122,9 +122,7 @@ async function post(req, res) {
 
   let translatedCollection;
   try {
-    console.log('checking colletion before translation', JSON.stringify(collection));
     const dbRecord = translateApiCollectionToPostgresCollection(collection);
-    console.log('checking dbRecord after translation', JSON.stringify(dbRecord), JSON.stringify(collection));
     try {
       await createRejectableTransaction(knex, async (trx) => {
         const [pgCollection] = await collectionPgModel.create(trx, dbRecord);
