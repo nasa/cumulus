@@ -244,7 +244,7 @@ async function buildAndExecuteWorkflow(
     provider,
     cmrProvider,
     payload,
-    meta,
+    meta
   );
   return executeWorkflow(stackName, bucketName, workflowName, workflowMsg, timeout);
 }
@@ -273,7 +273,7 @@ async function buildAndStartWorkflow(
   provider,
   payload,
   meta = {},
-  cmrProvider,
+  cmrProvider
 ) {
   const workflowMsg = await buildWorkflow(
     stackName,
