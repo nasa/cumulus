@@ -67,6 +67,10 @@ output "cnm_response_task" {
   value = module.ingest.cnm_response_task
 }
 
+output "cnm_to_cma_task" {
+  value = module.ingest.cnm_to_cma_task
+}
+
 output "discover_granules_task" {
   value = module.ingest.discover_granules_task
 }

@@ -28,6 +28,14 @@ output "cnm_response_task" {
   }
 }
 
+output "cnm_to_cma_task" {
+  value = {
+    task_arn           = module.cnm_to_cma_task.cumulus_task_lambda.arn
+    task_log_group     = module.cnm_to_cma_task.cumulus_task_log_group_name
+    last_modified_date = module.cnm_to_cma_task.cumulus_task_lambda.last_modified
+  }
+}
+
 output "discover_granules_task" {
   value = {
     task_arn           = aws_lambda_function.discover_granules_task.arn

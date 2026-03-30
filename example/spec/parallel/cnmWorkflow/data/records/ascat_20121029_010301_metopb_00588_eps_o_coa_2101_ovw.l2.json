@@ -2,7 +2,7 @@
   "version": "1.4",
   "provider": "NASA/JPL/PO.DAAC",
   "collection": "ASCATB-L2-Coastal/op",
-  "submissionTime": "2022-08-10T17:49:30.477188",
+  "submissionTime": "2022-08-10T17:49:30.477188Z",
   "identifier": "<<REPLACED with random string>>",
   "product": {
     "name": "ascat_20121029_010301_metopb_00588_eps_o_coa_2101_ovw.l2",

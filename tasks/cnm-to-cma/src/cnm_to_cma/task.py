@@ -1,5 +1,7 @@
 """lambda function used to translate CNM messages to CMA messages in aws lambda with cumulus"""
 
+import logging
+import os
 import re
 from datetime import UTC, datetime
 from typing import Any
@@ -11,10 +13,10 @@ from run_cumulus_task import run_cumulus_task
 from . import models_cnm, models_granule
 
 # Create Cumulus Logger instance
-LOGGER = CumulusLogger("cnm_to_cma")
+logger = CumulusLogger(__name__, level=int(os.environ.get("LOGLEVEL", logging.DEBUG)))
 
 
-def task(event: dict[str, Any], context: object) -> dict[str, Any]:
+def lambda_adapter(event: dict, context) -> dict[str, Any]:
     """Entry point of the lambda
     Args:
         event: Passed through from {handler}
@@ -24,18 +26,20 @@ def task(event: dict[str, Any], context: object) -> dict[str, Any]:
         A dict representing input and copied files. See schemas/output.json for more information.
 
     """
-    LOGGER.debug(event)
     cnm = event["input"]
     config = event["config"]
 
-    LOGGER.info(f"cnm message: {cnm} config: {config}")
+    logger.debug(f"cnm message: {cnm} config: {config}")
     granule = mapper(cnm, config)
     output: models_granule.SyncGranuleInput = models_granule.SyncGranuleInput(
         granules=[granule]
     )
     now_as_iso = datetime.now(UTC).isoformat(timespec="milliseconds") + "Z"
     cnm["receivedTime"] = now_as_iso
-    output_dict = {"cnm": cnm, "output_granules": output.model_dump(mode="json")}
+    output_dict = {
+        "cnm": cnm,
+        "output_granules": output.model_dump(mode="json", exclude_none=True),
+    }
     return output_dict
 
 
@@ -52,12 +56,12 @@ def mapper(cnm: dict, config: dict) -> models_granule.Granule:
     """
     try:
         cnm_model = models_cnm.CloudNotificationMessageCnm12.model_validate(cnm)
-        LOGGER.info(f"CNM Model in mapper: {cnm_model}")
+        logger.info(f"CNM Model in mapper: {cnm_model}")
         granule_id_extraction = config.get("collection", {}).get("granuleIdExtraction")
         # retrieve granule_id from product.names
         product = cnm_model.root.product
         granule_id = product.name
-        LOGGER.info(f"Raw granule_id: {granule_id}")
+        logger.info(f"Raw granule_id: {granule_id}")
         # Extract the last token after the last slash
         granule_id = product.name.rsplit("/", 1)[-1]
         # Apply regex extraction if provided
@@ -66,11 +70,11 @@ def mapper(cnm: dict, config: dict) -> models_granule.Granule:
             if matcher:
                 granule_id = matcher.group(1)
             else:
-                LOGGER.warn(
+                logger.warn(
                     f"granuleIdExtraction regex: {granule_id_extraction} did not match the "
                     f"granuleId: {granule_id} but program will continue"
                 )
-        LOGGER.info(f"Granule ID: {granule_id}")
+        logger.info(f"Granule ID: {granule_id}")
         cnm_input_files: list[models_cnm.File] = get_cnm_input_files(product)
         cma_files: list[models_granule.File] = create_granule_files(cnm_input_files)
         granule = models_granule.Granule(
@@ -80,10 +84,10 @@ def mapper(cnm: dict, config: dict) -> models_granule.Granule:
             dataType=config.get("collection", {}).get("name"),
             version=config.get("collection", {}).get("version"),
         )
-        LOGGER.info(f"Granule Model in mapper: {granule}")
+        logger.info(f"Granule Model in mapper: {granule}")
         return granule
     except pydantic.ValidationError as pydan_error:
-        LOGGER.error("pydantic schema validation failed:", pydan_error)
+        logger.error("pydantic schema validation failed:", pydan_error)
         raise pydan_error
 
 
@@ -126,7 +130,7 @@ def build_granule_file(cnm_file: Any) -> models_granule.File:
         r"^(?P<protocol>.*?)://(?P<host>[^/]+)(?:/(?P<full_path>.*))?$", uri
     )
     if not match:
-        LOGGER.error(f"Invalid URI format: {uri}")
+        logger.error(f"Invalid URI format: {uri}")
         raise ValueError(f"Invalid URI format: {uri}")
     groups = match.groupdict()
     protocol = groups["protocol"]
@@ -146,7 +150,7 @@ def build_granule_file(cnm_file: Any) -> models_granule.File:
 
 
 # handler that is provided to aws lambda
-def handler(event: dict[str, list[str] | dict], context: object) -> Any:
+def lambda_handler(event: dict, context):
     """Lambda handler. Runs a cumulus task that
 
     Args:
@@ -157,4 +161,6 @@ def handler(event: dict[str, list[str] | dict], context: object) -> Any:
         The result of the cumulus task. See schemas/output.json for more information.
 
     """
-    return run_cumulus_task(task, event, context)
+    logger.setMetadata(event, context)
+    cumulus_task_return = run_cumulus_task(lambda_adapter, event, context)
+    return cumulus_task_return

@@ -19,7 +19,7 @@
                   "destination": "{$.meta.cnm}"
                 },
                 {
-                  "source": "{$.output}",
+                  "source": "{$.output_granules}",
                   "destination": "{$.payload}"
                 }
               ]
