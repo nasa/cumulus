@@ -36,6 +36,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CSD-91**
   - Added a task config var to update-granules-cmr-metadata-file-links `updateGranuleIdentifiers` for whether or not to update the Granule metadata's identifiers and `GranuleUR`, defaults to true. See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
 
+- **async-operations-update**
+  - Update Async Operation container to new version 56, `cumuluss/async-operation:56`. Users should update their references to `async-operation` with the new version.
+
 ### Breaking Changes
 
 - **CUMULUS-4107**
