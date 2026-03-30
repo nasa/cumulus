@@ -144,7 +144,7 @@ test.serial('The correct output is returned when granules are queued without a P
 test.serial('The correct output is returned when granules are queued with a PDR', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
-  const collectionConfig = { foo: 'bar', cmrProvider: 'f'  };
+  const collectionConfig = { foo: 'bar', cmrProvider: 'f' };
   await t.context.getCollection.withArgs({
     prefix: t.context.stackName,
     collectionName: dataType,
@@ -175,7 +175,7 @@ test.serial('The correct output is returned when granules are queued with a PDR'
 test.serial('The correct output is returned when no granules are queued', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
-  const collectionConfig = { foo: 'bar', cmrProvider: 'f'  };
+  const collectionConfig = { foo: 'bar', cmrProvider: 'f' };
   await t.context.getCollection.withArgs({
     prefix: t.context.stackName,
     collectionName: dataType,
