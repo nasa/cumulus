@@ -114,7 +114,7 @@ test.afterEach(async (t) => {
 test.serial('The correct output is returned when granules are queued without a PDR', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
-  const collectionConfig = { foo: 'bar' };
+  const collectionConfig = { foo: 'bar', cmrProvider: 'f' };
   await t.context.getCollection.withArgs({
     prefix: t.context.stackName,
     collectionName: dataType,
@@ -144,7 +144,7 @@ test.serial('The correct output is returned when granules are queued without a P
 test.serial('The correct output is returned when granules are queued with a PDR', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
-  const collectionConfig = { foo: 'bar' };
+  const collectionConfig = { foo: 'bar', cmrProvider: 'f'  };
   await t.context.getCollection.withArgs({
     prefix: t.context.stackName,
     collectionName: dataType,
@@ -175,7 +175,7 @@ test.serial('The correct output is returned when granules are queued with a PDR'
 test.serial('The correct output is returned when no granules are queued', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
-  const collectionConfig = { foo: 'bar' };
+  const collectionConfig = { foo: 'bar', cmrProvider: 'f'  };
   await t.context.getCollection.withArgs({
     prefix: t.context.stackName,
     collectionName: dataType,
@@ -197,7 +197,7 @@ test.serial('The correct output is returned when no granules are queued', async 
 test.serial('Granules are added to the queue', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
-  const collectionConfig = { foo: 'bar' };
+  const collectionConfig = { foo: 'bar', cmrProvider: 'provider' };
   await t.context.getCollection.withArgs({
     prefix: t.context.stackName,
     collectionName: dataType,
@@ -250,7 +250,7 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
     granuleId: `granule-${randomString().slice(0, 6)}`,
     version: '6',
   };
-  const collectionConfig1 = { name: `collection-config-${randomString().slice(0, 6)}` };
+  const collectionConfig1 = { name: `collection-config-${randomString().slice(0, 6)}`, cmrProvider: 'provider' };
 
   const granule2 = {
     createdAt,
@@ -259,7 +259,7 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
     granuleId: `granule-${randomString().slice(0, 6)}`,
     version: '6',
   };
-  const collectionConfig2 = { name: `collection-config-${randomString().slice(0, 6)}` };
+  const collectionConfig2 = { name: `collection-config-${randomString().slice(0, 6)}`, cmrProvider: 'provider' };
 
   event.input.granules = [granule1, granule2];
 
@@ -308,6 +308,7 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
         state_machine: stateMachineArn,
       },
       meta: {
+        cmr: { provider: 'provider' },
         collection: collectionConfig1,
         provider: { id: 'id', name: 'provider-name' },
         workflow_name: workflow,
@@ -340,6 +341,7 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
         state_machine: stateMachineArn,
       },
       meta: {
+        cmr: { provider: 'provider' },
         collection: collectionConfig2,
         provider: { id: 'id', name: 'provider-name' },
         workflow_name: workflow,
@@ -372,7 +374,7 @@ test.serial('granules are enqueued with createdAt values added to granules that 
     granuleId: `granule-${randomString().slice(0, 6)}`,
     version: '6',
   };
-  const collectionConfig1 = { name: `collection-config-${randomString().slice(0, 6)}` };
+  const collectionConfig1 = { name: `collection-config-${randomString().slice(0, 6)}`, cmrProvider: 'provider' };
 
   const granule2 = {
     createdAt,
@@ -381,7 +383,7 @@ test.serial('granules are enqueued with createdAt values added to granules that 
     granuleId: `granule-${randomString().slice(0, 6)}`,
     version: '6',
   };
-  const collectionConfig2 = { name: `collection-config-${randomString().slice(0, 6)}` };
+  const collectionConfig2 = { name: `collection-config-${randomString().slice(0, 6)}`, cmrProvider: 'provider' };
 
   event.input.granules = [granule1, granule2];
 
@@ -454,7 +456,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
     files: [{ fileName: `file-${randomString().slice(0, 6)}`, bucket: 'test-bucket', key: '/test_key/' }],
     createdAt,
   };
-  const collectionConfig1 = { name: `collection-config-${randomString().slice(0, 6)}` };
+  const collectionConfig1 = { name: `collection-config-${randomString().slice(0, 6)}`, cmrProvider: 'provider' };
 
   const granule2 = {
     dataType: `data-type-${randomString().slice(0, 6)}`,
@@ -463,7 +465,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
     files: [{ fileName: `file-${randomString().slice(0, 6)}`, bucket: 'test-bucket', key: '/test_key/' }],
     createdAt,
   };
-  const collectionConfig2 = { name: `collection-config-${randomString().slice(0, 6)}` };
+  const collectionConfig2 = { name: `collection-config-${randomString().slice(0, 6)}`, cmrProvider: 'provider' };
 
   event.input.granules = [granule1, granule2];
 
@@ -513,6 +515,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
         state_machine: stateMachineArn,
       },
       meta: {
+        cmr: { provider: 'provider' },
         pdr: event.input.pdr,
         collection: collectionConfig1,
         provider: { id: 'id', name: 'provider-name' },
@@ -547,6 +550,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
         state_machine: stateMachineArn,
       },
       meta: {
+        cmr: { provider: 'provider' },
         pdr: event.input.pdr,
         collection: collectionConfig2,
         provider: { id: 'id', name: 'provider-name' },
@@ -570,7 +574,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
 test.serial('If a granule has a provider property, that provider is used', async (t) => {
   const dataType = randomString();
   const version = randomString();
-  const collectionConfig = { foo: 'bar' };
+  const collectionConfig = { foo: 'bar', cmrProvider: 'f' };
   await t.context.getCollection.withArgs({
     prefix: t.context.stackName,
     collectionName: dataType,
@@ -624,7 +628,7 @@ test.serial('If a granule has a provider property, that provider is used', async
 test.serial('A default concurrency of 3 is used', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
-  const collectionConfig = { foo: 'bar' };
+  const collectionConfig = { foo: 'bar', cmrProvider: 'f' };
   await t.context.getCollection.withArgs({
     prefix: t.context.stackName,
     collectionName: dataType,
@@ -654,7 +658,7 @@ test.serial('A default concurrency of 3 is used', async (t) => {
 test.serial('A configured concurrency is used', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
-  const collectionConfig = { foo: 'bar' };
+  const collectionConfig = { foo: 'bar', cmrProvider: 'f' };
   await t.context.getCollection.withArgs({
     prefix: t.context.stackName,
     collectionName: dataType,
@@ -689,7 +693,7 @@ test.serial('A config with executionNamePrefix is handled as expected', async (t
 
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
-  const collectionConfig = { foo: 'bar' };
+  const collectionConfig = { foo: 'bar', cmrProvider: 'f' };
   await t.context.getCollection.withArgs({
     prefix: t.context.stackName,
     collectionName: dataType,
@@ -742,7 +746,7 @@ test.serial('A config with executionNamePrefix is handled as expected', async (t
 test.serial('If a childWorkflowMeta is provided, it is passed through to the message builder and merged into the new message meta', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
-  const collectionConfig = { foo: 'bar' };
+  const collectionConfig = { foo: 'bar', cmrProvider: 'f' };
   await t.context.getCollection.withArgs({
     prefix: t.context.stackName,
     collectionName: dataType,
@@ -793,7 +797,7 @@ test.serial('createdAt for queued granule is equal to enqueueGranuleIngestMessag
   const { event } = t.context;
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
-  const collectionConfig = { foo: 'bar' };
+  const collectionConfig = { foo: 'bar', cmrProvider: 'f' };
   await t.context.getCollection.withArgs({
     prefix: t.context.stackName,
     collectionName: dataType,
@@ -840,7 +844,7 @@ test.serial('updatedGranuleBatchCreatedAt updates batch granule object with corr
 test.serial('hitting defaults for branch coverage', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
-  const collectionConfig = { foo: 'bar' };
+  const collectionConfig = { foo: 'bar', cmrProvider: 'f' };
   await t.context.getCollection.withArgs({
     prefix: t.context.stackName,
     collectionName: dataType,
