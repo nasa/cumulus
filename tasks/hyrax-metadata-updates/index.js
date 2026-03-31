@@ -143,7 +143,6 @@ async function getCollectionEntry(config, metadata, isUmmG) {
     shortName,
     versionId,
   });
-  console.log('cmr stuff', JSON.stringify(cmrSettings), JSON.stringify(searchParams));
   const result = await cmrInstance.searchCollections(searchParams);
 
   // Verify that we have a valid result. If we don't then something is badly wrong and we
@@ -174,7 +173,6 @@ async function getCollectionEntry(config, metadata, isUmmG) {
 async function generatePath(config, metadata, isUmmG) {
   const providerId = get(config.cmr, 'provider');
   // Check if providerId is defined
-  console.log('providerId', providerId);
   if (providerId === undefined) {
     throw new InvalidArgument('Provider not supplied in configuration. Unable to construct path');
   }
