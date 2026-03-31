@@ -115,4 +115,3 @@ The `start-iceberg-local` script:
 - Configures database connection to the local PostgreSQL instance
 - Enables fake authentication for testing
 - Exposes the API on port 5001
-

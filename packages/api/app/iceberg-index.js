@@ -128,9 +128,11 @@ const startServer = async () => {
         await destroyKnexClient();
         log.info('Database connections closed');
         log.info('Graceful shutdown complete');
+        // eslint-disable-next-line no-process-exit
         process.exit(0);
       } catch (error) {
         log.error('Error during graceful shutdown:', error);
+        // eslint-disable-next-line no-process-exit
         process.exit(1);
       }
     });
