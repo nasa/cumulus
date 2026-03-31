@@ -20,19 +20,48 @@ if (process.env.FAKE_AUTH === 'true') {
 // Import the limited routers for granules and executions
 const granulesIcebergRouter = require('../endpoints/iceberg-granules');
 const executionsIcebergRouter = require('../endpoints/iceberg-executions');
+const collectionsIcebergRouter = require('../endpoints/iceberg-collections');
+const providersIcebergRouter = require('../endpoints/iceberg-providers');
+const pdrsIcebergRouter = require('../endpoints/iceberg-pdrs');
+const rulesIcebergRouter = require('../endpoints/iceberg-rules');
+const asyncOperationsIcebergRouter = require('../endpoints/iceberg-async-operations');
+const reconciliationReportsIcebergRouter = require('../endpoints/iceberg-reconciliation-reports');
 
 // Iceberg API only serves a subset of API endpoints:
 // - version
+// - list of collections (GET /collections)
 // - list of granules (GET /granules)
+// - list of providers (GET /providers)
+// - list of pdrs (GET /pdrs)
+// - list of rules (GET /rules)
 // - list of executions (GET /executions)
+// - list of async-operations (GET /async-operations)
+// - list of reconciliation-reports (GET /reconciliation-reports)
 // - stats endpoints
-// - files (through granules files endpoint???)
 
 // granules list endpoint
 router.use('/granules', ensureAuthorized, granulesIcebergRouter);
 
 // executions list endpoint
 router.use('/executions', ensureAuthorized, executionsIcebergRouter);
+
+// collections list endpoint
+router.use('/collections', ensureAuthorized, collectionsIcebergRouter);
+
+// providers list endpoint
+router.use('/providers', ensureAuthorized, providersIcebergRouter);
+
+// pdrs list endpoint
+router.use('/pdrs', ensureAuthorized, pdrsIcebergRouter);
+
+// rules list endpoint
+router.use('/rules', ensureAuthorized, rulesIcebergRouter);
+
+// async-operations list endpoint
+router.use('/async-operations', ensureAuthorized, asyncOperationsIcebergRouter);
+
+// reconciliation-reports list endpoint
+router.use('/reconciliation-reports', ensureAuthorized, reconciliationReportsIcebergRouter);
 
 // stats endpoint (includes GET /stats and GET /stats/aggregate/:type?)
 router.use('/stats', ensureAuthorized, stats);

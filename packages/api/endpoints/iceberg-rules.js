@@ -1,18 +1,18 @@
 'use strict';
 
 /**
- * Limited executions router for Iceberg API deployment.
- * Only exposes the list endpoint (GET /executions).
+ * Limited rules router for Iceberg API deployment.
+ * Only exposes the list endpoint (GET /rules).
  */
 
 const router = require('express-promise-router')();
 const Logger = require('@cumulus/logger');
-const { ExecutionSearch } = require('@cumulus/db');
+const { RuleSearch } = require('@cumulus/db');
 
-const log = new Logger({ sender: '@cumulus/api/iceberg-executions' });
+const log = new Logger({ sender: '@cumulus/api/iceberg-rules' });
 
 /**
- * List and search executions
+ * List and search rules
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
@@ -20,7 +20,7 @@ const log = new Logger({ sender: '@cumulus/api/iceberg-executions' });
  */
 async function list(req, res) {
   log.debug(`list query ${JSON.stringify(req.query)}`);
-  const search = new ExecutionSearch({ queryStringParameters: req.query });
+  const search = new RuleSearch({ queryStringParameters: req.query });
   const response = await search.query();
   return res.send(response);
 }

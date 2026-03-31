@@ -288,7 +288,7 @@ test.serial('failed initialization clears promise and allows retry',
     const badEnv = {
       ...localStackConnectionEnv,
       DEPLOY_ICEBERG_API: 'true',
-      PG_PORT: '9999',  // Invalid port
+      PG_PORT: '9999', // Invalid port
       createTimeoutMillis: 100,
       acquireTimeoutMillis: 100,
     };

@@ -10,7 +10,7 @@ const Logger = require('@cumulus/logger');
 const { GranuleSearch } = require('@cumulus/db');
 const { addOrcaRecoveryStatus } = require('../lib/orca');
 
-const log = new Logger({ sender: '@cumulus/api/iceberg-limited-granules' });
+const log = new Logger({ sender: '@cumulus/api/iceberg-granules' });
 
 /**
  * List and search granules
