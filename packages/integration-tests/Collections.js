@@ -94,7 +94,7 @@ const buildRandomizedCollection = (overrides = {}) => ({
       sampleFileName: 'asdf.jpg',
     },
   ],
-  cmrProvider: 'PODAAC_SWOT',
+  cmrProvider: 'CUMULUS',
   ...overrides,
 });
 
