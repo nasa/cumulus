@@ -273,7 +273,7 @@ async function buildAndStartWorkflow(
   provider,
   payload,
   meta = {},
-  cmrProvider
+  cmrProvider = 'CUMULUS',
 ) {
   const workflowMsg = await buildWorkflow(
     stackName,
