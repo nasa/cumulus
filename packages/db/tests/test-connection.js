@@ -3,7 +3,12 @@ const sinon = require('sinon');
 const cryptoRandomString = require('crypto-random-string');
 const { KnexTimeoutError } = require('knex');
 
-const { getKnexClient } = require('../dist/connection');
+const {
+  getKnexClient,
+  initializeKnexClientSingleton,
+  getKnexClientSingleton,
+  destroyKnexClientSingleton,
+} = require('../dist/connection');
 const { localStackConnectionEnv } = require('../dist/config');
 
 const fakeConnectionConfig = {
@@ -148,4 +153,158 @@ test('getKnexClient returns a working knex client that throws invalid query erro
     await t.throwsAsync(t.context.knex(tableName).select({ foo: 'bar' }), {
       message: `select "bar" as "foo" from "${t.context.tableName}" - column "bar" does not exist`,
     });
+  });
+
+// Singleton connection tests
+test.serial('initializeKnexClientSingleton creates and reuses singleton',
+  async (t) => {
+    // Clean up any existing singleton
+    await destroyKnexClientSingleton();
+
+    const env = { ...localStackConnectionEnv, DEPLOY_ICEBERG_API: 'true' };
+
+    const client1 = await initializeKnexClientSingleton({ env });
+    const client2 = await initializeKnexClientSingleton({ env });
+
+    // Should return the same instance
+    t.is(client1, client2);
+
+    await destroyKnexClientSingleton();
+  });
+
+test.serial('initializeKnexClientSingleton handles concurrent calls safely',
+  async (t) => {
+    // Clean up any existing singleton
+    await destroyKnexClientSingleton();
+
+    const env = { ...localStackConnectionEnv, DEPLOY_ICEBERG_API: 'true' };
+
+    // Simulate concurrent initialization
+    const [client1, client2, client3] = await Promise.all([
+      initializeKnexClientSingleton({ env }),
+      initializeKnexClientSingleton({ env }),
+      initializeKnexClientSingleton({ env }),
+    ]);
+
+    // All should return the same instance
+    t.is(client1, client2);
+    t.is(client2, client3);
+
+    await destroyKnexClientSingleton();
+  });
+
+test.serial('getKnexClientSingleton returns singleton in Iceberg API mode',
+  async (t) => {
+    // Clean up any existing singleton
+    await destroyKnexClientSingleton();
+
+    const env = { ...localStackConnectionEnv, DEPLOY_ICEBERG_API: 'true' };
+
+    const client1 = await getKnexClientSingleton({ env });
+    const client2 = await getKnexClientSingleton({ env });
+
+    // Should return the same instance
+    t.is(client1, client2);
+
+    await destroyKnexClientSingleton();
+  });
+
+test.serial('getKnexClientSingleton returns new client in Lambda mode',
+  async (t) => {
+    // Clean up any existing singleton
+    await destroyKnexClientSingleton();
+
+    const env = { ...localStackConnectionEnv };
+    // DEPLOY_ICEBERG_API not set or not 'true' = Lambda mode
+
+    const client1 = await getKnexClientSingleton({ env });
+    const client2 = await getKnexClientSingleton({ env });
+
+    // Should return different instances in Lambda mode
+    t.not(client1, client2);
+
+    // Clean up
+    await client1.destroy();
+    await client2.destroy();
+  });
+
+test.serial('getKnexClientSingleton sets default pool size for Iceberg API',
+  async (t) => {
+    // Clean up any existing singleton
+    await destroyKnexClientSingleton();
+
+    const env = { ...localStackConnectionEnv, DEPLOY_ICEBERG_API: 'true' };
+
+    const client = await getKnexClientSingleton({ env });
+
+    // Check that pool max is set to 50 (default for Iceberg API)
+    t.is(client.client.pool.max, 50);
+
+    await destroyKnexClientSingleton();
+  });
+
+test.serial('getKnexClientSingleton respects custom dbMaxPool setting',
+  async (t) => {
+    // Clean up any existing singleton
+    await destroyKnexClientSingleton();
+
+    const env = {
+      ...localStackConnectionEnv,
+      DEPLOY_ICEBERG_API: 'true',
+      dbMaxPool: '25',
+    };
+
+    const client = await getKnexClientSingleton({ env });
+
+    // Check that pool max is set to custom value
+    t.is(client.client.pool.max, 25);
+
+    await destroyKnexClientSingleton();
+  });
+
+test.serial('destroyKnexClientSingleton destroys and resets singleton',
+  async (t) => {
+    // Clean up any existing singleton
+    await destroyKnexClientSingleton();
+
+    const env = { ...localStackConnectionEnv, DEPLOY_ICEBERG_API: 'true' };
+
+    const client1 = await getKnexClientSingleton({ env });
+
+    await destroyKnexClientSingleton();
+
+    const client2 = await getKnexClientSingleton({ env });
+
+    // Should create a new instance after destroy
+    t.not(client1, client2);
+
+    await destroyKnexClientSingleton();
+  });
+
+test.serial('failed initialization clears promise and allows retry',
+  async (t) => {
+    // Clean up any existing singleton
+    await destroyKnexClientSingleton();
+
+    const badEnv = {
+      ...localStackConnectionEnv,
+      DEPLOY_ICEBERG_API: 'true',
+      PG_PORT: '9999', // Invalid port
+      createTimeoutMillis: '100',
+      acquireTimeoutMillis: '100',
+    };
+
+    // First attempt should fail
+    await t.throwsAsync(
+      initializeKnexClientSingleton({ env: badEnv }),
+      { instanceOf: KnexTimeoutError }
+    );
+
+    // Retry with good config should succeed
+    const goodEnv = { ...localStackConnectionEnv, DEPLOY_ICEBERG_API: 'true' };
+    const client = await initializeKnexClientSingleton({ env: goodEnv });
+
+    t.truthy(client);
+
+    await destroyKnexClientSingleton();
   });

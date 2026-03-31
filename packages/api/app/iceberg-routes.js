@@ -18,21 +18,21 @@ if (process.env.FAKE_AUTH === 'true') {
 }
 
 // Import the limited routers for granules and executions
-const granulesLimitedRouter = require('./iceberg-limited-granules');
-const executionsLimitedRouter = require('./iceberg-limited-executions');
+const granulesIcebergRouter = require('../endpoints/iceberg-granules');
+const executionsIcebergRouter = require('../endpoints/iceberg-executions');
 
 // Iceberg API only serves a subset of API endpoints:
 // - version
 // - list of granules (GET /granules)
 // - list of executions (GET /executions)
 // - stats endpoints
-// - files (through granules files endpoint)
+// - files (through granules files endpoint???)
 
 // granules list endpoint
-router.use('/granules', ensureAuthorized, granulesLimitedRouter);
+router.use('/granules', ensureAuthorized, granulesIcebergRouter);
 
 // executions list endpoint
-router.use('/executions', ensureAuthorized, executionsLimitedRouter);
+router.use('/executions', ensureAuthorized, executionsIcebergRouter);
 
 // stats endpoint (includes GET /stats and GET /stats/aggregate/:type?)
 router.use('/stats', ensureAuthorized, stats);

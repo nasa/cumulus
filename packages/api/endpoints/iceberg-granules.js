@@ -2,7 +2,7 @@
 
 /**
  * Limited granules router for Iceberg API deployment.
- * Only exposes the list endpoint (GET /granules) and files lookup.
+ * Only exposes the list endpoint (GET /granules).
  */
 
 const router = require('express-promise-router')();
