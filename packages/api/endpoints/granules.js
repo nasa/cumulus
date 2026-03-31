@@ -35,6 +35,7 @@ const {
 const { sfn } = require('@cumulus/aws-client/services');
 
 const { getJsonS3Object, promiseS3Upload } = require('@cumulus/aws-client/S3');
+const { getKnexClientSingleton } = require('../app/db');
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { zodParser } = require('../src/zod-utils');
 
@@ -153,7 +154,7 @@ const _setNewGranuleDefaults = (incomingApiGranule, isNewRecord = true) => {
 
 const getFileGranuleAndCollectionByBucketAndKey = async (req, res) => {
   const { bucket, key } = req.params;
-  const { knex = await getKnexClient() } = req.testContext || {};
+  const { knex = await getKnexClientSingleton() } = req.testContext || {};
 
   // Get file meta from postgres database using getGranuleIdAndCollectionIdFromFile
   const results = await getGranuleIdAndCollectionIdFromFile({
@@ -187,7 +188,7 @@ const getFileGranuleAndCollectionByBucketAndKey = async (req, res) => {
  */
 const create = async (req, res) => {
   const {
-    knex = await getKnexClient(),
+    knex = await getKnexClientSingleton(),
     createGranuleFromApiMethod = createGranuleFromApi,
   } = req.testContext || {};
 
@@ -247,7 +248,7 @@ const patchGranule = async (req, res) => {
     collectionPgModel = new CollectionPgModel(),
     updateGranuleFromApiMethod = updateGranuleFromApi,
   } = req.testContext || {};
-  const knex = req.knex ?? await getKnexClient();
+  const knex = req.knex ?? await getKnexClientSingleton();
   let apiGranule = req.body || {};
   let pgCollection;
 
@@ -408,7 +409,7 @@ const _handleUpdateAction = async (
   pgCollection
 ) => {
   const {
-    knex = await getKnexClient(),
+    knex = await getKnexClientSingleton(),
     reingestHandler = reingestGranule,
     updateGranuleStatusToQueuedMethod = updateGranuleStatusToQueued,
     getFilesExistingAtLocationMethod = getFilesExistingAtLocation,
@@ -550,7 +551,7 @@ const _handleUpdateAction = async (
 async function patchByGranuleId(req, res) {
   const {
     granulePgModel = new GranulePgModel(),
-    knex = await getKnexClient(),
+    knex = await getKnexClientSingleton(),
   } = req.testContext || {};
   const body = req.body;
   const action = body.action;
@@ -587,7 +588,7 @@ async function patch(req, res) {
   const {
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
-    knex = await getKnexClient(),
+    knex = await getKnexClientSingleton(),
   } = req.testContext || {};
 
   const body = req.body;
@@ -644,7 +645,7 @@ const associateExecution = async (req, res) => {
     executionPgModel = new ExecutionPgModel(),
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
-    knex = await getKnexClient(),
+    knex = await getKnexClientSingleton(),
   } = req.testContext || {};
 
   let pgGranule;
@@ -746,7 +747,7 @@ const parseBulkPatchPayload = zodParser('BulkPatchSchema payload', BulkPatchSche
 async function bulkPatchGranuleCollection(req, res) {
   const {
     collectionPgModel = new CollectionPgModel(),
-    knex = await getKnexClient(),
+    knex = await getKnexClientSingleton(),
   } = req.testContext || {};
   const body = parseBulkPatchGranuleCollectionPayload(req.body);
   if (isError(body)) {
@@ -829,7 +830,7 @@ async function bulkPatch(req, res) {
  */
 async function delByGranuleId(req, res) {
   const {
-    knex = await getKnexClient(),
+    knex = await getKnexClientSingleton(),
   } = req.testContext || {};
   const granuleId = req.params.granuleId;
   log.info(`granules.del ${granuleId}`);
@@ -862,7 +863,7 @@ async function delByGranuleId(req, res) {
  */
 async function del(req, res) {
   const {
-    knex = await getKnexClient(),
+    knex = await getKnexClientSingleton(),
     collectionPgModel = new CollectionPgModel(),
     granulePgModel = new GranulePgModel(),
   } = req.testContext || {};
@@ -946,7 +947,7 @@ const parsebulkChangeCollectionPayload = zodParser('bulkChangeCollection payload
  */
 async function bulkChangeCollection(req, res) {
   const {
-    knex = await getKnexClient(),
+    knex = await getKnexClientSingleton(),
     sfnMethod = sfn,
     workflow = 'ChangeGranuleCollectionsWorkflow',
   } = req.testContext || {};
@@ -1079,7 +1080,7 @@ async function bulkChangeCollection(req, res) {
  */
 async function get(req, res) {
   const {
-    knex = await getKnexClient(),
+    knex = await getKnexClientSingleton(),
     collectionPgModel = new CollectionPgModel(),
     granulePgModel = new GranulePgModel(),
   } = req.testContext || {};
@@ -1137,7 +1138,7 @@ async function get(req, res) {
  * @returns {Promise<object>} the promise of express response object
  */
 async function getByGranuleId(req, res) {
-  const { knex = await getKnexClient() } = req.testContext || {};
+  const { knex = await getKnexClientSingleton() } = req.testContext || {};
   const { getRecoveryStatus } = req.query;
   const granuleId = req.params.granuleId;
 

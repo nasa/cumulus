@@ -10,7 +10,6 @@ const isError = require('lodash/isError');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 const {
-  getKnexClient,
   getApiGranuleExecutionCumulusIds,
   getApiGranuleCumulusIds,
   getWorkflowNameIntersectFromGranuleIds,
@@ -20,6 +19,7 @@ const {
   ExecutionSearch,
 } = require('@cumulus/db');
 const { deconstructCollectionId } = require('@cumulus/message/Collections');
+const { getKnexClientSingleton } = require('../app/db');
 
 const { zodParser } = require('../src/zod-utils');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
@@ -69,7 +69,7 @@ const parseBulkDeletePayload = zodParser('Bulk Execution Delete Payload', BulkEx
 async function create(req, res) {
   const {
     executionPgModel = new ExecutionPgModel(),
-    knex = await getKnexClient(),
+    knex = await getKnexClientSingleton(),
   } = req.testContext || {};
 
   const execution = req.body || {};
@@ -120,7 +120,7 @@ async function update(req, res) {
 
   const {
     executionPgModel = new ExecutionPgModel(),
-    knex = await getKnexClient(),
+    knex = await getKnexClientSingleton(),
   } = req.testContext || {};
 
   let oldPgRecord;
@@ -173,7 +173,7 @@ async function list(req, res) {
  */
 async function get(req, res) {
   const arn = req.params.arn;
-  const knex = await getKnexClient({ env: process.env });
+  const knex = await getKnexClientSingleton();
   const executionPgModel = new ExecutionPgModel();
   let executionRecord;
   try {
@@ -201,7 +201,7 @@ async function get(req, res) {
 async function del(req, res) {
   const {
     executionPgModel = new ExecutionPgModel(),
-    knex = await getKnexClient(),
+    knex = await getKnexClientSingleton(),
   } = req.testContext || {};
 
   const { arn } = req.params;
@@ -230,7 +230,7 @@ async function del(req, res) {
  */
 async function searchByGranules(req, res) {
   const payload = req.body;
-  const knex = await getKnexClient();
+  const knex = await getKnexClientSingleton();
   const { value: granules } = await getGranulesForPayload(payload).next() || {};
   const { page = 1, limit = 1, ...sortParams } = req.query;
 
@@ -265,7 +265,7 @@ async function searchByGranules(req, res) {
  */
 async function workflowsByGranules(req, res) {
   const payload = req.body;
-  const knex = await getKnexClient();
+  const knex = await getKnexClientSingleton();
   const { value: granules } = await getGranulesForPayload(payload).next() || {};
 
   const granuleCumulusIds = await getApiGranuleCumulusIds(knex, granules);
@@ -310,7 +310,7 @@ async function bulkDeleteExecutionsByCollection(req, res) {
   }
   try {
     log.info(`Collection ID Is ${collectionId}`);
-    const knex = await getKnexClient();
+    const knex = await getKnexClientSingleton();
     await collectionPgModel.get(
       knex,
       deconstructCollectionId(collectionId)
