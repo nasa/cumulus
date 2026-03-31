@@ -283,28 +283,26 @@ test.serial('destroyKnexClientSingleton destroys and resets singleton',
 
 test.serial('failed initialization clears promise and allows retry',
   async (t) => {
-    // Clean up any existing singleton
     await destroyKnexClientSingleton();
 
     const badEnv = {
       ...localStackConnectionEnv,
       DEPLOY_ICEBERG_API: 'true',
-      PG_PORT: '9999', // Invalid port
-      createTimeoutMillis: '100',
-      acquireTimeoutMillis: '100',
+      PG_PORT: '9999',  // Invalid port
+      createTimeoutMillis: 100,
+      acquireTimeoutMillis: 100,
     };
 
-    // First attempt should fail
-    await t.throwsAsync(
-      initializeKnexClientSingleton({ env: badEnv }),
-      { instanceOf: KnexTimeoutError }
-    );
+    // First attempt: initialize and immediately try a query to force connection failure
+    await t.throwsAsync(async () => {
+      const instance = await initializeKnexClientSingleton({ env: badEnv });
+      await instance.raw('SELECT 1'); // This forces the actual connection attempt
+    }, { instanceOf: KnexTimeoutError });
 
-    // Retry with good config should succeed
+    // Retry with good config
     const goodEnv = { ...localStackConnectionEnv, DEPLOY_ICEBERG_API: 'true' };
     const client = await initializeKnexClientSingleton({ env: goodEnv });
 
     t.truthy(client);
-
     await destroyKnexClientSingleton();
   });
