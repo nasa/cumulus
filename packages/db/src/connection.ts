@@ -88,10 +88,12 @@ export const getKnexClient = async ({
 
 // Singleton Knex client for long-running server processes (ECS)
 let knexClientSingleton: Knex | undefined;
+let knexClientSingletonPromise: Promise<Knex> | undefined;
 
 /**
  * Initialize a singleton Knex client for ECS server mode.
  * This ensures a single connection pool is reused across all requests.
+ * Concurrent calls are safe - they will wait for the same initialization.
  *
  * @param {Object} params - Configuration parameters
  * @param {NodeJS.ProcessEnv} params.env - Environment variables
@@ -108,7 +110,18 @@ export const initializeKnexClientSingleton = async ({
   secretsManager?: SecretsManager,
   knexLogger?: Logger
 } = {}): Promise<Knex> => {
-  if (!knexClientSingleton) {
+  // If already initialized, return singleton
+  if (knexClientSingleton) {
+    return knexClientSingleton;
+  }
+
+  // If initialization is in progress, wait for it
+  if (knexClientSingletonPromise) {
+    return knexClientSingletonPromise;
+  }
+
+  // Start new initialization
+  knexClientSingletonPromise = (async () => {
     // Set default pool size for Iceberg API if not already configured
     const modifiedEnv = { ...env };
     if (modifiedEnv.DEPLOY_ICEBERG_API === 'true' && !modifiedEnv.dbMaxPool) {
@@ -116,15 +129,25 @@ export const initializeKnexClientSingleton = async ({
     }
 
     knexLogger.info('Initializing singleton connection pool...');
-    knexClientSingleton = await getKnexClient({ env: modifiedEnv, secretsManager, knexLogger });
+    const client = await getKnexClient({ env: modifiedEnv, secretsManager, knexLogger });
+    knexClientSingleton = client;
+    return client;
+  })();
+
+  try {
+    return await knexClientSingletonPromise;
+  } catch (error) {
+    // Clear the promise on failure so retry is possible
+    knexClientSingletonPromise = undefined;
+    throw error;
   }
-  return knexClientSingleton;
 };
 
 /**
  * Get the Knex client, using singleton pattern for Iceberg API mode.
  * In Lambda mode (DEPLOY_ICEBERG_API !== 'true'), creates a new client each time.
  * In Iceberg API mode (DEPLOY_ICEBERG_API === 'true'), returns the singleton instance.
+ * Concurrent calls are safe - they will wait for the same initialization.
  *
  * @param {Object} params - Configuration parameters
  * @param {NodeJS.ProcessEnv} params.env - Environment variables
@@ -143,10 +166,7 @@ export const getKnexClientSingleton = async ({
 } = {}): Promise<Knex> => {
   // In Iceberg API mode, use singleton pattern
   if (env.DEPLOY_ICEBERG_API === 'true') {
-    if (!knexClientSingleton) {
-      return initializeKnexClientSingleton({ env, secretsManager, knexLogger });
-    }
-    return knexClientSingleton;
+    return initializeKnexClientSingleton({ env, secretsManager, knexLogger });
   }
 
   // In Lambda mode, create new client (Lambda will clean up)
@@ -164,5 +184,6 @@ export const destroyKnexClientSingleton = async (): Promise<void> => {
     log.info('Destroying singleton connection pool...');
     await knexClientSingleton.destroy();
     knexClientSingleton = undefined;
+    knexClientSingletonPromise = undefined;
   }
 };
