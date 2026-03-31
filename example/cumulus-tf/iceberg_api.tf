@@ -1,8 +1,8 @@
 locals {
   api_env_variables  = {
-        "OAUTH_PROVIDER": var.oauth_provider
-        "api_config_secret_id": module.cumulus.api_config_secret_arn
-        "DEPLOY_ICEBERG_API": tostring(var.deploy_iceberg_api)
+        "OAUTH_PROVIDER" = var.oauth_provider
+        "api_config_secret_id" = module.cumulus.api_config_secret_arn
+        "DEPLOY_ICEBERG_API" = tostring(var.deploy_iceberg_api)
   }
 }
 

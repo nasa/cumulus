@@ -51,8 +51,15 @@ npm run tsc
 Then build and run the API as a containerized service:
 
 ```bash
-# -e DEPLOY_ICEBERG_API=true \
-  cumulus-api:latest
+# Build from workspace root
+docker build -f packages/api/app/Dockerfile -t cumulus-iceberg-api:latest .
+
+# Run the container
+docker run -p 5001:5001 \
+  -e api_config_secret_id=<your-secret-id> \
+  -e dynamoTableNameString='{"AccessTokensTable":"..."}' \
+  -e DEPLOY_ICEBERG_API=true \
+  cumulus-iceberg-api:latest
 ```
 
 The Dockerfile automatically uses `iceberg-index.js` as the entry point.
@@ -71,17 +78,41 @@ The Dockerfile automatically uses `iceberg-index.js` as the entry point.
 
 ## Local Development
 
-```bash
-# Lambda mode (full API)
-node app/index.js
-
-# Iceberg API mode (limited endpoints)
-DEPLOY_ICEBERG_API=true PORT=5001 node app/iceberg-
+### Running Locally (Node.js)
 
 ```bash
 # Lambda mode (for testing Lambda behavior)
 node index.js
 
 # Iceberg API mode (for local API server with limited endpoints)
-DEPLOY_ICEBERG_API=true PORT=5001 node index.js
+DEPLOY_ICEBERG_API=true PORT=5001 node iceberg-index.js
 ```
+
+### Running with LocalStack (Docker)
+
+For local development with full AWS service emulation:
+
+```bash
+# 1. Start LocalStack and dependencies (from workspace root)
+npm run start-unit-test-stack
+
+# 2. In another terminal, start the Iceberg API (from workspace root)
+npm run start-iceberg-local
+
+# 3. Access the API at http://localhost:5001
+curl http://localhost:5001/version
+
+# 4. Stop the Iceberg API when done
+npm run stop-iceberg-local
+
+# 5. Stop LocalStack and dependencies
+npm run stop-unit-test-stack
+```
+
+The `start-iceberg-local` script:
+- Builds the Docker image from `packages/api/app/Dockerfile`
+- Runs the container connected to the LocalStack network
+- Configures database connection to the local PostgreSQL instance
+- Enables fake authentication for testing
+- Exposes the API on port 5001
+

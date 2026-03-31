@@ -2,7 +2,7 @@
 
 /**
  * Iceberg API Entry Point
- * 
+ *
  * This is a standalone Express server that serves a limited subset of the Cumulus API.
  * It's designed to run in ECS and only exposes read-only list endpoints:
  * - GET /version
@@ -48,7 +48,7 @@ const initEnvVarsFunction = async () => {
     try {
       envSecret = JSON.parse(response.SecretString);
     } catch (error) {
-      throw new SyntaxError(`Secret string returned for SecretId ${apiConfigSecretId} could not be parsed`, error);
+      throw new SyntaxError(`Secret string returned for SecretId ${apiConfigSecretId} could not be parsed`, { cause: error });
     }
     process.env = { ...envSecret, ...process.env };
   } catch (error) {
@@ -124,9 +124,15 @@ const startServer = async () => {
     log.info(`${signal} signal received: closing HTTP server and database connections`);
     icebergServer.close(async () => {
       log.info('HTTP server closed');
-      await destroyKnexClient();
-      log.info('Database connections closed');
-      throw new Error(`Server shutting down due to ${signal}`);
+      try {
+        await destroyKnexClient();
+        log.info('Database connections closed');
+        log.info('Graceful shutdown complete');
+        process.exit(0);
+      } catch (error) {
+        log.error('Error during graceful shutdown:', error);
+        process.exit(1);
+      }
     });
   };
 

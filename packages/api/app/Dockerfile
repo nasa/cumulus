@@ -11,23 +11,15 @@ RUN addgroup -g 433 -S task && \
 
 WORKDIR /app
 
-# 1. Copy configuration (Added wildcard for tsconfig*.json)
+# Copy configuration and source code
 COPY package*.json lerna.json tsconfig*.json .eslint* ./
-
-# 2. Copy the packages
 COPY packages ./packages
 
-# 3. Install ALL dependencies
+# Install dependencies and build
 RUN npm install -w @cumulus/api --include-workspace-root --ignore-scripts
-
-# 4. Build the API
-# This should now find /app/tsconfig.base.json
 RUN npx lerna run build --scope=@cumulus/api --include-dependencies
-
-# 5. Remove build tools to shrink the image
 RUN npm prune --omit=dev
 
-# 6. Set permissions
 RUN chown -R task:task /app
 
 USER task
