@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+- **async-operations-update**
+  - Update Async Operation container to new version 56, `cumuluss/async-operation:56`. Users should update their references to `async-operation` with the new version.
+
 ## [v21.3.2] 2026-03-20
 
 ### Migration Notes
@@ -35,9 +38,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CSD-91**
   - Added a task config var to update-granules-cmr-metadata-file-links `updateGranuleIdentifiers` for whether or not to update the Granule metadata's identifiers and `GranuleUR`, defaults to true. See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
-
-- **async-operations-update**
-  - Update Async Operation container to new version 56, `cumuluss/async-operation:56`. Users should update their references to `async-operation` with the new version.
 
 ### Breaking Changes
 
@@ -130,6 +130,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     | granule-invalidator-task | GranuleInvalidator
 - **CUMULUS-4599**
   - Added the ability to easily modify version numbers for all python packages in order to keep them in sync with the Cumulus version.
+- **CUMULUS-4562**
+  - Upgraded lerna to v9.
+  - Updated monorepo configuration and root package.json to align with Lerna v9.
+  - Removed prepare scripts from all package-level package.json files to prevent unintended lifecycle execution during install.
+  - Updated CI (Docker + Bamboo) to ensure compatibility with the new Lerna version.
+  - Applied necessary dependency and script adjustments across affected packages.
+  - Updated the markdownlint-cli package and fixed linting errors or disabled specific rules.
+  - Fixed security vulnerabilities related to minimatch, uuid, fast-xml-parser packages etc.
+  - Replaced legacy querystring module with URLSearchParams.
 - **CSD-91**
   - Added a task config var to update-granules-cmr-metadata-file-links `updateGranuleIdentifiers` for whether or not to update the Granule metadata's identifiers and `GranuleUR`, defaults to true. See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
 
@@ -140,30 +149,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4516**
   - Updated sftp-client to explicitly tear down stream in sftp-client/syncFromS3
   - Updated sftp-client to warn/log on `No response from server` errors in `end` method
-
-## [v21.3.1] 2026-02-16
-
-### Added
-
-- **CUMULUS-4498**
-  - Added `states:StartExecution` action to the `<prefix>-steprole` IAM role.
-
-### Changed
-
-- **CUMULUS-4514**
-  - Pinned fast-xml-parser at 5.3.4 for @aws-sdk/xml-builder due to a security vulnerability.
-- **CUMULUS-4562**
-  - Upgraded lerna to v9.
-  - Updated monorepo configuration and root package.json to align with Lerna v9.
-  - Removed prepare scripts from all package-level package.json files to prevent unintended lifecycle execution during install.
-  - Updated CI (Docker + Bamboo) to ensure compatibility with the new Lerna version.
-  - Applied necessary dependency and script adjustments across affected packages.
-  - Updated the markdownlint-cli package and fixed linting errors or disabled specific rules.
-  - Fixed security vulnerabilities related to minimatch, uuid, fast-xml-parser packages etc.
-  - Replaced legacy querystring module with URLSearchParams.
-
-### Fixed
-
 - **CUMULUS-4608**
   - Fixed bug where workflow list endpoint /workflows would error if a workflow field was undefined.   The API response now returns null for undefined fields and the sort method converts the value to string before sorting.
 - **CUMULUS-4566**
@@ -176,6 +161,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       - LzardsBackup
       - ChangeGranuleCollectionS3
   - Update aws-sdk versions to ^3.993.0
+
+## [v21.3.1] 2026-02-16
+
+### Added
+
+- **CUMULUS-4498**
+  - Added `states:StartExecution` action to the `<prefix>-steprole` IAM role.
+
+### Changed
+
+- **CUMULUS-4514**
+  - Pinned fast-xml-parser at 5.3.4 for @aws-sdk/xml-builder due to a security vulnerability.
 
 ## [v21.3.0] 2026-01-26
 
