@@ -81,9 +81,9 @@ resource "aws_ecs_task_definition" "default" {
       }]
       environment       = [
         {name = "GROUP_ID", value = "1"},
-        {name = "CONFIG_STORAGE_TOPIC", value = "my_connect_configs"},
-        {name = "OFFSET_STORAGE_TOPIC", value = "my_connect_offsets"},
-        {name = "STATUS_STORAGE_TOPIC", value = "my_connect_statuses"},
+        {name = "CONFIG_STORAGE_TOPIC", value = "connect_configs"},
+        {name = "OFFSET_STORAGE_TOPIC", value = "connect_offsets"},
+        {name = "STATUS_STORAGE_TOPIC", value = "connect_statuses"},
         {name = "BOOTSTRAP_SERVERS", value = "localhost:9092"},
         {name = "RDS_ENDPOINT", value = var.rds_endpoint}
       ]

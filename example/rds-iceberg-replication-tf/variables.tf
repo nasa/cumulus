@@ -14,22 +14,6 @@ variable "aws_db_subnet_group_prefix" {
   default     = "cumulus-rds-tf-subnet"
 }
 
-variable "rds_endpoint" {
-  description = "The rw endpoint for RDS"
-  type        = string
-}
-
-variable "db_admin_username" {
-  description = "Username for RDS database administrator authentication"
-  type        = string
-  default     = "postgres"
-}
-
-variable "db_admin_password" {
-  description = "Password for RDS database administrator authentication"
-  type = string
-}
-
 variable "region" {
   description = "Region to deploy module to"
   type        = string
@@ -91,7 +75,6 @@ variable "kafka_image" {
 variable "connect_image" {
   description = "Image used to start kafka the container. See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-image"
   type = string
-  default = "quay.io/debezium/connect:3.4"
 }
 
 variable "data_persistence_remote_state_config" {

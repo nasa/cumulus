@@ -22,6 +22,8 @@ locals {
   tags                            = merge(var.tags, { Deployment = var.prefix })
   rds_security_group              = lookup(data.terraform_remote_state.data_persistence.outputs, "rds_security_group", "")
   rds_endpoint                    = lookup(data.terraform_remote_state.rds_cluster.outputs, "rds_endpoint")
+  admin_db_login_secret_version   = lookup(data.terraform_remote_state.rds_cluster.outputs, "admin_db_login_secret_version")
+  db_credentials                  = jsondecode(local.admin_db_login_secret_version.current.secret_string)
 }
 
 data "terraform_remote_state" "data_persistence" {
@@ -39,8 +41,8 @@ data "terraform_remote_state" "rds_cluster" {
 module "ecs_cluster" {
   source                     = "../../tf-modules/rds-iceberg-replication"
   prefix                     = var.prefix
-  db_admin_username          = var.db_admin_username
-  db_admin_password          = var.db_admin_password
+  db_admin_username          = local.db_credentials.username
+  db_admin_password          = local.db_credentials.password
   region                     = var.region
   vpc_id                     = var.vpc_id
   subnets                    = var.subnets
