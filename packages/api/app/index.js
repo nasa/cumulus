@@ -21,13 +21,14 @@ const boom = require('../lib/expressBoom');
 
 const log = new Logger({ sender: '@api/index' });
 
-let initPromise;
+let initPromise = false;
 
 // Load Environment Variables
 // This should be done outside of the handler to minimize Secrets Manager calls.
 const initEnvVarsFunction = async () => {
   if (inTestMode() && process.env.INIT_ENV_VARS_FUNCTION_TEST !== 'true') {
-    return undefined;
+    initPromise = true;
+    return;
   }
   log.info('Initializing environment variables');
   const apiConfigSecretId = getRequiredEnvVar('api_config_secret_id');
@@ -41,17 +42,22 @@ const initEnvVarsFunction = async () => {
     } catch (error) {
       throw new SyntaxError(`Secret string returned for SecretId ${apiConfigSecretId} could not be parsed`, error);
     }
-    process.env = { ...envSecret, ...process.env };
+    Object.entries(envSecret).forEach(([envVar, envVal]) => {
+      if (!(envVar in process.env)) {
+        process.env[envVar] = envVal;
+      }
+    });
+    initPromise = true;
+    return;
   } catch (error) {
     log.error(`Encountered error trying to set environment variables from secret ${apiConfigSecretId}`, error);
     throw error;
   }
-  return undefined;
 };
 
 const ensureEnvVarsInitialized = async () => {
   if (!initPromise) {
-    initPromise = await initEnvVarsFunction();
+    await initEnvVarsFunction();
   }
   return initPromise;
 };
