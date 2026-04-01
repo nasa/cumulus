@@ -18,12 +18,16 @@ provider "aws" {
   }
 }
 
+data "aws_secretsmanager_secret_version" "db_credentials" {
+  secret_id = local.admin_db_login_secret_arn
+}
+
 locals {
   tags                            = merge(var.tags, { Deployment = var.prefix })
   rds_security_group              = lookup(data.terraform_remote_state.data_persistence.outputs, "rds_security_group", "")
   rds_endpoint                    = lookup(data.terraform_remote_state.rds_cluster.outputs, "rds_endpoint")
-  admin_db_login_secret_version   = lookup(data.terraform_remote_state.rds_cluster.outputs, "admin_db_login_secret_version")
-  db_credentials                  = jsondecode(local.admin_db_login_secret_version.current.secret_string)
+  admin_db_login_secret_arn   = lookup(data.terraform_remote_state.rds_cluster.outputs, "admin_db_login_secret_arn")
+  db_credentials = jsondecode(data.aws_secretsmanager_secret_version.db_credentials.secret_string)
 }
 
 data "terraform_remote_state" "data_persistence" {
