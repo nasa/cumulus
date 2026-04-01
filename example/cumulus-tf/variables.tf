@@ -281,6 +281,18 @@ variable "deploy_iceberg_api" {
   description = "Whether to deploy the Iceberg API (hosted in ECS with limited endpoints)"
 }
 
+variable "iceberg_api_cpu" {
+  type        = number
+  default     = 512
+  description = "The amount of CPU units to reserve for the Iceberg API Fargate Task"
+}
+
+variable "iceberg_api_memory" {
+  type        = number
+  default     = 1024
+  description = "The amount of memory in MB to reserve for the Iceberg API Fargate Task"
+}
+
 variable "api_service_autoscaling_min_capacity" {
   type        = number
   default     = 1
@@ -289,7 +301,7 @@ variable "api_service_autoscaling_min_capacity" {
 
 variable "api_service_autoscaling_max_capacity" {
   type        = number
-  default     = 10
+  default     = 2
   description = "Maximum number of API service tasks to run"
 }
 

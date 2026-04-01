@@ -33,8 +33,8 @@ resource "aws_ecs_task_definition" "iceberg_api" {
   family                   = "${var.prefix}-IcebergApiTask"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = 512
-  memory                   = 1024
+  cpu                      = var.iceberg_api_cpu
+  memory                   = var.iceberg_api_memory
   execution_role_arn       = module.cumulus.ecs_execution_role_arn
   task_role_arn            = module.cumulus.ecs_task_role_arn
 
