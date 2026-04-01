@@ -61,6 +61,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4606**
+  - Added terraform module and example deployment for RDS to Iceberg replication Fargate cluster
+    and associated service/task.
 - **CUMULUS-4564**
   - Added private_api_lambda_arn as an output in the Cumulus terraform module
 - **CUMULUS-4473**
