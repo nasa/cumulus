@@ -78,5 +78,4 @@ module "iceberg_api" {
 
 | Name | Description |
 |------|-------------|
-| iceberg_api_lb_dns_name | DNS name of the Iceberg API load balancer |
-| iceberg_api_lb_id | ID of the Iceberg API load balancer |
+| iceberg_api_uri | URI for the Iceberg API |

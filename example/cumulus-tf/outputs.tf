@@ -6,14 +6,9 @@ output "archive_api_redirect_uri" {
   value = module.cumulus.archive_api_redirect_uri
 }
 
-output "iceberg_load_balancer_id" {
-  description = "The iceberg application load balancer ID."
-  value       = var.deploy_iceberg_api ? module.iceberg_api[0].iceberg_api_lb_id : null
-}
-
-output "iceberg_load_balancer_dns_name" {
-  description = "The iceberg application load balancer DNS name."
-  value       = var.deploy_iceberg_api ? module.iceberg_api[0].iceberg_api_lb_dns_name : null
+output "iceberg_api_uri" {
+  description = "URI for the Iceberg API"
+  value       = module.cumulus.iceberg_api_uri
 }
 
 # TEA-Specific outputs
