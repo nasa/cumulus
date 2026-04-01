@@ -1,46 +1,47 @@
 'use strict';
 
 const {
-  getKnexClientSingleton,
-  initializeKnexClientSingleton,
-  destroyKnexClientSingleton,
+  getKnexClient,
+  getIcebergKnexClient,
+  initializeIcebergKnexClientSingleton,
+  destroyIcebergKnexClientSingleton,
 } = require('@cumulus/db');
 const Logger = require('@cumulus/logger');
 
 const log = new Logger({ sender: '@cumulus/api/db' });
 
 /**
- * Initialize the singleton Knex client for ECS server mode.
- * Should be called once at server startup.
+ * Initialize the Iceberg API singleton Knex client for ECS server mode.
+ * Should be called once at Iceberg API server startup.
  *
  * @returns {Promise<void>}
  */
 const initializeKnexClient = async () => {
-  // Set default pool size for ECS mode if not already configured
+  // Set default pool size for Iceberg API ECS mode if not already configured
   if (!process.env.dbMaxPool) {
     process.env.dbMaxPool = '50';
-    log.info('Setting default dbMaxPool to 50 for ECS server mode');
+    log.info('Setting default dbMaxPool to 50 for Iceberg API ECS server mode');
   }
 
-  log.info(`Initializing singleton Knex client for ECS server mode with pool size: ${process.env.dbMaxPool}`);
-  await initializeKnexClientSingleton();
-  log.info('Knex client initialized successfully');
+  log.info(`Initializing Iceberg API singleton Knex client for ECS server mode with pool size: ${process.env.dbMaxPool}`);
+  await initializeIcebergKnexClientSingleton();
+  log.info('Iceberg API Knex client initialized successfully');
 };
 
 /**
- * Destroy the singleton Knex client connection pool.
- * This should be called during graceful shutdown of the ECS server.
+ * Destroy the Iceberg API singleton Knex client connection pool.
+ * This should be called during graceful shutdown of the Iceberg API ECS server.
  *
  * @returns {Promise<void>}
  */
 const destroyKnexClient = async () => {
-  log.info('Shutting down Knex client...');
-  await destroyKnexClientSingleton();
-  log.info('Knex client destroyed successfully');
+  log.info('Shutting down Iceberg API Knex client...');
+  await destroyIcebergKnexClientSingleton();
+  log.info('Iceberg API Knex client destroyed successfully');
 };
 
 /**
- * Express middleware to attach the Knex client to the request object.
+ * Express middleware to attach the Iceberg API Knex client to the request object.
  * For test contexts, respects the injected knex client.
  *
  * @param {Object} req - express request object
@@ -51,11 +52,11 @@ const attachKnexClient = async (req, res, next) => {
   // Allow test context to override
   if (!req.testContext?.knex) {
     try {
-      const knex = await getKnexClientSingleton();
+      const knex = await getIcebergKnexClient();
       req.knexClient = knex;
     } catch (error) {
-      log.error('Failed to attach Knex client to request', error);
-      return res.boom.badImplementation('Database connection error');
+      log.error('Failed to attach Iceberg API Knex client to request', error);
+      return res.boom.badImplementation('Iceberg API database connection error');
     }
   }
   return next();
@@ -63,7 +64,8 @@ const attachKnexClient = async (req, res, next) => {
 
 module.exports = {
   initializeKnexClient,
-  getKnexClientSingleton,
+  getKnexClient,
+  getIcebergKnexClient,
   attachKnexClient,
   destroyKnexClient,
 };

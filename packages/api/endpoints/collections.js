@@ -13,6 +13,7 @@ const Logger = require('@cumulus/logger');
 const {
   CollectionPgModel,
   createRejectableTransaction,
+  getKnexClient,
   isCollisionError,
   translateApiCollectionToPostgresCollection,
   translatePostgresCollectionToApiCollection,
@@ -24,7 +25,6 @@ const {
   publishCollectionDeleteSnsMessage,
   publishCollectionUpdateSnsMessage,
 } = require('../lib/publishSnsMessageUtils');
-const { getKnexClientSingleton } = require('../app/db');
 const { isBadRequestError } = require('../lib/errors');
 const { validateCollection } = require('../lib/utils');
 const insertMMTLinks = require('../lib/mmt');
@@ -83,7 +83,7 @@ async function get(req, res) {
   const version = req.params.version;
   try {
     const collectionPgModel = new CollectionPgModel();
-    const knex = await getKnexClientSingleton();
+    const knex = await getKnexClient();
     const result = await collectionPgModel.get(knex, { name, version });
     return res.send(translatePostgresCollectionToApiCollection(result));
   } catch (error) {
@@ -101,7 +101,7 @@ async function get(req, res) {
 async function post(req, res) {
   const {
     collectionPgModel = new CollectionPgModel(),
-    knex = await getKnexClientSingleton(),
+    knex = await getKnexClient(),
     collectionConfigStore = new CollectionConfigStore(
       process.env.system_bucket,
       process.env.stackName
@@ -165,7 +165,7 @@ async function post(req, res) {
 async function put(req, res) {
   const {
     collectionPgModel = new CollectionPgModel(),
-    knex = await getKnexClientSingleton(),
+    knex = await getKnexClient(),
     collectionConfigStore = new CollectionConfigStore(
       process.env.system_bucket,
       process.env.stackName
@@ -222,7 +222,7 @@ async function put(req, res) {
 async function del(req, res) {
   const {
     collectionPgModel = new CollectionPgModel(),
-    knex = await getKnexClientSingleton(),
+    knex = await getKnexClient(),
     collectionConfigStore = new CollectionConfigStore(
       process.env.system_bucket,
       process.env.stackName

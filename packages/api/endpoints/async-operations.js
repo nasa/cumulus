@@ -7,6 +7,7 @@ const pick = require('lodash/pick');
 
 const {
   AsyncOperationPgModel,
+  getKnexClient,
   translateApiAsyncOperationToPostgresAsyncOperation,
   translatePostgresAsyncOperationToApiAsyncOperation,
 } = require('@cumulus/db');
@@ -18,7 +19,6 @@ const {
 const Logger = require('@cumulus/logger');
 const { AsyncOperationSearch } = require('@cumulus/db');
 
-const { getKnexClientSingleton } = require('../app/db');
 const { isBadRequestError } = require('../lib/errors');
 
 const { recordIsValid } = require('../lib/schema');
@@ -41,7 +41,7 @@ async function list(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function getAsyncOperation(req, res) {
-  const knex = await getKnexClientSingleton();
+  const knex = await getKnexClient();
   const asyncOperationPgModel = new AsyncOperationPgModel();
   let asyncOperationRecord;
 
@@ -66,7 +66,7 @@ async function getAsyncOperation(req, res) {
 async function del(req, res) {
   const {
     asyncOperationPgModel = new AsyncOperationPgModel(),
-    knex = await getKnexClientSingleton(),
+    knex = await getKnexClient(),
   } = req.testContext || {};
 
   const { id } = req.params || {};
@@ -98,7 +98,7 @@ async function del(req, res) {
 async function post(req, res) {
   const {
     asyncOperationPgModel = new AsyncOperationPgModel(),
-    knex = await getKnexClientSingleton(),
+    knex = await getKnexClient(),
   } = req.testContext || {};
 
   const apiAsyncOperation = req.body;

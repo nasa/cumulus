@@ -11,12 +11,12 @@ const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 const {
   getApiGranuleExecutionCumulusIdsByExecution,
+  getKnexClient,
   GranulePgModel,
   ExecutionPgModel,
   CollectionPgModel,
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
-const { getKnexClientSingleton } = require('../app/db');
 const { filenamify } = require('../lib/utils');
 
 const logger = new Logger({ sender: '@cumulus/api/execution-status' });
@@ -105,7 +105,7 @@ async function getEventDetails(event) {
  */
 async function get(req, res) {
   const arn = req.params.arn;
-  const knex = await getKnexClientSingleton();
+  const knex = await getKnexClient({ env: process.env });
   const granulePgModel = new GranulePgModel();
   const collectionPgModel = new CollectionPgModel();
   const executionPgModel = new ExecutionPgModel();
