@@ -143,6 +143,7 @@ async function getCollectionEntry(config, metadata, isUmmG) {
     shortName,
     versionId,
   });
+
   const result = await cmrInstance.searchCollections(searchParams);
 
   // Verify that we have a valid result. If we don't then something is badly wrong and we

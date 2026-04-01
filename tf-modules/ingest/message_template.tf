@@ -68,7 +68,7 @@ locals {
       cmr = {
         oauthProvider      = var.cmr_oauth_provider
         username           = var.cmr_username
-        provider           = null # this is set in schedule-sf at workflow launch
+        provider           = null # this is set in when workflow is launched
         clientId           = var.cmr_client_id
         passwordSecretName = length(var.cmr_password) == 0 ? "" : aws_secretsmanager_secret.message_template_cmr_password.name
         cmrEnvironment     = var.cmr_environment
