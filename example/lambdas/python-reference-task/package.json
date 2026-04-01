@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/python-reference-task",
   "private": true,
-  "version": "21.3.1",
+  "version": "21.3.2",
   "description": "Python reference task",
   "main": "index.js",
   "homepage": "https://github.com/nasa/cumulus/tree/master/example/lambdas/python-reference-task",
@@ -15,7 +15,8 @@
     "clean": "rm -rf dist && rm -rf lib && rm -rf .venv && mkdir dist && mkdir lib",
     "build": "uv sync",
     "package": "npm run clean && ./bin/package.sh $(pwd)",
-    "install-python-deps": "npm run build"
+    "install-python-deps": "npm run build",
+    "update-python-version": "uv version --"
   },
   "publishConfig": {
     "access": "restricted"

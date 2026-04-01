@@ -10,7 +10,7 @@ module "orca_recovery_adapter_workflow" {
   state_machine_definition = templatefile(
     "${path.module}/orca_recovery_adapter_workflow.asl.json",
     {
-      orca_recovery_adapter_task: module.cumulus.orca_recovery_adapter_task.task_arn
+      orca_recovery_adapter_task : module.cumulus.orca_recovery_adapter_task.task_arn
     }
   )
 }

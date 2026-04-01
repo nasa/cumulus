@@ -1,7 +1,7 @@
 {
     "name": "@cumulus/pdr-cleanup",
     "private": true,
-    "version": "21.3.1",
+    "version": "21.3.2",
     "description": "This task is for cleaning up PDRs after a successful ingest",
     "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/pdr-cleanup",
     "repository": {
@@ -14,7 +14,8 @@
       "clean": "rm -rf dist && rm -rf .venv && mkdir -p dist/packages",
       "build": "uv sync",
       "package": "npm run clean && cp -r ./schemas ./dist/packages && ../../bin/package_uv.sh 3.12 ${PWD}",
-      "install-python-deps": "npm run build"
+      "install-python-deps": "npm run build",
+      "update-python-version": "uv version --"
     },
     "publishConfig": {
       "access": "restricted"

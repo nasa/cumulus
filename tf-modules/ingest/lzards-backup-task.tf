@@ -18,7 +18,7 @@ resource "aws_lambda_function" "lzards_backup_task" {
       system_bucket                           = var.system_bucket
       lzards_launchpad_passphrase_secret_name = length(var.lzards_launchpad_passphrase) == 0 ? null : aws_secretsmanager_secret.lzards_launchpad_passphrase[0].name
       lzards_launchpad_certificate            = var.lzards_launchpad_certificate
-      launchpad_api	                          = var.launchpad_api
+      launchpad_api                           = var.launchpad_api
       backup_role_arn                         = aws_iam_role.lambda_backup_role[0].arn
       lzards_api                              = var.lzards_api
       lzards_provider                         = var.lzards_provider
@@ -42,11 +42,11 @@ resource "aws_lambda_function" "lzards_backup_task" {
 # Lambda backup role
 
 data "aws_iam_policy_document" "lambda_backup_role_policy" {
-  count         = length(var.lzards_launchpad_passphrase) == 0 ? 0 : 1
+  count = length(var.lzards_launchpad_passphrase) == 0 ? 0 : 1
   statement {
     actions = ["sts:AssumeRole"]
     principals {
-      type = "AWS"
+      type        = "AWS"
       identifiers = [var.lambda_processing_role_arn]
     }
   }
@@ -69,7 +69,7 @@ resource "aws_iam_role" "lambda_backup_role" {
 }
 
 data "aws_iam_policy_document" "lambda_backup_policy" {
-  count         = length(var.lzards_launchpad_passphrase) == 0 ? 0 : 1
+  count = length(var.lzards_launchpad_passphrase) == 0 ? 0 : 1
   statement {
     actions = [
       "s3:GetBucket*",
@@ -84,7 +84,7 @@ data "aws_iam_policy_document" "lambda_backup_policy" {
     resources = [for b in local.all_non_internal_buckets : "arn:aws:s3:::${b}/*"]
   }
   statement {
-    actions = ["s3:GetObject*"]
+    actions   = ["s3:GetObject*"]
     resources = ["arn:aws:s3:::${var.system_bucket}/*"]
   }
 }
@@ -103,9 +103,9 @@ resource "aws_secretsmanager_secret_version" "lzards_launchpad_passphrase" {
 }
 
 data "aws_iam_policy_document" "lzards_processing_role_get_secrets" {
-  count         = length(var.lzards_launchpad_passphrase) == 0 ? 0 : 1
+  count = length(var.lzards_launchpad_passphrase) == 0 ? 0 : 1
   statement {
-    actions   = ["secretsmanager:GetSecretValue"]
+    actions = ["secretsmanager:GetSecretValue"]
     resources = [
       aws_secretsmanager_secret.lzards_launchpad_passphrase[0].arn,
     ]

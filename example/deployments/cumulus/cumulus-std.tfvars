@@ -31,9 +31,9 @@ buckets = {
   }
 }
 
-key_name      = "lp"
+key_name = "lp"
 
-oauth_provider   = "launchpad"
+oauth_provider = "launchpad"
 
 saml_entity_id                  = "https://dashboard.cumulus.sit.earthdata.nasa.gov"
 saml_assertion_consumer_service = "https://api.cumulus.sit.earthdata.nasa.gov/saml/auth"
@@ -42,7 +42,7 @@ saml_launchpad_metadata_url     = "https://auth.launchpad-sbx.nasa.gov/unauth/me
 
 deploy_cumulus_distribution = false
 
-archive_api_url = "https://api.cumulus.sit.earthdata.nasa.gov/"
+archive_api_url             = "https://api.cumulus.sit.earthdata.nasa.gov/"
 private_archive_api_gateway = true
 
 # LOG CONFIGURATION (optional)
@@ -60,6 +60,6 @@ s3_replicator_config = {
 api_reserved_concurrency = 14
 
 lambda_timeouts = {
-  queue_granules_task_timeout: 900,
-  discover_granules_task_timeout: 900
+  queue_granules_task_timeout : 900,
+  discover_granules_task_timeout : 900
 }
