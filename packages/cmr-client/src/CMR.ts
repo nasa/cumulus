@@ -311,7 +311,6 @@ export class CMR {
       provider_short_name: this.provider,
       ...params,
     });
-    console.log(searchParams);
     const output = await this.searchConcept(
       'collections',
       searchParams,
