@@ -1,8 +1,6 @@
 'use strict';
 
 const {
-  getKnexClient,
-  getIcebergKnexClient,
   initializeIcebergKnexClientSingleton,
   destroyIcebergKnexClientSingleton,
 } = require('@cumulus/db');
@@ -40,32 +38,7 @@ const destroyKnexClient = async () => {
   log.info('Iceberg API Knex client destroyed successfully');
 };
 
-/**
- * Express middleware to attach the Iceberg API Knex client to the request object.
- * For test contexts, respects the injected knex client.
- *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @param {Function} next - express next middleware function
- */
-const attachKnexClient = async (req, res, next) => {
-  // Allow test context to override
-  if (!req.testContext?.knex) {
-    try {
-      const knex = await getIcebergKnexClient();
-      req.knexClient = knex;
-    } catch (error) {
-      log.error('Failed to attach Iceberg API Knex client to request', error);
-      return res.boom.badImplementation('Iceberg API database connection error');
-    }
-  }
-  return next();
-};
-
 module.exports = {
   initializeKnexClient,
-  getKnexClient,
-  getIcebergKnexClient,
-  attachKnexClient,
   destroyKnexClient,
 };

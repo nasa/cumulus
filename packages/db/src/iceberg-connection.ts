@@ -1,6 +1,6 @@
 import { SecretsManager } from '@aws-sdk/client-secrets-manager';
 import { services } from '@cumulus/aws-client';
-import { knex, Knex } from 'knex';
+import { Knex } from 'knex';
 import Logger from '@cumulus/logger';
 
 import { getKnexClient } from './connection';
