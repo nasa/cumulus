@@ -23,6 +23,7 @@ const {
 } = require('../generate_db_records');
 
 test.before(async (t) => {
+  process.env.dbMaxPool = '10'; // Increase pool size for this test
   t.context.testDbName = randomId('generate_records');
   const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
 
@@ -37,7 +38,7 @@ test.before(async (t) => {
     })
   );
   const providerPgModel = new ProviderPgModel();
-  providerPgModel.create(
+  await providerPgModel.create(
     t.context.knex,
     fakeProviderRecordFactory({ name: 'provider_test' })
   );
@@ -46,8 +47,9 @@ test.after.always(async (t) => {
   await destroyLocalTestDb({
     knex: t.context.knex,
     knexAdmin: t.context.knexAdmin,
-    tesetDbName: t.context.testDbName,
+    testDbName: t.context.testDbName,
   });
+  delete process.env.dbMaxPool;
 });
 
 test('getBatchParamGenerator() yields a generator that plays well with pMap', async (t) => {

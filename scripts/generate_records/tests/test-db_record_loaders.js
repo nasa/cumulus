@@ -22,6 +22,7 @@ const {
   loadRule,
 } = require('../db_record_loaders');
 test.before(async (t) => {
+  process.env.dbMaxPool = '10'; // Increase pool size for this test
   t.context.testDbName = randomId('db_record_loaders');
   const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
 
@@ -34,8 +35,9 @@ test.after.always(async (t) => {
   await destroyLocalTestDb({
     knex: t.context.knex,
     knexAdmin: t.context.knexAdmin,
-    tesetDbName: t.context.testDbName,
+    testDbName: t.context.testDbName,
   });
+  delete process.env.dbMaxPool;
 });
 
 test('loadExecutions() uploads executions', async (t) => {

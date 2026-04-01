@@ -15,6 +15,7 @@ const { randomId } = require('@cumulus/common/test-utils');
 const generateDbRecords = require('../generate_db_records');
 const generateDbExecutions = require('../generate_db_executions');
 test.beforeEach(async (t) => {
+  process.env.dbMaxPool = '10'; // Increase pool size for this test
   t.context.testDbName = randomId('generate_records');
   const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
   t.context.knex = knex;
@@ -25,15 +26,16 @@ test.afterEach.always(async (t) => {
   await destroyLocalTestDb({
     knex: t.context.knex,
     knexAdmin: t.context.knexAdmin,
-    tesetDbName: t.context.testDbName,
+    testDbName: t.context.testDbName,
   });
+  delete process.env.dbMaxPool;
 });
 
 test.serial('generate_db_records.main() uploads the expected number of entries to the database without variance', async (t) => {
   t.timeout(100 * 1000);
   const argv = clone(process.argv);
   const env = clone(process.env);
-  process.env = localStackConnectionEnv;
+  process.env = Object.assign(process.env, localStackConnectionEnv);
   process.env.PG_DATABASE = t.context.testDbName;
   process.argv = process.argv.slice(0, 2).concat([
     '--concurrency=100',
@@ -64,7 +66,7 @@ test.serial('generate_db_records.main() uploads at least the expected number of 
   t.timeout(100 * 1000);
   const argv = clone(process.argv);
   const env = clone(process.env);
-  process.env = localStackConnectionEnv;
+  process.env = Object.assign(process.env, localStackConnectionEnv);
   process.env.PG_DATABASE = t.context.testDbName;
   process.argv = process.argv.slice(0, 2).concat([
     '--concurrency=200',
@@ -96,7 +98,7 @@ test.serial('generate_db_executions.main() uploads at least the expected number 
   t.timeout(100 * 1000);
   const argv = clone(process.argv);
   const env = clone(process.env);
-  process.env = localStackConnectionEnv;
+  process.env = Object.assign(process.env, localStackConnectionEnv);
   process.env.PG_DATABASE = t.context.testDbName;
   process.argv = process.argv.slice(0, 2).concat([
     '--concurrency=200',
