@@ -8,12 +8,12 @@ output "archive_api_redirect_uri" {
 
 output "iceberg_load_balancer_id" {
   description = "The iceberg application load balancer ID."
-  value       = var.deploy_iceberg_api ? aws_lb.iceberg_api[0].id : null
+  value       = var.deploy_iceberg_api ? module.iceberg_api[0].iceberg_api_lb_id : null
 }
 
 output "iceberg_load_balancer_dns_name" {
   description = "The iceberg application load balancer DNS name."
-  value       = var.deploy_iceberg_api ? aws_lb.iceberg_api[0].dns_name : null
+  value       = var.deploy_iceberg_api ? module.iceberg_api[0].iceberg_api_lb_dns_name : null
 }
 
 # TEA-Specific outputs
