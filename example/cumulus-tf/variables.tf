@@ -530,6 +530,7 @@ variable "cloudwatch_log_retention_periods" {
     replaySqsMessages            = 7
     SyncGranule                  = 7
     UpdateCmrAccessConstraints   = 7
+    IcebergApi                   = 7
   }
 }
 

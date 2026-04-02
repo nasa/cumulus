@@ -21,6 +21,9 @@ module "iceberg_api" {
 
   rds_security_group_id = var.rds_security_group
 
+  default_log_retention_days       = var.default_log_retention_days
+  cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
+
   api_service_autoscaling_min_capacity = var.api_service_autoscaling_min_capacity
   api_service_autoscaling_max_capacity = var.api_service_autoscaling_max_capacity
   api_service_autoscaling_target_cpu   = var.api_service_autoscaling_target_cpu

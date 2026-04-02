@@ -15,7 +15,7 @@ data "aws_ssm_parameter" "private_ca" {
 
 resource "aws_cloudwatch_log_group" "iceberg_api" {
   name              = "/ecs/${var.prefix}-iceberg-api"
-  retention_in_days = 30
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "IcebergApi", var.default_log_retention_days)
 }
 
 resource "aws_ecs_task_definition" "iceberg_api" {
