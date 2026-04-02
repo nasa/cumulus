@@ -590,7 +590,11 @@ abstract class BaseSearch {
    * @returns search result
    */
   async query(testKnex?: Knex) {
-    const knex = testKnex ?? (isIcebergKnexClientSingletonInitialized() ? await getIcebergKnexClient() : await getKnexClient());
+    const knex = testKnex ?? (
+      isIcebergKnexClientSingletonInitialized()
+        ? await getIcebergKnexClient()
+        : await getKnexClient()
+    );
     const { countQuery, searchQuery } = this.buildSearch(knex);
 
     const shouldEstimateRowcount = countQuery

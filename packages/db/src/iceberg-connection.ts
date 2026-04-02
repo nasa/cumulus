@@ -81,9 +81,8 @@ export const getIcebergKnexClient = async ({
   env?: NodeJS.ProcessEnv,
   secretsManager?: SecretsManager,
   knexLogger?: Logger
-} = {}): Promise<Knex> => {
-  return initializeIcebergKnexClientSingleton({ env, secretsManager, knexLogger });
-};
+} = {}): Promise<Knex> =>
+  initializeIcebergKnexClientSingleton({ env, secretsManager, knexLogger });
 
 /**
  * Destroy the Iceberg API singleton Knex client connection pool.
@@ -105,32 +104,5 @@ export const destroyIcebergKnexClientSingleton = async (): Promise<void> => {
  *
  * @returns {boolean} True if the singleton is initialized, false otherwise
  */
-export const isIcebergKnexClientSingletonInitialized = (): boolean => {
-  return icebergKnexClientSingleton !== undefined;
-};
-
-/**
- * Legacy function for backward compatibility.
- * Returns the Iceberg singleton if initialized, otherwise returns a new Cumulus client.
- * This maintains the old behavior for existing code.
- *
- * @param {Object} params - Configuration parameters
- * @param {NodeJS.ProcessEnv} params.env - Environment variables
- * @param {SecretsManager} [params.secretsManager] - AWS Secrets Manager client
- * @param {Logger} [params.knexLogger] - Logger instance
- * @returns {Promise<Knex>} A Knex client instance
- */
-export const getKnexClientSingleton = async ({
-  env = process.env,
-  secretsManager = services.secretsManager(),
-  knexLogger = log,
-}: {
-  env?: NodeJS.ProcessEnv,
-  secretsManager?: SecretsManager,
-  knexLogger?: Logger
-} = {}): Promise<Knex> => {
-  if (isIcebergKnexClientSingletonInitialized()) {
-    return getIcebergKnexClient({ env, secretsManager, knexLogger });
-  }
-  return getKnexClient({ env, secretsManager, knexLogger });
-};
+export const isIcebergKnexClientSingletonInitialized = (): boolean =>
+  icebergKnexClientSingleton !== undefined;

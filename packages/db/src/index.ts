@@ -24,7 +24,6 @@ export {
   initializeIcebergKnexClientSingleton,
   destroyIcebergKnexClientSingleton,
   isIcebergKnexClientSingletonInitialized,
-  getKnexClientSingleton,
 } from './iceberg-connection';
 export { getKnexConfig, localStackConnectionEnv } from './config';
 export { createRejectableTransaction } from './database';

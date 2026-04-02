@@ -3,7 +3,7 @@ const { KnexTimeoutError } = require('knex');
 
 const {
   initializeIcebergKnexClientSingleton,
-  getKnexClientSingleton,
+  getIcebergKnexClient,
   destroyIcebergKnexClientSingleton,
 } = require('../dist/iceberg-connection');
 const { localStackConnectionEnv } = require('../dist/config');
@@ -13,7 +13,7 @@ test.serial('initializeIcebergKnexClientSingleton creates and reuses singleton',
     // Clean up any existing singleton
     await destroyIcebergKnexClientSingleton();
 
-    const env = { ...localStackConnectionEnv };
+    const env = { ...localStackConnectionEnv, DEPLOY_ICEBERG_API: 'true' };
 
     const client1 = await initializeIcebergKnexClientSingleton({ env });
     const client2 = await initializeIcebergKnexClientSingleton({ env });
@@ -45,15 +45,15 @@ test.serial('initializeIcebergKnexClientSingleton handles concurrent calls safel
     await destroyIcebergKnexClientSingleton();
   });
 
-test.serial('getKnexClientSingleton returns singleton in Iceberg API mode',
+test.serial('getIcebergKnexClient returns singleton in Iceberg API mode',
   async (t) => {
     // Clean up any existing singleton
     await destroyIcebergKnexClientSingleton();
 
-    const env = { ...localStackConnectionEnv };
+    const env = { ...localStackConnectionEnv, DEPLOY_ICEBERG_API: 'true' };
 
-    const client1 = await getKnexClientSingleton({ env });
-    const client2 = await getKnexClientSingleton({ env });
+    const client1 = await getIcebergKnexClient({ env });
+    const client2 = await getIcebergKnexClient({ env });
 
     // Should return the same instance
     t.is(client1, client2);
@@ -61,33 +61,14 @@ test.serial('getKnexClientSingleton returns singleton in Iceberg API mode',
     await destroyIcebergKnexClientSingleton();
   });
 
-test.serial('getKnexClientSingleton returns new client in Lambda mode',
+test.serial('getIcebergKnexClient sets default pool size for Iceberg API',
   async (t) => {
     // Clean up any existing singleton
     await destroyIcebergKnexClientSingleton();
 
-    const env = { ...localStackConnectionEnv };
-    // No DEPLOY_ICEBERG_API = Lambda mode
+    const env = { ...localStackConnectionEnv, DEPLOY_ICEBERG_API: 'true' };
 
-    const client1 = await getKnexClientSingleton({ env });
-    const client2 = await getKnexClientSingleton({ env });
-
-    // Should return different instances in Lambda mode
-    t.not(client1, client2);
-
-    // Clean up
-    await client1.destroy();
-    await client2.destroy();
-  });
-
-test.serial('getKnexClientSingleton sets default pool size for Iceberg API',
-  async (t) => {
-    // Clean up any existing singleton
-    await destroyIcebergKnexClientSingleton();
-
-    const env = { ...localStackConnectionEnv };
-
-    const client = await getKnexClientSingleton({ env });
+    const client = await getIcebergKnexClient({ env });
 
     // Check that pool max is set to 50 (default for Iceberg API)
     t.is(client.client.pool.max, 50);
@@ -95,17 +76,18 @@ test.serial('getKnexClientSingleton sets default pool size for Iceberg API',
     await destroyIcebergKnexClientSingleton();
   });
 
-test.serial('getKnexClientSingleton respects custom dbMaxPool setting',
+test.serial('getIcebergKnexClient respects custom dbMaxPool setting',
   async (t) => {
     // Clean up any existing singleton
     await destroyIcebergKnexClientSingleton();
 
     const env = {
       ...localStackConnectionEnv,
+      DEPLOY_ICEBERG_API: 'true',
       dbMaxPool: '25',
     };
 
-    const client = await getKnexClientSingleton({ env });
+    const client = await getIcebergKnexClient({ env });
 
     // Check that pool max is set to custom value
     t.is(client.client.pool.max, 25);
@@ -118,13 +100,13 @@ test.serial('destroyIcebergKnexClientSingleton destroys and resets singleton',
     // Clean up any existing singleton
     await destroyIcebergKnexClientSingleton();
 
-    const env = { ...localStackConnectionEnv };
+    const env = { ...localStackConnectionEnv, DEPLOY_ICEBERG_API: 'true' };
 
-    const client1 = await getKnexClientSingleton({ env });
+    const client1 = await getIcebergKnexClient({ env });
 
     await destroyIcebergKnexClientSingleton();
 
-    const client2 = await getKnexClientSingleton({ env });
+    const client2 = await getIcebergKnexClient({ env });
 
     // Should create a new instance after destroy
     t.not(client1, client2);
