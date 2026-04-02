@@ -194,6 +194,5 @@ test.serial('Sends an SQS message with cmrProvider from collection', async (t) =
   t.deepEqual(targetMessage.meta.collection, fakeCollection);
   t.deepEqual(targetMessage.meta.provider, fakeProvider);
   t.is(targetMessage.meta.cmr.provider, fakeCollection.cmrProvider);
-  console.log(fakeMessageResponse.meta.cmr.username);
   t.is(targetMessage.meta.cmr.username, fakeMessageResponse.meta.cmr.username);
 });
