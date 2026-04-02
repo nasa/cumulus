@@ -15,7 +15,6 @@ const { randomId } = require('@cumulus/common/test-utils');
 const generateDbRecords = require('../generate_db_records');
 const generateDbExecutions = require('../generate_db_executions');
 test.beforeEach(async (t) => {
-  process.env.dbMaxPool = '10'; // Increase pool size for this test
   t.context.testDbName = randomId('generate_records');
   const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
   t.context.knex = knex;
@@ -28,7 +27,6 @@ test.afterEach.always(async (t) => {
     knexAdmin: t.context.knexAdmin,
     testDbName: t.context.testDbName,
   });
-  delete process.env.dbMaxPool;
 });
 
 test.serial('generate_db_records.main() uploads the expected number of entries to the database without variance', async (t) => {

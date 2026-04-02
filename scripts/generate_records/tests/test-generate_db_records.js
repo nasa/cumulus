@@ -23,7 +23,6 @@ const {
 } = require('../generate_db_records');
 
 test.before(async (t) => {
-  process.env.dbMaxPool = '10'; // Increase pool size for this test
   t.context.testDbName = randomId('generate_records');
   const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
 
@@ -49,7 +48,6 @@ test.after.always(async (t) => {
     knexAdmin: t.context.knexAdmin,
     testDbName: t.context.testDbName,
   });
-  delete process.env.dbMaxPool;
 });
 
 test('getBatchParamGenerator() yields a generator that plays well with pMap', async (t) => {
@@ -199,7 +197,7 @@ test.serial("parseArgs() fails when executionsPerGranule doesn't follow a:b form
   process.argv = argv;
 });
 
-test('uploadDataBatch() uploads a batch of entries verified to be in the database', async (t) => {
+test.serial('uploadDataBatch() uploads a batch of entries verified to be in the database', async (t) => {
   const providerPgModel = new ProviderPgModel();
   const collectionPgModel = new CollectionPgModel();
 
@@ -257,7 +255,7 @@ test('uploadDataBatch() uploads a batch of entries verified to be in the databas
   }));
 });
 
-test('uploadDBGranules() uploads a pile of entries', async (t) => {
+test.serial('uploadDBGranules() uploads a pile of entries', async (t) => {
   const providerPgModel = new ProviderPgModel();
   const collectionPgModel = new CollectionPgModel();
 
