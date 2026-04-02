@@ -117,10 +117,13 @@ async function post(req, res) {
 
   collection.updatedAt = Date.now();
   collection.createdAt = Date.now();
+
   validateCollection(collection);
+
   let translatedCollection;
   try {
     const dbRecord = translateApiCollectionToPostgresCollection(collection);
+
     try {
       await createRejectableTransaction(knex, async (trx) => {
         const [pgCollection] = await collectionPgModel.create(trx, dbRecord);
