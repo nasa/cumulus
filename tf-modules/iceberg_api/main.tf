@@ -2,7 +2,6 @@ locals {
   api_env_variables  = {
         "OAUTH_PROVIDER" = var.oauth_provider
         "api_config_secret_id" = var.api_config_secret_arn
-        "DEPLOY_ICEBERG_API" = "true"
   }
 }
 

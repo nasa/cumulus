@@ -15,7 +15,6 @@ test.serial('initializeIcebergKnexClientSingleton creates and reuses singleton',
 
     const env = {
       ...localStackConnectionEnv,
-      DEPLOY_ICEBERG_API: 'true',
       dbMaxPool: '2',
     };
 
@@ -35,7 +34,6 @@ test.serial('initializeIcebergKnexClientSingleton handles concurrent calls safel
 
     const env = {
       ...localStackConnectionEnv,
-      DEPLOY_ICEBERG_API: 'true',
       dbMaxPool: '3',
     };
 
@@ -58,7 +56,7 @@ test.serial('getIcebergKnexClient sets default pool size for Iceberg API',
     // Clean up any existing singleton
     await destroyIcebergKnexClientSingleton();
 
-    const env = { ...localStackConnectionEnv, DEPLOY_ICEBERG_API: 'true' };
+    const env = { ...localStackConnectionEnv };
 
     const client = await getIcebergKnexClient({ env });
 
@@ -75,7 +73,6 @@ test.serial('getIcebergKnexClient respects custom dbMaxPool setting',
 
     const env = {
       ...localStackConnectionEnv,
-      DEPLOY_ICEBERG_API: 'true',
       dbMaxPool: '3',
     };
 
@@ -94,7 +91,6 @@ test.serial('destroyIcebergKnexClientSingleton destroys and resets singleton',
 
     const env = {
       ...localStackConnectionEnv,
-      DEPLOY_ICEBERG_API: 'true',
       dbMaxPool: '2',
     };
 
@@ -116,7 +112,6 @@ test.serial('failed initialization clears promise and allows retry',
 
     const badEnv = {
       ...localStackConnectionEnv,
-      DEPLOY_ICEBERG_API: 'true',
       dbMaxPool: '3',
       PG_PORT: '9999', // Invalid port
       createTimeoutMillis: 100,

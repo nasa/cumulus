@@ -58,7 +58,6 @@ docker build -f packages/api/app/Dockerfile -t cumulus-iceberg-api:latest .
 docker run -p 5001:5001 \
   -e api_config_secret_id=<your-secret-id> \
   -e dynamoTableNameString='{"AccessTokensTable":"..."}' \
-  -e DEPLOY_ICEBERG_API=true \
   cumulus-iceberg-api:latest
 ```
 
@@ -73,7 +72,6 @@ The Dockerfile automatically uses `iceberg-index.js` as the entry point.
 ### For Iceberg API (iceberg-index.js)
 - `api_config_secret_id`: AWS Secrets Manager secret ID containing API configuration
 - `dynamoTableNameString`: JSON string with DynamoDB table names
-- `DEPLOY_ICEBERG_API`: Set to `true` (tells connection layer to use singleton pattern)
 - `PORT` (optional): Server port, defaults to 5001
 
 ## Local Development
@@ -85,7 +83,7 @@ The Dockerfile automatically uses `iceberg-index.js` as the entry point.
 node index.js
 
 # Iceberg API mode (for local API server with limited endpoints)
-DEPLOY_ICEBERG_API=true PORT=5001 node iceberg-index.js
+PORT=5001 node iceberg-index.js
 ```
 
 ### Running with LocalStack (Docker)

@@ -27,7 +27,7 @@ const Logger = require('@cumulus/logger');
 const icebergRouter = require('./iceberg-routes');
 const { jsonBodyParser } = require('./middleware');
 const boom = require('../lib/expressBoom');
-const { initializeKnexClient, destroyKnexClient } = require('./db');
+const { initializeKnexClient, destroyKnexClient } = require('./iceberg-db');
 
 const log = new Logger({ sender: '@api/iceberg-index' });
 
