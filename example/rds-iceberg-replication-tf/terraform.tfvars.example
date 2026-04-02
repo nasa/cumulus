@@ -6,6 +6,8 @@ vpc_id                 = "vpc-12345"
 subnets                = ["subnet-12345"]
 tags                   = { "Deployment" = "my_prefix" }
 rds_endpoint           = "prefix-rds-cluster-v2.cluster-12345.us-east-1.rds.amazonaws.com"
+connect_image = "<account ID>.dkr.ecr.us-east-1.amazonaws.com/cumulus/debezium/connect:0.3"
+kafka_image = "<account ID>.dkr.ecr.us-east-1.amazonaws.com/cumulus/debezium/kafka:3.4
 data_persistence_remote_state_config = {
   bucket = "PREFIX-tf-state"
   key    = "PREFIX/data-persistence/terraform.tfstate"
