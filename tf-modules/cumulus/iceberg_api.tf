@@ -1,6 +1,6 @@
 module "iceberg_api" {
   count = var.deploy_iceberg_api ? 1 : 0
-  source = "./iceberg_api"
+  source = "../iceberg_api"
 
   prefix             = var.prefix
   region             = data.aws_region.current.name
