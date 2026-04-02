@@ -56,7 +56,7 @@ async function handleScheduleEvent(event) {
   const eventCustomMeta = get(event, 'meta', {});
   let cmrMeta = {};
   if (collection) {
-    const cmrMeta = joinCollectionProviderToTemplateCmrMeta(
+    cmrMeta = joinCollectionProviderToTemplateCmrMeta(
       messageTemplate, collection
     );
   }
