@@ -50,7 +50,12 @@ const initEnvVarsFunction = async () => {
     } catch (error) {
       throw new SyntaxError(`Secret string returned for SecretId ${apiConfigSecretId} could not be parsed`, { cause: error });
     }
-    process.env = { ...envSecret, ...process.env };
+
+    for (const [key, value] of Object.entries(envSecret)) {
+      if (!(key in process.env)) {
+        process.env[key] = String(value);
+      }
+    }
   } catch (error) {
     log.error(`Encountered error trying to set environment variables from secret ${apiConfigSecretId}`, error);
     throw error;
