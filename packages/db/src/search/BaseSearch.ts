@@ -5,7 +5,6 @@ import Logger from '@cumulus/logger';
 
 import { BaseRecord } from '../types/base';
 import { getKnexClient } from '../connection';
-import { getIcebergKnexClient, isIcebergKnexClientSingletonInitialized } from '../iceberg-connection';
 import { TableNames } from '../tables';
 import { DbQueryParameters, QueriableType, QueryEvent, QueryStringParameters } from '../types/search';
 import { convertQueryStringToDbQueryParameters } from './queries';
@@ -590,11 +589,7 @@ abstract class BaseSearch {
    * @returns search result
    */
   async query(testKnex?: Knex) {
-    const knex = testKnex ?? (
-      isIcebergKnexClientSingletonInitialized()
-        ? await getIcebergKnexClient()
-        : await getKnexClient()
-    );
+    const knex = testKnex ?? await getKnexClient();
     const { countQuery, searchQuery } = this.buildSearch(knex);
 
     const shouldEstimateRowcount = countQuery
