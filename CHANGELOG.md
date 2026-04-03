@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+- Upgraded package `lodash` to version 4.18.1.
 
 ## [v21.3.2] 2026-03-20
 
