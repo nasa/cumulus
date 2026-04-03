@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+- Upgraded package `lodash` to version 4.18.1.
+
 ### Added
 
 - **CUMULUS-4706**
