@@ -73,7 +73,7 @@
     "@cumulus/errors": "21.3.2",
     "@cumulus/logger": "21.3.2",
     "@cumulus/types": "21.3.2",
-    "lodash": "~4.18.1",
+    "lodash": "^4.18.1",
     "mem": "^8.0.2",
     "p-map": "^1.2.0",
     "p-retry": "^4.2.0",
