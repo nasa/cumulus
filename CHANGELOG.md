@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+- **CUMULUS-4567**
+  - Add SQL and TypeScript migration files to alter the executions_cumulus_id sequence type.
+
 ## [v21.3.2] 2026-03-20
 
 ### Migration Notes
