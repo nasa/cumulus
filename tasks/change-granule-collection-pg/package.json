@@ -54,6 +54,6 @@
     "@cumulus/db": "21.3.2",
     "@cumulus/distribution-utils": "21.3.2",
     "@cumulus/es-client": "21.3.2",
-    "lodash": "^4.17.21"
+    "lodash": "^4.18.1"
   }
 }

@@ -150,7 +150,7 @@
     "jsdoc-to-markdown": "7.1.1",
     "latest-version": "^9.0.0",
     "lerna": "^9.0.5",
-    "lodash": "^4.17.21",
+    "lodash": "^4.18.1",
     "markdownlint-cli": "^0.47.0",
     "md5": "^2.2.1",
     "mime-types": "^2.1.22",

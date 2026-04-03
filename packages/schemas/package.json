@@ -49,6 +49,6 @@
   "dependencies": {
     "json-schema-to-typescript": "^15.0.4",
     "json-templates": "^4.1.0",
-    "lodash": "^4.17.21"
+    "lodash": "^4.18.1"
   }
 }
