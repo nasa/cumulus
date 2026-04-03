@@ -106,7 +106,7 @@
     "@octokit/graphql": "^2.3.0",
     "@smithy/types": "^2.11.0",
     "@types/aws-lambda": "^8.10.58",
-    "@types/lodash": "^4.18.1",
+    "@types/lodash": "^4.17.24",
     "@types/lodash.iserror": "^3.1.6",
     "@types/mime-types": "^2.1.0",
     "@types/node": "^12.12.6",
