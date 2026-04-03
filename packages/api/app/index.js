@@ -50,7 +50,7 @@ const initEnvVarsFunction = async () => {
 };
 
 const ensureEnvVarsInitialized = () => {
-  if (!initEnvVars) {
+  if (initEnvVars === undefined) {
     initEnvVars = initEnvVarsFunction().catch((error) => {
       initEnvVars = undefined; // allow retry
       throw error;
