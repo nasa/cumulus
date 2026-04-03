@@ -275,6 +275,42 @@ variable "archive_api_url" {
   description = "If not specified, the value of the Backend (Archive) API Gateway endpoint is used"
 }
 
+variable "deploy_iceberg_api" {
+  type        = bool
+  default     = false
+  description = "Whether to deploy the Iceberg API (hosted in ECS with limited endpoints)"
+}
+
+variable "iceberg_api_cpu" {
+  type        = number
+  default     = 512
+  description = "The amount of CPU units to reserve for the Iceberg API Fargate Task"
+}
+
+variable "iceberg_api_memory" {
+  type        = number
+  default     = 1024
+  description = "The amount of memory in MB to reserve for the Iceberg API Fargate Task"
+}
+
+variable "api_service_autoscaling_min_capacity" {
+  type        = number
+  default     = 1
+  description = "Minimum number of API service tasks to run"
+}
+
+variable "api_service_autoscaling_max_capacity" {
+  type        = number
+  default     = 2
+  description = "Maximum number of API service tasks to run"
+}
+
+variable "api_service_autoscaling_target_cpu" {
+  type        = number
+  default     = 70
+  description = "Target CPU utilization percentage for API service autoscaling"
+}
+
 variable "archive_api_users" {
   description = "Earthdata (URS) usernames that should be allowed to access the archive API"
   type        = list(string)
@@ -494,6 +530,7 @@ variable "cloudwatch_log_retention_periods" {
     replaySqsMessages            = 7
     SyncGranule                  = 7
     UpdateCmrAccessConstraints   = 7
+    IcebergApi                   = 7
   }
 }
 
@@ -561,4 +598,10 @@ variable "workflow_configurations" {
       }
     }
   }
+}
+
+variable "cumulus_iceberg_api_image_version" {
+  description = "The version of the Cumulus Iceberg API image to use"
+  type = string
+  default = "latest"
 }

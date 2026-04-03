@@ -54,6 +54,10 @@ output "launchpad_passphrase_secret_arn" {
   value = aws_secretsmanager_secret.api_launchpad_passphrase.arn
 }
 
+output "api_config_secret_arn" {
+  value = aws_secretsmanager_secret_version.api_config.arn
+}
+
 output "private_api_lambda_arn" {
   value = aws_lambda_function.private_api.arn
 }
