@@ -54,12 +54,9 @@ async function handleScheduleEvent(event) {
   };
 
   const eventCustomMeta = get(event, 'meta', {});
-  let cmrMeta = {};
-  if (collection) {
-    const cmrMeta = joinCollectionProviderToTemplateCmrMeta(
-      messageTemplate, collection
-    );
-  }
+  const cmrMeta = joinCollectionProviderToTemplateCmrMeta(
+    messageTemplate, collection
+  );
   const message = buildQueueMessageFromTemplate({
     messageTemplate,
     asyncOperationId: get(event, 'asyncOperationId'),
