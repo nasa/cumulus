@@ -44,7 +44,7 @@
     "@cumulus/common": "21.3.2",
     "@cumulus/cumulus-message-adapter-js": "2.4.0",
     "@cumulus/logger": "21.3.2",
-    "lodash": "^4.17.15"
+    "lodash": "^4.18.1"
   },
   "devDependencies": {
     "@cumulus/schemas": "21.3.2"
