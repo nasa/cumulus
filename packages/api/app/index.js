@@ -21,14 +21,11 @@ const boom = require('../lib/expressBoom');
 
 const log = new Logger({ sender: '@api/index' });
 
-let initPromise = false;
-
 // Load Environment Variables
 // This should be done outside of the handler to minimize Secrets Manager calls.
 const initEnvVarsFunction = async () => {
   if (inTestMode() && process.env.INIT_ENV_VARS_FUNCTION_TEST !== 'true') {
-    initPromise = true;
-    return;
+    return undefined;
   }
   log.info('Initializing environment variables');
   const apiConfigSecretId = getRequiredEnvVar('api_config_secret_id');
@@ -42,25 +39,14 @@ const initEnvVarsFunction = async () => {
     } catch (error) {
       throw new SyntaxError(`Secret string returned for SecretId ${apiConfigSecretId} could not be parsed`, error);
     }
-    Object.entries(envSecret).forEach(([envVar, envVal]) => {
-      if (!(envVar in process.env)) {
-        process.env[envVar] = envVal;
-      }
-    });
-    initPromise = true;
-    return;
+    process.env = { ...envSecret, ...process.env };
   } catch (error) {
     log.error(`Encountered error trying to set environment variables from secret ${apiConfigSecretId}`, error);
     throw error;
   }
+  return undefined;
 };
-
-const ensureEnvVarsInitialized = async () => {
-  if (!initPromise) {
-    await initEnvVarsFunction();
-  }
-  return initPromise;
-};
+const initEnvVars = initEnvVarsFunction();
 
 // Setup express app
 const app = express();
@@ -109,7 +95,7 @@ app.use((err, _req, res, _next) => {
 const server = awsServerlessExpress.createServer(app);
 
 const handler = async (event, context) => {
-  await ensureEnvVarsInitialized(); // Wait for environment vars to resolve from initEnvVarsFunction
+  await initEnvVars; // Wait for environment vars to resolve from initEnvVarsFunction
   const dynamoTableNames = JSON.parse(getRequiredEnvVar('dynamoTableNameString'));
   // Set Dynamo table names as environment variables for Lambda
   Object.keys(dynamoTableNames).forEach((tableEnvVarName) => {
