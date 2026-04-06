@@ -28,7 +28,7 @@
     "@cumulus/logger": "21.3.2",
     "@cumulus/message": "21.3.2",
     "@cumulus/types": "21.3.2",
-    "lodash": "^4.17.21",
+    "lodash": "^4.18.1",
     "moment": "^2.30.1",
     "p-map": "^4.0.0"
   }
