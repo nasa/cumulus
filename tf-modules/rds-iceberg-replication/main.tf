@@ -57,6 +57,3 @@ resource "aws_cloudwatch_log_group" "kafka-connect-logs" {
 data "aws_iam_policy" "ECSInfrastructure" {
   arn = "arn:aws:iam::aws:policy/service-role/AmazonECSInfrastructureRolePolicyForVolumes"
 }
-
-
-
