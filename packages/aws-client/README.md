@@ -784,6 +784,8 @@ Move an S3 object to another location in S3
 * [SNS](#module_SNS)
     * [~publishSnsMessageWithRetry(snsTopicArn, message, retryOptions)](#module_SNS..publishSnsMessageWithRetry) ⇒ <code>Promise.&lt;undefined&gt;</code>
     * [~createSnsTopic(snsTopicName)](#module_SNS..createSnsTopic) ⇒
+    * [~deleteSnsTopic(snsTopicArn)](#module_SNS..deleteSnsTopic) ⇒
+    * [~subscribeSqsToSnsTopic(snsTopicArn, sqsQueueArn)](#module_SNS..subscribeSqsToSnsTopic) ⇒
 
 <a name="module_SNS..publishSnsMessageWithRetry"></a>
 
@@ -810,6 +812,31 @@ Create an SNS topic with a given name.
 | Param | Description |
 | --- | --- |
 | snsTopicName | Name of the SNS topic |
+
+<a name="module_SNS..deleteSnsTopic"></a>
+
+### SNS~deleteSnsTopic(snsTopicArn) ⇒
+Delete an SNS topic with a given ARN.
+
+**Kind**: inner method of [<code>SNS</code>](#module_SNS)
+**Returns**: - Promise that resolves when the topic is deleted
+
+| Param | Description |
+| --- | --- |
+| snsTopicArn | ARN of the SNS topic |
+
+<a name="module_SNS..subscribeSqsToSnsTopic"></a>
+
+### SNS~subscribeSqsToSnsTopic(snsTopicArn, sqsQueueArn) ⇒
+Subscribe an SQS queue to an SNS topic.
+
+**Kind**: inner method of [<code>SNS</code>](#module_SNS)
+**Returns**: - Promise that resolves with the subscription ARN
+
+| Param | Description |
+| --- | --- |
+| snsTopicArn | ARN of the SNS topic |
+| sqsQueueArn | ARN of the SQS queue |
 
 <a name="module_SQS"></a>
 

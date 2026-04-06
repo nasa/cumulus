@@ -6,6 +6,11 @@ output "archive_api_redirect_uri" {
   value = module.cumulus.archive_api_redirect_uri
 }
 
+output "iceberg_api_uri" {
+  description = "URI for the Iceberg API"
+  value       = module.cumulus.iceberg_api_uri
+}
+
 # TEA-Specific outputs
 
 output "tea_distribution_url" {
