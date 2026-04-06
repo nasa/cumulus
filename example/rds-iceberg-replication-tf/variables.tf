@@ -55,7 +55,7 @@ variable "cpu_architecture" {
 }
 
 variable "memory" {
-  description = "The memory the ECS container agent will reserve for the task"
+  description = "The amount of memory (in MB) that the ECS container agent reserves for a task."
   type        = number
   default     = 16384 # 16GB
 }
@@ -67,12 +67,12 @@ variable "volume_size_in_gb" {
 }
 
 variable "kafka_image" {
-  description = "Image used to start kafka the container. See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-image"
+  description = "Image used to start the kafka container. See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-image"
   type = string
 }
 
 variable "connect_image" {
-  description = "Image used to start kafka the container. See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-image"
+  description = "Image used to start the kafka-connect container. See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-image"
   type = string
 }
 

@@ -71,7 +71,7 @@ variable "cpu_architecture" {
 }
 
 variable "memory" {
-  description = "The memory the ECS container agent will reserve for the task"
+  description = "The amount of memory (in MB) that the ECS container agent reserves for a task."
   type        = number
   default     = 16384 # 16GB
 }
