@@ -36,6 +36,10 @@ Typically, there are two TypeScript interfaces describing each Cumulus data type
 For the BigInt columns, knex returns postgres as "string" type. In order to use cumulus_id as a number, knex hook
 postProcessResponse is configured to convert the return string from columns ending with "cumulus_id" to number.
 
+### Running DB migrations
+
+If wishing to manually run knex migrations via the [Knex CLI](https://knexjs.org/guide/migrations.html#migration-cli), make sure to build the DB package using `tsc:no_debug` as this will ensure a clean build without debug maps and other knex CLI
+
 ## About Cumulus
 
 Cumulus is a cloud-based data ingest, archive, distribution and management
