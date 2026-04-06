@@ -13,6 +13,7 @@
     "clean": "rm -rf dist",
     "build": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
+    "tsc:no_debug": "npm run clean && ../../node_modules/.bin/tsc --sourceMap false --inlineSourceMap false --declaration false --declarationMap false",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "test": "../../node_modules/.bin/ava",
     "test:ci": "../../scripts/run_package_ci_unit.sh",
