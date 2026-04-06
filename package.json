@@ -106,7 +106,7 @@
     "@octokit/graphql": "^2.3.0",
     "@smithy/types": "^2.11.0",
     "@types/aws-lambda": "^8.10.58",
-    "@types/lodash": "^4.14.150",
+    "@types/lodash": "^4.17.24",
     "@types/lodash.iserror": "^3.1.6",
     "@types/mime-types": "^2.1.0",
     "@types/node": "^12.12.6",
@@ -150,7 +150,7 @@
     "jsdoc-to-markdown": "7.1.1",
     "latest-version": "^9.0.0",
     "lerna": "^9.0.5",
-    "lodash": "^4.17.21",
+    "lodash": "^4.18.1",
     "markdownlint-cli": "^0.47.0",
     "md5": "^2.2.1",
     "mime-types": "^2.1.22",
@@ -187,6 +187,9 @@
     "xml2js": "0.5.0"
   },
   "overrides": {
+    "axios@1": "^1.14.0",
+    "lodash@4": "^4.18.1",
+    "lodash-es@4": "^4.18.1",
     "minimatch@3": "^3.1.5",
     "minimatch@7": "^7.4.9",
     "minimatch@10": "^10.2.4",
