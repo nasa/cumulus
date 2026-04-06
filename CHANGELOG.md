@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4728**
+  - Add `tsc:no_debug` as a build option for the DB package to allow Knex CLI migrations to work properly
 - **CUMULUS-4706**
   - Define and serve the iceberg search api routes through the iceberg api server.
 - **CUMULUS-4558**
