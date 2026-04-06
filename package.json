@@ -187,6 +187,7 @@
     "xml2js": "0.5.0"
   },
   "overrides": {
+    "axios@1": "^1.14.0",
     "lodash@4": "^4.18.1",
     "lodash-es@4": "^4.18.1",
     "minimatch@3": "^3.1.5",
