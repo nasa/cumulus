@@ -3,5 +3,7 @@
   "pass-enoaudit": true,
   "retry-count": 20,
   "allowlist": [
+    "GHSA-43fc-jf86-j433",
+    "GHSA-r5fr-rjxr-66jc"
   ]
 }

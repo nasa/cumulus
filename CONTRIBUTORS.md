@@ -10,6 +10,7 @@
 * Anthony Lukach
 * Anthony Ortega
 * Bradley J. Hazuka
+* Brandon Lokey
 * Brian Tennity
 * Bryan Wexler
 * Charles Huang
@@ -35,6 +36,7 @@
 * Marc Huffnagle
 * Mark Boyd
 * Mark Schwab
+* Mason Yates
 * Matt Savoie
 * Menno Van Diermen
 * Michael Dorfman
