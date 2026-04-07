@@ -41,11 +41,13 @@ const initEnvVarsFunction = async () => {
     } catch (error) {
       throw new SyntaxError(`Secret string returned for SecretId ${apiConfigSecretId} could not be parsed`, error);
     }
-    Object.entries(envSecret).forEach(([key, value]) => {
-      if (!(key in process.env)) {
-        process.env[key] = value;
+    // avoid overwriting the values already in process.env by only identifying and adding the ones
+    // provided in envSecret that were previously undefined
+    for (const [key, value] of Object.entries(envSecret)) {
+      if (process.env[key] === undefined) {
+        process.env[key] = String(value);
       }
-    });
+    }
   } catch (error) {
     log.error(`Encountered error trying to set environment variables from secret ${apiConfigSecretId}`, error);
     throw error;

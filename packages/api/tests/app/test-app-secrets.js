@@ -7,22 +7,14 @@ const { randomString } = require('@cumulus/common/test-utils');
 let secretId;
 const secretString = JSON.stringify({ testKey: 'testVal' });
 
-test.before(async () => {
+test.before(() => {
   process.env.INIT_ENV_VARS_FUNCTION_TEST = 'true';
   secretId = randomString(10);
-  await awsServices.secretsManager().createSecret({
-    Name: secretId,
-    SecretString: secretString,
-  });
   process.env.api_config_secret_id = secretId;
 });
 
-test.after.always(async () => {
+test.after.always(() => {
   delete process.env.INIT_ENV_VARS_FUNCTION_TEST;
-  await awsServices.secretsManager().deleteSecret({
-    SecretId: secretId,
-    ForceDeleteWithoutRecovery: true,
-  });
 });
 
 test.serial('secretsManager is not called at module load time and called once for multiple invocations', async (t) => {
