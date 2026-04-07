@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+- Upgraded package `lodash` to version 4.18.1.
 
 - **CUMULUS-4576 Upgrade Cumulus to use the latest version of TEA (3.0.0)
   ** UPGRADE NOTE: When upgrading the TEA module version, use a two-phase apply to prevent rollback failures
