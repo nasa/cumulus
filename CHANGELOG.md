@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-4706**
   - Define and serve the iceberg search api routes through the iceberg api server.
+- **CUMULUS-4606**
+  - Added terraform module and example deployment for RDS to Iceberg replication Fargate cluster
+    and associated service/task.
 - **CUMULUS-4558**
   - Added provisioning ECS Fargate infrastructure for cumulus api using terraform.
 - **CUMULUS-4557**

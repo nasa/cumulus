@@ -18,7 +18,7 @@ provider "aws" {
   }
 }
 
-module "rds_cluster" {
+module "rds_iceberg_replication" {
   source                          = "../../tf-modules/cumulus-rds-tf"
   prefix                          = var.prefix
   db_admin_username               = var.db_admin_username
