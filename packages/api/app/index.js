@@ -41,8 +41,7 @@ const initEnvVarsFunction = async () => {
     } catch (error) {
       throw new SyntaxError(`Secret string returned for SecretId ${apiConfigSecretId} could not be parsed`, error);
     }
-    // avoid overwriting the values already in process.env by only identifying and adding the ones
-    // provided in envSecret that were previously undefined
+    // Allow explicitly set environment variables to override secret values.
     for (const [key, value] of Object.entries(envSecret)) {
       if (process.env[key] === undefined) {
         process.env[key] = String(value);
