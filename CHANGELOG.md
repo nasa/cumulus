@@ -23,6 +23,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
  Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
 ````terraform apply -var-file=env/sandbox.tfvars````
 
+- **CUMULUS-4567**
+  - Add SQL and TypeScript migration files to alter the executions_cumulus_id sequence type.
+
 ## [v21.3.2] 2026-03-20
 
 ### Migration Notes
