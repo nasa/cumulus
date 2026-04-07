@@ -35,7 +35,7 @@ function joinCollectionProviderToTemplateCmrMeta(messageTemplate, collection) {
   const { cmrProvider } = collection;
   if (isNil(cmrProvider)) {
     throw new CMRProviderNotConfiguredError(
-      `no cmr_provider found for collection ${collection.name}___${collection.version}`,
+      `no cmr_provider found for collection ${collection.name}___${collection.version}`
     );
   }
   const templateCmr = messageTemplate?.meta?.cmr || {};
