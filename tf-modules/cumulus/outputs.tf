@@ -199,6 +199,13 @@ output "ecs_cluster_name" {
   value = aws_ecs_cluster.default.name
 }
 
+# Iceberg API outputs
+
+output "iceberg_api_uri" {
+  description = "URI for the Iceberg API"
+  value       = var.deploy_iceberg_api ? module.iceberg_api[0].iceberg_api_uri : null
+}
+
 # Queues
 
 output "start_sf_queue_url" {
