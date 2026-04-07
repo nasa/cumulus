@@ -15,8 +15,8 @@ const isNil = require('lodash/isNil');
 const CmrProviderNotConfiguredMessage = 'all collections must configure a cmr_provider for sf to be scheduled';
 class CMRProviderNotConfiguredError extends Error {
   /**
-   * 
-   * @param {string} message 
+   *
+   * @param {string} message
    */
   constructor(message) {
     super(`${message} ${CmrProviderNotConfiguredMessage}`);
