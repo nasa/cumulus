@@ -42,7 +42,7 @@ data "terraform_remote_state" "rds_cluster" {
   workspace = terraform.workspace
 }
 
-module "ecs_cluster" {
+module "rds_iceberg_replication" {
   source                     = "../../tf-modules/rds-iceberg-replication"
   prefix                     = var.prefix
   db_admin_username          = local.db_credentials.username
