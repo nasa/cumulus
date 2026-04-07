@@ -8,8 +8,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Upgraded package `lodash` to version 4.18.1.
 
+### Migration Notes
+
+All core tasks that enqueue messages to launch workflows are updated to use collection defined cmrProvider. Any daac/consolidation tasks which perform the same function need to ensure they do the same.
+
 ### Added
 
+- **CUMULUS-4534**
+  - collection db model has added non-optional cmr_provider field
+  - update requires db-migration to add cmr_provider to collection model
 - **CUMULUS-4706**
   - Define and serve the iceberg search api routes through the iceberg api server.
 - **CUMULUS-4606**
@@ -21,6 +28,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Make a containerized iceberg api that can be deployed to ECS.
 - **async-operations-update**
   - Update Async Operation container to new version 56, `cumuluss/async-operation:56`. Users should update their references to `async-operation` with the new version.
+
+### Changed
+
+- **CUMULUS-4534**
+  - collection translate functions pass cmr_provider/cmrProvider back and forth
+  - sf-scheduler lambda function uses collection cmr_provider to fill provider in cmr section of message template meta
+  - enqueueParsePdrMessage, enqueueGranuleIngestMessage, enqueueWorkflowMessage also use collection cmr_provider to fill provider in cmr secrtion of message template meta
+  - enqueueWorkflowMessage (used in queue-workflow task) uses collection cmr_provider to fill provider in cmr secrtion of message template meta
+  - enqueueParsePdrMessage (used in queue-pdrs task) uses collection cmr_provider to fill provider in cmr secrtion of message template meta
+  - enqueueGranuleIngestMessage (used in queue-granules task) uses collection cmr_provider to fill provider in cmr secrtion of message template meta
 
 ## [v21.3.2] 2026-03-20
 
@@ -66,9 +83,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-4564**
   - Added private_api_lambda_arn as an output in the Cumulus terraform module
-- **CUMULUS-4534**
-  - collection db model has added non-optional cmr_provider field
-  - update requires db-migration to add cmr_provider to collection model
+
 - **CUMULUS-4473**
   - Updated Granules Bulk Operations API endpoints to support `granuleInventoryReportName` and
     `s3GranuleIdInputFile` in the payload. `batchSize` added as an optional parameter for
@@ -119,9 +134,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **CUMULUS-4534**
-  - collection translate functions pass cmr_provider/cmrProvider back and forth
-  - sf-scheduler lambda function uses collection cmr_provider to fill provider in cmr section of message template meta
 - **CUMULUS-4473**
   - Updated Granules Bulk Operations return consistent output formats across different bulk opertions
     (previously, some bulk operation aggregated errors while others returned per-granule errors)
