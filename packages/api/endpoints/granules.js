@@ -1046,7 +1046,7 @@ async function bulkChangeCollection(req, res) {
 
   input.cumulus_meta = { ...input.template?.cumulus_meta, ...input.cumulus_meta };
   input.meta = { ...input.template?.meta, ...input.meta };
-  if (input.meta.cmr) {
+  if (input.meta.cmr && input.meta.cmr instanceof Object) {
     input.meta.cmr.provider = pgCollection.cmr_provider;
   }
   input.replace = {
