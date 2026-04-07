@@ -104,7 +104,7 @@ describe('when ChangeGranuleCollectionPG is called', () => {
       granuleObject = {
         prefix: stackName,
         body: {
-          ...(pick(inputPayload.granules[0], ['granuleId', 'files', 'producerGranuleId'])),
+          ...(pick(inputPayload.granules[0], ['granuleId', 'files'])),
           collectionId: constructCollectionId(inputPayload.granules[0].dataType, inputPayload.granules[0].version),
           status: 'completed',
         },
