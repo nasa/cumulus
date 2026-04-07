@@ -36,6 +36,6 @@
     "@cumulus/common": "21.3.2",
     "@cumulus/logger": "21.3.2",
     "@cumulus/types": "21.3.2",
-    "lodash": "^4.17.21"
+    "lodash": "^4.18.1"
   }
 }
