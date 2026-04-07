@@ -14,11 +14,14 @@ const isNil = require('lodash/isNil');
 
 const CmrProviderNotConfiguredMessage = 'all collections must configure a cmr_provider for sf to be scheduled';
 class CMRProviderNotConfiguredError extends Error {
-  constructor(error) {
-    super(`${error.message} ${CmrProviderNotConfiguredMessage}`);
+  /**
+   * 
+   * @param {string} message 
+   */
+  constructor(message) {
+    super(`${message} ${CmrProviderNotConfiguredMessage}`);
 
     this.name = 'CMRProviderNotConfiguredError';
-    this.code = error.code;
 
     Error.captureStackTrace(this, CMRProviderNotConfiguredError);
   }
@@ -31,9 +34,9 @@ class CMRProviderNotConfiguredError extends Error {
 function joinCollectionProviderToTemplateCmrMeta(messageTemplate, collection) {
   const { cmrProvider } = collection;
   if (isNil(cmrProvider)) {
-    throw new CMRProviderNotConfiguredError({
-      message: `no cmr_provider found for collection ${collection.name}___${collection.version}`,
-    });
+    throw new CMRProviderNotConfiguredError(
+      `no cmr_provider found for collection ${collection.name}___${collection.version}`,
+    );
   }
   const templateCmr = messageTemplate?.meta?.cmr || {};
   return {
