@@ -134,6 +134,8 @@ Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
   - Added pdr-cleanup task into cumulus core from ASDC
 - **CUMULUS-4563**
   - Added a Github action to generate requirements.txt files from coreified uv.lock files
+- **CUMULUS-4513**
+  - Added support for retries in PDR workflows
 
 ### Changed
 

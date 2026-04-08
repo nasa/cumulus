@@ -1,0 +1,52 @@
+{
+  "title": "FilterGranulesOutput",
+  "description": "Describes the output produced by the filter-granules task",
+  "type": "object",
+  "required": ["granules", "completed"],
+  "properties": {
+    "filesCount": { "type": "number" },
+    "totalSize": { "type": "number" },
+    "granulesCount": { "type": "number" },
+    "pdr": {
+      "type": "object",
+      "required": ["name", "path"],
+      "properties": {
+        "name": { "type": "string" },
+        "path": { "type": "string" }
+      }
+    },
+    "completed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "granules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["granuleId", "dataType"],
+        "properties": {
+          "granuleId": { "type": "string" },
+          "producerGranuleId": { "type": "string" },
+          "dataType": { "type": "string" },
+          "granuleSize": { "type": "number" },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": { "type": "string" },
+                "name": { "type": "string" },
+                "type": { "type": "string" },
+                "size": { "type": "number" },
+                "checksumType": { "type": "string" },
+                "checksum": { "type": ["string", "number"] }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
