@@ -70,7 +70,7 @@ the cmr_provider field now replaces the stack-wide configured cmr provider on a 
 
 5. Verify the updates
 
-     We can verify that the tables are updated successfully by checking the `\d tablename` results from psql, the indexes created should be listed.
+     We can verify that the tables are updated successfully by checking the `\d collections` results from psql, the column "cmr_provider" should now appear.
 
      If the concurrent index query fails for any reason, you may have an `invalid` index - if this occurs,
      make sure to drop and create the index again to avoid resources being used for the invalid index.
