@@ -4,7 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [v20.3.2] 2025-12-04
+## Unreleased
+
+## [v20.3.3] 2025-04-10 [BACKPORT]
+
+Please note changes in 20.3.3 may not yet be released in future versions, as this is a backport and patch release on the 20.3.x series of releases. Updates that are included in the future will have a corresponding CHANGELOG entry in future releases.
+
+- **CSD-100**
+  - made changes to the `PrivateApiLambda` and `ApiEndpoints` lambdas to ensure the environment variables
+    are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported
+
+## [v20.3.2] 2025-12-04 [BACKPORT]
+
+Please note changes in 20.3.2 may not yet be released in future versions, as this is a backport and patch release on the 20.3.x series of releases. Updates that are included in the future will have a corresponding CHANGELOG entry in future releases.
 
 ### Added
 
@@ -8734,7 +8746,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v20.3.2...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v20.3.3...HEAD
+[v20.3.3]: https://github.com/nasa/cumulus/compare/v20.3.2...v20.3.3
 [v20.3.2]: https://github.com/nasa/cumulus/compare/v20.3.1...v20.3.2
 [v20.3.1]: https://github.com/nasa/cumulus/compare/v20.3.0...v20.3.1
 [v20.3.0]: https://github.com/nasa/cumulus/compare/v20.2.1...v20.3.0
