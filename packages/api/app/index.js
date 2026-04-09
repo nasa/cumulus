@@ -51,7 +51,6 @@ const initEnvVarsFunction = async () => {
   log.info('Environment variables successfully initialized');
   return undefined;
 };
-initEnvVars = initEnvVarsFunction();
 
 const ensureEnvVarsInitialized = () => {
   if (initEnvVars === undefined) {
@@ -68,7 +67,6 @@ let app;
 let server;
 
 const handler = async (event, context) => {
-  await initEnvVars; // Wait for environment vars to resolve from initEnvVarsFunction
   await ensureEnvVarsInitialized();
 
   const dynamoTableNames = JSON.parse(getRequiredEnvVar('dynamoTableNameString'));
