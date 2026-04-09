@@ -78,7 +78,7 @@ const handler = async (event, context) => {
   });
 
   if (!server) {
-// eslint-disable-next-line global-require
+    // eslint-disable-next-line global-require
     const router = require('./routes');
     // eslint-disable-next-line global-require
     const { jsonBodyParser } = require('./middleware');
