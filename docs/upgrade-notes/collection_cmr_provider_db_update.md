@@ -6,8 +6,6 @@ hide_title: false
 
 ## Background
 
-## Update db
-
 the updated Collection db model can be found [here](https://github.com/nasa/cumulus/blob/master/packages/db/src/types/collection.ts)
 
 the cmr_provider field now replaces the stack-wide configured cmr provider on a per-collection basis. This field cannot be null, but this presents a problem for existing databases, where collections already exist. as a result an update must be run manually.
@@ -44,13 +42,10 @@ the cmr_provider field now replaces the stack-wide configured cmr provider on a 
     When the SQL commands are running, perform step 5 to monitor the commands.
 
     ```sh
-    tmux new-session -s CumulusUpgrade -n ArchiveIndex
+    tmux new-session -s CumulusUpgrade -n CMRProvider
 
     psql -h <Endpoint for writer instance> -p <Port for database or 5432> -d <cumulus database name> -U <database admin user> -W
     #e.g. psql -h cumulus-dev-rds-cluster.cluster-xxx.us-east-1.rds.amazonaws.com -p 5432 -d cumulus_test_db -U cumulus_test -W
-
-    # Use -f option to run the SQL commands from a file, -o option to write output to file
-    psql -h <Endpoint for writer instance> -p <Port for database or 5432> -d <cumulus database name> -U <database admin user> -f 20250617190412_add_archived_and_index.sql -W
     ```
 
     The following are the relevant SQL commands. no sql file is provided to prevent confusion as there's a value that must be configured and not confused. Replace <cmr_provider> with your stack's cmr_provider.
