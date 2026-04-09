@@ -31,7 +31,7 @@ const initEnvVarsFunction = async () => {
   }
   try {
     const apiConfigSecretId = process.env.api_config_secret_id || getRequiredEnvVar('api_config_secret_id');
-    const secret = await secretsManager().getSecretValue({ SecretId: apiConfigSecretId }).promise();
+    const secret = await secretsManager().getSecretValue({ SecretId: apiConfigSecretId });
     let envSecret;
     try {
       envSecret = JSON.parse(secret.SecretString);
