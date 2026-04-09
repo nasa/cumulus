@@ -28,8 +28,8 @@ let initEnvVars;
 const initEnvVarsFunction = async () => {
   if (inTestMode() && process.env.INIT_ENV_VARS_FUNCTION_TEST !== 'true') {
     return undefined;
-  } 
-  
+  }
+
   // NOTE: Leaving your logic here exactly as provided
   try {
     const apiConfigSecretId = process.env.api_config_secret_id || getRequiredEnvVar('api_config_secret_id');
@@ -75,7 +75,7 @@ const handler = async (event, context) => {
   // Ensures environment variables are initialized once per container;
   // subsequent invocations reuse the result or allow for re-initialization on failure
   await ensureEnvVarsInitialized();
-  
+
   const dynamoTableNames = JSON.parse(getRequiredEnvVar('dynamoTableNameString'));
   // Set Dynamo table names as environment variables for Lambda
   Object.keys(dynamoTableNames).forEach((tableEnvVarName) => {
@@ -140,9 +140,9 @@ const handler = async (event, context) => {
     ...event,
     queryStringParameters: event.multiValueQueryStringParameters || event.queryStringParameters,
   };
-  
+
   log.info('Running serverlessExpress.proxy');
-  
+
   return new Promise((resolve, reject) => {
     awsServerlessExpress.proxy(
       server,
