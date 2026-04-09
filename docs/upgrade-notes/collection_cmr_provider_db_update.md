@@ -51,7 +51,7 @@ the cmr_provider field now replaces the stack-wide configured cmr provider on a 
     The following are the relevant SQL commands. no sql file is provided to prevent confusion as there's a value that must be configured and not confused. Replace <cmr_provider> with your stack's cmr_provider.
 
     ```sql
-    ALTER TABLE collections ADD COLUMN IF NOT EXISTS cmr_provider TEXT NOT NULL DEFAULT <cmr_provider>
+    ALTER TABLE collections ADD COLUMN IF NOT EXISTS cmr_provider TEXT NOT NULL DEFAULT '<cmr_provider>';
     CREATE INDEX CONCURRENTLY IF NOT EXISTS collections_cmr_provider ON collections (cmr_provider);
     ```
 
