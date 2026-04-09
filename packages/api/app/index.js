@@ -154,4 +154,3 @@ module.exports = {
   initEnvVarsFunction,
   handler,
 };
-
