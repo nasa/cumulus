@@ -29,8 +29,6 @@ const initEnvVarsFunction = async () => {
   if (inTestMode() && process.env.INIT_ENV_VARS_FUNCTION_TEST !== 'true') {
     return undefined;
   }
-
-  // NOTE: Leaving your logic here exactly as provided
   try {
     const apiConfigSecretId = process.env.api_config_secret_id || getRequiredEnvVar('api_config_secret_id');
     const secret = await secretsManager().getSecretValue({ SecretId: apiConfigSecretId }).promise();
@@ -41,7 +39,6 @@ const initEnvVarsFunction = async () => {
       throw new SyntaxError(`Secret string returned for SecretId ${apiConfigSecretId} could not be parsed`, error);
     }
     process.env = { ...envSecret, ...process.env };
-    // Allow explicitly set environment variables to override secret values.
     for (const [key, value] of Object.entries(envSecret)) {
       if (process.env[key] === undefined) {
         process.env[key] = String(value);
@@ -72,8 +69,6 @@ let server;
 
 const handler = async (event, context) => {
   await initEnvVars; // Wait for environment vars to resolve from initEnvVarsFunction
-  // Ensures environment variables are initialized once per container;
-  // subsequent invocations reuse the result or allow for re-initialization on failure
   await ensureEnvVarsInitialized();
 
   const dynamoTableNames = JSON.parse(getRequiredEnvVar('dynamoTableNameString'));
@@ -82,9 +77,7 @@ const handler = async (event, context) => {
     process.env[tableEnvVarName] = dynamoTableNames[tableEnvVarName];
   });
 
-  // ONLY setup Express once, and ONLY after the environment variables are populated
   if (!server) {
-    // IMPORTANT: Require routes and middleware here so they evaluate with populated process.env
     const router = require('./routes');
     const { jsonBodyParser } = require('./middleware');
     const boom = require('../lib/expressBoom');
@@ -153,7 +146,7 @@ const handler = async (event, context) => {
 };
 
 module.exports = {
-  app, // Note: For unit tests that import `app` directly, it will initially be undefined until handler runs.
+  app,
   initEnvVarsFunction,
   handler,
 };
