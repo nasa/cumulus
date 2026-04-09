@@ -37,6 +37,12 @@ Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
 - **async-operations-update**
   - Update Async Operation container to new version 56, `cumuluss/async-operation:56`. Users should update their references to `async-operation` with the new version.
 
+### Changed
+
+- **CSD-100**
+  - made changes to the `PrivateApiLambda` and `ApiEndpoints` lambdas to ensure the environment variables
+    are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported
+
 ### Fixed
 
 - **Security Vulnerabilities**
