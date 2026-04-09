@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 - Upgraded package `lodash` to version 4.18.1.
 
+### Changed
+
+- **CSD-100**
+  - made changes to the `PrivateApiLambda` and `ApiEndpoints` lambdas to ensure the environment variables
+    are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported
 - **CUMULUS-4576 Upgrade Cumulus to use the latest version of TEA (3.0.0)
   ** UPGRADE NOTE: When upgrading the TEA module version, use a two-phase apply to prevent rollback failures
   caused by Terraform destroying old lambda S3 objects before the CloudFormation stack update completes.
