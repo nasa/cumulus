@@ -34,10 +34,10 @@ All core tasks that enqueue messages to launch workflows are updated to use coll
 - **CUMULUS-4534**
   - collection translate functions pass cmr_provider/cmrProvider back and forth
   - sf-scheduler lambda function uses collection cmr_provider to fill provider in cmr section of message template meta
-  - enqueueParsePdrMessage, enqueueGranuleIngestMessage, enqueueWorkflowMessage also use collection cmr_provider to fill provider in cmr secrtion of message template meta
-  - enqueueWorkflowMessage (used in queue-workflow task) uses collection cmr_provider to fill provider in cmr secrtion of message template meta
-  - enqueueParsePdrMessage (used in queue-pdrs task) uses collection cmr_provider to fill provider in cmr secrtion of message template meta
-  - enqueueGranuleIngestMessage (used in queue-granules task) uses collection cmr_provider to fill provider in cmr secrtion of message template meta
+  - enqueueParsePdrMessage, enqueueGranuleIngestMessage, enqueueWorkflowMessage also use collection cmr_provider to fill provider in cmr section of message template meta
+  - enqueueWorkflowMessage (used in queue-workflow task) uses collection cmr_provider to fill provider in cmr section of message template meta
+  - enqueueParsePdrMessage (used in queue-pdrs task) uses collection cmr_provider to fill provider in cmr section of message template meta
+  - enqueueGranuleIngestMessage (used in queue-granules task) uses collection cmr_provider to fill provider in cmr section of message template meta
 
 ## [v21.3.2] 2026-03-20
 
