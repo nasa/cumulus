@@ -55,12 +55,12 @@ output "add_missing_file_checksums_task" {
   value = module.ingest.add_missing_file_checksums_task
 }
 
-output "aws_api_proxy_task" {
-  value = module.ingest.aws_api_proxy_task
-}
-
 output "add_unique_granule_id_task" {
   value = module.ingest.add_unique_granule_id_task
+}
+
+output "aws_api_proxy_task" {
+  value = module.ingest.aws_api_proxy_task
 }
 
 output "cnm_response_task" {
@@ -81,6 +81,10 @@ output "fake_processing_task" {
 
 output "files_to_granules_task" {
   value = module.ingest.files_to_granules_task
+}
+
+output "get_cnm_task" {
+  value = module.ingest.get_cnm_task
 }
 
 output "granule_invalidator_task" {
@@ -193,6 +197,13 @@ output "ecs_cluster_arn" {
 
 output "ecs_cluster_name" {
   value = aws_ecs_cluster.default.name
+}
+
+# Iceberg API outputs
+
+output "iceberg_api_uri" {
+  description = "URI for the Iceberg API"
+  value       = var.deploy_iceberg_api ? module.iceberg_api[0].iceberg_api_uri : null
 }
 
 # Queues

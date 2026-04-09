@@ -43,7 +43,7 @@ variable "db_admin_username" {
 
 variable "db_admin_password" {
   description = "Password for RDS database administrator authentication"
-  type = string
+  type        = string
 }
 
 variable "input_security_group_id" {
@@ -77,7 +77,7 @@ variable "snapshot_identifier" {
 
 variable "subnets" {
   description = "Subnets for database cluster.  Requires at least 2 across multiple AZs"
-  type    = list(string)
+  type        = list(string)
 }
 
 variable "tags" {
@@ -99,38 +99,38 @@ variable "engine_version" {
 
 variable "parameter_group_family_v13" {
   description = "Database family to use for creating database parameter group under postgres 13 upgrade conditions"
-  type = string
-  default = "aurora-postgresql13"
+  type        = string
+  default     = "aurora-postgresql13"
 }
 
 variable "enable_upgrade" {
   description = "Flag to enable use of updated parameter group for postgres v17"
-  type = bool
-  default = true
+  type        = bool
+  default     = true
 }
 
 variable "parameter_group_family_v17" {
   description = "Database family to use for creating database parameter group under postgres 17 upgrade conditions"
-  type = string
-  default = "aurora-postgresql17"
+  type        = string
+  default     = "aurora-postgresql17"
 }
 
 variable "max_capacity" {
-  type = number
+  type    = number
   default = 4
 }
 
 variable "min_capacity" {
-  type = number
+  type    = number
   default = 2
 }
 
 variable "cluster_instance_count" {
   description = "Number of instances to create inside of the cluster"
-  type = number
-  default = 1
+  type        = number
+  default     = 1
   validation {
-    condition = var.cluster_instance_count >= 1 && var.cluster_instance_count <= 16
+    condition     = var.cluster_instance_count >= 1 && var.cluster_instance_count <= 16
     error_message = "Variable cluster_instance_count should be between 1 and 16."
   }
 }
@@ -141,8 +141,8 @@ variable "prefix" {
 }
 variable "provision_user_database" {
   description = "true/false flag to configure if the module should provision a user and database using default settings"
-  type = bool
-  default = false
+  type        = bool
+  default     = false
 }
 
 variable "permissions_boundary_arn" {
@@ -157,26 +157,26 @@ variable "rds_user_password" {
 
 variable "rds_connection_timing_configuration" {
   description = "Cumulus rds connection timeout retry timing object -- these values map to knex.js's internal use of  https://github.com/vincit/tarn.js/ for connection acquisition"
-  type = map(number)
+  type        = map(number)
   default = {
-      acquireTimeoutMillis: 90000
-      createRetryIntervalMillis: 30000,
-      createTimeoutMillis: 20000,
-      idleTimeoutMillis: 1000,
-      reapIntervalMillis: 1000,
+    acquireTimeoutMillis : 90000
+    createRetryIntervalMillis : 30000,
+    createTimeoutMillis : 20000,
+    idleTimeoutMillis : 1000,
+    reapIntervalMillis : 1000,
   }
 }
 
 variable "rds_scaling_timeout_action" {
   description = "Action to take when RDS cluster cannot find a scaling point after given timeout"
-  type = string
-  default = "ForceApplyCapacityChange"
+  type        = string
+  default     = "ForceApplyCapacityChange"
 }
 
 variable "enabled_cloudwatch_logs_exports" {
   description = "Set of log types to export to CloudWatch Logs. For Amazon Aurora PostgreSQL, the only valid value is [\"postgresql\"]."
-  type = list(string)
-  default = []
+  type        = list(string)
+  default     = []
 }
 
 variable "postgresql_log_retention_days" {
@@ -199,7 +199,7 @@ variable "db_parameters" {
   default = [
     {
       name         = "shared_preload_libraries"
-      value        = "pg_stat_statements,auto_explain"
+      value        = "pg_stat_statements,auto_explain,pglogical"
       apply_method = "pending-reboot"
     },
     {
@@ -246,30 +246,35 @@ variable "db_parameters" {
       name         = "rds.force_ssl"
       value        = 0
       apply_method = "pending-reboot"
-    }
+    },
+    {
+      name  = "rds.logical_replication"
+      value = "1"
+      apply_method = "pending-reboot"  # Requires restart
+    },
   ]
 }
 
 variable "disableSSL" {
   description = "If set to true, disable use of SSL with Core database connections."
-  type = bool
-  default = false
+  type        = bool
+  default     = false
 }
 
 variable "rejectUnauthorized" {
   description = "If disableSSL is false or not set, set to false to allow self-signed certificates or non-supported CAs."
-  type = bool
-  default = false
+  type        = bool
+  default     = false
 }
 
 variable "lambda_memory_sizes" {
   description = "Configurable map of memory sizes for lambdas"
-  type = map(number)
-  default = {}
+  type        = map(number)
+  default     = {}
 }
 
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
-  type = map(number)
-  default = {}
+  type        = map(number)
+  default     = {}
 }

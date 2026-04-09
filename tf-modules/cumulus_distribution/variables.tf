@@ -60,8 +60,8 @@ variable "bucket_map_file" {
 }
 
 variable "cmr_acl_based_credentials" {
-  type = bool
-  default = false
+  type        = bool
+  default     = false
   description = "Option to enable/disable user based CMR ACLs to derive permission for s3 credential access tokens"
 }
 
@@ -78,21 +78,21 @@ variable "cmr_provider" {
 }
 
 variable "lambda_subnet_ids" {
-  type    = list(string)
-  default = []
+  type        = list(string)
+  default     = []
   description = "VPC subnets used by Lambda functions"
 }
 
 variable "lambda_memory_sizes" {
   description = "Configurable map of memory sizes for lambdas"
-  type = map(number)
-  default = {}
+  type        = map(number)
+  default     = {}
 }
 
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
-  type = map(number)
-  default = {}
+  type        = map(number)
+  default     = {}
 }
 
 variable "oauth_provider" {
@@ -132,13 +132,13 @@ variable "vpc_id" {
 }
 
 variable "cloudwatch_log_retention_periods" {
-  type = map(number)
+  type        = map(number)
   description = "retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"
-  default = {}
+  default     = {}
 }
 
 variable "default_log_retention_days" {
-  type = number
-  default = 30
+  type        = number
+  default     = 30
   description = "default value that user chooses for their log retention periods"
 }
