@@ -45,7 +45,7 @@ const initEnvVarsFunction = async () => {
       }
     }
   } catch (error) {
-    log.error(`Encountered error trying to set environment variables`, error);
+    log.error('Encountered error trying to set environment variables', error);
     throw error;
   }
   log.info('Environment variables successfully initialized');
@@ -78,8 +78,11 @@ const handler = async (event, context) => {
   });
 
   if (!server) {
+// eslint-disable-next-line global-require
     const router = require('./routes');
+    // eslint-disable-next-line global-require
     const { jsonBodyParser } = require('./middleware');
+    // eslint-disable-next-line global-require
     const boom = require('../lib/expressBoom');
 
     app = express();
