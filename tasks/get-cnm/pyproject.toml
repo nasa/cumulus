@@ -1,6 +1,6 @@
 [project]
 name = "get-cnm"
-version = "21.3.2"
+version = "21.3.3"
 description = "Retrieves the originating CNM message for a specified granule"
 readme = "README.md"
 requires-python = ">=3.12"

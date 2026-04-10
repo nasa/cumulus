@@ -1,7 +1,7 @@
 {
     "name": "@cumulus/pdr-cleanup",
     "private": true,
-    "version": "21.3.2",
+    "version": "21.3.3",
     "description": "This task is for cleaning up PDRs after a successful ingest",
     "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/pdr-cleanup",
     "repository": {

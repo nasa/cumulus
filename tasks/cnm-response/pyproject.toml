@@ -1,6 +1,6 @@
 [project]
 name = "cnm-response"
-version = "21.3.2"
+version = "21.3.3"
 description = "CNM Response task"
 requires-python = "~=3.12.0"
 dependencies = [
