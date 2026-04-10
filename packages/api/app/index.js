@@ -47,6 +47,7 @@ const initEnvVarsFunction = async () => {
     throw error;
   }
   log.info('Environment variables successfully initialized');
+  return undefined;
 };
 
 const ensureEnvVarsInitialized = () => {
@@ -107,7 +108,7 @@ const server = awsServerlessExpress.createServer(app);
 
 const handler = async (event, context) => {
   // Ensures environment variables are initialized once per container;
-  // subsequent invocations reuse the result
+  // subsequent invocations reuse the result or allow for re-initialization on failure
   await ensureEnvVarsInitialized();
   const dynamoTableNames = JSON.parse(getRequiredEnvVar('dynamoTableNameString'));
   // Set Dynamo table names as environment variables for Lambda

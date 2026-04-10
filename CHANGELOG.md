@@ -6,11 +6,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-- Upgraded package `lodash` to version 4.18.1.
+- **CUMULUS-4576 Upgrade Cumulus to use the latest version of TEA (3.0.0)
+  ** UPGRADE NOTE: When upgrading the TEA module version, use a two-phase apply to prevent rollback failures
+  caused by Terraform destroying old lambda S3 objects before the CloudFormation stack update completes.
 
 ### Migration Notes
 
 All core tasks that enqueue messages to launch workflows are updated to use collection defined cmrProvider. Any daac/consolidation tasks which perform the same function need to ensure they do the same.
+
+Phase 1 — upload new S3 objects and update CF stack (keeps old S3 objects intact as rollback targets if the CF update fails):
+   ````
+   terraform apply \
+     -target=module.thin_egress_app.aws_s3_object.cloudformation_template \
+     -target=module.thin_egress_app.aws_s3_object.lambda_source \
+     -target=module.thin_egress_app.aws_s3_object.lambda_code_dependency_archive \
+     -target=module.thin_egress_app.aws_s3_bucket.lambda_source \
+     -target=module.thin_egress_app.aws_cloudformation_stack.thin_egress_app \
+     -var-file=env/sandbox.tfvars
+   ````
+Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
+````terraform apply -var-file=env/sandbox.tfvars````
 
 ### Added
 
@@ -20,7 +35,7 @@ All core tasks that enqueue messages to launch workflows are updated to use coll
 - **CUMULUS-4706**
   - Define and serve the iceberg search api routes through the iceberg api server.
 - **CUMULUS-4606**
-  - Added terraform module and example deployment for RDS to Iceberg replication Fargate cluster
+  - Add terraform module and example deployment for RDS to Iceberg replication Fargate cluster
     and associated service/task.
 - **CUMULUS-4558**
   - Added provisioning ECS Fargate infrastructure for cumulus api using terraform.
@@ -38,6 +53,15 @@ All core tasks that enqueue messages to launch workflows are updated to use coll
   - enqueueWorkflowMessage (used in queue-workflow task) uses collection cmr_provider to fill provider in cmr section of message template meta
   - enqueueParsePdrMessage (used in queue-pdrs task) uses collection cmr_provider to fill provider in cmr section of message template meta
   - enqueueGranuleIngestMessage (used in queue-granules task) uses collection cmr_provider to fill provider in cmr section of message template meta
+
+### Fixed
+
+- **Security Vulnerabilities**
+  - Upgraded package `lodash` to version 4.18.1.
+  - Updated package overrides to address CVEs GHSA-43fc-jf86-j433 and GHSA-r5fr-rjxr-66jc.
+- **CSD-100**
+  - made changes to the `PrivateApiLambda` and `ApiEndpoints` lambdas to ensure the environment variables
+    are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported
 
 ## [v21.3.2] 2026-03-20
 
