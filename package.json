@@ -49,7 +49,7 @@
     "tsc": "lerna run tsc",
     "tsc:listEmittedFiles": "lerna run tsc:listEmittedFiles --stream --no-prefix",
     "package": "lerna run package",
-    "bootstrap": "npm install && lerna run build && lerna run package && npm run bootstrap-python && git rev-parse --short HEAD > .bootstrapSha",
+    "bootstrap": "npm install && lerna run build && lerna run package && npm run bootstrap-python && lerna run prepublish && git rev-parse --short HEAD > .bootstrapSha",
     "bootstrap-python": "uv sync --all-groups",
     "bootstrap-no-build": "npm install && npm run bootstrap-python",
     "bootstrap-no-build-no-scripts": "npm install --ignore-scripts && npm run bootstrap-python",
