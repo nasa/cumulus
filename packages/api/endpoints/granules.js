@@ -7,6 +7,7 @@ const isError = require('lodash/isError');
 const pMap = require('p-map');
 const router = require('express-promise-router')();
 const cloneDeep = require('lodash/cloneDeep');
+const isObject = require('lodash/isObject');
 const { v4: uuidv4 } = require('uuid');
 const {
   getWorkflowFileKey,
@@ -1046,7 +1047,7 @@ async function bulkChangeCollection(req, res) {
 
   input.cumulus_meta = { ...input.template?.cumulus_meta, ...input.cumulus_meta };
   input.meta = { ...input.template?.meta, ...input.meta };
-  if (typeof input.meta.cmr === 'object' && input.meta.cmr !== null) {
+  if (isObject(input.meta.cmr) && input.meta.cmr !== null) {
     input.meta.cmr.provider = pgCollection.cmr_provider;
   }
   input.replace = {
