@@ -27,7 +27,7 @@ let initEnvVars;
 // Called once per Lambda container to minimize Secrets Manager calls
 const initEnvVarsFunction = async () => {
   if (inTestMode() && process.env.INIT_ENV_VARS_FUNCTION_TEST !== 'true') {
-    return;
+    return undefined;
   }
   log.info('Initializing environment variables');
   const apiConfigSecretId = getRequiredEnvVar('api_config_secret_id');
