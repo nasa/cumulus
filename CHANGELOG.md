@@ -62,6 +62,8 @@ Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
 - **CSD-100**
   - made changes to the `PrivateApiLambda` and `ApiEndpoints` lambdas to ensure the environment variables
     are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported
+- **CUMULUS-4606**
+  - Added prefix to IAM resource names to prevent collisions from multiple deployments in sandbox environment
 
 ## [v21.3.2] 2026-03-20
 
