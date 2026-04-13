@@ -93,6 +93,11 @@ module.exports.collection = {
   description: 'Cumulus-api Collection Table schema',
   type: 'object',
   properties: {
+    cmrProvider: {
+      title: 'CMRProvider',
+      description: 'cmr provider corresponding to this collection',
+      type: 'string',
+    },
     name: {
       title: 'Name',
       description: 'Collection short_name registered with the CMR',

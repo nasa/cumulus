@@ -15,24 +15,26 @@ export interface CollectionFile {
 }
 
 export interface PartialCollectionRecord {
+  cmrProvider?: string,
+  createdAt?: number,
   duplicateHandling?: DuplicateHandling,
   files?: CollectionFile[],
   granuleId?: string,
   granuleIdExtraction?: string,
   ignoreFilesConfigForDiscovery?: boolean,
+  meta?: object,
   name?: string,
   process?: string,
   reportToEms?: boolean,
   sampleFileName?: string,
   tags?: string[],
-  meta?: object,
+  updatedAt?: number,
   url_path?: string,
   version?: string,
-  createdAt?: number,
-  updatedAt?: number
 }
 
 export interface NewCollectionRecord extends PartialCollectionRecord {
+  cmrProvider: string,
   files: CollectionFile[],
   granuleId: string,
   granuleIdExtraction: string,

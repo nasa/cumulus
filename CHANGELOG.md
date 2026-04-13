@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   ** UPGRADE NOTE: When upgrading the TEA module version, use a two-phase apply to prevent rollback failures
   caused by Terraform destroying old lambda S3 objects before the CloudFormation stack update completes.
 
+### Migration Notes
+
+All core tasks that enqueue messages to launch workflows are updated to use collection defined cmrProvider. Any daac/consolidation tasks which perform the same function need to ensure they do the same.
+
 Phase 1 — upload new S3 objects and update CF stack (keeps old S3 objects intact as rollback targets if the CF update fails):
    ````
    terraform apply \
@@ -25,6 +29,9 @@ Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
 
 ### Added
 
+- **CUMULUS-4534**
+  - collection db model has added non-optional cmr_provider field
+  - update requires db-migration to add cmr_provider to collection model
 - **CUMULUS-4706**
   - Define and serve the iceberg search api routes through the iceberg api server.
 - **CUMULUS-4606**
@@ -36,6 +43,16 @@ Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
   - Make a containerized iceberg api that can be deployed to ECS.
 - **async-operations-update**
   - Update Async Operation container to new version 56, `cumuluss/async-operation:56`. Users should update their references to `async-operation` with the new version.
+
+### Changed
+
+- **CUMULUS-4534**
+  - collection translate functions pass cmr_provider/cmrProvider back and forth
+  - sf-scheduler lambda function uses collection cmr_provider to fill provider in cmr section of message template meta
+  - enqueueParsePdrMessage, enqueueGranuleIngestMessage, enqueueWorkflowMessage also use collection cmr_provider to fill provider in cmr section of message template meta
+  - enqueueWorkflowMessage (used in queue-workflow task) uses collection cmr_provider to fill provider in cmr section of message template meta
+  - enqueueParsePdrMessage (used in queue-pdrs task) uses collection cmr_provider to fill provider in cmr section of message template meta
+  - enqueueGranuleIngestMessage (used in queue-granules task) uses collection cmr_provider to fill provider in cmr section of message template meta
 
 ### Fixed
 
@@ -92,6 +109,7 @@ Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
 
 - **CUMULUS-4564**
   - Added private_api_lambda_arn as an output in the Cumulus terraform module
+
 - **CUMULUS-4473**
   - Updated Granules Bulk Operations API endpoints to support `granuleInventoryReportName` and
     `s3GranuleIdInputFile` in the payload. `batchSize` added as an optional parameter for

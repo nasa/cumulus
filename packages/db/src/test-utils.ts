@@ -89,6 +89,7 @@ export const fakeCollectionRecordFactory = (
   meta: { foo: 'bar' },
   created_at: new Date(),
   updated_at: new Date(),
+  cmr_provider: 'provider',
   ...params,
 });
 

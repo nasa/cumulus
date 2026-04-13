@@ -159,6 +159,9 @@ const collectionMapping : TypeMapping = {
   url_path: (value?: string) => ({
     url_path: value,
   }),
+  cmrProvider: (value?: string) => ({
+    cmr_provider: value,
+  }),
 };
 
 const executionMapping : TypeMapping = {
