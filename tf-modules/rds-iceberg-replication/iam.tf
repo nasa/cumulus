@@ -1,5 +1,5 @@
 resource "aws_iam_role" "ecs_task_execution_role" {
-  name = "ecs-task-execution-role"
+  name = "${var.prefix}-ecs-task-execution-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -20,7 +20,7 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
 }
 
 resource "aws_iam_role" "fargate_task_role" {
-  name = "fargate-task-role"
+  name = "${var.prefix}-fargate-task-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -39,7 +39,7 @@ resource "aws_iam_role" "fargate_task_role" {
 }
 
 resource "aws_iam_policy" "s3_access_policy" {
-  name        = "fargate-s3-access-policy"
+  name        = "${var.prefix}-fargate-s3-access-policy"
   description = "IAM policy for Fargate task to access S3"
 
   policy = jsonencode({
@@ -63,7 +63,7 @@ resource "aws_iam_policy" "s3_access_policy" {
 }
 
 resource "aws_iam_policy" "glue_access_policy" {
-  name        = "fargate-glue-access-policy"
+  name        = "${var.prefix}-fargate-glue-access-policy"
   description = "IAM policy for Fargate task to access AWS Glue"
 
   policy = jsonencode({
@@ -81,7 +81,7 @@ resource "aws_iam_policy" "glue_access_policy" {
 }
 
 resource "aws_iam_policy" "rds_access_policy" {
-  name        = "fargate-rds-access-policy"
+  name        = "${var.prefix}-fargate-rds-access-policy"
   description = "IAM policy for Fargate task to access RDS"
 
   policy = jsonencode({
@@ -109,7 +109,7 @@ resource "aws_iam_role_policy_attachment" "attach_glue_policy" {
 }
 
 resource "aws_iam_role" "ecs_infrastructure_role" {
-  name = "ecs-infrastructure-role"
+  name = "${var.prefix}-ecs-infrastructure-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
