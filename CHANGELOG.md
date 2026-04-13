@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+
+## [v21.3.3] 2026-04-10
+
 - Upgraded package `lodash` to version 4.18.1.
 
 - **CUMULUS-4576 Upgrade Cumulus to use the latest version of TEA (3.0.0)
@@ -9632,7 +9635,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v21.3.2...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v21.3.3...HEAD
+[v21.3.3]: https://github.com/nasa/cumulus/compare/v21.3.2...v21.3.3
 [v21.3.2]: https://github.com/nasa/cumulus/compare/v21.3.1...v21.3.2
 [v21.3.1]: https://github.com/nasa/cumulus/compare/v21.3.0...v21.3.1
 [v21.3.0]: https://github.com/nasa/cumulus/compare/v21.2.0...v21.3.0
