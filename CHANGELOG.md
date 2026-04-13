@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-## [v20.3.3] 2025-04-10 [BACKPORT]
+## [v20.3.3] 2025-04-13 [BACKPORT]
 
 Please note changes in 20.3.3 may not yet be released in future versions, as this is a backport and patch release on the 20.3.x series of releases. Updates that are included in the future will have a corresponding CHANGELOG entry in future releases.
 
