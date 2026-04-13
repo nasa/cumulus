@@ -46,6 +46,7 @@ export const collectionsS3TableSql = (tableName: string = 'collections') => `
     granule_id_extraction_regex TEXT NOT NULL,
     files JSON NOT NULL,
     process TEXT,
+    cmr_provider TEXT,
     url_path TEXT,
     duplicate_handling TEXT,
     report_to_ems BOOLEAN,

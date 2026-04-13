@@ -140,6 +140,7 @@ async function buildWorkflow(
   workflowName,
   collection,
   provider,
+  cmrProvider,
   payload,
   meta
 ) {
@@ -177,6 +178,7 @@ async function buildWorkflow(
 
   template.meta.workflow_name = workflowName;
   template.meta = merge(template.meta, meta);
+  template.meta.cmr.provider = cmrProvider;
   template.payload = payload || {};
 
   return template;
@@ -231,7 +233,8 @@ async function buildAndExecuteWorkflow(
   provider,
   payload,
   meta = {},
-  timeout = 600
+  timeout = 600,
+  cmrProvider = 'CUMULUS'
 ) {
   const workflowMsg = await buildWorkflow(
     stackName,
@@ -239,6 +242,7 @@ async function buildAndExecuteWorkflow(
     workflowName,
     collection,
     provider,
+    cmrProvider,
     payload,
     meta
   );
@@ -268,10 +272,19 @@ async function buildAndStartWorkflow(
   collection,
   provider,
   payload,
-  meta = {}
+  meta = {},
+  cmrProvider = 'CUMULUS'
 ) {
-  const workflowMsg = await
-  buildWorkflow(stackName, bucketName, workflowName, collection, provider, payload, meta);
+  const workflowMsg = await buildWorkflow(
+    stackName,
+    bucketName,
+    workflowName,
+    collection,
+    provider,
+    cmrProvider,
+    payload,
+    meta
+  );
   return startWorkflow(stackName, bucketName, workflowName, workflowMsg);
 }
 

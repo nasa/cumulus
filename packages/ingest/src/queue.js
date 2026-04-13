@@ -10,6 +10,41 @@ const {
   getWorkflowFileKey,
   templateKey,
 } = require('@cumulus/common/workflows');
+const isNil = require('lodash/isNil');
+
+const CmrProviderNotConfiguredMessage = 'all collections must configure a cmr_provider for sf to be scheduled';
+class CMRProviderNotConfiguredError extends Error {
+  /**
+   *
+   * @param {string} message
+   */
+  constructor(message) {
+    super(`${message} ${CmrProviderNotConfiguredMessage}`);
+
+    this.name = 'CMRProviderNotConfiguredError';
+
+    Error.captureStackTrace(this, CMRProviderNotConfiguredError);
+  }
+}
+/**
+ * @typedef { import('@cumulus/types/api/collections').CollectionRecord } CollectionRecord
+ * @param {object | undefined} messageTemplate
+ * @param {CollectionRecord} collection
+ */
+function joinCollectionProviderToTemplateCmrMeta(messageTemplate, collection) {
+  const { cmrProvider } = collection;
+  if (isNil(cmrProvider)) {
+    throw new CMRProviderNotConfiguredError(
+      `no cmr_provider found for collection ${collection.name}___${collection.version}`
+    );
+  }
+  const templateCmr = messageTemplate?.meta?.cmr || {};
+  return {
+    ...templateCmr,
+    provider: cmrProvider,
+  };
+}
+exports.joinCollectionProviderToTemplateCmrMeta = joinCollectionProviderToTemplateCmrMeta;
 
 /**
  * Enqueue a PDR to be parsed
@@ -43,6 +78,10 @@ async function enqueueParsePdrMessage({
   additionalCustomMeta = {},
 }) {
   const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
+  let cmrMeta = {};
+  if (collection) {
+    cmrMeta = joinCollectionProviderToTemplateCmrMeta(messageTemplate, collection);
+  }
   const { arn: parsePdrArn } = await getJsonS3Object(
     systemBucket,
     getWorkflowFileKey(stack, parsePdrWorkflow)
@@ -62,6 +101,7 @@ async function enqueueParsePdrMessage({
       ...additionalCustomMeta,
       collection,
       provider,
+      cmr: cmrMeta,
     },
     executionNamePrefix,
   });
@@ -110,6 +150,10 @@ async function enqueueGranuleIngestMessage({
   executionNamePrefix,
   additionalCustomMeta = {},
 }) {
+  let cmrMeta = {};
+  if (collection) {
+    cmrMeta = joinCollectionProviderToTemplateCmrMeta(messageTemplate, collection);
+  }
   const message = buildQueueMessageFromTemplate({
     messageTemplate,
     parentExecutionArn,
@@ -120,6 +164,7 @@ async function enqueueGranuleIngestMessage({
       ...(pdr ? { pdr } : {}),
       collection,
       provider,
+      cmr: cmrMeta,
     },
     executionNamePrefix,
   });
@@ -163,6 +208,10 @@ async function enqueueWorkflowMessage({
   additionalCustomMeta = {},
 }) {
   const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
+  let cmrMeta = {};
+  if (collection) {
+    cmrMeta = joinCollectionProviderToTemplateCmrMeta(messageTemplate, collection);
+  }
   const { arn: queuedWorkflowArn } = await getJsonS3Object(
     systemBucket,
     getWorkflowFileKey(stack, workflow)
@@ -188,6 +237,7 @@ async function enqueueWorkflowMessage({
       ...additionalCustomMeta,
       collection,
       provider,
+      cmr: cmrMeta,
     },
   });
 
