@@ -2,10 +2,8 @@ import { Knex } from 'knex';
 
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('async_operations', (table) => {
-    // Primary key (sequence-backed)
     table.increments('cumulus_id').primary();
 
-    // Columns
     table.uuid('id').notNullable().unique();
     table.text('description').notNullable();
     table.text('operation_type').notNullable();
@@ -15,7 +13,6 @@ export async function up(knex: Knex): Promise<void> {
 
     table.timestamps(false, true);
 
-    // Indexes (can also be split out if you prefer)
     table.index(
       ['status', 'operation_type', 'cumulus_id'],
       'async_operations_status_operation_type_cumulus_id_index'
@@ -27,7 +24,6 @@ export async function up(knex: Knex): Promise<void> {
     );
   });
 
-  // CHECK constraints (must use raw)
   await knex.raw(`
     ALTER TABLE async_operations
     ADD CONSTRAINT async_operations_operation_type_check
@@ -60,7 +56,6 @@ export async function up(knex: Knex): Promise<void> {
     ]))
   `);
 
-  // Comments
   await knex.raw(`
     COMMENT ON COLUMN async_operations.id IS 'Unique ID for async operation';
     COMMENT ON COLUMN async_operations.description IS 'description for async operation';

@@ -2,10 +2,8 @@ import { Knex } from 'knex';
 
 export const up = async (knex: Knex): Promise<void> => {
   await knex.schema.createTable('reconciliation_reports', (table) => {
-    // Primary key
     table.increments('cumulus_id').primary();
 
-    // Columns
     table.text('name').notNullable();
     table.text('type').notNullable();
     table.text('status').notNullable();
@@ -15,18 +13,12 @@ export const up = async (knex: Knex): Promise<void> => {
 
     table.timestamps(false, true);
 
-    // Indexes
+    table.unique(['name']);
+
     table.index(['status'], 'reconciliation_reports_status_index');
     table.index(['updated_at'], 'reconciliation_reports_updated_at_index');
   });
 
-  // Unique constraint
-  await knex.raw(`
-    ALTER TABLE reconciliation_reports
-    ADD CONSTRAINT reconciliation_reports_name_unique UNIQUE (name);
-  `);
-
-  // CHECK constraints
   await knex.raw(`
     ALTER TABLE reconciliation_reports
     ADD CONSTRAINT reconciliation_reports_status_check
@@ -49,7 +41,6 @@ export const up = async (knex: Knex): Promise<void> => {
     ]));
   `);
 
-  // Comments
   await knex.raw(`
     COMMENT ON COLUMN reconciliation_reports.name IS 'Reconciliation Report name';
     COMMENT ON COLUMN reconciliation_reports.type IS 'Type of Reconciliation Report';

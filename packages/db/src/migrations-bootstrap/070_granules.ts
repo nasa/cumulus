@@ -2,14 +2,15 @@ import { Knex } from 'knex';
 
 export const up = async (knex: Knex): Promise<void> => {
   await knex.schema.createTable('granules', (table) => {
-    // Primary key
     table.bigIncrements('cumulus_id').primary();
 
-    // Columns
     table.text('granule_id').notNullable();
     table.text('status').notNullable();
 
-    table.integer('collection_cumulus_id').notNullable();
+    table.integer('collection_cumulus_id')
+      .references('cumulus_id')
+      .inTable('collections')
+      .notNullable();
 
     table.timestamps(false, true);
 
@@ -25,8 +26,12 @@ export const up = async (knex: Knex): Promise<void> => {
 
     table.text('cmr_link');
 
-    table.integer('pdr_cumulus_id');
-    table.integer('provider_cumulus_id');
+    table.integer('pdr_cumulus_id')
+      .references('cumulus_id')
+      .inTable('pdrs');
+    table.integer('provider_cumulus_id')
+      .references('cumulus_id')
+      .inTable('providers');
 
     table.timestamp('beginning_date_time', { useTz: true });
     table.timestamp('ending_date_time', { useTz: true });
@@ -43,7 +48,9 @@ export const up = async (knex: Knex): Promise<void> => {
 
     table.boolean('archived').notNullable().defaultTo(false);
 
-    // Indexes
+    table
+      .unique(['collection_cumulus_id', 'granule_id']);
+
     table.index(['archived'], 'granules_archived_index');
 
     table.index(
@@ -73,14 +80,6 @@ export const up = async (knex: Knex): Promise<void> => {
     table.index(['updated_at'], 'granules_updated_at_index');
   });
 
-  // Unique constraint
-  await knex.raw(`
-    ALTER TABLE granules
-    ADD CONSTRAINT granules_collection_cumulus_id_granule_id_unique
-    UNIQUE (collection_cumulus_id, granule_id);
-  `);
-
-  // CHECK constraint
   await knex.raw(`
     ALTER TABLE granules
     ADD CONSTRAINT granules_status_check
@@ -92,30 +91,6 @@ export const up = async (knex: Knex): Promise<void> => {
     ]));
   `);
 
-  // Foreign keys
-  // TODO create inline
-  await knex.raw(`
-    ALTER TABLE granules
-    ADD CONSTRAINT granules_collection_cumulus_id_foreign
-    FOREIGN KEY (collection_cumulus_id)
-    REFERENCES collections(cumulus_id);
-  `);
-
-  await knex.raw(`
-    ALTER TABLE granules
-    ADD CONSTRAINT granules_pdr_cumulus_id_foreign
-    FOREIGN KEY (pdr_cumulus_id)
-    REFERENCES pdrs(cumulus_id);
-  `);
-
-  await knex.raw(`
-    ALTER TABLE granules
-    ADD CONSTRAINT granules_provider_cumulus_id_foreign
-    FOREIGN KEY (provider_cumulus_id)
-    REFERENCES providers(cumulus_id);
-  `);
-
-  // Comments
   await knex.raw(`
     COMMENT ON COLUMN granules.cumulus_id IS 'Internal Cumulus ID for a granule';
     COMMENT ON COLUMN granules.granule_id IS 'Granule ID';

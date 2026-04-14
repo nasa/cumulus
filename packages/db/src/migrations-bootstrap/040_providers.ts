@@ -2,10 +2,8 @@ import { Knex } from 'knex';
 
 export const up = async (knex: Knex): Promise<void> => {
   await knex.schema.createTable('providers', (table) => {
-    // Primary key
     table.increments('cumulus_id').primary();
 
-    // Columns
     table.text('name').notNullable();
 
     table.text('protocol').notNullable().defaultTo('http');
@@ -28,17 +26,11 @@ export const up = async (knex: Knex): Promise<void> => {
 
     table.integer('max_download_time');
 
-    // Indexes
+    table.unique(['name']);
+
     table.index(['updated_at'], 'providers_updated_at_index');
   });
 
-  // Unique constraint
-  await knex.raw(`
-    ALTER TABLE providers
-    ADD CONSTRAINT providers_name_unique UNIQUE (name);
-  `);
-
-  // CHECK constraint
   await knex.raw(`
     ALTER TABLE providers
     ADD CONSTRAINT providers_protocol_check
@@ -51,7 +43,6 @@ export const up = async (knex: Knex): Promise<void> => {
     ]));
   `);
 
-  // Comments
   await knex.raw(`
     COMMENT ON COLUMN providers.name IS 'Provider name';
     COMMENT ON COLUMN providers.protocol IS 'Protocol for the provider';

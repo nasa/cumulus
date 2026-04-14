@@ -2,15 +2,22 @@ import { Knex } from 'knex';
 
 export const up = async (knex: Knex): Promise<void> => {
   await knex.schema.createTable('pdrs', (table) => {
-    // Primary key
     table.increments('cumulus_id').primary();
 
-    // Foreign keys
-    table.integer('collection_cumulus_id').notNullable();
-    table.integer('provider_cumulus_id').notNullable();
-    table.bigInteger('execution_cumulus_id');
+    table.integer('collection_cumulus_id')
+      .references('cumulus_id')
+      .inTable('collections')
+      .notNullable();
 
-    // Columns
+    table.integer('provider_cumulus_id')
+      .references('cumulus_id')
+      .inTable('providers')
+      .notNullable();
+
+    table.bigInteger('execution_cumulus_id')
+      .references('cumulus_id')
+      .inTable('executions');
+
     table.text('status').notNullable();
     table.text('name').notNullable();
 
@@ -29,7 +36,8 @@ export const up = async (knex: Knex): Promise<void> => {
 
     table.timestamps(false, true);
 
-    // Indexes
+    table.unique(['name']);
+
     table.index(
       ['collection_cumulus_id', 'status', 'cumulus_id'],
       'pdrs_coll_status_cumulus_id_index'
@@ -53,13 +61,6 @@ export const up = async (knex: Knex): Promise<void> => {
     table.index(['updated_at'], 'pdrs_updated_at_index');
   });
 
-  // Unique constraint
-  await knex.raw(`
-    ALTER TABLE pdrs
-    ADD CONSTRAINT pdrs_name_unique UNIQUE (name);
-  `);
-
-  // CHECK constraint
   await knex.raw(`
     ALTER TABLE pdrs
     ADD CONSTRAINT pdrs_status_check
@@ -70,29 +71,6 @@ export const up = async (knex: Knex): Promise<void> => {
     ]));
   `);
 
-  // Foreign keys
-  await knex.raw(`
-    ALTER TABLE pdrs
-    ADD CONSTRAINT pdrs_collection_cumulus_id_foreign
-    FOREIGN KEY (collection_cumulus_id)
-    REFERENCES collections(cumulus_id);
-  `);
-
-  await knex.raw(`
-    ALTER TABLE pdrs
-    ADD CONSTRAINT pdrs_execution_cumulus_id_foreign
-    FOREIGN KEY (execution_cumulus_id)
-    REFERENCES executions(cumulus_id);
-  `);
-
-  await knex.raw(`
-    ALTER TABLE pdrs
-    ADD CONSTRAINT pdrs_provider_cumulus_id_foreign
-    FOREIGN KEY (provider_cumulus_id)
-    REFERENCES providers(cumulus_id);
-  `);
-
-  // Comments
   await knex.raw(`
     COMMENT ON COLUMN pdrs.cumulus_id IS 'Internal Cumulus ID for a PDR';
     COMMENT ON COLUMN pdrs.status IS 'Status (running, failed, completed) of the PDR';

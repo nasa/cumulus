@@ -2,10 +2,8 @@ import { Knex } from 'knex';
 
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('collections', (table) => {
-    // Primary key (handles sequence automatically)
     table.increments('cumulus_id').primary();
 
-    // Columns
     table.text('name').notNullable();
     table.text('version').notNullable();
     table.text('sample_file_name').notNullable();
@@ -28,21 +26,14 @@ export async function up(knex: Knex): Promise<void> {
 
     table.timestamps(false, true);
 
-    table.text('cmr_provider');
+    table.text('cmr_provider').notNullable();
 
-    // Indexes
+    table.unique(['name', 'version']);
+
     table.index(['cmr_provider'], 'collection_cmr_provider_index');
     table.index(['updated_at'], 'collections_updated_at_index');
   });
 
-  // Unique constraint (name + version)
-  await knex.raw(`
-    ALTER TABLE collections
-    ADD CONSTRAINT collections_name_version_unique
-    UNIQUE (name, version);
-  `);
-
-  // CHECK constraint
   await knex.raw(`
     ALTER TABLE collections
     ADD CONSTRAINT collections_duplicate_handling_check
@@ -54,7 +45,6 @@ export async function up(knex: Knex): Promise<void> {
     ]));
   `);
 
-  // Comments
   await knex.raw(`
     COMMENT ON COLUMN collections.name IS 'Collection short_name registered with the CMR';
     COMMENT ON COLUMN collections.version IS 'The version registered with the CMR';

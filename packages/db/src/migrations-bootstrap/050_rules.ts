@@ -2,15 +2,18 @@ import { Knex } from 'knex';
 
 export const up = async (knex: Knex): Promise<void> => {
   await knex.schema.createTable('rules', (table) => {
-    // Primary key
     table.increments('cumulus_id').primary();
 
-    // Columns
     table.text('name').notNullable();
     table.text('workflow').notNullable();
 
-    table.integer('collection_cumulus_id');
-    table.integer('provider_cumulus_id');
+    table.integer('collection_cumulus_id')
+      .references('cumulus_id')
+      .inTable('collections');
+
+    table.integer('provider_cumulus_id')
+      .references('cumulus_id')
+      .inTable('providers');
 
     table.text('type').notNullable();
     table.boolean('enabled').notNullable();
@@ -29,17 +32,11 @@ export const up = async (knex: Knex): Promise<void> => {
 
     table.timestamps(false, true);
 
-    // Indexes
+    table.unique(['name']);
+
     table.index(['updated_at'], 'rules_updated_at_index');
   });
 
-  // Unique constraint
-  await knex.raw(`
-    ALTER TABLE rules
-    ADD CONSTRAINT rules_name_unique UNIQUE (name);
-  `);
-
-  // CHECK constraint
   await knex.raw(`
     ALTER TABLE rules
     ADD CONSTRAINT rules_type_check
@@ -52,22 +49,6 @@ export const up = async (knex: Knex): Promise<void> => {
     ]));
   `);
 
-  // Foreign keys
-  await knex.raw(`
-    ALTER TABLE rules
-    ADD CONSTRAINT rules_collection_cumulus_id_foreign
-    FOREIGN KEY (collection_cumulus_id)
-    REFERENCES collections(cumulus_id);
-  `);
-
-  await knex.raw(`
-    ALTER TABLE rules
-    ADD CONSTRAINT rules_provider_cumulus_id_foreign
-    FOREIGN KEY (provider_cumulus_id)
-    REFERENCES providers(cumulus_id);
-  `);
-
-  // Comments
   await knex.raw(`
     COMMENT ON COLUMN rules.name IS 'Rule name';
     COMMENT ON COLUMN rules.workflow IS 'Workflow name to invoke for this rule';

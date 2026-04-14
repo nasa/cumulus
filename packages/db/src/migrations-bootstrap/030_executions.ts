@@ -2,15 +2,22 @@ import { Knex } from 'knex';
 
 export const up = async (knex: Knex): Promise<void> => {
   await knex.schema.createTable('executions', (table) => {
-    // Primary key (bigint + sequence)
     table.bigIncrements('cumulus_id').primary();
 
-    // Columns
     table.text('arn').notNullable();
 
-    table.integer('async_operation_cumulus_id');
-    table.integer('collection_cumulus_id');
-    table.bigInteger('parent_cumulus_id');
+    table.integer('async_operation_cumulus_id')
+      .references('cumulus_id')
+      .inTable('async_operations');
+
+    table.integer('collection_cumulus_id')
+      .references('cumulus_id')
+      .inTable('collections');
+
+    table.bigInteger('parent_cumulus_id')
+      .references('cumulus_id')
+      .inTable('executions')
+      .onDelete('SET NULL');
 
     table.text('cumulus_version');
     table.text('url');
@@ -32,7 +39,9 @@ export const up = async (knex: Knex): Promise<void> => {
 
     table.boolean('archived').notNullable().defaultTo(false);
 
-    // Indexes
+    table.unique(['arn']);
+    table.unique(['url']);
+
     table.index(['archived'], 'executions_archived_index');
     table.index(['collection_cumulus_id'], 'executions_collection_cumulus_id_index');
     table.index(['parent_cumulus_id'], 'executions_parent_cumulus_id_index');
@@ -43,18 +52,6 @@ export const up = async (knex: Knex): Promise<void> => {
     table.index(['updated_at'], 'executions_updated_at_index');
   });
 
-  // Unique constraints
-  await knex.raw(`
-    ALTER TABLE executions
-    ADD CONSTRAINT executions_arn_unique UNIQUE (arn);
-  `);
-
-  await knex.raw(`
-    ALTER TABLE executions
-    ADD CONSTRAINT executions_url_unique UNIQUE (url);
-  `);
-
-  // CHECK constraint
   await knex.raw(`
     ALTER TABLE executions
     ADD CONSTRAINT executions_status_check
@@ -66,30 +63,6 @@ export const up = async (knex: Knex): Promise<void> => {
     ]));
   `);
 
-  // Foreign keys
-  await knex.raw(`
-    ALTER TABLE executions
-    ADD CONSTRAINT executions_async_operation_cumulus_id_foreign
-    FOREIGN KEY (async_operation_cumulus_id)
-    REFERENCES async_operations(cumulus_id);
-  `);
-
-  await knex.raw(`
-    ALTER TABLE executions
-    ADD CONSTRAINT executions_collection_cumulus_id_foreign
-    FOREIGN KEY (collection_cumulus_id)
-    REFERENCES collections(cumulus_id);
-  `);
-
-  await knex.raw(`
-    ALTER TABLE executions
-    ADD CONSTRAINT executions_parent_cumulus_id_foreign
-    FOREIGN KEY (parent_cumulus_id)
-    REFERENCES executions(cumulus_id)
-    ON DELETE SET NULL;
-  `);
-
-  // Comments
   await knex.raw(`
     COMMENT ON COLUMN executions.arn IS 'Execution ARN';
     COMMENT ON COLUMN executions.cumulus_version IS 'Cumulus version for the execution';
