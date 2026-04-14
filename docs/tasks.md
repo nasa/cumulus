@@ -7,6 +7,7 @@ hide_title: false
 A list of reusable Cumulus tasks. [Add your own.](adding-a-task.md)
 
 ## Tasks
+
 ### [@cumulus/add-missing-file-checksums](https://github.com/nasa/cumulus/tree/master/tasks/add-missing-file-checksums#readme)
 
 Add checksums to files in S3 which don't have one
