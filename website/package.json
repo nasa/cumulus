@@ -3,9 +3,6 @@
   "version": "21.3.3",
   "description": "The Cumulus website",
   "license": "Apache-2.0",
-  "overrides": {
-    "webpack": "5.105.4"
-  },
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
@@ -22,6 +19,9 @@
     "@docusaurus/core": "^2.3.0",
     "@docusaurus/preset-classic": "^2.3.0",
     "react": "^17.0.2"
+  },
+  "overrides": {
+    "webpack": "5.105.4"
   },
   "private": true
 }
