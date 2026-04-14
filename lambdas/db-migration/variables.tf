@@ -32,6 +32,12 @@ variable "tags" {
   default = {}
 }
 
+variable "use_bootstrap" {
+  description = "Whether to run the bootstrap migrations when creating database schemas"
+  type        = bool
+  default     = true
+}
+
 variable "vpc_id" {
   type    = string
   default = null
