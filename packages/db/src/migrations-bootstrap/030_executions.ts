@@ -1,57 +1,95 @@
 import { Knex } from 'knex';
 
+const PARTITION_COUNT = 8;
+
 export const up = async (knex: Knex): Promise<void> => {
-  await knex.schema.createTable('executions', (table) => {
-    table.bigIncrements('cumulus_id').primary();
+  // Parent partitioned table
+  await knex.raw(`
+    CREATE TABLE executions (
+      cumulus_id BIGSERIAL,
+      arn TEXT NOT NULL,
 
-    table.text('arn').notNullable();
+      async_operation_cumulus_id INTEGER,
+      collection_cumulus_id INTEGER,
+      parent_cumulus_id BIGINT,
 
-    table.integer('async_operation_cumulus_id')
-      .references('cumulus_id')
-      .inTable('async_operations');
+      cumulus_version TEXT,
+      url TEXT,
 
-    table.integer('collection_cumulus_id')
-      .references('cumulus_id')
-      .inTable('collections');
+      status TEXT NOT NULL,
 
-    table.bigInteger('parent_cumulus_id')
-      .references('cumulus_id')
-      .inTable('executions')
-      .onDelete('SET NULL');
+      tasks JSONB,
+      error JSONB,
 
-    table.text('cumulus_version');
-    table.text('url');
+      workflow_name TEXT,
+      duration REAL,
 
-    table.text('status').notNullable();
+      original_payload JSONB,
+      final_payload JSONB,
 
-    table.jsonb('tasks');
-    table.jsonb('error');
+      "timestamp" TIMESTAMPTZ,
 
-    table.text('workflow_name');
-    table.float('duration');
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
 
-    table.jsonb('original_payload');
-    table.jsonb('final_payload');
+      archived BOOLEAN DEFAULT FALSE NOT NULL,
 
-    table.timestamp('timestamp', { useTz: true });
+      CONSTRAINT executions_pkey PRIMARY KEY (cumulus_id),
 
-    table.timestamps(false, true);
+      CONSTRAINT executions_arn_unique UNIQUE (arn, cumulus_id),
+      CONSTRAINT executions_url_unique UNIQUE (url, cumulus_id)
+    )
+    PARTITION BY HASH (cumulus_id);
+  `);
 
-    table.boolean('archived').notNullable().defaultTo(false);
+  // Partitions
+  await Promise.all(
+    Array.from({ length: PARTITION_COUNT }).map((_, i) =>
+      knex.raw(`
+        CREATE TABLE executions_p${i}
+        PARTITION OF executions
+        FOR VALUES WITH (MODULUS ${PARTITION_COUNT}, REMAINDER ${i});
+      `))
+  );
 
-    table.unique(['arn']);
-    table.unique(['url']);
+  // INDEXES (on parent → propagate)
+  await knex.raw(`
+    CREATE INDEX executions_archived_index
+      ON executions (archived);
 
-    table.index(['archived'], 'executions_archived_index');
-    table.index(['collection_cumulus_id'], 'executions_collection_cumulus_id_index');
-    table.index(['parent_cumulus_id'], 'executions_parent_cumulus_id_index');
-    table.index(
-      ['status', 'collection_cumulus_id', 'cumulus_id'],
-      'executions_status_collection_cumulus_id_index'
-    );
-    table.index(['updated_at'], 'executions_updated_at_index');
-  });
+    CREATE INDEX executions_collection_cumulus_id_index
+      ON executions (collection_cumulus_id);
 
+    CREATE INDEX executions_parent_cumulus_id_index
+      ON executions (parent_cumulus_id);
+
+    CREATE INDEX executions_status_collection_cumulus_id_index
+      ON executions (status, collection_cumulus_id, cumulus_id);
+
+    CREATE INDEX executions_updated_at_index
+      ON executions (updated_at);
+  `);
+
+  // FOREIGN KEYS
+  await knex.raw(`
+    ALTER TABLE executions
+    ADD CONSTRAINT executions_async_operation_cumulus_id_foreign
+    FOREIGN KEY (async_operation_cumulus_id)
+    REFERENCES async_operations(cumulus_id);
+
+    ALTER TABLE executions
+    ADD CONSTRAINT executions_collection_cumulus_id_foreign
+    FOREIGN KEY (collection_cumulus_id)
+    REFERENCES collections(cumulus_id);
+
+    ALTER TABLE executions
+    ADD CONSTRAINT executions_parent_cumulus_id_foreign
+    FOREIGN KEY (parent_cumulus_id)
+    REFERENCES executions(cumulus_id)
+    ON DELETE SET NULL;
+  `);
+
+  // CHECK CONSTRAINT
   await knex.raw(`
     ALTER TABLE executions
     ADD CONSTRAINT executions_status_check
@@ -63,6 +101,7 @@ export const up = async (knex: Knex): Promise<void> => {
     ]));
   `);
 
+  // COMMENTS
   await knex.raw(`
     COMMENT ON COLUMN executions.arn IS 'Execution ARN';
     COMMENT ON COLUMN executions.cumulus_version IS 'Cumulus version for the execution';
@@ -80,5 +119,5 @@ export const up = async (knex: Knex): Promise<void> => {
 };
 
 export const down = async (knex: Knex): Promise<void> => {
-  await knex.schema.dropTableIfExists('executions');
+  await knex.raw('DROP TABLE IF EXISTS executions CASCADE;');
 };

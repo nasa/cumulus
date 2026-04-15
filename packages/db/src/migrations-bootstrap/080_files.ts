@@ -1,37 +1,62 @@
 import { Knex } from 'knex';
 
+const PARTITION_COUNT = 8;
+
 export const up = async (knex: Knex): Promise<void> => {
-  await knex.schema.createTable('files', (table) => {
-    table.bigIncrements('cumulus_id').primary();
+  // Parent partitioned table
+  await knex.raw(`
+    CREATE TABLE files (
+      cumulus_id BIGSERIAL,
+      granule_cumulus_id BIGINT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
 
-    table.bigInteger('granule_cumulus_id').notNullable();
-    table.foreign('granule_cumulus_id')
-      .references('cumulus_id')
-      .inTable('granules')
-      .onDelete('CASCADE');
+      file_size BIGINT,
+      bucket TEXT NOT NULL,
+      checksum_type TEXT,
+      checksum_value TEXT,
+      file_name TEXT,
+      key TEXT NOT NULL,
+      path TEXT,
+      source TEXT,
+      type TEXT,
 
-    table.timestamps(false, true);
+      CONSTRAINT files_pkey PRIMARY KEY (cumulus_id),
 
-    table.bigInteger('file_size');
+      CONSTRAINT files_bucket_key_unique UNIQUE (bucket, key, cumulus_id)
+    )
+    PARTITION BY HASH (cumulus_id);
+  `);
 
-    table.text('bucket').notNullable();
+  // Partitions
+  await Promise.all(
+    Array.from({ length: PARTITION_COUNT }).map((_, i) =>
+      knex.raw(`
+        CREATE TABLE files_p${i}
+        PARTITION OF files
+        FOR VALUES WITH (MODULUS ${PARTITION_COUNT}, REMAINDER ${i});
+      `))
+  );
 
-    table.text('checksum_type');
-    table.text('checksum_value');
+  // Indexes (on parent → propagate to partitions)
+  await knex.raw(`
+    CREATE INDEX files_granule_cumulus_id_index
+      ON files (granule_cumulus_id);
 
-    table.text('file_name');
+    CREATE INDEX files_updated_at_index
+      ON files (updated_at);
+  `);
 
-    table.text('key').notNullable();
-    table.text('path');
-    table.text('source');
-    table.text('type');
+  // Foreign key (must be added after partition creation)
+  await knex.raw(`
+    ALTER TABLE files
+    ADD CONSTRAINT files_granule_cumulus_id_foreign
+    FOREIGN KEY (granule_cumulus_id)
+    REFERENCES granules(cumulus_id)
+    ON DELETE CASCADE;
+  `);
 
-    table.unique(['bucket', 'key']);
-
-    table.index(['granule_cumulus_id'], 'files_granule_cumulus_id_index');
-    table.index(['updated_at'], 'files_updated_at_index');
-  });
-
+  // Comments
   await knex.raw(`
     COMMENT ON COLUMN files.cumulus_id IS 'Internal Cumulus ID for a file';
     COMMENT ON COLUMN files.file_size IS 'Size of file (bytes)';
@@ -47,5 +72,5 @@ export const up = async (knex: Knex): Promise<void> => {
 };
 
 export const down = async (knex: Knex): Promise<void> => {
-  await knex.schema.dropTableIfExists('files');
+  await knex.raw('DROP TABLE IF EXISTS files CASCADE;');
 };

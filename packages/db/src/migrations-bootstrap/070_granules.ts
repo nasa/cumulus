@@ -1,84 +1,80 @@
 import { Knex } from 'knex';
 
+const PARTITION_COUNT = 8;
+
 export const up = async (knex: Knex): Promise<void> => {
-  await knex.schema.createTable('granules', (table) => {
-    table.bigIncrements('cumulus_id').primary();
+  // Parent partitioned table
+  await knex.raw(`
+    CREATE TABLE granules (
+      cumulus_id BIGSERIAL,
+      granule_id TEXT NOT NULL,
+      status TEXT NOT NULL,
+      collection_cumulus_id INTEGER NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      published BOOLEAN,
+      duration REAL,
+      time_to_archive REAL,
+      time_to_process REAL,
+      product_volume BIGINT,
+      error JSONB,
+      cmr_link TEXT,
+      pdr_cumulus_id INTEGER,
+      provider_cumulus_id INTEGER,
+      beginning_date_time TIMESTAMPTZ,
+      ending_date_time TIMESTAMPTZ,
+      last_update_date_time TIMESTAMPTZ,
+      processing_end_date_time TIMESTAMPTZ,
+      processing_start_date_time TIMESTAMPTZ,
+      production_date_time TIMESTAMPTZ,
+      query_fields JSONB,
+      "timestamp" TIMESTAMPTZ,
+      producer_granule_id TEXT NOT NULL,
+      archived BOOLEAN DEFAULT FALSE NOT NULL,
 
-    table.text('granule_id').notNullable();
-    table.text('status').notNullable();
+      CONSTRAINT granules_pkey PRIMARY KEY (cumulus_id),
 
-    table.integer('collection_cumulus_id')
-      .references('cumulus_id')
-      .inTable('collections')
-      .notNullable();
+      CONSTRAINT granules_granule_id_unique UNIQUE (granule_id, cumulus_id)
+    )
+    PARTITION BY HASH (cumulus_id);
+  `);
 
-    table.timestamps(false, true);
+  // Create partitions
+  await Promise.all(
+    Array.from({ length: PARTITION_COUNT }).map((_, i) =>
+      knex.raw(`
+      CREATE TABLE granules_p${i}
+      PARTITION OF granules
+      FOR VALUES WITH (MODULUS ${PARTITION_COUNT}, REMAINDER ${i});
+    `))
+  );
 
-    table.boolean('published');
+  // Indexes (must be created on parent → propagates)
+  await knex.raw(`
+    CREATE INDEX granules_archived_index
+      ON granules (archived);
 
-    table.float('duration');
-    table.float('time_to_archive');
-    table.float('time_to_process');
+    CREATE INDEX granules_coll_status_processendtime_cumulus_id_index
+      ON granules (collection_cumulus_id, status, processing_end_date_time, cumulus_id);
 
-    table.bigInteger('product_volume');
+    CREATE INDEX granules_collection_updated_idx
+      ON granules (collection_cumulus_id, updated_at);
 
-    table.jsonb('error');
+    CREATE INDEX granules_granule_id_index
+      ON granules (granule_id);
 
-    table.text('cmr_link');
+    CREATE INDEX granules_producer_granule_id_index
+      ON granules (producer_granule_id);
 
-    table.integer('pdr_cumulus_id')
-      .references('cumulus_id')
-      .inTable('pdrs');
-    table.integer('provider_cumulus_id')
-      .references('cumulus_id')
-      .inTable('providers');
+    CREATE INDEX granules_provider_collection_cumulus_id_granule_id_index
+      ON granules (provider_cumulus_id, collection_cumulus_id, granule_id);
 
-    table.timestamp('beginning_date_time', { useTz: true });
-    table.timestamp('ending_date_time', { useTz: true });
-    table.timestamp('last_update_date_time', { useTz: true });
-    table.timestamp('processing_end_date_time', { useTz: true });
-    table.timestamp('processing_start_date_time', { useTz: true });
-    table.timestamp('production_date_time', { useTz: true });
+    CREATE INDEX granules_status_provider_collection_cumulus_id_index
+      ON granules (status, provider_cumulus_id, collection_cumulus_id, cumulus_id);
 
-    table.jsonb('query_fields');
-
-    table.timestamp('timestamp', { useTz: true });
-
-    table.text('producer_granule_id').notNullable();
-
-    table.boolean('archived').notNullable().defaultTo(false);
-
-    table
-      .unique(['collection_cumulus_id', 'granule_id']);
-
-    table.index(['archived'], 'granules_archived_index');
-
-    table.index(
-      ['collection_cumulus_id', 'status', 'processing_end_date_time', 'cumulus_id'],
-      'granules_coll_status_processendtime_cumulus_id_index'
-    );
-
-    table.index(
-      ['collection_cumulus_id', 'updated_at'],
-      'granules_collection_updated_idx'
-    );
-
-    table.index(['granule_id'], 'granules_granule_id_index');
-
-    table.index(['producer_granule_id'], 'granules_producer_granule_id_index');
-
-    table.index(
-      ['provider_cumulus_id', 'collection_cumulus_id', 'granule_id'],
-      'granules_provider_collection_cumulus_id_granule_id_index'
-    );
-
-    table.index(
-      ['status', 'provider_cumulus_id', 'collection_cumulus_id', 'cumulus_id'],
-      'granules_status_provider_collection_cumulus_id_index'
-    );
-
-    table.index(['updated_at'], 'granules_updated_at_index');
-  });
+    CREATE INDEX granules_updated_at_index
+      ON granules (updated_at);
+  `);
 
   await knex.raw(`
     ALTER TABLE granules
@@ -91,6 +87,25 @@ export const up = async (knex: Knex): Promise<void> => {
     ]));
   `);
 
+  // Foreign keys (must be added after)
+  await knex.raw(`
+    ALTER TABLE granules
+    ADD CONSTRAINT granules_collection_cumulus_id_foreign
+    FOREIGN KEY (collection_cumulus_id)
+    REFERENCES collections(cumulus_id);
+
+    ALTER TABLE granules
+    ADD CONSTRAINT granules_pdr_cumulus_id_foreign
+    FOREIGN KEY (pdr_cumulus_id)
+    REFERENCES pdrs(cumulus_id);
+
+    ALTER TABLE granules
+    ADD CONSTRAINT granules_provider_cumulus_id_foreign
+    FOREIGN KEY (provider_cumulus_id)
+    REFERENCES providers(cumulus_id);
+  `);
+
+  // Comments
   await knex.raw(`
     COMMENT ON COLUMN granules.cumulus_id IS 'Internal Cumulus ID for a granule';
     COMMENT ON COLUMN granules.granule_id IS 'Granule ID';
@@ -114,5 +129,5 @@ export const up = async (knex: Knex): Promise<void> => {
 };
 
 export const down = async (knex: Knex): Promise<void> => {
-  await knex.schema.dropTableIfExists('granules');
+  await knex.raw('DROP TABLE IF EXISTS granules CASCADE;');
 };
