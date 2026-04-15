@@ -85,7 +85,7 @@
     "@octokit/graphql": "^2.3.0",
     "@smithy/types": "^2.11.0",
     "@types/aws-lambda": "^8.10.58",
-    "@types/lodash": "^4.14.150",
+    "@types/lodash": "^4.17.24",
     "@types/lodash.iserror": "^3.1.6",
     "@types/mime-types": "^2.1.0",
     "@types/node": "^12.12.6",
@@ -129,7 +129,7 @@
     "jsdoc-to-markdown": "7.1.1",
     "latest-version": "^9.0.0",
     "lerna": "^6.6.2",
-    "lodash": "^4.17.21",
+    "lodash": "^4.18.1",
     "markdownlint-cli": "^0.31.1",
     "md5": "^2.2.1",
     "mime-types": "^2.1.22",
@@ -167,7 +167,9 @@
   },
   "overrides": {
     "lerna": { "semver": "^7.5.2" },
-    "form-data": "^4.0.4"
+    "form-data": "^4.0.4",
+    "lodash@4": "^4.18.1",
+    "lodash-es@4": "^4.18.1"
   },
   "private": true
 }

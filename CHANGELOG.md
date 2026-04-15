@@ -4,12 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## Unreleased
+## [Unreleased]
 
 ## [v20.3.3] 2025-04-13 [BACKPORT]
 
 Please note changes in 20.3.3 may not yet be released in future versions, as this is a backport and patch release on the 20.3.x series of releases. Updates that are included in the future will have a corresponding CHANGELOG entry in future releases.
 
+### Fixed
+
+- Upgraded package `lodash` to version 4.18.1.
 - **CSD-100**
   - made changes to the `PrivateApiLambda` and `ApiEndpoints` lambdas to ensure the environment variables
     are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported

@@ -41,6 +41,6 @@
     "@cumulus/launchpad-auth": "20.3.3",
     "@cumulus/logger": "20.3.3",
     "got": "^11.8.5",
-    "lodash": "^4.17.21"
+    "lodash": "^4.18.1"
   }
 }

@@ -49,7 +49,7 @@
     "@cumulus/errors": "20.3.3",
     "@cumulus/ingest": "20.3.3",
     "@cumulus/message": "20.3.3",
-    "lodash": "^4.17.21"
+    "lodash": "^4.18.1"
   },
   "devDependencies": {
     "@cumulus/schemas": "20.3.3"

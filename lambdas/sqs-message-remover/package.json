@@ -43,6 +43,6 @@
     "@cumulus/common": "20.3.3",
     "@cumulus/ingest": "20.3.3",
     "@cumulus/logger": "20.3.3",
-    "lodash": "^4.17.21"
+    "lodash": "^4.18.1"
   }
 }
