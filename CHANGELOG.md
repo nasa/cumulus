@@ -65,6 +65,34 @@ Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
 - **CUMULUS-4606**
   - Added prefix to IAM resource names to prevent collisions from multiple deployments in sandbox environment
 
+## [v21.3.3] 2026-04-10
+
+- Upgraded package `lodash` to version 4.18.1.
+
+- **CUMULUS-4576** Upgrade Cumulus to use the latest version of TEA (3.0.0)
+  ** UPGRADE NOTE: When upgrading the TEA module version, use a two-phase apply to prevent rollback failures
+  caused by Terraform destroying old lambda S3 objects before the CloudFormation stack update completes.
+
+ Phase 1 — upload new S3 objects and update CF stack (keeps old S3 objects intact as rollback targets if the CF update fails):
+   ````terraform apply \
+     -target=module.thin_egress_app.aws_s3_object.cloudformation_template \
+     -target=module.thin_egress_app.aws_s3_object.lambda_source \
+     -target=module.thin_egress_app.aws_s3_object.lambda_code_dependency_archive \
+     -target=module.thin_egress_app.aws_s3_bucket.lambda_source \
+     -target=module.thin_egress_app.aws_cloudformation_stack.thin_egress_app \
+     -var-file=env/sandbox.tfvars
+   ````
+ Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
+````terraform apply -var-file=env/sandbox.tfvars````
+
+### Changed
+
+- **CSD-100**
+  - made changes to the `PrivateApiLambda` and `ApiEndpoints` lambdas to ensure the environment variables
+    are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported
+- **CUMULUS-4567**
+  - Add SQL and TypeScript migration files to alter the executions_cumulus_id sequence type.
+
 ## [v21.3.2] 2026-03-20
 
 ### Migration Notes
