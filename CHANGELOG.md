@@ -44,7 +44,7 @@ Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
 - **async-operations-update**
   - Update Async Operation container to new version 56, `cumuluss/async-operation:56`. Users should update their references to `async-operation` with the new version.
 - **CUMULUS-4780**
-  - Implemented Partitioned Schema for Consolidated Database
+  - Implemented partitioned schema for consolidated database
 
 ### Changed
 
