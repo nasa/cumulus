@@ -54,8 +54,8 @@ resource "aws_iam_policy" "s3_access_policy" {
           "s3:DeleteObject"
         ],
         Resource = [
-          "arn:aws:s3:::your-bucket-name",
-          "arn:aws:s3:::your-bucket-name/*"
+          "arn:aws:s3:::${var.iceberg_s3_bucket}",
+          "arn:aws:s3:::${var.iceberg_s3_bucket}/*"
         ]
       }
     ]
@@ -74,7 +74,7 @@ resource "aws_iam_policy" "glue_access_policy" {
         Action = [
           "glue:*"
         ],
-        Resource = "*" # TODO: Scope down to specific ARNs if possible
+        Resource = "*"
       }
     ]
   })

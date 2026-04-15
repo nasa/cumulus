@@ -1,10 +1,21 @@
-variable "aws_profile" {
-  type    = string
-  default = null
-}
-
 variable "prefix" {
   description = "The unique prefix for your deployment resources"
+  type        = string
+}
+
+variable "region" {
+  description = "Region to deploy module to"
+  type        = string
+  default     = "us-east-1"
+}
+
+variable "rds_security_group" {
+  description = "RDS access security group"
+  type        = string
+}
+
+variable "task_security_group_id" {
+  description = "Security group to use for tasks"
   type        = string
 }
 
@@ -14,21 +25,31 @@ variable "aws_db_subnet_group_prefix" {
   default     = "cumulus-rds-tf-subnet"
 }
 
-variable "region" {
-  description = "Region to deploy module to"
+variable "rds_endpoint" {
+  description = "The rw endpoint for RDS"
   type        = string
-  default     = "us-east-1"
+}
+
+variable "rds_port" {
+  description = "The Postgres port"
+  type        = string
+  default     = "5432"
+}
+
+variable "db_admin_username" {
+  description = "Username for RDS database administrator authentication"
+  type        = string
+  default     = "postgres"
+}
+
+variable "db_admin_password" {
+  description = "Password for RDS database administrator authentication"
+  type = string
 }
 
 variable "subnet" {
   description = "Subnet for Fargate tasks"
   type    = string
-}
-
-variable "tags" {
-  description = "Tags to be applied to RDS cluster resources that support tags"
-  type        = map(string)
-  default     = {}
 }
 
 variable "vpc_id" {
@@ -49,7 +70,7 @@ variable "cpu" {
 }
 
 variable "cpu_architecture" {
-  description = "The architecture of the cpu platform. Valid values are X86_64 and ARM64"
+  description = "The architecture of the cpu platform. Valid values are X86_65 and ARM64"
   type        = string
   default     = "ARM64"
 }
@@ -81,12 +102,20 @@ variable "bootstrap_image" {
   type = string
 }
 
-variable "data_persistence_remote_state_config" {
-  type = object({ bucket = string, key = string, region = string })
+variable "tags" {
+  description = "Tags to be applied to RDS cluster resources that support tags"
+  type        = map(string)
+  default     = {}
 }
 
-variable "rds_cluster_remote_state_config" {
-  type = object({ bucket = string, key = string, region = string })
+variable "slot_name" {
+  description = "The name for the replication slot"
+  type = string
+}
+
+variable "table_include_list" {
+  description = "comma-separated list of dB tables to be replicated"
+  type = string
 }
 
 variable "iceberg_s3_bucket" {
@@ -98,3 +127,38 @@ variable "iceberg_namespace" {
   description = "iceberg namespace (same as glue database)"
   type = string
 }
+
+variable "pg_db" {
+  description = "postgres database"
+  type = string
+}
+
+variable "ecs_infrastructure_role" {
+  type = object({
+    arn  = string
+    name = string
+  })
+}
+
+variable "fargate_task_role" {
+  type = object({
+    arn  = string
+    name = string
+  })
+}
+
+variable "ecs_task_execution_role" {
+  type = object({
+    arn  = string
+    name = string
+  })
+}
+
+variable "ecs_cluster" {
+  type = object({
+    arn  = string
+    name = string
+    id   = string
+  })
+}
+

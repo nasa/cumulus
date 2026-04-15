@@ -14,6 +14,12 @@ variable "rds_endpoint" {
   type        = string
 }
 
+variable "rds_port" {
+  description = "The Postgres port"
+  type        = string
+  default     = "5432"
+}
+
 variable "db_admin_username" {
   description = "Username for RDS database administrator authentication"
   type        = string
@@ -36,9 +42,9 @@ variable "rds_security_group" {
   type        = string
 }
 
-variable "subnets" {
-  description = "Subnets for database cluster.  Requires at least 2 across multiple AZs"
-  type    = list(string)
+variable "subnet" {
+  description = "Subnet for Fargate tasks"
+  type    = string
 }
 
 variable "tags" {
@@ -89,5 +95,25 @@ variable "kafka_image" {
 
 variable "connect_image" {
   description = "Image used to start the kafka-connect container. See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-image"
+  type = string
+}
+
+variable "bootstrap_image" {
+  description = "Image used to start the bootstrap container. See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-image"
+  type = string
+}
+
+variable "iceberg_s3_bucket" {
+  description = "S3 bucket where iceberg tables are stored"
+  type = string
+}
+
+variable "iceberg_namespace" {
+  description = "iceberg namespace (same as glue database)"
+  type = string
+}
+
+variable "pg_db" {
+  description = "postgres database"
   type = string
 }
