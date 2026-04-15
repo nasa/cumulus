@@ -44,12 +44,12 @@ variable "db_admin_username" {
 
 variable "db_admin_password" {
   description = "Password for RDS database administrator authentication"
-  type = string
+  type        = string
 }
 
 variable "subnet" {
   description = "Subnet for Fargate tasks"
-  type    = string
+  type        = string
 }
 
 variable "vpc_id" {
@@ -59,14 +59,14 @@ variable "vpc_id" {
 
 variable "force_new_deployment" {
   description = "Enable to force a new task deployment of the service. See https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service#force_new_deployment"
-  type = bool
-  default = false
+  type        = bool
+  default     = false
 }
 
 variable "cpu" {
   description = "The number of CPU units the Amazon ECS container agent will reserve for the task"
-  type    = number
-  default = 4096 # 4 CPUs
+  type        = number
+  default     = 4096 # 4 CPUs
 }
 
 variable "cpu_architecture" {
@@ -89,17 +89,17 @@ variable "volume_size_in_gb" {
 
 variable "kafka_image" {
   description = "Image used to start the kafka container. See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-image"
-  type = string
+  type        = string
 }
 
 variable "connect_image" {
   description = "Image used to start the kafka-connect container. See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-image"
-  type = string
+  type        = string
 }
 
 variable "bootstrap_image" {
   description = "Image used to start the bootstrap container. See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-image"
-  type = string
+  type        = string
 }
 
 variable "tags" {
@@ -110,27 +110,27 @@ variable "tags" {
 
 variable "slot_name" {
   description = "The name for the replication slot"
-  type = string
+  type        = string
 }
 
 variable "table_include_list" {
   description = "comma-separated list of dB tables to be replicated"
-  type = string
+  type        = string
 }
 
 variable "iceberg_s3_bucket" {
   description = "S3 bucket where iceberg tables are stored"
-  type = string
+  type        = string
 }
 
 variable "iceberg_namespace" {
   description = "iceberg namespace (same as glue database)"
-  type = string
+  type        = string
 }
 
 variable "pg_db" {
   description = "postgres database"
-  type = string
+  type        = string
 }
 
 variable "ecs_infrastructure_role" {
@@ -161,4 +161,3 @@ variable "ecs_cluster" {
     id   = string
   })
 }
-
