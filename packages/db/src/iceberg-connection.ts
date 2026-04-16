@@ -42,17 +42,14 @@ const warmupConnection = async (conn: DuckDBConnection): Promise<void> => {
     await conn.run(`LOAD '${extBase}/aws.duckdb_extension';`);
   }
 
-  // 1. Set Regional Context
   // This is critical for Glue and S3 signing to work properly
   const region = process.env.AWS_REGION || 'us-east-1';
   await conn.run(`SET s3_region='${region}';`);
-  await conn.run(`SET s3_url_style='vhost';`);
+  await conn.run('SET s3_url_style=\'vhost\';');
 
-  // 2. Load AWS Identity
   // This populates DuckDB's internal session with your environment/profile credentials
   await conn.run('CALL load_aws_credentials();');
 
-  // 3. Register the Storage Secret
   // The Iceberg extension requires a formal 'SECRET' object to authorize S3 calls
   // 'credential_chain' allows it to automatically pick up the credentials from Step 2
   await conn.run('CREATE SECRET IF NOT EXISTS (TYPE S3, PROVIDER credential_chain);');
@@ -85,12 +82,12 @@ export const initializeDuckDb = async (): Promise<void> => {
 
     log.info(`Attaching Iceberg Glue catalog for account: ${awsAccountId}`);
 
-    // 1. Attach the account-level catalog
+    // Attach the account-level catalog
     await setupConn.run(
       `ATTACH '${awsAccountId}' AS glue_iceberg (TYPE iceberg, ENDPOINT_TYPE 'glue');`
     );
 
-    // 2. Map only the tables you need from your specific schema
+    // Map only the tables you need from your specific schema
     const tableNames = [
       'granules', 'collections', 'executions', 'pdrs',
       'providers', 'rules', 'async_operations', 'granules_executions',
