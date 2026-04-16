@@ -118,6 +118,12 @@ variable "table_include_list" {
   type        = string
 }
 
+variable "column_exclude_list" {
+  description = "Comma separated list of database columns that should not be replicated"
+  default     = ""
+  type        = string
+}
+
 variable "iceberg_s3_bucket" {
   description = "S3 bucket where iceberg tables are stored"
   type        = string

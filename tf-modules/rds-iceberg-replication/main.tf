@@ -18,19 +18,20 @@ locals {
   replication_services = {
     small-tables = {
       slot_name          = "${var.prefix}-small-tables"
-      table_include_list = "public.collections,public.async_operations,public.providers,public.pdrs,public.reconciliation_reports,public.rules"
+      table_include_list = "${var.pg_schema}.collections,${var.pg_schema}.async_operations,${var.pg_schema}.providers,${var.pg_schema}.pdrs,${var.pg_schema}.reconciliation_reports,${var.pg_schema}.rules"
     }
     executions = {
       slot_name          = "${var.prefix}-executions"
-      table_include_list = "public.executions"
+      table_include_list = "${var.pg_schema}.executions"
+      column_exclude_list = "${var.pg_schema}.executions.original_payload,${var.pg_schema}.executions.final_payload"
     }
     granules = {
       slot_name          = "${var.prefix}-granules"
-      table_include_list = "public.granules"
+      table_include_list = "${var.pg_schema}.granules"
     }
     files = {
       slot_name          = "${var.prefix}-files"
-      table_include_list = "public.files"
+      table_include_list = "${var.pg_schema}.files"
     }
   }
 }

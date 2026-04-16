@@ -142,6 +142,7 @@ resource "aws_ecs_task_definition" "default" {
         {name = "PG_USER", value = var.db_admin_username},
         {name = "PG_PASSWORD", value = var.db_admin_password},
         {name = "TABLES", value = var.table_include_list},
+        {name = "COLUMN_EXCLUDE_LIST", value = var.column_exclude_list},
         {name = "AWS_DEFAULT_REGION", value = var.region},
         {name = "ICEBERG_NAMESPACE", value = var.iceberg_namespace},
         {name = "ICEBERG_S3_BUCKET", value = var.iceberg_s3_bucket},

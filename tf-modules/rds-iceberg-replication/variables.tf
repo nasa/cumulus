@@ -117,3 +117,9 @@ variable "pg_db" {
   description = "postgres database"
   type = string
 }
+
+variable "pg_schema" {
+  description = "The name of the schema in the postgres database that contains the tables"
+  type = string
+  default = "public"
+}
