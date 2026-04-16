@@ -263,7 +263,19 @@ test.serial('parsePdr accepts an MD5 checksum', async (t) => {
   t.is(fileWithChecksum.checksumType, 'MD5');
 });
 
-test.serial('parsePdr throws an exception if the value of an MD5 checksum is not a string', async (t) => {
+test.serial('parsePdr accepts an MD5 checksum that is an unquoted all-decimal string', async (t) => {
+  t.context.payload.input.pdr.name = 'MOD09GQ-with-decimal-MD5-checksum.PDR';
+  await setUpTestPdrAndValidate(t).catch(t.fail);
+
+  const result = await parsePdr(t.context.payload);
+  await validateOutput(t, result).catch(t.fail);
+
+  const fileWithChecksum = result.granules[0].files.find((file) => file.name === 'MOD09GQ.A2017224.h09v02.006.2017227165020.hdf');
+  t.is(fileWithChecksum.checksumType, 'MD5');
+  t.is(fileWithChecksum.checksum, '73806951753129206387143405718909');
+});
+
+test.serial('parsePdr throws an exception if the value of an MD5 checksum is not a valid 32-character hex string', async (t) => {
   t.context.payload.input.pdr.name = 'MOD09GQ-with-invalid-MD5-checksum.PDR';
   await setUpTestPdrAndValidate(t).catch(t.fail);
 
@@ -271,7 +283,7 @@ test.serial('parsePdr throws an exception if the value of an MD5 checksum is not
     await parsePdr(t.context.payload);
     t.fail('Expected parsePdr to throw an error');
   } catch (error) {
-    t.true(error.message.startsWith('Expected MD5 value to be a string'));
+    t.true(error.message.startsWith('Expected MD5 value to be a 32-character hex string'));
   }
 });
 
