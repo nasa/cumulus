@@ -101,7 +101,7 @@ const validateChecksumInfo = (checksum, checksumType) => {
       throw new PDRParsingError(`Expected CKSUM value to be a number: ${checksum}`);
     }
     if (checksumType === 'MD5') {
-      if (!isString(checksum) || !/^[0-9a-fA-F]{32}$/.test(checksum)) {
+      if (!isString(checksum) || !/^[\dA-Fa-f]{32}$/.test(checksum)) {
         throw new PDRParsingError(`Expected MD5 value to be a 32-character hex string: ${checksum}`);
       }
     }
