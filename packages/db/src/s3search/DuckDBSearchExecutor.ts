@@ -87,5 +87,3 @@ export class DuckDBSearchExecutor {
     return { meta, results: apiRecords };
   }
 }
-
-

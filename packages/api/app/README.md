@@ -102,7 +102,7 @@ Then test it (`$token` is a Cumulus API token obtained from the [`/token` endpoi
 
 ```bash
 curl http://localhost:5001/version
-curl -H "Authorization: Bearer $token" "http://localhost:5001/granules" 
+curl -H "Authorization: Bearer $token" "http://localhost:5001/granules"
 ```
 
 ### Running With Docker
@@ -129,5 +129,5 @@ Then test it (`$token` is a Cumulus API token obtained from the [`/token` endpoi
 
 ```bash
 curl http://localhost:5001/version
-curl -H "Authorization: Bearer $token" "http://localhost:5001/granules" 
+curl -H "Authorization: Bearer $token" "http://localhost:5001/granules"
 ```

@@ -7,12 +7,12 @@
 
 const router = require('express-promise-router')();
 const Logger = require('@cumulus/logger');
-const { addOrcaRecoveryStatus } = require('../lib/orca');
 const {
   GranuleS3Search,
   acquireDuckDbConnection,
   releaseDuckDbConnection,
 } = require('@cumulus/db/duckdb');
+const { addOrcaRecoveryStatus } = require('../lib/orca');
 
 const log = new Logger({ sender: '@cumulus/api/iceberg-granules' });
 

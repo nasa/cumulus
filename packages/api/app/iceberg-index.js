@@ -37,7 +37,7 @@ log.info('Initializing Iceberg API (DuckDB/Iceberg mode)');
 // Load Environment Variables
 const initEnvVarsFunction = async () => {
   if (inTestMode() && process.env.INIT_ENV_VARS_FUNCTION_TEST !== 'true') {
-    return undefined;
+    return;
   }
   log.info('Initializing environment variables');
   const apiConfigSecretId = getRequiredEnvVar('api_config_secret_id');
@@ -124,10 +124,9 @@ const startServer = async () => {
         await destroyDuckDbClient();
         log.info('DuckDB connections closed');
         log.info('Graceful shutdown complete');
-        process.exit(0);
       } catch (error) {
         log.error('Error during graceful shutdown:', error);
-        process.exit(1);
+        throw error;
       }
     });
   };

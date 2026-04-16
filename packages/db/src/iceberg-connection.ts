@@ -19,13 +19,13 @@ const warmupConnection = async (conn: DuckDBConnection): Promise<void> => {
   if (isLocal) {
     // On Mac, let DuckDB download/load the correct architecture automatically
     // Using explicit INSTALL/LOAD ensures binaries exist on your local machine
-    await conn.run("INSTALL httpfs; LOAD httpfs;");
-    await conn.run("INSTALL iceberg; LOAD iceberg;");
-    await conn.run("INSTALL aws; LOAD aws;");
+    await conn.run('INSTALL httpfs; LOAD httpfs;');
+    await conn.run('INSTALL iceberg; LOAD iceberg;');
+    await conn.run('INSTALL aws; LOAD aws;');
   } else {
     // Production: Use pre-bundled Linux AMD64 extensions from the Docker image
     if (!dbVersionCache) {
-      const versionRes = await conn.run("SELECT version();");
+      const versionRes = await conn.run('SELECT version();');
       const rows = await versionRes.getRows();
       dbVersionCache = (rows[0][0] as string) || 'unknown';
     }
@@ -42,33 +42,33 @@ const warmupConnection = async (conn: DuckDBConnection): Promise<void> => {
     await conn.run(`LOAD '${extBase}/aws.duckdb_extension';`);
   }
 
-  // 1. Set Regional Context 
+  // 1. Set Regional Context
   // This is critical for Glue and S3 signing to work properly
   const region = process.env.AWS_REGION || 'us-east-1';
   await conn.run(`SET s3_region='${region}';`);
-  await conn.run("SET s3_url_style='vhost';");
+  await conn.run(`SET s3_url_style='vhost';`);
 
   // 2. Load AWS Identity
   // This populates DuckDB's internal session with your environment/profile credentials
-  await conn.run("CALL load_aws_credentials();");
+  await conn.run('CALL load_aws_credentials();');
 
   // 3. Register the Storage Secret
   // The Iceberg extension requires a formal 'SECRET' object to authorize S3 calls
   // 'credential_chain' allows it to automatically pick up the credentials from Step 2
-  await conn.run("CREATE SECRET IF NOT EXISTS (TYPE S3, PROVIDER credential_chain);");
+  await conn.run('CREATE SECRET IF NOT EXISTS (TYPE S3, PROVIDER credential_chain);');
 };
 
 /**
  * Initialize the DuckDB Instance and load required extensions.
  */
 export const initializeDuckDb = async (): Promise<void> => {
-  if (instance || isInitializing) return; 
+  if (instance || isInitializing) return;
   isInitializing = true;
 
   try {
     log.info('Initializing DuckDB Instance for Iceberg API...');
     instance = await DuckDBInstance.create(':memory:');
-    
+
     const setupConn = await instance.connect();
     await warmupConnection(setupConn);
 
@@ -92,15 +92,15 @@ export const initializeDuckDb = async (): Promise<void> => {
 
     // 2. Map only the tables you need from your specific schema
     const tableNames = [
-      'granules', 'collections', 'executions', 'pdrs', 
-      'providers', 'rules', 'async_operations', 'granules_executions'
+      'granules', 'collections', 'executions', 'pdrs',
+      'providers', 'rules', 'async_operations', 'granules_executions',
     ];
 
-    for (const tableName of tableNames) {
+    await Promise.all(tableNames.map(async (tableName) => {
       try {
         // Point specifically to your schema inside the attached catalog
         await setupConn.run(
-          `CREATE OR REPLACE VIEW "${tableName}" AS 
+          `CREATE OR REPLACE VIEW "${tableName}" AS
            SELECT * FROM glue_iceberg.${glueSchema}.${tableName};`
         );
         log.debug(`View created for ${glueSchema}.${tableName}`);
@@ -108,12 +108,12 @@ export const initializeDuckDb = async (): Promise<void> => {
         // Log warning if a specific table is missing from your schema
         log.warn(`Table ${tableName} not found in schema ${glueSchema}. Skipping.`);
       }
-    }
+    }));
 
     // Fill the pool
     connectionPool.push(setupConn);
     const remainingCount = MAX_POOL_SIZE - connectionPool.length;
-    
+
     if (remainingCount > 0) {
       const newConns = await Promise.all(
         Array.from({ length: remainingCount }).map(async () => {
@@ -124,9 +124,8 @@ export const initializeDuckDb = async (): Promise<void> => {
       );
       connectionPool.push(...newConns);
     }
-    
-    log.info('DuckDB initialization and view creation complete.');
 
+    log.info('DuckDB initialization and view creation complete.');
   } catch (error) {
     log.error('Failed to initialize DuckDB:', error);
     instance = undefined;
@@ -160,8 +159,8 @@ export const releaseDuckDbConnection = async (conn: DuckDBConnection): Promise<v
   if (connectionPool.length < MAX_POOL_SIZE) {
     connectionPool.push(conn);
   } else {
-    // No .close() method exists on DuckDBConnection. 
-    // Simply allowing the reference to be dropped is the correct way 
+    // No .close() method exists on DuckDBConnection.
+    // Simply allowing the reference to be dropped is the correct way
     // to handle connections that exceed the pool limit.
     log.debug('Pool full, discarding connection reference.');
   }

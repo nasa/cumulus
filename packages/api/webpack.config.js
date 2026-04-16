@@ -25,7 +25,7 @@ const root = path.resolve(__dirname);
  * This webpack configuration only builds Lambda functions.
  * The Iceberg API (iceberg-index.js) runs in ECS without webpack bundling,
  * allowing it to use native DuckDB libraries that cannot be bundled.
- * 
+ *
  * Iceberg-specific files are explicitly excluded from Lambda builds below.
  */
 module.exports = {
