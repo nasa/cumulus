@@ -737,3 +737,9 @@ variable "iceberg_s3_bucket" {
   type        = string
   default     = ""
 }
+
+variable "iceberg_glue_schema" {
+  description = "AWS Glue schema (database) name containing the Iceberg tables"
+  type        = string
+  default     = ""
+}

@@ -28,6 +28,9 @@ module "iceberg_api" {
 
   iceberg_s3_bucket = var.iceberg_s3_bucket
 
+  aws_account_id      = data.aws_caller_identity.current.account_id
+  iceberg_glue_schema = var.iceberg_glue_schema
+
   default_log_retention_days       = var.default_log_retention_days
   cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
 

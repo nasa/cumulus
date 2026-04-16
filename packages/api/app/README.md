@@ -1,37 +1,28 @@
 # Cumulus API Application
 
-This directory contains the main Express application for the Cumulus API.
+This directory contains two separate Express applications that share the same codebase but are deployed and operated differently.
 
-## Dual Deployment Modes
+---
 
-The Cumulus API supports two separate deployment modes with distinct entry points:
+## Cumulus API — Lambda (`index.js`)
 
-### Lambda Mode (Default) - `index.js`
+The main Cumulus API is deployed as an **AWS Lambda function** behind API Gateway. It is **not** run locally or in Docker — it is deployed and tested via Terraform and the standard Cumulus deployment process.
 
-The full Cumulus API runs as an AWS Lambda handler, serving all API endpoints:
-
-```javascript
-const { handler } = require('./index.js');
-// Use handler for Lambda invocations
-```
-
-- Uses AWS Serverless Express
-- Handles API Gateway events
+- Entry point: `index.js`
+- Uses AWS Serverless Express to handle API Gateway events
+- Serves all read/write API endpoints (collections, granules, executions, providers, rules, etc.)
+- Creates new Postgresql database connections per invocation
 - Deployed via Terraform as Lambda functions
-- Serves all API endpoints (collections, granules, executions, providers, rules, etc.)
-- Creates new database connections per invocation
 
-### Iceberg API Mode (ECS) - `iceberg-index.js`
+---
 
-A limited read-only API that runs as a standalone Express server in ECS querying iceberg tables:
+## Cumulus Iceberg API — ECS (`iceberg-index.js`)
 
-```bash
-node app/iceberg-index.js
-```
+A separate, limited **read-only** API deployed as a **long-running ECS Fargate service**. It queries Iceberg tables via AWS Glue and DuckDB instead of the primary Postgresql database.
 
-- Listens on HTTP port (default: 5001, configurable via `PORT`)
-- Suitable for container/ECS deployments
-- Does not use AWS Serverless Express middleware
+- Entry point: `iceberg-index.js`
+- Runs as a standalone Express HTTP server (port 5001 by default)
+- Deployed via Terraform as an ECS Fargate service with an Application Load Balancer
 - Only exposes read-only list endpoints:
 
   | Endpoint | Description |
@@ -51,130 +42,92 @@ node app/iceberg-index.js
   All list endpoints are also accessible under the `/v1/` prefix (e.g. `GET /v1/granules`).
 - Uses a singleton DuckDB connection pool for better performance
 
-## Docker Deployment
+### ECS Docker Image
 
-Build and run the API as a containerized service:
+The Iceberg API is packaged as a Docker image for ECS deployment:
 
 ```bash
 # Build from workspace root
 docker build -f packages/api/app/Dockerfile -t cumulus-iceberg-api:latest .
-
-# Run against AWS (production/staging)
-docker run -p 5001:5001 \
-  -e api_config_secret_id=<your-secret-id> \
-  -e dynamoTableNameString='{"AccessTokensTable":"<table-name>"}' \
-  -e AWS_REGION=us-east-1 \
-  -e ICEBERG_ACCOUNT_ID=<account-id> \
-  -e ICEBERG_BUCKET_NAME=<bucket-name> \
-  -e ICEBERG_TABLE_PATH=<base-path>/<namespace> \
-  cumulus-iceberg-api:latest
 ```
 
-The Dockerfile automatically uses `iceberg-index.js` as the entry point.
+The Dockerfile automatically uses `iceberg-index.js` as the entry point. In production the image is pushed to ECR and run by ECS — `AWS_ACCOUNT_ID` and `ICEBERG_GLUE_SCHEMA` are injected as ECS task environment variables by Terraform.
 
-## Environment Variables
+---
 
-### Required (both modes)
+## Environment Variables (Iceberg API only)
+
+### Required
 
 | Variable | Description |
 |---|---|
+| `api_config_secret_id` | AWS Secrets Manager secret ARN/name containing API configuration |
 | `dynamoTableNameString` | JSON string mapping table env-var names to DynamoDB table names, e.g. `{"AccessTokensTable":"my-table"}` |
-| `api_config_secret_id` | AWS Secrets Manager secret ID containing API configuration (skipped when `NODE_ENV=test`) |
+| `AWS_ACCOUNT_ID` | AWS account ID used to attach the Glue Iceberg catalog |
+| `ICEBERG_GLUE_SCHEMA` | AWS Glue schema (database) name containing the Iceberg tables |
 
-### Optional — Iceberg API server
+### Optional
 
 | Variable | Default | Description |
 |---|---|---|
 | `PORT` | `5001` | HTTP port the server listens on |
 | `DUCKDB_MAX_POOL` | `20` | DuckDB connection pool size |
-
-### Optional — Authentication
-
-| Variable | Description |
-|---|---|
-| `FAKE_AUTH=true` | Bypass authentication (for local testing only) |
-| `TOKEN_SECRET` | Secret used to sign JWT tokens; required when `FAKE_AUTH=true` (e.g. `test-secret`) |
-
-### Optional — Iceberg data source
-
-Set `LOCAL_ICEBERG_PATH` to query from a local directory instead of AWS S3 Tables (useful for local testing without AWS credentials).
-The server creates DuckDB views using `read_iceberg()` for each table, so the directory must contain one Iceberg table per resource:
-
-```
-LOCAL_ICEBERG_PATH/<namespace>/
-    granules/metadata/...
-    collections/metadata/...
-    executions/metadata/...
-    files/metadata/...
-    granules_executions/metadata/...
-    pdrs/metadata/...
-    providers/metadata/...
-    rules/metadata/...
-    async_operations/metadata/...
-    reconciliation_reports/metadata/...
-```
-
-| Variable | Default | Description |
-|---|---|---|
-| `ICEBERG_TABLE_PATH` | _(required)_ | Full path to the namespace directory containing the table directories (e.g. `s3://my-bucket/cumulus` or `/local/path/cumulus`) |
-
-When `LOCAL_ICEBERG_PATH` is **not** set, the server connects to AWS S3 Tables using:
-
-| Variable | Default | Description |
-|---|---|---|
-| `ICEBERG_ACCOUNT_ID` | `1234567890` | AWS account ID owning the S3 table bucket |
-| `ICEBERG_BUCKET_NAME` | `cumulus-table-bucket` | S3 table bucket name |
-| `ICEBERG_TABLE_PATH` | _(required)_ | Full S3 path to the namespace directory (e.g. `s3://my-bucket/cumulus`) |
 | `AWS_REGION` | `us-east-1` | AWS region |
+| `NODE_ENV` | _(unset)_ | Set to `development` to have DuckDB auto-install extensions (Mac/local use); production uses pre-bundled extensions from the Docker image |
 
-## Local Development
+---
+
+## Local Development (Iceberg API only)
+
+> **Note:** Local development applies only to the Iceberg API (`iceberg-index.js`). The main Cumulus API (`index.js`) is deployed via Lambda and is not run locally.
+
+AWS credentials must be configured in your environment (via `~/.aws`, SSO session, or env vars). The server connects to the real sandbox AWS Glue catalog.
 
 ### Running Locally (Node.js)
-
-Set `NODE_ENV=test` to skip loading environment variables from AWS Secrets Manager,
-and `FAKE_AUTH=true` to bypass authentication:
 
 ```bash
 cd packages/api
 
-# With a local Iceberg catalog directory
-NODE_ENV=test \
-FAKE_AUTH=true \
-TOKEN_SECRET=test-secret \
-dynamoTableNameString='{"AccessTokensTable":"local-AccessTokensTable"}' \
-ICEBERG_TABLE_PATH=/Users/yliu10/Downloads/your_namespace \
+NODE_ENV=development \
+api_config_secret_id=<your-secret-manager-arn> \
+dynamoTableNameString='{"AccessTokensTable":"<sandbox-table-name>"}' \
+AWS_ACCOUNT_ID=<your-aws-account-id> \
+ICEBERG_GLUE_SCHEMA=<your-glue-schema> \
+AWS_REGION=us-east-1 \
 PORT=5001 \
 node app/iceberg-index.js
 ```
 
-Then test it:
+Then test it (`$token` is a Cumulus API token obtained from the [`/token` endpoint](https://nasa.github.io/cumulus-api/#token) of the deployed Cumulus API):
 
 ```bash
 curl http://localhost:5001/version
-curl http://localhost:5001/granules
-curl http://localhost:5001/collections
+curl -H "Authorization: Bearer $token" "http://localhost:5001/granules" 
 ```
 
-### Running With Docker (Local Iceberg Catalog)
+### Running With Docker
 
 ```bash
 # Build from workspace root
 docker build -f packages/api/app/Dockerfile -t cumulus-iceberg-api:latest .
 
-# Run with a local Iceberg catalog mounted into the container
+# Run against the sandbox AWS Glue catalog
 docker run -p 5001:5001 \
-  -e NODE_ENV=test \
-  -e FAKE_AUTH=true \
-  -e TOKEN_SECRET=test-secret \
-  -e dynamoTableNameString='{"AccessTokensTable":"local-AccessTokensTable"}' \
-  -e ICEBERG_TABLE_PATH=/data/iceberg_catalog/your_namespace \
-  -v /path/to/your/iceberg_catalog:/data/iceberg_catalog:ro \
+  -e NODE_ENV=development \
+  -e api_config_secret_id=<your-secret-manager-arn> \
+  -e dynamoTableNameString='{"AccessTokensTable":"<sandbox-table-name>"}' \
+  -e AWS_ACCOUNT_ID=<your-aws-account-id> \
+  -e ICEBERG_GLUE_SCHEMA=<your-glue-schema> \
+  -e AWS_REGION=us-east-1 \
+  -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+  -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+  -e AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN \
   cumulus-iceberg-api:latest
 ```
 
-Then test it:
+Then test it (`$token` is a Cumulus API token obtained from the [`/token` endpoint](https://nasa.github.io/cumulus-api/#token) of the deployed Cumulus API):
 
 ```bash
 curl http://localhost:5001/version
-curl http://localhost:5001/granules
+curl -H "Authorization: Bearer $token" "http://localhost:5001/granules" 
 ```

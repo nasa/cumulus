@@ -82,6 +82,16 @@ variable "iceberg_s3_bucket" {
   type        = string
 }
 
+variable "aws_account_id" {
+  description = "AWS account ID used to attach the Glue Iceberg catalog"
+  type        = string
+}
+
+variable "iceberg_glue_schema" {
+  description = "AWS Glue schema (database) name containing the Iceberg tables"
+  type        = string
+}
+
 variable "api_service_autoscaling_min_capacity" {
   description = "Minimum capacity for API service autoscaling"
   type        = number

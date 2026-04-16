@@ -14,27 +14,47 @@ const MAX_POOL_SIZE = Number(process.env.DUCKDB_MAX_POOL) || 20;
  * Executes settings that should apply to every individual connection.
  */
 const warmupConnection = async (conn: DuckDBConnection): Promise<void> => {
-  // Get/Cache Version
-  if (!dbVersionCache) {
-    const versionRes = await conn.run("SELECT version();");
-    const rows = await versionRes.getRows();
-    dbVersionCache = (rows[0][0] as string) || 'unknown';
+  const isLocal = process.env.NODE_ENV === 'development';
+
+  if (isLocal) {
+    // On Mac, let DuckDB download/load the correct architecture automatically
+    // Using explicit INSTALL/LOAD ensures binaries exist on your local machine
+    await conn.run("INSTALL httpfs; LOAD httpfs;");
+    await conn.run("INSTALL iceberg; LOAD iceberg;");
+    await conn.run("INSTALL aws; LOAD aws;");
+  } else {
+    // Production: Use pre-bundled Linux AMD64 extensions from the Docker image
+    if (!dbVersionCache) {
+      const versionRes = await conn.run("SELECT version();");
+      const rows = await versionRes.getRows();
+      dbVersionCache = (rows[0][0] as string) || 'unknown';
+    }
+
+    const extPath = '/app/.duckdb_extensions';
+    const extBase = `${extPath}/${dbVersionCache}/linux_amd64`;
+    await conn.run(`SET extension_directory='${extPath}';`);
+
+    // Load bundled extensions
+    await conn.run('LOAD parquet;');
+    await conn.run('LOAD avro;');
+    await conn.run(`LOAD '${extBase}/httpfs.duckdb_extension';`);
+    await conn.run(`LOAD '${extBase}/iceberg.duckdb_extension';`);
+    await conn.run(`LOAD '${extBase}/aws.duckdb_extension';`);
   }
 
-  const extPath = '/app/.duckdb_extensions';
-  const extBase = `${extPath}/${dbVersionCache}/linux_amd64`;
-
-  // Standard S3 & Engine Config
+  // 1. Set Regional Context 
+  // This is critical for Glue and S3 signing to work properly
+  const region = process.env.AWS_REGION || 'us-east-1';
+  await conn.run(`SET s3_region='${region}';`);
   await conn.run("SET s3_url_style='vhost';");
-  await conn.run(`SET extension_directory='${extPath}';`);
 
-  // Load Extensions
-  await conn.run('LOAD parquet;');
-  await conn.run('LOAD avro;');
-  await conn.run(`LOAD '${extBase}/httpfs.duckdb_extension';`);
-  await conn.run(`LOAD '${extBase}/iceberg.duckdb_extension';`);
-  
-  // Identity & Security
+  // 2. Load AWS Identity
+  // This populates DuckDB's internal session with your environment/profile credentials
+  await conn.run("CALL load_aws_credentials();");
+
+  // 3. Register the Storage Secret
+  // The Iceberg extension requires a formal 'SECRET' object to authorize S3 calls
+  // 'credential_chain' allows it to automatically pick up the credentials from Step 2
   await conn.run("CREATE SECRET IF NOT EXISTS (TYPE S3, PROVIDER credential_chain);");
 };
 
@@ -52,52 +72,41 @@ export const initializeDuckDb = async (): Promise<void> => {
     const setupConn = await instance.connect();
     await warmupConnection(setupConn);
 
-    // Verify critical function registration
-    const funcCheck = await setupConn.run(
-      "SELECT function_name FROM duckdb_functions() WHERE function_name = 'iceberg_scan';"
+    // Use your AWS Account ID and the specific schema name
+    const awsAccountId = process.env.AWS_ACCOUNT_ID;
+    const glueSchema = process.env.ICEBERG_GLUE_SCHEMA;
+
+    if (!awsAccountId) {
+      throw new Error('AWS_ACCOUNT_ID environment variable is required.');
+    }
+    if (!glueSchema) {
+      throw new Error('ICEBERG_GLUE_SCHEMA environment variable is required.');
+    }
+
+    log.info(`Attaching Iceberg Glue catalog for account: ${awsAccountId}`);
+
+    // 1. Attach the account-level catalog
+    await setupConn.run(
+      `ATTACH '${awsAccountId}' AS glue_iceberg (TYPE iceberg, ENDPOINT_TYPE 'glue');`
     );
-    const funcRows = await funcCheck.getRows();
-    
-    if (funcRows.length === 0) {
-      throw new Error(`iceberg_scan function failed to register for version ${dbVersionCache}`);
-    }
 
-    // CREATE VIEWS
-    // const tablePath = process.env.ICEBERG_TABLE_PATH;
-    const tablePath = process.env.ICEBERG_TABLE_PATH || 's3://yliu-sandbox-test-iceberg/warehouse/yliu_test';
-
-    if (!tablePath) {
-      throw new Error('ICEBERG_TABLE_PATH environment variable is required.');
-    }
-    
-    log.info(`Creating views for Iceberg tables at ${tablePath}`);
-
+    // 2. Map only the tables you need from your specific schema
     const tableNames = [
-      'granules', 'collections', 'executions', 'files', 
-      'granules_executions', 'pdrs', 'providers', 
-      'reconciliation_reports', 'rules', 'async_operations'
+      'granules', 'collections', 'executions', 'pdrs', 
+      'providers', 'rules', 'async_operations', 'granules_executions'
     ];
 
     for (const tableName of tableNames) {
-      const metadataFolder = `${tablePath}/${tableName}/metadata/`.replace(/([^:])\/\/+/g, '$1/');
-      
       try {
-        const globQuery = `SELECT file FROM glob('${metadataFolder}*.metadata.json') ORDER BY file DESC LIMIT 1;`;
-        const res = await setupConn.run(globQuery);
-        const rows = await res.getRows();
-
-        if (rows.length === 0) {
-          log.warn(`No metadata found for ${tableName}. Skipping view creation.`);
-          continue;
-        }
-
-        const latestMetadataJson = rows[0][0];
+        // Point specifically to your schema inside the attached catalog
         await setupConn.run(
-          `CREATE OR REPLACE VIEW "${tableName}" AS SELECT * FROM iceberg_scan('${latestMetadataJson}');`
+          `CREATE OR REPLACE VIEW "${tableName}" AS 
+           SELECT * FROM glue_iceberg.${glueSchema}.${tableName};`
         );
+        log.debug(`View created for ${glueSchema}.${tableName}`);
       } catch (error) {
-        log.error(`Critical error resolving table ${tableName}:`, error);
-        throw error;
+        // Log warning if a specific table is missing from your schema
+        log.warn(`Table ${tableName} not found in schema ${glueSchema}. Skipping.`);
       }
     }
 

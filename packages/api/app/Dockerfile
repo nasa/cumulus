@@ -44,8 +44,10 @@ const { DuckDBInstance } = require('@duckdb/node-api'); \
   await conn.run(\"SET extension_directory='/app/.duckdb_extensions';\"); \
   await conn.run('INSTALL httpfs;'); \
   await conn.run('INSTALL iceberg;'); \
+  await conn.run('INSTALL aws;'); \
   await conn.run('INSTALL parquet;'); \
   await conn.run('INSTALL avro;'); \
+  await conn.run('INSTALL json;'); \
 })().catch(e => { console.error(e); process.exit(1); });"
 
 RUN chown -R task:task /app/.duckdb_extensions

@@ -1,7 +1,9 @@
 locals {
   api_env_variables  = {
-        "OAUTH_PROVIDER" = var.oauth_provider
+        "OAUTH_PROVIDER"      = var.oauth_provider
         "api_config_secret_id" = var.api_config_secret_arn
+        "AWS_ACCOUNT_ID"      = var.aws_account_id
+        "ICEBERG_GLUE_SCHEMA" = var.iceberg_glue_schema
   }
 }
 

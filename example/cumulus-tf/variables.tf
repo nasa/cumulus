@@ -316,6 +316,11 @@ variable "iceberg_s3_bucket" {
   type        = string
 }
 
+variable "iceberg_glue_schema" {
+  description = "AWS Glue schema (database) name containing the Iceberg tables"
+  type        = string
+}
+
 variable "archive_api_users" {
   description = "Earthdata (URS) usernames that should be allowed to access the archive API"
   type        = list(string)
