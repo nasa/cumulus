@@ -268,8 +268,8 @@ test.serial('parsePdr accepts an MD5 checksum', async (t) => {
 // added alongside this fix. It is skipped when the installed pvl version predates that
 // change (e.g. in CI against the published npm package before the coordinated release).
 test.serial('parsePdr accepts an MD5 checksum that is an unquoted all-decimal string', async (t) => {
-  if (new PVLNumeric('1').rawValue === undefined) {
-    t.pass('Skipped: installed @cumulus/pvl does not have rawValue support — requires coordinated release with this change');
+  if (new PVLNumeric('1').rawValue !== '1') {
+    t.pass('Skipped: installed @cumulus/pvl does not preserve rawValue as the original string before Number() conversion — requires coordinated release with this change');
     return;
   }
 
