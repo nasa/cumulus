@@ -26,6 +26,15 @@ A Cumulus task to add a unique granule ID to a granule
 
 ---
 
+### [@cumulus/aws-api-proxy-task](https://github.com/nasa/cumulus/tree/master/tasks/aws-api-proxy)
+
+AWS API proxy task
+
+- Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/aws-api-proxy/schemas).
+- Resources: [npm](https://npmjs.com/package/@cumulus/aws-api-proxy-task) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/aws-api-proxy)
+
+---
+
 ### [@cumulus/change-granule-collection-pg](https://github.com/nasa/cumulus/tree/master/tasks/change-granule-collection-pg)
 
 Move granule files and postgres records to a new collection
@@ -41,6 +50,24 @@ Move granule files and postgres records to a new collection
 
 - Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/change-granule-collection-s3/schemas).
 - Resources: [npm](https://npmjs.com/package/@cumulus/change-granule-collection-s3) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/change-granule-collection-s3)
+
+---
+
+### [@cumulus/cnm-response](https://github.com/nasa/cumulus/tree/master/tasks/cnm-response)
+
+CNM Response task
+
+- Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/cnm-response/schemas).
+- Resources: [npm](https://npmjs.com/package/@cumulus/cnm-response) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/cnm-response)
+
+---
+
+### [@cumulus/cnm-to-cma](https://github.com/nasa/cumulus/tree/master/tasks/cnm-to-cma)
+
+CNM to CMA task
+
+- Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/cnm-to-cma/schemas).
+- Resources: [npm](https://npmjs.com/package/@cumulus/cnm-to-cma) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/cnm-to-cma)
 
 ---
 
@@ -68,6 +95,24 @@ Converts array-of-files input into a granules object by extracting granuleId fro
 
 - Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/files-to-granules/schemas).
 - Resources: [npm](https://npmjs.com/package/@cumulus/files-to-granules) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/files-to-granules)
+
+---
+
+### [@cumulus/get-cnm-task](https://github.com/nasa/cumulus/tree/master/tasks/get-cnm)
+
+Get CNM task
+
+- Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/get-cnm/schemas).
+- Resources: [npm](https://npmjs.com/package/@cumulus/get-cnm-task) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/get-cnm)
+
+---
+
+### [@cumulus/granule-invalidator-task](https://github.com/nasa/cumulus/tree/master/tasks/granule-invalidator)
+
+Granule invalidator task
+
+- Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/granule-invalidator/schemas).
+- Resources: [npm](https://npmjs.com/package/@cumulus/granule-invalidator-task) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/granule-invalidator)
 
 ---
 
@@ -131,6 +176,15 @@ Download and Parse a given PDR
 
 - Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/parse-pdr/schemas).
 - Resources: [npm](https://npmjs.com/package/@cumulus/parse-pdr) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/parse-pdr)
+
+---
+
+### [@cumulus/pdr-cleanup](https://github.com/nasa/cumulus/tree/master/tasks/pdr-cleanup)
+
+This task is for cleaning up PDRs after a successful ingest
+
+- Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/pdr-cleanup/schemas).
+- Resources: [npm](https://npmjs.com/package/@cumulus/pdr-cleanup) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/pdr-cleanup)
 
 ---
 
