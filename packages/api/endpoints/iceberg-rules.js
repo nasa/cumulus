@@ -7,7 +7,11 @@
 
 const router = require('express-promise-router')();
 const Logger = require('@cumulus/logger');
-const { RuleSearch } = require('@cumulus/db');
+const {
+  RuleS3Search,
+  acquireDuckDbConnection,
+  releaseDuckDbConnection,
+} = require('@cumulus/db/duckdb');
 
 const log = new Logger({ sender: '@cumulus/api/iceberg-rules' });
 
@@ -20,9 +24,27 @@ const log = new Logger({ sender: '@cumulus/api/iceberg-rules' });
  */
 async function list(req, res) {
   log.debug(`list query ${JSON.stringify(req.query)}`);
-  const search = new RuleSearch({ queryStringParameters: req.query });
-  const response = await search.query();
-  return res.send(response);
+  const conn = await acquireDuckDbConnection();
+
+  try {
+    const search = new RuleS3Search({ queryStringParameters: req.query }, conn);
+    const response = await search.query();
+    return res.send(response);
+  } catch (error) {
+    log.error('RuleS3Search Query Failed', error);
+    if (res.boom) {
+      return res.boom.badImplementation('Error querying S3/Iceberg data', {
+        details: error.message,
+      });
+    }
+    return res.status(500).send({
+      error: 'Internal Server Error',
+      message: 'Error querying S3/Iceberg data',
+      details: error.message,
+    });
+  } finally {
+    await releaseDuckDbConnection(conn);
+  }
 }
 
 // Only expose the list endpoint for Iceberg API

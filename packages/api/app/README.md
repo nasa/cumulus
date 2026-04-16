@@ -23,7 +23,7 @@ const { handler } = require('./index.js');
 
 ### Iceberg API Mode (ECS) - `iceberg-index.js`
 
-A limited read-only API that runs as a standalone Express server in ECS:
+A limited read-only API that runs as a standalone Express server in ECS querying iceberg tables:
 
 ```bash
 node app/iceberg-index.js
@@ -33,83 +33,148 @@ node app/iceberg-index.js
 - Suitable for container/ECS deployments
 - Does not use AWS Serverless Express middleware
 - Only exposes read-only list endpoints:
-  - `GET /version`
-  - `GET /granules` (list)
-  - `GET /executions` (list)
-  - `GET /stats` and `GET /stats/aggregate/:type?`
-- Uses singleton database connection pool for better performance
+
+  | Endpoint | Description |
+  |---|---|
+  | `GET /version` | API version (no auth required) |
+  | `GET /granules` | List granules |
+  | `GET /collections` | List collections |
+  | `GET /executions` | List executions |
+  | `GET /providers` | List providers |
+  | `GET /pdrs` | List PDRs |
+  | `GET /rules` | List rules |
+  | `GET /async-operations` | List async operations |
+  | `GET /reconciliation-reports` | List reconciliation reports |
+  | `GET /stats` | Statistics summary |
+  | `GET /stats/aggregate/:type?` | Aggregate statistics |
+
+  All list endpoints are also accessible under the `/v1/` prefix (e.g. `GET /v1/granules`).
+- Uses a singleton DuckDB connection pool for better performance
 
 ## Docker Deployment
 
-**Before building the Docker image**, you must compile TypeScript locally:
-
-```bash
-# From workspace root
-npm run tsc
-```
-
-Then build and run the API as a containerized service:
+Build and run the API as a containerized service:
 
 ```bash
 # Build from workspace root
 docker build -f packages/api/app/Dockerfile -t cumulus-iceberg-api:latest .
 
-# Run the container
+# Run against AWS (production/staging)
 docker run -p 5001:5001 \
   -e api_config_secret_id=<your-secret-id> \
-  -e dynamoTableNameString='{"AccessTokensTable":"..."}' \
+  -e dynamoTableNameString='{"AccessTokensTable":"<table-name>"}' \
+  -e AWS_REGION=us-east-1 \
+  -e ICEBERG_ACCOUNT_ID=<account-id> \
+  -e ICEBERG_BUCKET_NAME=<bucket-name> \
+  -e ICEBERG_TABLE_PATH=<base-path>/<namespace> \
   cumulus-iceberg-api:latest
 ```
 
 The Dockerfile automatically uses `iceberg-index.js` as the entry point.
 
-## Required Environment Variables
+## Environment Variables
 
-### For Lambda (index.js)
-- `api_config_secret_id`: AWS Secrets Manager secret ID containing API configuration
-- `dynamoTableNameString`: JSON string with DynamoDB table names
+### Required (both modes)
 
-### For Iceberg API (iceberg-index.js)
-- `api_config_secret_id`: AWS Secrets Manager secret ID containing API configuration
-- `dynamoTableNameString`: JSON string with DynamoDB table names
-- `PORT` (optional): Server port, defaults to 5001
+| Variable | Description |
+|---|---|
+| `dynamoTableNameString` | JSON string mapping table env-var names to DynamoDB table names, e.g. `{"AccessTokensTable":"my-table"}` |
+| `api_config_secret_id` | AWS Secrets Manager secret ID containing API configuration (skipped when `NODE_ENV=test`) |
+
+### Optional — Iceberg API server
+
+| Variable | Default | Description |
+|---|---|---|
+| `PORT` | `5001` | HTTP port the server listens on |
+| `DUCKDB_MAX_POOL` | `20` | DuckDB connection pool size |
+
+### Optional — Authentication
+
+| Variable | Description |
+|---|---|
+| `FAKE_AUTH=true` | Bypass authentication (for local testing only) |
+| `TOKEN_SECRET` | Secret used to sign JWT tokens; required when `FAKE_AUTH=true` (e.g. `test-secret`) |
+
+### Optional — Iceberg data source
+
+Set `LOCAL_ICEBERG_PATH` to query from a local directory instead of AWS S3 Tables (useful for local testing without AWS credentials).
+The server creates DuckDB views using `read_iceberg()` for each table, so the directory must contain one Iceberg table per resource:
+
+```
+LOCAL_ICEBERG_PATH/<namespace>/
+    granules/metadata/...
+    collections/metadata/...
+    executions/metadata/...
+    files/metadata/...
+    granules_executions/metadata/...
+    pdrs/metadata/...
+    providers/metadata/...
+    rules/metadata/...
+    async_operations/metadata/...
+    reconciliation_reports/metadata/...
+```
+
+| Variable | Default | Description |
+|---|---|---|
+| `ICEBERG_TABLE_PATH` | _(required)_ | Full path to the namespace directory containing the table directories (e.g. `s3://my-bucket/cumulus` or `/local/path/cumulus`) |
+
+When `LOCAL_ICEBERG_PATH` is **not** set, the server connects to AWS S3 Tables using:
+
+| Variable | Default | Description |
+|---|---|---|
+| `ICEBERG_ACCOUNT_ID` | `1234567890` | AWS account ID owning the S3 table bucket |
+| `ICEBERG_BUCKET_NAME` | `cumulus-table-bucket` | S3 table bucket name |
+| `ICEBERG_TABLE_PATH` | _(required)_ | Full S3 path to the namespace directory (e.g. `s3://my-bucket/cumulus`) |
+| `AWS_REGION` | `us-east-1` | AWS region |
 
 ## Local Development
 
 ### Running Locally (Node.js)
 
-```bash
-# Lambda mode (for testing Lambda behavior)
-node index.js
+Set `NODE_ENV=test` to skip loading environment variables from AWS Secrets Manager,
+and `FAKE_AUTH=true` to bypass authentication:
 
-# Iceberg API mode (for local API server with limited endpoints)
-PORT=5001 node iceberg-index.js
+```bash
+cd packages/api
+
+# With a local Iceberg catalog directory
+NODE_ENV=test \
+FAKE_AUTH=true \
+TOKEN_SECRET=test-secret \
+dynamoTableNameString='{"AccessTokensTable":"local-AccessTokensTable"}' \
+ICEBERG_TABLE_PATH=/Users/yliu10/Downloads/your_namespace \
+PORT=5001 \
+node app/iceberg-index.js
 ```
 
-### Running with LocalStack (Docker)
-
-For local development with full AWS service emulation:
+Then test it:
 
 ```bash
-# 1. Start LocalStack and dependencies (from workspace root)
-npm run start-unit-test-stack
-
-# 2. In another terminal, start the Iceberg API (from workspace root)
-npm run start-iceberg-local
-
-# 3. Access the API at http://localhost:5001
 curl http://localhost:5001/version
-
-# 4. Stop the Iceberg API when done
-npm run stop-iceberg-local
-
-# 5. Stop LocalStack and dependencies
-npm run stop-unit-test-stack
+curl http://localhost:5001/granules
+curl http://localhost:5001/collections
 ```
 
-The `start-iceberg-local` script:
-- Builds the Docker image from `packages/api/app/Dockerfile`
-- Runs the container connected to the LocalStack network
-- Configures database connection to the local PostgreSQL instance
-- Enables fake authentication for testing
-- Exposes the API on port 5001
+### Running With Docker (Local Iceberg Catalog)
+
+```bash
+# Build from workspace root
+docker build -f packages/api/app/Dockerfile -t cumulus-iceberg-api:latest .
+
+# Run with a local Iceberg catalog mounted into the container
+docker run -p 5001:5001 \
+  -e NODE_ENV=test \
+  -e FAKE_AUTH=true \
+  -e TOKEN_SECRET=test-secret \
+  -e dynamoTableNameString='{"AccessTokensTable":"local-AccessTokensTable"}' \
+  -e ICEBERG_TABLE_PATH=/data/iceberg_catalog/your_namespace \
+  -v /path/to/your/iceberg_catalog:/data/iceberg_catalog:ro \
+  cumulus-iceberg-api:latest
+```
+
+Then test it:
+
+```bash
+curl http://localhost:5001/version
+curl http://localhost:5001/granules
+```

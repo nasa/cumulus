@@ -1,9 +1,12 @@
 import { knex, Knex } from 'knex';
 import { DuckDBConnection } from '@duckdb/node-api';
+import Logger from '@cumulus/logger';
 
 import { prepareBindings } from './duckdbHelpers';
 import { Meta } from '../search/BaseSearch';
 import { DbQueryParameters } from '../types/search';
+
+const log = new Logger({ sender: '@cumulus/db/DuckDBSearchExecutor' });
 
 /**
  * DuckDBSearchExecutor is a helper class for executing search queries on DuckDB.
@@ -66,6 +69,7 @@ export class DuckDBSearchExecutor {
     // sequential execution (DuckDB cannot handle multiple prepared statements simultaneously)
     for (const config of queryConfigs.filter((c) => c.query)) {
       const { sql, bindings } = config.query!.clone().toSQL().toNative();
+      log.debug(`Executing SQL: ${sql}`);
       // eslint-disable-next-line no-await-in-loop
       const reader = await this.dbConnection.runAndReadAll(sql, prepareBindings(bindings));
       const result = reader.getRowObjectsJson();
@@ -83,3 +87,5 @@ export class DuckDBSearchExecutor {
     return { meta, results: apiRecords };
   }
 }
+
+

@@ -1,33 +1,59 @@
-FROM node:22-alpine
+FROM node:22-slim
 
-# Install build tools (needed for native npm modules)
-RUN apk add --no-cache python3 make g++ git bash
+# Install build tools
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    git \
+    bash \
+    ca-certificates \
+    openssl \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user with specific UIDs/GIDs for security and consistency
-# GID 433 and UID 431 are used to maintain consistent permissions across
-# Cumulus infrastructure and avoid conflicts with common system IDs
-RUN addgroup -g 433 -S task && \
-    adduser -u 431 -S task -G task
+RUN groupadd -g 433 task && \
+    useradd -u 431 -g task -m task
+
+# Create a shared directory for DuckDB extensions
+RUN mkdir -p /app/.duckdb_extensions && chown -R task:task /app/.duckdb_extensions
+ENV DUCKDB_EXTENSION_DIRECTORY=/app/.duckdb_extensions
 
 WORKDIR /app
 
-# Copy configuration and source code
 COPY package*.json lerna.json tsconfig*.json .eslint* ./
 COPY packages ./packages
 
-# Install dependencies and build
-RUN npm install -w @cumulus/api --include-workspace-root --ignore-scripts
+RUN npm install -w @cumulus/api --include-workspace-root
 RUN npx lerna run build --scope=@cumulus/api --include-dependencies
 RUN npm prune --omit=dev
 
 RUN chown -R task:task /app
 
-USER task
-WORKDIR /app/packages/api
-EXPOSE 5001
+# Update your pre-install script to use this directory
+# Inside your Dockerfile
+RUN node -e "\
+const { DuckDBInstance } = require('@duckdb/node-api'); \
+(async () => { \
+  const db = await DuckDBInstance.create(':memory:'); \
+  const conn = await db.connect(); \
+  const versionRes = await conn.run('SELECT version()'); \
+  const version = (await versionRes.getRows())[0][0]; \
+  console.log('Detected DuckDB Version:', version); \
+  \
+  await conn.run(\"SET extension_directory='/app/.duckdb_extensions';\"); \
+  await conn.run('INSTALL httpfs;'); \
+  await conn.run('INSTALL iceberg;'); \
+  await conn.run('INSTALL parquet;'); \
+  await conn.run('INSTALL avro;'); \
+})().catch(e => { console.error(e); process.exit(1); });"
 
-# Cumulus specific environment variables
+RUN chown -R task:task /app/.duckdb_extensions
+USER task
+
+WORKDIR /app/packages/api
+
+EXPOSE 5001
 ENV NODE_ENV=production
 
-# Start the Iceberg API server - iceberg-index.js loads secrets from AWS
 CMD ["node", "app/iceberg-index.js"]

@@ -731,3 +731,9 @@ variable "api_service_autoscaling_target_cpu" {
   type        = number
   default     = 70
 }
+
+variable "iceberg_s3_bucket" {
+  description = "Name of the S3 bucket the Iceberg API task needs read/write access to"
+  type        = string
+  default     = ""
+}

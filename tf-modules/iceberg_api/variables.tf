@@ -3,6 +3,12 @@ variable "prefix" {
   type        = string
 }
 
+variable "permissions_boundary_arn" {
+  description = "ARN of the IAM permissions boundary to attach to all IAM roles (required in NGAP environments)"
+  type        = string
+  default     = null
+}
+
 variable "region" {
   description = "AWS region"
   type        = string
@@ -32,13 +38,13 @@ variable "api_config_secret_arn" {
 variable "iceberg_api_cpu" {
   description = "CPU allocation for Iceberg API ECS task"
   type        = number
-  default     = 256
+  default     = 512
 }
 
 variable "iceberg_api_memory" {
   description = "Memory allocation for Iceberg API ECS task"
   type        = number
-  default     = 512
+  default     = 1024
 }
 
 variable "cumulus_iceberg_api_image_version" {
@@ -48,11 +54,6 @@ variable "cumulus_iceberg_api_image_version" {
 
 variable "ecs_execution_role_arn" {
   description = "ARN of the ECS execution role"
-  type        = string
-}
-
-variable "ecs_task_role_arn" {
-  description = "ARN of the ECS task role"
   type        = string
 }
 
@@ -73,6 +74,11 @@ variable "ecs_cluster_instance_subnet_ids" {
 
 variable "rds_security_group_id" {
   description = "ID of the RDS security group"
+  type        = string
+}
+
+variable "iceberg_s3_bucket" {
+  description = "Name of the S3 bucket the Iceberg API task needs read/write access to (e.g. the S3 Tables bucket or a staging bucket)"
   type        = string
 }
 
@@ -104,4 +110,9 @@ variable "default_log_retention_days" {
   type        = number
   default     = 30
   description = "default value that user chooses for their log retention periods"
+}
+
+variable "ecs_task_role_arn" {
+  description = "ARN of the ECS task role"
+  type        = string
 }

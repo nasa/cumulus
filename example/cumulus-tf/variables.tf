@@ -311,6 +311,11 @@ variable "api_service_autoscaling_target_cpu" {
   description = "Target CPU utilization percentage for API service autoscaling"
 }
 
+variable "iceberg_s3_bucket" {
+  description = "Name of the S3 bucket the Iceberg API task needs read/write access to (e.g. the S3 Tables bucket or a staging bucket)"
+  type        = string
+}
+
 variable "archive_api_users" {
   description = "Earthdata (URS) usernames that should be allowed to access the archive API"
   type        = list(string)
