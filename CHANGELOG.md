@@ -59,12 +59,12 @@ Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
 - **Security Vulnerabilities**
   - Upgraded package `lodash` to version 4.18.1.
   - Updated package overrides to address CVEs GHSA-43fc-jf86-j433 and GHSA-r5fr-rjxr-66jc.
+  - added a `webpack` override to `/website/package.json` due to docusaurus conflicts
 - **CSD-100**
   - made changes to the `PrivateApiLambda` and `ApiEndpoints` lambdas to ensure the environment variables
     are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported
 - **CUMULUS-4606**
   - Added prefix to IAM resource names to prevent collisions from multiple deployments in sandbox environment
-- added a `webpack` override to `/website/package.json` due to docusaurus conflicts
 
 ## [v21.3.3] 2026-04-10
 
