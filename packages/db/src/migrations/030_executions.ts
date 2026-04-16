@@ -1,12 +1,13 @@
 import { Knex } from 'knex';
 
-const PARTITION_COUNT = 8;
+const BASE_YEAR = Number(process.env.PARTITION_BASE_YEAR ?? 2026);
+const TOTAL_YEARS = 2;
 
 export const up = async (knex: Knex): Promise<void> => {
   // Parent partitioned table
   await knex.raw(`
     CREATE TABLE executions (
-      cumulus_id BIGSERIAL,
+      cumulus_id BIGINT,
       arn TEXT NOT NULL,
 
       async_operation_cumulus_id INTEGER,
@@ -34,23 +35,47 @@ export const up = async (knex: Knex): Promise<void> => {
 
       archived BOOLEAN DEFAULT FALSE NOT NULL,
 
-      CONSTRAINT executions_pkey PRIMARY KEY (cumulus_id),
+      CONSTRAINT executions_pkey PRIMARY KEY (cumulus_id, created_at),
 
-      CONSTRAINT executions_arn_unique UNIQUE (arn, cumulus_id),
-      CONSTRAINT executions_url_unique UNIQUE (url, cumulus_id)
+      CONSTRAINT executions_cumulus_id_foreign
+      FOREIGN KEY (cumulus_id)
+      REFERENCES executions_lookup(cumulus_id)
     )
-    PARTITION BY HASH (cumulus_id);
+    PARTITION BY RANGE (created_at);
   `);
 
-  // Partitions
-  await Promise.all(
-    Array.from({ length: PARTITION_COUNT }).map((_, i) =>
-      knex.raw(`
-        CREATE TABLE executions_p${i}
-        PARTITION OF executions
-        FOR VALUES WITH (MODULUS ${PARTITION_COUNT}, REMAINDER ${i});
-      `))
-  );
+  // QUARTERLY PARTITIONS
+  const partitions: string[] = [];
+
+  for (let year = 0; year < TOTAL_YEARS; year += 1) {
+    const y = BASE_YEAR + year;
+
+    partitions.push(`
+      CREATE TABLE executions_${y}_q1
+      PARTITION OF executions
+      FOR VALUES FROM ('${y}-01-01') TO ('${y}-04-01');
+    `);
+
+    partitions.push(`
+      CREATE TABLE executions_${y}_q2
+      PARTITION OF executions
+      FOR VALUES FROM ('${y}-04-01') TO ('${y}-07-01');
+    `);
+
+    partitions.push(`
+      CREATE TABLE executions_${y}_q3
+      PARTITION OF executions
+      FOR VALUES FROM ('${y}-07-01') TO ('${y}-10-01');
+    `);
+
+    partitions.push(`
+      CREATE TABLE executions_${y}_q4
+      PARTITION OF executions
+      FOR VALUES FROM ('${y}-10-01') TO ('${y + 1}-01-01');
+    `);
+  }
+
+  await knex.raw(partitions.join('\n'));
 
   // INDEXES (on parent → propagate)
   await knex.raw(`
@@ -85,7 +110,7 @@ export const up = async (knex: Knex): Promise<void> => {
     ALTER TABLE executions
     ADD CONSTRAINT executions_parent_cumulus_id_foreign
     FOREIGN KEY (parent_cumulus_id)
-    REFERENCES executions(cumulus_id)
+    REFERENCES executions_lookup(cumulus_id)
     ON DELETE SET NULL;
   `);
 

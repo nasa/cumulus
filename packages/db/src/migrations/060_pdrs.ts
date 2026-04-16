@@ -16,7 +16,7 @@ export const up = async (knex: Knex): Promise<void> => {
 
     table.bigInteger('execution_cumulus_id')
       .references('cumulus_id')
-      .inTable('executions');
+      .inTable('executions_lookup');
 
     table.text('status').notNullable();
     table.text('name').notNullable();

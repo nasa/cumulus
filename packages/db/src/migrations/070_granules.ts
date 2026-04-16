@@ -6,7 +6,7 @@ export const up = async (knex: Knex): Promise<void> => {
   // Parent partitioned table
   await knex.raw(`
     CREATE TABLE granules (
-      cumulus_id BIGSERIAL,
+      cumulus_id BIGINT,
       granule_id TEXT NOT NULL,
       status TEXT NOT NULL,
       collection_cumulus_id INTEGER NOT NULL,
@@ -32,11 +32,13 @@ export const up = async (knex: Knex): Promise<void> => {
       producer_granule_id TEXT NOT NULL,
       archived BOOLEAN DEFAULT FALSE NOT NULL,
 
-      CONSTRAINT granules_pkey PRIMARY KEY (cumulus_id),
+      CONSTRAINT granules_pkey PRIMARY KEY (cumulus_id, collection_cumulus_id),
 
-      CONSTRAINT granules_granule_id_unique UNIQUE (granule_id, cumulus_id)
+      CONSTRAINT granules_cumulus_id_foreign
+      FOREIGN KEY (cumulus_id)
+      REFERENCES granules_lookup(cumulus_id)
     )
-    PARTITION BY HASH (cumulus_id);
+    PARTITION BY HASH (collection_cumulus_id);
   `);
 
   // Create partitions

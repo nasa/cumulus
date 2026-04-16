@@ -6,7 +6,7 @@ export const up = async (knex: Knex): Promise<void> => {
   // Parent partitioned table
   await knex.raw(`
     CREATE TABLE files (
-      cumulus_id BIGSERIAL,
+      cumulus_id BIGINT,
       granule_cumulus_id BIGINT NOT NULL,
       created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
       updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -21,11 +21,14 @@ export const up = async (knex: Knex): Promise<void> => {
       source TEXT,
       type TEXT,
 
-      CONSTRAINT files_pkey PRIMARY KEY (cumulus_id),
+      CONSTRAINT files_pkey PRIMARY KEY (cumulus_id, granule_cumulus_id),
 
-      CONSTRAINT files_bucket_key_unique UNIQUE (bucket, key, cumulus_id)
+      CONSTRAINT files_granule_cumulus_id_foreign
+      FOREIGN KEY (granule_cumulus_id)
+      REFERENCES granules_lookup(cumulus_id)
+      ON DELETE CASCADE
     )
-    PARTITION BY HASH (cumulus_id);
+    PARTITION BY HASH (granule_cumulus_id);
   `);
 
   // Partitions
@@ -45,15 +48,6 @@ export const up = async (knex: Knex): Promise<void> => {
 
     CREATE INDEX files_updated_at_index
       ON files (updated_at);
-  `);
-
-  // Foreign key (must be added after partition creation)
-  await knex.raw(`
-    ALTER TABLE files
-    ADD CONSTRAINT files_granule_cumulus_id_foreign
-    FOREIGN KEY (granule_cumulus_id)
-    REFERENCES granules(cumulus_id)
-    ON DELETE CASCADE;
   `);
 
   // Comments

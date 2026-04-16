@@ -7,12 +7,12 @@ export const up = async (knex: Knex): Promise<void> => {
 
     table.foreign('granule_cumulus_id')
       .references('cumulus_id')
-      .inTable('granules')
+      .inTable('granules_lookup')
       .onDelete('CASCADE');
 
     table.foreign('execution_cumulus_id')
       .references('cumulus_id')
-      .inTable('executions')
+      .inTable('executions_lookup')
       .onDelete('CASCADE');
 
     table.unique(['granule_cumulus_id', 'execution_cumulus_id']);
