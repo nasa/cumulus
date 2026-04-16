@@ -21,3 +21,5 @@ rds_cluster_remote_state_config = {
 }
 iceberg_namespace = "SOME_NAMESPACE"
 iceberg_s3_bucket = "YOUR_BUCKET"
+pg_db = "postgres"
+pg_schema = "public"
