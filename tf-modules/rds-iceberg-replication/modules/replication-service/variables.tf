@@ -48,7 +48,7 @@ variable "db_admin_password" {
 }
 
 variable "subnet" {
-  description = "Subnet for Fargate tasks"
+  description = "Subnet for Fargate tasks. We only use one since we are using EBS volumes which don't work across multiple AZs."
   type        = string
 }
 
@@ -109,7 +109,7 @@ variable "tags" {
 }
 
 variable "slot_name" {
-  description = "The name for the replication slot"
+  description = "The name of the Postgres replication slot to be used to track changes in the dB. This will be created by the source connector if it does not exist."
   type        = string
 }
 
@@ -134,6 +134,7 @@ variable "pg_db" {
 }
 
 variable "ecs_infrastructure_role" {
+  description = "IAM role used to provide access to EBS volumes"
   type = object({
     arn  = string
     name = string
@@ -141,6 +142,7 @@ variable "ecs_infrastructure_role" {
 }
 
 variable "fargate_task_role" {
+  description = "IAM role used to allow task containers to access AWS services"
   type = object({
     arn  = string
     name = string
@@ -148,6 +150,7 @@ variable "fargate_task_role" {
 }
 
 variable "ecs_task_execution_role" {
+  description = "IAM role used by Docker daemon and ECS container agent"
   type = object({
     arn  = string
     name = string
@@ -155,6 +158,7 @@ variable "ecs_task_execution_role" {
 }
 
 variable "ecs_cluster" {
+  description = "The ECS cluster to which the replication service will belong"
   type = object({
     arn  = string
     name = string
