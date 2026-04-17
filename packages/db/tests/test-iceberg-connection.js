@@ -1,17 +1,6 @@
 'use strict';
 
-/**
- * Unit tests for packages/db/src/iceberg-connection.ts
- *
- * Covers:
- *   - Concurrent callers block during initialization (DuckDBInstance.create called once)
- *   - Connection pool reuse (acquire → release → re-acquire returns same conn)
- *   - Pool discard when full
- *   - Init failures reset state so callers can retry
- *   - acquireDuckDbConnection triggers lazy init when called before initializeDuckDb
- *   - destroyDuckDb resets all state
- */
-
+const _ = require('lodash');
 const test = require('ava');
 const sinon = require('sinon');
 // noCallThru prevents proxyquire from loading the real @duckdb/node-api binary,
@@ -115,7 +104,7 @@ test.serial('acquireDuckDbConnection returns a connection from the pool after in
   const conn = await acquireDuckDbConnection();
 
   t.truthy(conn, 'should return a connection object');
-  t.truthy(typeof conn.run === 'function', 'returned connection must expose run()');
+  t.true(_.isFunction(conn.run), 'returned connection must expose run()');
 });
 
 test.serial('released connection is re-acquired on next acquireDuckDbConnection call', async (t) => {

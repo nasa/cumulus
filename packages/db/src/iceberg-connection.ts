@@ -67,7 +67,10 @@ const warmupConnection = async (conn: DuckDBConnection): Promise<void> => {
  */
 export const initializeDuckDb = async (): Promise<void> => {
   if (instance) return;
-  if (initPromise) return initPromise;
+  if (initPromise) {
+    await initPromise;
+    return;
+  }
 
   initPromise = (async () => {
     try {
@@ -140,7 +143,7 @@ export const initializeDuckDb = async (): Promise<void> => {
     }
   })();
 
-  return initPromise;
+  await initPromise;
 };
 
 /**

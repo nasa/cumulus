@@ -78,7 +78,7 @@ variable "rds_security_group_id" {
 }
 
 variable "iceberg_s3_bucket" {
-  description = "Name of the S3 bucket the Iceberg API task needs read/write access to (e.g. the S3 Tables bucket or a staging bucket)"
+  description = "Name of the S3 bucket the Iceberg API task needs read access to"
   type        = string
 }
 

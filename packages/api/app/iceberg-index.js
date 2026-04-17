@@ -129,10 +129,11 @@ const startServer = async () => {
       try {
         await destroyDuckDbClient();
         log.info('Graceful shutdown complete');
-        process.exit(0);
+        process.exitCode = 0;
       } catch (error) {
         log.error('Error during graceful shutdown:', error);
-        process.exit(1);
+        process.exitCode = 1;
+        throw error;
       }
     });
   };
