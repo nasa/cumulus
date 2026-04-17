@@ -103,9 +103,7 @@ app.use((err, _req, res, _next) => {
   return res.boom.badImplementation('Internal Server Error');
 });
 
-/**
- * Initialize and start server
- */
+// Initialize and start server
 const startServer = async () => {
   await initEnvVars;
   const dynamoTableNames = JSON.parse(getRequiredEnvVar('dynamoTableNameString'));

@@ -24,7 +24,7 @@ WORKDIR /app
 COPY package*.json lerna.json tsconfig*.json .eslint* ./
 COPY packages ./packages
 
-RUN npm install -w @cumulus/api --include-workspace-root
+RUN npm install -w @cumulus/api --include-workspace-root --ignore-scripts
 RUN npx lerna run build --scope=@cumulus/api --include-dependencies
 RUN npm prune --omit=dev
 

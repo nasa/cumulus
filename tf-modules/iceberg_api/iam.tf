@@ -25,6 +25,7 @@ data "aws_iam_policy_document" "iceberg_task_role_policy" {
     ]
     resources = [
       "arn:aws:s3:::${var.iceberg_s3_bucket}",
+      "arn:aws:s3:::${var.system_bucket}",
     ]
   }
 
@@ -35,6 +36,7 @@ data "aws_iam_policy_document" "iceberg_task_role_policy" {
     ]
     resources = [
       "arn:aws:s3:::${var.iceberg_s3_bucket}/*",
+      "arn:aws:s3:::${var.system_bucket}/*",
     ]
   }
 

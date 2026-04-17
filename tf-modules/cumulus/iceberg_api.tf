@@ -25,6 +25,7 @@ module "iceberg_api" {
   rds_security_group_id = var.rds_security_group
 
   iceberg_s3_bucket = var.iceberg_s3_bucket
+  system_bucket     = var.system_bucket
 
   aws_account_id      = data.aws_caller_identity.current.account_id
   iceberg_glue_schema = var.iceberg_glue_schema

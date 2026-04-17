@@ -82,6 +82,11 @@ variable "iceberg_s3_bucket" {
   type        = string
 }
 
+variable "system_bucket" {
+  description = "Name of the Cumulus system S3 bucket (used for auth config and other system resources)"
+  type        = string
+}
+
 variable "aws_account_id" {
   description = "AWS account ID used to attach the Glue Iceberg catalog"
   type        = string
