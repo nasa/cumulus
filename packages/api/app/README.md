@@ -107,21 +107,21 @@ curl -H "Authorization: Bearer $token" "http://localhost:5001/granules"
 
 ### Running With Docker
 
+An `env.local.example` file is provided as a template. Copy it and fill in your values before running:
+
+```bash
+cp packages/api/app/env.local.example packages/api/app/.env.local
+# Edit .env.local with your sandbox values
+```
+
+Then build and run:
+
 ```bash
 # Build from workspace root
 docker build -f packages/api/app/Dockerfile -t cumulus-iceberg-api:latest .
 
-# Run against the sandbox AWS Glue catalog
-docker run -p 5001:5001 \
-  -e NODE_ENV=development \
-  -e api_config_secret_id=<your-secret-manager-arn> \
-  -e dynamoTableNameString='{"AccessTokensTable":"<sandbox-table-name>"}' \
-  -e AWS_ACCOUNT_ID=<your-aws-account-id> \
-  -e ICEBERG_GLUE_SCHEMA=<your-glue-schema> \
-  -e AWS_REGION=us-east-1 \
-  -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
-  -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
-  -e AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN \
+docker run --rm -p 5001:5001 \
+  --env-file packages/api/app/.env.local \
   cumulus-iceberg-api:latest
 ```
 
