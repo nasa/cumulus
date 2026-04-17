@@ -737,7 +737,7 @@ variable "iceberg_s3_bucket" {
   type        = string
   default     = null
   validation {
-    condition     = !var.deploy_iceberg_api || (var.iceberg_s3_bucket != null && trim(var.iceberg_s3_bucket) != "")
+    condition     = !var.deploy_iceberg_api || (var.iceberg_s3_bucket != null && trimspace(var.iceberg_s3_bucket) != "")
     error_message = "iceberg_s3_bucket must be set to a non-empty value when deploy_iceberg_api is true."
   }
 }
@@ -746,7 +746,7 @@ variable "iceberg_glue_schema" {
   type        = string
   default     = null
   validation {
-    condition     = !var.deploy_iceberg_api || (var.iceberg_glue_schema != null && trim(var.iceberg_glue_schema) != "")
+    condition     = !var.deploy_iceberg_api || (var.iceberg_glue_schema != null && trimspace(var.iceberg_glue_schema) != "")
     error_message = "iceberg_glue_schema must be set to a non-empty value when deploy_iceberg_api is true."
   }
 }
