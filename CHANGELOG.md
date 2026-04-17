@@ -29,6 +29,10 @@ Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
 
 ### Added
 
+- **CUMULUS-4707**
+  - Implement list of granules route in iceberg search api
+- **CUMULUS-4708**
+  - Implement list of executions route in iceberg search api
 - **CUMULUS-4534**
   - collection db model has added non-optional cmr_provider field
   - update requires db-migration to add cmr_provider to collection model

@@ -1,6 +1,6 @@
 'use strict';
 
-const _ = require('lodash');
+const isFunction = require('lodash/isFunction');
 const test = require('ava');
 const sinon = require('sinon');
 // noCallThru prevents proxyquire from loading the real @duckdb/node-api binary,
@@ -104,7 +104,7 @@ test.serial('acquireDuckDbConnection returns a connection from the pool after in
   const conn = await acquireDuckDbConnection();
 
   t.truthy(conn, 'should return a connection object');
-  t.true(_.isFunction(conn.run), 'returned connection must expose run()');
+  t.true(isFunction(conn.run), 'returned connection must expose run()');
 });
 
 test.serial('released connection is re-acquired on next acquireDuckDbConnection call', async (t) => {
