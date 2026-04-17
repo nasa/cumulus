@@ -27,7 +27,7 @@ resource "aws_ecs_task_definition" "iceberg_api" {
   cpu                      = var.iceberg_api_cpu
   memory                   = var.iceberg_api_memory
   execution_role_arn       = var.ecs_execution_role_arn
-  task_role_arn            = var.ecs_task_role_arn
+  task_role_arn            = aws_iam_role.iceberg_task_role.arn
 
   runtime_platform {
     operating_system_family = "LINUX"

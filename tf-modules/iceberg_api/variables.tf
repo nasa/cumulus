@@ -121,8 +121,3 @@ variable "default_log_retention_days" {
   default     = 30
   description = "default value that user chooses for their log retention periods"
 }
-
-variable "ecs_task_role_arn" {
-  description = "ARN of the ECS task role"
-  type        = string
-}

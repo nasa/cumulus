@@ -18,8 +18,6 @@ module "iceberg_api" {
 
   ecs_execution_role_arn          = aws_iam_role.ecs_execution_role.arn
 
-  ecs_task_role_arn        = aws_iam_role.ecs_task_role.arn
-
   ecs_cluster_arn                 = aws_ecs_cluster.default.arn
   ecs_cluster_name                = aws_ecs_cluster.default.name
   ecs_cluster_instance_subnet_ids = var.ecs_cluster_instance_subnet_ids
