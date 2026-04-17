@@ -7,11 +7,7 @@
 
 const router = require('express-promise-router')();
 const Logger = require('@cumulus/logger');
-const {
-  ReconciliationReportS3Search,
-  acquireDuckDbConnection,
-  releaseDuckDbConnection,
-} = require('@cumulus/db/duckdb');
+const { ReconciliationReportS3Search } = require('@cumulus/db/duckdb');
 
 const log = new Logger({ sender: '@cumulus/api/iceberg-reconciliation-reports' });
 
@@ -24,10 +20,9 @@ const log = new Logger({ sender: '@cumulus/api/iceberg-reconciliation-reports' }
  */
 async function list(req, res) {
   log.debug(`list query ${JSON.stringify(req.query)}`);
-  const conn = await acquireDuckDbConnection();
 
   try {
-    const search = new ReconciliationReportS3Search({ queryStringParameters: req.query }, conn);
+    const search = new ReconciliationReportS3Search({ queryStringParameters: req.query });
     const response = await search.query();
     return res.send(response);
   } catch (error) {
@@ -39,8 +34,6 @@ async function list(req, res) {
       error: 'Internal Server Error',
       message: 'Error querying S3/Iceberg data',
     });
-  } finally {
-    await releaseDuckDbConnection(conn);
   }
 }
 

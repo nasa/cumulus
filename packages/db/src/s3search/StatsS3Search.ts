@@ -1,23 +1,21 @@
 import { knex, Knex } from 'knex';
 import { DuckDBConnection } from '@duckdb/node-api';
-import Logger from '@cumulus/logger';
 
 import { QueryEvent } from '../types/search';
 import {
   ApiAggregateResult, StatsSearch, SummaryResult, TotalSummary,
 } from '../search/StatsSearch';
+import { acquireDuckDbConnection, releaseDuckDbConnection } from '../iceberg-connection';
 import { prepareBindings } from './duckdbHelpers';
-
-const log = new Logger({ sender: '@cumulus/db/StatsSearch' });
 
 /**
  * A class to query postgres for the STATS and STATS/AGGREGATE endpoints
  */
 class StatsS3Search extends StatsSearch {
-  private dbConnection: DuckDBConnection;
+  private dbConnection: DuckDBConnection | undefined;
   private knexBuilder: Knex;
 
-  constructor(event: QueryEvent, type: string, dbConnection: DuckDBConnection) {
+  constructor(event: QueryEvent, type: string, dbConnection?: DuckDBConnection) {
     super(event, type);
     this.dbConnection = dbConnection;
     // Use 'pg' dialect to generate DuckDB-compatible SQL ($1, $2, etc.)
@@ -31,16 +29,22 @@ class StatsS3Search extends StatsSearch {
    */
   public async summary(): Promise<SummaryResult> {
     const aggregateQuery = this.buildSummaryQuery(this.knexBuilder);
-    log.debug(`summary about to execute query: ${aggregateQuery?.toSQL().sql}`);
 
     const { sql, bindings } = aggregateQuery.toSQL().toNative();
-    const reader = await this.dbConnection.runAndReadAll(
-      sql,
-      prepareBindings([...bindings]) // prepareBindings must be imported/defined in scope
-    );
-
-    const aggregateQueryRes: TotalSummary[] = reader.getRowObjectsJson() as any[];
-    return this.formatSummaryResult(aggregateQueryRes[0]);
+    const injected = this.dbConnection;
+    const dbConnection = injected ?? await acquireDuckDbConnection();
+    try {
+      const reader = await dbConnection.runAndReadAll(
+        sql,
+        prepareBindings([...bindings])
+      );
+      const aggregateQueryRes: TotalSummary[] = reader.getRowObjectsJson() as any[];
+      return this.formatSummaryResult(aggregateQueryRes[0]);
+    } finally {
+      if (!injected) {
+        await releaseDuckDbConnection(dbConnection);
+      }
+    }
   }
 
   /**
@@ -51,12 +55,19 @@ class StatsS3Search extends StatsSearch {
   async aggregate(): Promise<ApiAggregateResult> {
     const { searchQuery } = this.buildSearch(this.knexBuilder);
     const { sql, bindings } = searchQuery.toSQL().toNative();
-    const reader = await this.dbConnection.runAndReadAll(
-      sql,
-      prepareBindings([...bindings]) // prepareBindings must be imported/defined in scope
-    );
-    const records = reader.getRowObjectsJson() as any;
-    return this.formatAggregateResult(records);
+    const injected = this.dbConnection;
+    const dbConnection = injected ?? await acquireDuckDbConnection();
+    try {
+      const records = (await dbConnection.runAndReadAll(
+        sql,
+        prepareBindings([...bindings])
+      )).getRowObjectsJson() as any;
+      return this.formatAggregateResult(records);
+    } finally {
+      if (!injected) {
+        await releaseDuckDbConnection(dbConnection);
+      }
+    }
   }
 }
 

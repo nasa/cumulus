@@ -9,7 +9,7 @@ import {
   getExecutionInfoByGranuleCumulusIds,
   getFilesByGranuleCumulusIds,
 } from './duckdbHelpers';
-import { DuckDBSearchExecutor } from './DuckDBSearchExecutor';
+import { executeDuckDBSearch } from './DuckDBSearchExecutor';
 import { GranuleRecord, GranuleSearch } from '../search/GranuleSearch';
 import { QueryEvent } from '../types/search';
 import { translatePostgresGranuleToApiGranuleWithoutDbQuery } from '../translate/granules';
@@ -21,19 +21,11 @@ const log = new Logger({ sender: '@cumulus/db/GranuleS3Search' });
  * Class to build and execute DuckDB search query for granules
  */
 export class GranuleS3Search extends GranuleSearch {
-  private dbConnection: DuckDBConnection;
-  private duckDBSearchExecutor: DuckDBSearchExecutor;
+  private readonly dbConnection: DuckDBConnection | undefined;
 
-  constructor(event: QueryEvent, dbConnection: DuckDBConnection) {
+  constructor(event: QueryEvent, dbConnection?: DuckDBConnection) {
     super(event, false); // disables estimateTableRowCount
-
     this.dbConnection = dbConnection;
-    this.duckDBSearchExecutor = new DuckDBSearchExecutor({
-      dbConnection,
-      dbQueryParameters: this.dbQueryParameters,
-      getMetaTemplate: this._metaTemplate.bind(this),
-      translateRecords: this.translatePostgresRecordsToApiRecords.bind(this),
-    });
   }
 
   /**
@@ -43,8 +35,11 @@ export class GranuleS3Search extends GranuleSearch {
    * @param knexClient - DB client
    * @returns translated api records
    */
-  protected async translatePostgresRecordsToApiRecords(pgRecords: GranuleRecord[], knexClient: Knex)
-    : Promise<Partial<ApiGranuleRecord>[]> {
+  private async translateRecords(
+    pgRecords: GranuleRecord[],
+    knexClient: Knex,
+    dbConnection: DuckDBConnection
+  ): Promise<Partial<ApiGranuleRecord>[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
 
     const { fields, includeFullRecord } = this.dbQueryParameters;
@@ -55,7 +50,7 @@ export class GranuleS3Search extends GranuleSearch {
     if (includeFullRecord) {
       //get files
       const files = await getFilesByGranuleCumulusIds({
-        connection: this.dbConnection,
+        connection: dbConnection,
         granuleCumulusIds: cumulusIds,
         knexBuilder: knexClient,
       });
@@ -68,7 +63,7 @@ export class GranuleS3Search extends GranuleSearch {
 
       //get Executions
       const executions = await getExecutionInfoByGranuleCumulusIds({
-        connection: this.dbConnection,
+        connection: dbConnection,
         granuleCumulusIds: cumulusIds,
         knexBuilder: knexClient,
       });
@@ -105,12 +100,20 @@ export class GranuleS3Search extends GranuleSearch {
   }
 
   /**
-   * Build and execute search query
+   * Build and execute search query.
+   * Uses the connection supplied at construction time (e.g. in tests), or
+   * borrows one from the pool and releases it when done.
    *
    * @returns search result
    */
   async query() {
-    return this.duckDBSearchExecutor.query((knexBuilder) =>
-      this.buildSearch(knexBuilder));
+    return executeDuckDBSearch({
+      injectedConnection: this.dbConnection,
+      dbQueryParameters: this.dbQueryParameters,
+      getMetaTemplate: this._metaTemplate.bind(this),
+      makeTranslateRecords: (conn) => (records, knexClient) =>
+        this.translateRecords(records, knexClient, conn),
+      buildSearch: (knexBuilder) => this.buildSearch(knexBuilder),
+    });
   }
 }

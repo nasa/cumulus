@@ -5,6 +5,7 @@ import Logger from '@cumulus/logger';
 import { prepareBindings } from './duckdbHelpers';
 import { Meta } from '../search/BaseSearch';
 import { DbQueryParameters } from '../types/search';
+import { acquireDuckDbConnection, releaseDuckDbConnection } from '../iceberg-connection';
 
 const log = new Logger({ sender: '@cumulus/db/DuckDBSearchExecutor' });
 
@@ -85,5 +86,53 @@ export class DuckDBSearchExecutor {
 
     const apiRecords = await this.translateRecords(records, this.knexBuilder);
     return { meta, results: apiRecords };
+  }
+}
+
+/**
+ * Shared helper that builds queries, acquires a DuckDB connection (or reuses an
+ * injected one), executes, and releases the connection when done.
+ *
+ * @param params.injectedConnection - connection provided by caller (e.g. tests); when
+ *   supplied it is used directly and never released by this function.
+ * @param params.dbQueryParameters - query parameters controlling pagination, count, etc.
+ * @param params.getMetaTemplate - returns the response meta template
+ * @param params.makeTranslateRecords - factory called with the resolved connection,
+ *   returns the record-translation function.  Simple classes can ignore the connection
+ *   argument; classes that need it (e.g. GranuleS3Search) can close over it.
+ * @param params.buildSearch - builds the knex count/search queries
+ */
+export async function executeDuckDBSearch(params: {
+  injectedConnection: DuckDBConnection | undefined;
+  dbQueryParameters: DbQueryParameters;
+  getMetaTemplate: () => Meta;
+  makeTranslateRecords: (
+    conn: DuckDBConnection
+  ) => (records: any[], knexClient: Knex) => any[] | Promise<any[]>;
+  buildSearch: (knexBuilder: Knex) => {
+    countQuery?: Knex.QueryBuilder;
+    searchQuery: Knex.QueryBuilder;
+  };
+}) {
+  const {
+    injectedConnection, dbQueryParameters, getMetaTemplate, makeTranslateRecords, buildSearch,
+  } = params;
+
+  const knexBuilder = knex({ client: 'pg' });
+  const builtQueries = buildSearch(knexBuilder);
+
+  const dbConnection = injectedConnection ?? await acquireDuckDbConnection();
+  try {
+    const executor = new DuckDBSearchExecutor({
+      dbConnection,
+      dbQueryParameters,
+      getMetaTemplate,
+      translateRecords: makeTranslateRecords(dbConnection),
+    });
+    return await executor.query(() => builtQueries);
+  } finally {
+    if (!injectedConnection) {
+      await releaseDuckDbConnection(dbConnection);
+    }
   }
 }

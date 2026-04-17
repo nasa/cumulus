@@ -7,11 +7,7 @@
 
 const router = require('express-promise-router')();
 const Logger = require('@cumulus/logger');
-const {
-  GranuleS3Search,
-  acquireDuckDbConnection,
-  releaseDuckDbConnection,
-} = require('@cumulus/db/duckdb');
+const { GranuleS3Search } = require('@cumulus/db/duckdb');
 const { addOrcaRecoveryStatus } = require('../lib/orca');
 
 const log = new Logger({ sender: '@cumulus/api/iceberg-granules' });
@@ -27,19 +23,9 @@ async function list(req, res) {
   log.debug(`list query ${JSON.stringify(req.query)}`);
   const { getRecoveryStatus, ...queryStringParameters } = req.query;
 
-  // Acquire connection from the shared singleton pool
-  const conn = await acquireDuckDbConnection();
-
+  let result;
   try {
-    const dbSearch = new GranuleS3Search({ queryStringParameters }, conn);
-    const result = await dbSearch.query();
-
-    let finalResult = result;
-    if (getRecoveryStatus === 'true') {
-      finalResult = await addOrcaRecoveryStatus(result);
-    }
-
-    return res.send(finalResult);
+    result = await new GranuleS3Search({ queryStringParameters }).query();
   } catch (error) {
     log.error('GranuleS3Search Query Failed', error);
 
@@ -51,10 +37,14 @@ async function list(req, res) {
       error: 'Internal Server Error',
       message: 'Error querying S3/Iceberg data',
     });
-  } finally {
-    // Always release the connection back to the pool
-    await releaseDuckDbConnection(conn);
   }
+
+  let finalResult = result;
+  if (getRecoveryStatus === 'true') {
+    finalResult = await addOrcaRecoveryStatus(result);
+  }
+
+  return res.send(finalResult);
 }
 
 // Only expose the list endpoint for Iceberg API
