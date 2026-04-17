@@ -15,8 +15,8 @@
       "default": "./dist/duckdb.js"
     },
     "./package.json": "./package.json",
-    "./dist/*": "./dist/*",
-    "./*": "./dist/*"
+    "./dist/*": "./dist/*.js",
+    "./*": "./dist/*.js"
   },
   "files": [
     "dist/**/*.js",
