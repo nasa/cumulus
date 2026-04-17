@@ -735,11 +735,18 @@ variable "api_service_autoscaling_target_cpu" {
 variable "iceberg_s3_bucket" {
   description = "Name of the S3 bucket the Iceberg API task needs read/write access to"
   type        = string
-  default     = ""
+  default     = null
+  validation {
+    condition     = !var.deploy_iceberg_api || (var.iceberg_s3_bucket != null && trim(var.iceberg_s3_bucket) != "")
+    error_message = "iceberg_s3_bucket must be set to a non-empty value when deploy_iceberg_api is true."
+  }
 }
-
 variable "iceberg_glue_schema" {
   description = "AWS Glue schema (database) name containing the Iceberg tables"
   type        = string
-  default     = ""
+  default     = null
+  validation {
+    condition     = !var.deploy_iceberg_api || (var.iceberg_glue_schema != null && trim(var.iceberg_glue_schema) != "")
+    error_message = "iceberg_glue_schema must be set to a non-empty value when deploy_iceberg_api is true."
+  }
 }

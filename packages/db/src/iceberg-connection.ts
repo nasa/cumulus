@@ -3,8 +3,15 @@ import Logger from '@cumulus/logger';
 
 const log = new Logger({ sender: '@cumulus/db/iceberg-connection' });
 
+/**
+ * Wraps an identifier in double-quotes and escapes any embedded double-quotes
+ * by doubling them (standard SQL identifier quoting).
+ * e.g. foo -> "foo", foo"bar -> "foo""bar"
+ */
+const quoteIdent = (ident: string): string => `"${ident.replace(/"/g, '""')}"`;
+
 let instance: DuckDBInstance | undefined;
-let isInitializing = false;
+let initPromise: Promise<void> | undefined;
 let dbVersionCache: string | undefined;
 
 const connectionPool: DuckDBConnection[] = [];
@@ -59,77 +66,81 @@ const warmupConnection = async (conn: DuckDBConnection): Promise<void> => {
  * Initialize the DuckDB Instance and load required extensions.
  */
 export const initializeDuckDb = async (): Promise<void> => {
-  if (instance || isInitializing) return;
-  isInitializing = true;
+  if (instance) return;
+  if (initPromise) return initPromise;
 
-  try {
-    log.info('Initializing DuckDB Instance for Iceberg API...');
-    instance = await DuckDBInstance.create(':memory:');
+  initPromise = (async () => {
+    try {
+      log.info('Initializing DuckDB Instance for Iceberg API...');
+      instance = await DuckDBInstance.create(':memory:');
 
-    const setupConn = await instance.connect();
-    await warmupConnection(setupConn);
+      const setupConn = await instance.connect();
+      await warmupConnection(setupConn);
 
-    // Use your AWS Account ID and the specific schema name
-    const awsAccountId = process.env.AWS_ACCOUNT_ID;
-    const glueSchema = process.env.ICEBERG_GLUE_SCHEMA;
+      // Use your AWS Account ID and the specific schema name
+      const awsAccountId = process.env.AWS_ACCOUNT_ID;
+      const glueSchema = process.env.ICEBERG_GLUE_SCHEMA;
 
-    if (!awsAccountId) {
-      throw new Error('AWS_ACCOUNT_ID environment variable is required.');
-    }
-    if (!glueSchema) {
-      throw new Error('ICEBERG_GLUE_SCHEMA environment variable is required.');
-    }
-
-    log.info(`Attaching Iceberg Glue catalog for account: ${awsAccountId}`);
-
-    // Attach the account-level catalog
-    await setupConn.run(
-      `ATTACH '${awsAccountId}' AS glue_iceberg (TYPE iceberg, ENDPOINT_TYPE 'glue');`
-    );
-
-    // Map only the tables you need from your specific schema
-    const tableNames = [
-      'granules', 'collections', 'executions', 'pdrs',
-      'providers', 'rules', 'async_operations', 'granules_executions',
-    ];
-
-    await Promise.all(tableNames.map(async (tableName) => {
-      try {
-        // Point specifically to your schema inside the attached catalog
-        await setupConn.run(
-          `CREATE OR REPLACE VIEW "${tableName}" AS
-           SELECT * FROM glue_iceberg.${glueSchema}.${tableName};`
-        );
-        log.debug(`View created for ${glueSchema}.${tableName}`);
-      } catch (error) {
-        // Log warning if a specific table is missing from your schema
-        log.warn(`Table ${tableName} not found in schema ${glueSchema}. Skipping.`);
+      if (!awsAccountId) {
+        throw new Error('AWS_ACCOUNT_ID environment variable is required.');
       }
-    }));
+      if (!glueSchema) {
+        throw new Error('ICEBERG_GLUE_SCHEMA environment variable is required.');
+      }
 
-    // Fill the pool
-    connectionPool.push(setupConn);
-    const remainingCount = MAX_POOL_SIZE - connectionPool.length;
+      log.info(`Attaching Iceberg Glue catalog for account: ${awsAccountId}`);
 
-    if (remainingCount > 0) {
-      const newConns = await Promise.all(
-        Array.from({ length: remainingCount }).map(async () => {
-          const conn = await instance!.connect();
-          await warmupConnection(conn);
-          return conn;
-        })
+      // Attach the account-level catalog
+      await setupConn.run(
+        `ATTACH '${awsAccountId}' AS glue_iceberg (TYPE iceberg, ENDPOINT_TYPE 'glue');`
       );
-      connectionPool.push(...newConns);
-    }
 
-    log.info('DuckDB initialization and view creation complete.');
-  } catch (error) {
-    log.error('Failed to initialize DuckDB:', error);
-    instance = undefined;
-    throw error;
-  } finally {
-    isInitializing = false;
-  }
+      // Map only the tables you need from your specific schema
+      const tableNames = [
+        'granules', 'collections', 'executions', 'pdrs',
+        'providers', 'rules', 'async_operations', 'granules_executions',
+      ];
+
+      for (const tableName of tableNames) {
+        try {
+          // Point specifically to your schema inside the attached catalog
+          // eslint-disable-next-line no-await-in-loop
+          await setupConn.run(
+            `CREATE OR REPLACE VIEW ${quoteIdent(tableName)} AS
+             SELECT * FROM glue_iceberg.${quoteIdent(glueSchema)}.${quoteIdent(tableName)};`
+          );
+          log.debug(`View created for ${glueSchema}.${tableName}`);
+        } catch (error) {
+          // Log warning if a specific table is missing from your schema
+          log.warn(`Table ${tableName} not found in schema ${glueSchema}. Skipping.`);
+        }
+      }
+
+      // Fill the pool
+      connectionPool.push(setupConn);
+      const remainingCount = MAX_POOL_SIZE - connectionPool.length;
+
+      if (remainingCount > 0) {
+        const newConns = await Promise.all(
+          Array.from({ length: remainingCount }).map(async () => {
+            const conn = await instance!.connect();
+            await warmupConnection(conn);
+            return conn;
+          })
+        );
+        connectionPool.push(...newConns);
+      }
+
+      log.info('DuckDB initialization and view creation complete.');
+    } catch (error) {
+      log.error('Failed to initialize DuckDB:', error);
+      instance = undefined;
+      initPromise = undefined;
+      throw error;
+    }
+  })();
+
+  return initPromise;
 };
 
 /**
@@ -170,5 +181,6 @@ export const destroyDuckDb = async (): Promise<void> => {
   log.info('Shutting down DuckDB...');
   connectionPool.length = 0;
   instance = undefined;
+  initPromise = undefined;
   dbVersionCache = undefined;
 };

@@ -17,7 +17,7 @@ resource "aws_iam_role" "iceberg_task_role" {
 }
 
 data "aws_iam_policy_document" "iceberg_task_role_policy" {
-  
+
   statement {
     actions = [
       "s3:GetBucket*",
@@ -50,18 +50,6 @@ data "aws_iam_policy_document" "iceberg_task_role_policy" {
   statement {
     actions   = ["dynamodb:Query"]
     resources = ["arn:aws:dynamodb:*:*:table/*/index/*"]
-  }
-
-  statement {
-    actions = [
-      "states:DescribeActivity",
-      "states:DescribeExecution",
-      "states:GetActivityTask",
-      "states:GetExecutionHistory",
-      "states:SendTaskFailure",
-      "states:SendTaskSuccess",
-    ]
-    resources = ["arn:aws:states:*:*:*"]
   }
 
   statement {

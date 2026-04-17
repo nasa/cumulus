@@ -33,14 +33,11 @@ async function list(req, res) {
   } catch (error) {
     log.error('ProviderS3Search Query Failed', error);
     if (res.boom) {
-      return res.boom.badImplementation('Error querying S3/Iceberg data', {
-        details: error.message,
-      });
+      return res.boom.badImplementation('Error querying S3/Iceberg data');
     }
     return res.status(500).send({
       error: 'Internal Server Error',
       message: 'Error querying S3/Iceberg data',
-      details: error.message,
     });
   } finally {
     await releaseDuckDbConnection(conn);

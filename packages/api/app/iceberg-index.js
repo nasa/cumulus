@@ -7,7 +7,13 @@
  * It's designed to run in ECS and only exposes read-only list endpoints:
  * - GET /version
  * - GET /granules (list)
+ * - GET /collections (list)
  * - GET /executions (list)
+ * - GET /providers (list)
+ * - GET /pdrs (list)
+ * - GET /rules (list)
+ * - GET /async-operations (list)
+ * - GET /reconciliation-reports (list)
  * - GET /stats
  * - GET /stats/aggregate/:type?
  */
@@ -122,11 +128,11 @@ const startServer = async () => {
       log.info('HTTP server closed');
       try {
         await destroyDuckDbClient();
-        log.info('DuckDB connections closed');
         log.info('Graceful shutdown complete');
+        process.exit(0);
       } catch (error) {
         log.error('Error during graceful shutdown:', error);
-        throw error;
+        process.exit(1);
       }
     });
   };

@@ -44,15 +44,12 @@ async function list(req, res) {
     log.error('GranuleS3Search Query Failed', error);
 
     if (res.boom) {
-      return res.boom.badImplementation('Error querying S3/Iceberg data', {
-        details: error.message,
-      });
+      return res.boom.badImplementation('Error querying S3/Iceberg data');
     }
 
     return res.status(500).send({
       error: 'Internal Server Error',
       message: 'Error querying S3/Iceberg data',
-      details: error.message,
     });
   } finally {
     // Always release the connection back to the pool
