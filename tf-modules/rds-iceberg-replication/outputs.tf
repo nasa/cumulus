@@ -1,3 +1,3 @@
 output "iceberg_replication_cluster_arn" {
-  value = aws_ecs_cluster.default.arn
+  value = module.cluster.replication_ecs_cluster.arn
 }

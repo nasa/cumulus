@@ -46,6 +46,8 @@ Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
 
 ### Changed
 
+- **CUMULUS-4788**
+  - split replication service into multiple services, one for each replication table group
 - **CUMULUS-4534**
   - collection translate functions pass cmr_provider/cmrProvider back and forth
   - sf-scheduler lambda function uses collection cmr_provider to fill provider in cmr section of message template meta
@@ -59,6 +61,7 @@ Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
 - **Security Vulnerabilities**
   - Upgraded package `lodash` to version 4.18.1.
   - Updated package overrides to address CVEs GHSA-43fc-jf86-j433 and GHSA-r5fr-rjxr-66jc.
+  - added a `webpack` override to `/website/package.json` due to docusaurus conflicts
 - **CSD-100**
   - made changes to the `PrivateApiLambda` and `ApiEndpoints` lambdas to ensure the environment variables
     are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported

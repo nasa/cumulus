@@ -20,9 +20,9 @@ variable "region" {
   default     = "us-east-1"
 }
 
-variable "subnets" {
-  description = "Subnets for database cluster.  Requires at least 2 across multiple AZs"
-  type    = list(string)
+variable "subnet" {
+  description = "Subnet for Fargate tasks"
+  type    = string
 }
 
 variable "tags" {
@@ -76,10 +76,36 @@ variable "connect_image" {
   type = string
 }
 
+variable "bootstrap_image" {
+  description = "Image used to start the bootstrap container. See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-image"
+  type = string
+}
+
 variable "data_persistence_remote_state_config" {
   type = object({ bucket = string, key = string, region = string })
 }
 
 variable "rds_cluster_remote_state_config" {
   type = object({ bucket = string, key = string, region = string })
+}
+
+variable "iceberg_s3_bucket" {
+  description = "S3 bucket where iceberg tables are stored"
+  type = string
+}
+
+variable "iceberg_namespace" {
+  description = "iceberg namespace (same as glue database)"
+  type = string
+}
+
+variable "pg_db" {
+  description = "postgres database"
+  type = string
+}
+
+variable "pg_schema" {
+  description = "The name of the schema in the postgres database that contains the tables"
+  type = string
+  default = "public"
 }
