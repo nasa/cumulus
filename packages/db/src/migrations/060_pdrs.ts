@@ -14,9 +14,13 @@ export const up = async (knex: Knex): Promise<void> => {
       .inTable('providers')
       .notNullable();
 
-    table.bigInteger('execution_cumulus_id')
-      .references('cumulus_id')
-      .inTable('executions_lookup');
+    table.bigInteger('execution_cumulus_id');
+    table.timestamp('execution_created_at', { useTz: true });
+
+    table.foreign(['execution_cumulus_id', 'execution_created_at'])
+      .references(['cumulus_id', 'created_at'])
+      .inTable('executions')
+      .onDelete('SET NULL');
 
     table.text('status').notNullable();
     table.text('name').notNullable();

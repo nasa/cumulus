@@ -7,12 +7,13 @@ export const up = async (knex: Knex): Promise<void> => {
   // Parent partitioned table
   await knex.raw(`
     CREATE TABLE executions (
-      cumulus_id BIGINT,
+      cumulus_id BIGSERIAL,
       arn TEXT NOT NULL,
 
       async_operation_cumulus_id INTEGER,
       collection_cumulus_id INTEGER,
       parent_cumulus_id BIGINT,
+      parent_created_at TIMESTAMPTZ,
 
       cumulus_version TEXT,
       url TEXT,
@@ -37,9 +38,8 @@ export const up = async (knex: Knex): Promise<void> => {
 
       CONSTRAINT executions_pkey PRIMARY KEY (cumulus_id, created_at),
 
-      CONSTRAINT executions_cumulus_id_foreign
-      FOREIGN KEY (cumulus_id)
-      REFERENCES executions_lookup(cumulus_id)
+      CONSTRAINT executions_arn_unique UNIQUE (arn, created_at),
+      CONSTRAINT executions_url_unique UNIQUE (url, created_at)
     )
     PARTITION BY RANGE (created_at);
   `);
@@ -109,8 +109,8 @@ export const up = async (knex: Knex): Promise<void> => {
 
     ALTER TABLE executions
     ADD CONSTRAINT executions_parent_cumulus_id_foreign
-    FOREIGN KEY (parent_cumulus_id)
-    REFERENCES executions_lookup(cumulus_id)
+    FOREIGN KEY (parent_cumulus_id, parent_created_at)
+    REFERENCES executions (cumulus_id, created_at)
     ON DELETE SET NULL;
   `);
 
