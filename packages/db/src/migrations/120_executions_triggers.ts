@@ -41,6 +41,10 @@ export const up = async (knex: Knex): Promise<void> => {
         RAISE EXCEPTION 'Invariant violation: ARN % not found in executions_global_unique', OLD.arn;
       END IF;
 
+      IF NEW.arn IS DISTINCT FROM OLD.arn THEN
+        RAISE EXCEPTION 'arn is immutable';
+      END IF;
+
       -- Update URL only if changed
       IF NEW.url IS DISTINCT FROM OLD.url THEN
         UPDATE executions_global_unique
@@ -57,7 +61,6 @@ export const up = async (knex: Knex): Promise<void> => {
     CREATE TRIGGER executions_global_unique_update_trigger
     AFTER UPDATE ON executions
     FOR EACH ROW
-    WHEN (OLD.url IS DISTINCT FROM NEW.url)
     EXECUTE FUNCTION executions_global_unique_update();
   `);
 

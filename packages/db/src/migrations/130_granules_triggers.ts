@@ -42,6 +42,10 @@ export const up = async (knex: Knex): Promise<void> => {
           'Invariant violation: granule_id % not found in granules_global_unique', OLD.granule_id;
       END IF;
 
+      IF NEW.granule_id IS DISTINCT FROM OLD.granule_id THEN
+        RAISE EXCEPTION 'granule_id is immutable';
+      END IF;
+
       RETURN NEW;
     END;
     $$ LANGUAGE plpgsql;
@@ -51,7 +55,6 @@ export const up = async (knex: Knex): Promise<void> => {
     CREATE TRIGGER granules_global_unique_update_trigger
     AFTER UPDATE ON granules
     FOR EACH ROW
-    WHEN (OLD.granule_id IS DISTINCT FROM NEW.granule_id)
     EXECUTE FUNCTION granules_global_unique_update();
   `);
 
