@@ -26,22 +26,28 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
     execution: PostgresExecution,
     writeConstraints: boolean = true
   ) {
-    if (writeConstraints && execution.status === 'running') {
-      return await knexOrTrx(this.tableName)
-        .insert(execution)
-        .onConflict('arn')
-        .merge({
-          created_at: execution.created_at,
-          updated_at: execution.updated_at,
-          timestamp: execution.timestamp,
-          original_payload: execution.original_payload,
-        })
-        .returning('*');
+    // Try update existing execution by ARN
+    const updatePayload = (writeConstraints && execution.status === 'running')
+      ? {
+        created_at: execution.created_at,
+        updated_at: execution.updated_at,
+        timestamp: execution.timestamp,
+        original_payload: execution.original_payload,
+      }
+      : execution;
+
+    const updated = await knexOrTrx(this.tableName)
+      .where({ arn: execution.arn })
+      .update(updatePayload)
+      .returning('*');
+
+    if (updated.length > 0) {
+      return updated;
     }
+
+    // Insert new execution (trigger enforces global uniqueness)
     return await knexOrTrx(this.tableName)
       .insert(execution)
-      .onConflict('arn')
-      .merge()
       .returning('*');
   }
 
