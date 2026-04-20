@@ -15,12 +15,12 @@ import { QueryEvent } from '../types/search';
 import { translatePostgresGranuleToApiGranuleWithoutDbQuery } from '../translate/granules';
 import { PostgresFileRecord } from '../types/file';
 
-const log = new Logger({ sender: '@cumulus/db/GranuleS3Search' });
+const log = new Logger({ sender: '@cumulus/db/GranuleIcebergSearch' });
 
 /**
  * Class to build and execute DuckDB search query for granules
  */
-export class GranuleS3Search extends GranuleSearch {
+export class GranuleIcebergSearch extends GranuleSearch {
   private readonly dbConnection: DuckDBConnection | undefined;
 
   constructor(event: QueryEvent, dbConnection?: DuckDBConnection) {

@@ -1,13 +1,13 @@
 import { DuckDBConnection } from '@duckdb/node-api';
 
 import { executeDuckDBSearch } from './DuckDBSearchExecutor';
-import { PdrSearch } from '../search/PdrSearch';
+import { ProviderSearch } from '../search/ProviderSearch';
 import { QueryEvent } from '../types/search';
 
 /**
- * Class to build and execute DuckDB search query for PDRs
+ * Class to build and execute DuckDB search query for providers
  */
-export class PdrS3Search extends PdrSearch {
+export class ProviderIcebergSearch extends ProviderSearch {
   private readonly dbConnection: DuckDBConnection | undefined;
 
   constructor(event: QueryEvent, dbConnection?: DuckDBConnection) {

@@ -1,17 +1,17 @@
 import { DuckDBConnection } from '@duckdb/node-api';
 
 import { executeDuckDBSearch } from './DuckDBSearchExecutor';
-import { ReconciliationReportSearch } from '../search/ReconciliationReportSearch';
+import { ExecutionSearch } from '../search/ExecutionSearch';
 import { QueryEvent } from '../types/search';
 
 /**
- * Class to build and execute DuckDB search query for Reconciliation Report
+ * Class to build and execute DuckDB search query for executions
  */
-export class ReconciliationReportS3Search extends ReconciliationReportSearch {
+export class ExecutionIcebergSearch extends ExecutionSearch {
   private readonly dbConnection: DuckDBConnection | undefined;
 
   constructor(event: QueryEvent, dbConnection?: DuckDBConnection) {
-    super(event);
+    super(event, false); // disables estimateTableRowCount
     this.dbConnection = dbConnection;
   }
 

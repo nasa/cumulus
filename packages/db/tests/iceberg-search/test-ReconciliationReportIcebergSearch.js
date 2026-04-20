@@ -12,9 +12,9 @@ const {
   stageAndLoadDuckDBTableFromData,
 } = require('../../dist/test-duckdb-utils');
 const {
-  reconciliationReportsS3TableSql,
-} = require('../../dist/s3search/s3TableSchemas');
-const { ReconciliationReportS3Search } = require('../../dist/s3search/ReconciliationReportS3Search');
+  reconciliationReportsIcebergSql,
+} = require('../../dist/iceberg-search/IcebergSchemas');
+const { ReconciliationReportIcebergSearch } = require('../../dist/iceberg-search/ReconciliationReportIcebergSearch');
 const {
   fakeReconciliationReportRecordFactory,
 } = require('../../dist');
@@ -53,7 +53,7 @@ test.before(async (t) => {
     connection,
     t.context.knexBuilder,
     'reconciliation_reports',
-    reconciliationReportsS3TableSql,
+    reconciliationReportsIcebergSql,
     reconReports,
     `${duckdbS3Prefix}reconciliation_reports.parquet`
   );
@@ -64,9 +64,9 @@ test.after.always(async (t) => {
   await t.context.connection.closeSync();
 });
 
-test.serial('ReconciliationReportS3Search returns the correct response for a basic query', async (t) => {
+test.serial('ReconciliationReportIcebergSearch returns the correct response for a basic query', async (t) => {
   const { connection } = t.context;
-  const dbSearch = new ReconciliationReportS3Search({}, connection);
+  const dbSearch = new ReconciliationReportIcebergSearch({}, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results.length, 10);
@@ -93,13 +93,13 @@ test.serial('ReconciliationReportS3Search returns the correct response for a bas
   t.deepEqual(response.results[9], expectedResponse10);
 });
 
-test.serial('ReconciliationReportS3Search supports page and limit params', async (t) => {
+test.serial('ReconciliationReportIcebergSearch supports page and limit params', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 25,
     page: 2,
   };
-  let dbSearch = new ReconciliationReportS3Search({ queryStringParameters }, connection);
+  let dbSearch = new ReconciliationReportIcebergSearch({ queryStringParameters }, connection);
   let response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 25);
@@ -108,7 +108,7 @@ test.serial('ReconciliationReportS3Search supports page and limit params', async
     limit: 10,
     page: 5,
   };
-  dbSearch = new ReconciliationReportS3Search({ queryStringParameters }, connection);
+  dbSearch = new ReconciliationReportIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 10);
@@ -117,44 +117,44 @@ test.serial('ReconciliationReportS3Search supports page and limit params', async
     limit: 10,
     page: 11,
   };
-  dbSearch = new ReconciliationReportS3Search({ queryStringParameters }, connection);
+  dbSearch = new ReconciliationReportIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 0);
 });
 
-test.serial('ReconciliationReportS3Search supports prefix search', async (t) => {
+test.serial('ReconciliationReportIcebergSearch supports prefix search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 50,
     prefix: 'fakeReconReport-1',
   };
-  const dbSearch = new ReconciliationReportS3Search({ queryStringParameters }, connection);
+  const dbSearch = new ReconciliationReportIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 11);
   t.is(response.results?.length, 11);
 });
 
-test.serial('ReconciliationReportS3Search supports infix search', async (t) => {
+test.serial('ReconciliationReportIcebergSearch supports infix search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 50,
     infix: 'conReport-2',
   };
-  const dbSearch = new ReconciliationReportS3Search({ queryStringParameters }, connection);
+  const dbSearch = new ReconciliationReportIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 11);
   t.is(response.results?.length, 11);
 });
 
-test.serial('ReconciliationReportS3Search supports sorting', async (t) => {
+test.serial('ReconciliationReportIcebergSearch supports sorting', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 100,
     sort_by: 'type',
     order: 'asc',
   };
-  const dbSearch = new ReconciliationReportS3Search({ queryStringParameters }, connection);
+  const dbSearch = new ReconciliationReportIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
@@ -163,34 +163,34 @@ test.serial('ReconciliationReportS3Search supports sorting', async (t) => {
   t.true(response.results[31].type < response.results[45].type);
 });
 
-test.serial('ReconciliationReportS3Search supports term search for string fields', async (t) => {
+test.serial('ReconciliationReportIcebergSearch supports term search for string fields', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 100,
     status: 'Generated',
   };
-  const dbSearch = new ReconciliationReportS3Search({ queryStringParameters }, connection);
+  const dbSearch = new ReconciliationReportIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 17);
   t.is(response.results?.length, 17);
   t.true(response.results?.every((result) => result.status === 'Generated'));
 });
 
-test.serial('ReconciliationReportS3Search supports term search for date fields', async (t) => {
+test.serial('ReconciliationReportIcebergSearch supports term search for date fields', async (t) => {
   const { connection } = t.context;
   const testUpdatedAt = t.context.reconReportSearchTimestamp + 1;
   const queryStringParameters = {
     limit: 100,
     updatedAt: `${testUpdatedAt}`,
   };
-  const dbSearch = new ReconciliationReportS3Search({ queryStringParameters }, connection);
+  const dbSearch = new ReconciliationReportIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
   t.true(response.results?.every((report) => report.updatedAt === testUpdatedAt));
 });
 
-test.serial('ReconciliationReportS3Search supports range search', async (t) => {
+test.serial('ReconciliationReportIcebergSearch supports range search', async (t) => {
   const { connection } = t.context;
   const timestamp1 = t.context.reconReportSearchTimestamp - 1;
   const timestamp2 = t.context.reconReportSearchTimestamp + 1;
@@ -199,7 +199,7 @@ test.serial('ReconciliationReportS3Search supports range search', async (t) => {
     timestamp__from: `${timestamp1}`,
     timestamp__to: `${timestamp2}`,
   };
-  const dbSearch = new ReconciliationReportS3Search({ queryStringParameters }, connection);
+  const dbSearch = new ReconciliationReportIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
 
   t.is(response.meta.count, 50);
@@ -208,7 +208,7 @@ test.serial('ReconciliationReportS3Search supports range search', async (t) => {
     && report.updatedAt <= timestamp2));
 });
 
-test.serial('ReconciliationReportS3Search supports search for multiple fields', async (t) => {
+test.serial('ReconciliationReportIcebergSearch supports search for multiple fields', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 50,
@@ -216,7 +216,7 @@ test.serial('ReconciliationReportS3Search supports search for multiple fields', 
     status: 'Failed',
   };
 
-  const dbSearch = new ReconciliationReportS3Search({ queryStringParameters }, connection);
+  const dbSearch = new ReconciliationReportIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 4);
   t.is(response.results?.length, 4);
@@ -224,13 +224,13 @@ test.serial('ReconciliationReportS3Search supports search for multiple fields', 
     report.type === 'Inventory' && report.status === 'Failed'));
 });
 
-test.serial('ReconciliationReportS3Search returns fields specified', async (t) => {
+test.serial('ReconciliationReportIcebergSearch returns fields specified', async (t) => {
   const { connection } = t.context;
   let fields = 'name';
   let queryStringParameters = {
     fields,
   };
-  let dbSearch = new ReconciliationReportS3Search({ queryStringParameters }, connection);
+  let dbSearch = new ReconciliationReportIcebergSearch({ queryStringParameters }, connection);
   let response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 10);
@@ -240,21 +240,21 @@ test.serial('ReconciliationReportS3Search returns fields specified', async (t) =
   queryStringParameters = {
     fields,
   };
-  dbSearch = new ReconciliationReportS3Search({ queryStringParameters }, connection);
+  dbSearch = new ReconciliationReportIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 10);
   response.results.forEach((report) => t.deepEqual(Object.keys(report), fields.split(',')));
 });
 
-test.serial('ReconciliationReportS3Search ignores non-existing fields', async (t) => {
+test.serial('ReconciliationReportIcebergSearch ignores non-existing fields', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 100,
     non_existing_field: `non_exist_${cryptoRandomString({ length: 5 })}`,
     non_existing_field__from: `non_exist_${cryptoRandomString({ length: 5 })}`,
   };
-  const dbSearch = new ReconciliationReportS3Search({ queryStringParameters }, connection);
+  const dbSearch = new ReconciliationReportIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);

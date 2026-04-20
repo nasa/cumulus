@@ -1,4 +1,4 @@
-export const asyncOperationsS3TableSql = (tableName: string = 'async_operations') => `
+export const asyncOperationsIcebergSql = (tableName: string = 'async_operations') => `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     cumulus_id INTEGER PRIMARY KEY,
     id UUID NOT NULL,
@@ -36,7 +36,7 @@ export const asyncOperationsS3TableSql = (tableName: string = 'async_operations'
         ))
 );`;
 
-export const collectionsS3TableSql = (tableName: string = 'collections') => `
+export const collectionsIcebergSql = (tableName: string = 'collections') => `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     cumulus_id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
@@ -59,7 +59,7 @@ export const collectionsS3TableSql = (tableName: string = 'collections') => `
     CHECK (duplicate_handling IN ('error', 'replace', 'skip', 'version'))
 );`;
 
-export const executionsS3TableSql = (tableName: string = 'executions') => `
+export const executionsIcebergSql = (tableName: string = 'executions') => `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     cumulus_id BIGINT PRIMARY KEY,
     arn TEXT NOT NULL,
@@ -94,7 +94,7 @@ export const executionsS3TableSql = (tableName: string = 'executions') => `
         CHECK (status IN ('running', 'completed', 'failed', 'unknown'))
 );`;
 
-export const filesS3TableSql = (tableName: string = 'files') => `
+export const filesIcebergSql = (tableName: string = 'files') => `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     cumulus_id BIGINT PRIMARY KEY,
     granule_cumulus_id BIGINT NOT NULL,
@@ -115,7 +115,7 @@ export const filesS3TableSql = (tableName: string = 'files') => `
         REFERENCES granules (cumulus_id)
 );`;
 
-export const granulesS3TableSql = (tableName: string = 'granules') => `
+export const granulesIcebergSql = (tableName: string = 'granules') => `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     cumulus_id BIGINT PRIMARY KEY,
     granule_id TEXT NOT NULL,
@@ -146,7 +146,7 @@ export const granulesS3TableSql = (tableName: string = 'granules') => `
     CHECK (status IN ('running', 'completed', 'failed', 'queued'))
 );`;
 
-export const granulesExecutionsS3TableSql = (tableName: string = 'granules_executions') => `
+export const granulesExecutionsIcebergSql = (tableName: string = 'granules_executions') => `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     granule_cumulus_id BIGINT NOT NULL,
     execution_cumulus_id BIGINT NOT NULL,
@@ -160,7 +160,7 @@ export const granulesExecutionsS3TableSql = (tableName: string = 'granules_execu
         REFERENCES granules (cumulus_id)
 );`;
 
-export const pdrsS3TableSql = (tableName: string = 'pdrs') => `
+export const pdrsIcebergSql = (tableName: string = 'pdrs') => `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     cumulus_id INTEGER PRIMARY KEY,
     collection_cumulus_id INTEGER NOT NULL,
@@ -192,7 +192,7 @@ export const pdrsS3TableSql = (tableName: string = 'pdrs') => `
         CHECK (status IN ('running', 'failed', 'completed'))
 );`;
 
-export const providersS3TableSql = (tableName: string = 'providers') => `
+export const providersIcebergSql = (tableName: string = 'providers') => `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     cumulus_id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
@@ -214,7 +214,7 @@ export const providersS3TableSql = (tableName: string = 'providers') => `
         CHECK (protocol IN ('http', 'https', 'ftp', 'sftp', 's3'))
 );`;
 
-export const reconciliationReportsS3TableSql = (tableName: string = 'reconciliation_reports') => `
+export const reconciliationReportsIcebergSql = (tableName: string = 'reconciliation_reports') => `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     cumulus_id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
@@ -237,7 +237,7 @@ export const reconciliationReportsS3TableSql = (tableName: string = 'reconciliat
         CHECK (status IN ('Generated', 'Pending', 'Failed'))
 );`;
 
-export const rulesS3TableSql = (tableName: string = 'rules') => `
+export const rulesIcebergSql = (tableName: string = 'rules') => `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     cumulus_id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,

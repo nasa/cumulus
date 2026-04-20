@@ -1,13 +1,13 @@
 import { DuckDBConnection } from '@duckdb/node-api';
 
 import { executeDuckDBSearch } from './DuckDBSearchExecutor';
-import { AsyncOperationSearch } from '../search/AsyncOperationSearch';
+import { ReconciliationReportSearch } from '../search/ReconciliationReportSearch';
 import { QueryEvent } from '../types/search';
 
 /**
- * Class to build and execute DuckDB search query for asyncOperation
+ * Class to build and execute DuckDB search query for Reconciliation Report
  */
-export class AsyncOperationS3Search extends AsyncOperationSearch {
+export class ReconciliationReportIcebergSearch extends ReconciliationReportSearch {
   private readonly dbConnection: DuckDBConnection | undefined;
 
   constructor(event: QueryEvent, dbConnection?: DuckDBConnection) {

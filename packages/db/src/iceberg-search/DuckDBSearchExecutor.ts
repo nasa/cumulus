@@ -16,7 +16,7 @@ const log = new Logger({ sender: '@cumulus/db/DuckDBSearchExecutor' });
  *   - Execute them sequentially to avoid prepared statement conflicts
  *   - Transform raw database records into API-ready records
  *
- * This class is intended to be used by S3Search subclasses that inherit
+ * This class is intended to be used by IcebergSearch subclasses that inherit
  * from BaseSearch, allowing them to reuse query logic while providing
  * custom record translation.
  */
@@ -101,7 +101,7 @@ export class DuckDBSearchExecutor {
  * @param params.getMetaTemplate - returns the response meta template
  * @param params.makeTranslateRecords - factory called with the resolved connection,
  *   returns the record-translation function.  Simple classes can ignore the connection
- *   argument; classes that need it (e.g. GranuleS3Search) can close over it.
+ *   argument; classes that need it (e.g. GranuleIcebergSearch) can close over it.
  * @param params.buildSearch - builds the knex count/search queries
  */
 export async function executeDuckDBSearch(params: {

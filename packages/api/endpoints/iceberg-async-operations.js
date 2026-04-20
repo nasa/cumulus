@@ -7,7 +7,7 @@
 
 const router = require('express-promise-router')();
 const Logger = require('@cumulus/logger');
-const { AsyncOperationS3Search } = require('@cumulus/db/duckdb');
+const { AsyncOperationIcebergSearch } = require('@cumulus/db/duckdb');
 
 const log = new Logger({ sender: '@cumulus/api/iceberg-async-operations' });
 
@@ -22,10 +22,11 @@ async function list(req, res) {
   log.debug(`list query ${JSON.stringify(req.query)}`);
 
   try {
-    const response = await new AsyncOperationS3Search({ queryStringParameters: req.query }).query();
+    const search = new AsyncOperationIcebergSearch({ queryStringParameters: req.query });
+    const response = await search.query();
     return res.send(response);
   } catch (error) {
-    log.error('AsyncOperationS3Search Query Failed', error);
+    log.error('AsyncOperationIcebergSearch Query Failed', error);
     if (res.boom) {
       return res.boom.badImplementation('Error querying S3/Iceberg data');
     }

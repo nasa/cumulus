@@ -12,12 +12,12 @@ export {
 } from './iceberg-connection';
 
 // Re-export S3 search classes that depend on DuckDB
-export { GranuleS3Search } from './s3search/GranuleS3Search';
-export { CollectionS3Search } from './s3search/CollectionS3Search';
-export { ExecutionS3Search } from './s3search/ExecutionS3Search';
-export { ProviderS3Search } from './s3search/ProviderS3Search';
-export { RuleS3Search } from './s3search/RuleS3Search';
-export { PdrS3Search } from './s3search/PdrS3Search';
-export { AsyncOperationS3Search } from './s3search/AsyncOperationS3Search';
-export { ReconciliationReportS3Search } from './s3search/ReconciliationReportS3Search';
-export { StatsS3Search } from './s3search/StatsS3Search';
+export { GranuleIcebergSearch } from './iceberg-search/GranuleIcebergSearch';
+export { CollectionIcebergSearch } from './iceberg-search/CollectionIcebergSearch';
+export { ExecutionIcebergSearch } from './iceberg-search/ExecutionIcebergSearch';
+export { ProviderIcebergSearch } from './iceberg-search/ProviderIcebergSearch';
+export { RuleIcebergSearch } from './iceberg-search/RuleIcebergSearch';
+export { PdrIcebergSearch } from './iceberg-search/PdrIcebergSearch';
+export { AsyncOperationIcebergSearch } from './iceberg-search/AsyncOperationIcebergSearch';
+export { ReconciliationReportIcebergSearch } from './iceberg-search/ReconciliationReportIcebergSearch';
+export { StatsIcebergSearch } from './iceberg-search/StatsIcebergSearch';

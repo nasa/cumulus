@@ -48,7 +48,7 @@ The Iceberg API is packaged as a Docker image for ECS deployment:
 
 ```bash
 # Build from workspace root
-docker build -f packages/api/app/Dockerfile -t cumulus-iceberg-api:latest .
+docker build --platform linux/arm64 -f packages/api/app/Dockerfile -t cumulus-iceberg-api:latest .
 ```
 
 The Dockerfile automatically uses `iceberg-index.js` as the entry point. In production the image is pushed to ECR and run by ECS — `AWS_ACCOUNT_ID` and `ICEBERG_NAMESPACE` are injected as ECS task environment variables by Terraform.
@@ -118,7 +118,7 @@ Then build and run:
 
 ```bash
 # Build from workspace root
-docker build -f packages/api/app/Dockerfile -t cumulus-iceberg-api:latest .
+docker build --platform linux/arm64 -f packages/api/app/Dockerfile -t cumulus-iceberg-api:latest .
 
 docker run --rm -p 5001:5001 \
   --env-file packages/api/app/.env.local \

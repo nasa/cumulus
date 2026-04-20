@@ -9,15 +9,15 @@ import { translatePostgresCollectionToApiCollection } from '../translate/collect
 import { PostgresCollectionRecord } from '../types/collection';
 import { QueryEvent } from '../types/search';
 import { prepareBindings } from './duckdbHelpers';
-import { GranuleS3Search } from './GranuleS3Search';
+import { GranuleIcebergSearch } from './GranuleIcebergSearch';
 import { executeDuckDBSearch } from './DuckDBSearchExecutor';
 
-const log = new Logger({ sender: '@cumulus/db/CollectionS3Search' });
+const log = new Logger({ sender: '@cumulus/db/CollectionIcebergSearch' });
 
 /**
  * Class to build and execute DuckDB search query for collections
  */
-export class CollectionS3Search extends CollectionSearch {
+export class CollectionIcebergSearch extends CollectionSearch {
   private readonly dbConnection: DuckDBConnection | undefined;
 
   constructor(event: QueryEvent, dbConnection?: DuckDBConnection) {
@@ -41,10 +41,10 @@ export class CollectionS3Search extends CollectionSearch {
     let statsQuery = knexClient(granulesTable);
 
     if (this.active) {
-      const granuleS3Search = new GranuleS3Search(
+      const granuleIcebergSearch = new GranuleIcebergSearch(
         { queryStringParameters: this.queryStringParameters }
       );
-      const { countQuery } = granuleS3Search.buildSearchForActiveCollections(knexClient);
+      const { countQuery } = granuleIcebergSearch.buildSearchForActiveCollections(knexClient);
       statsQuery = countQuery.clear('select');
     }
 

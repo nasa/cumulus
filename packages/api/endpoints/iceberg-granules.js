@@ -7,7 +7,7 @@
 
 const router = require('express-promise-router')();
 const Logger = require('@cumulus/logger');
-const { GranuleS3Search } = require('@cumulus/db/duckdb');
+const { GranuleIcebergSearch } = require('@cumulus/db/duckdb');
 const { addOrcaRecoveryStatus } = require('../lib/orca');
 
 const log = new Logger({ sender: '@cumulus/api/iceberg-granules' });
@@ -25,9 +25,9 @@ async function list(req, res) {
 
   let result;
   try {
-    result = await new GranuleS3Search({ queryStringParameters }).query();
+    result = await new GranuleIcebergSearch({ queryStringParameters }).query();
   } catch (error) {
-    log.error('GranuleS3Search Query Failed', error);
+    log.error('GranuleIcebergSearch Query Failed', error);
 
     if (res.boom) {
       return res.boom.badImplementation('Error querying S3/Iceberg data');

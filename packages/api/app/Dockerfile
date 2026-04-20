@@ -1,4 +1,4 @@
-FROM --platform=linux/arm64 node:22-slim
+FROM node:22-slim
 
 # Install build tools
 RUN apt-get update && apt-get install -y \

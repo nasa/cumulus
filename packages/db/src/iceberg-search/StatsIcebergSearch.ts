@@ -11,7 +11,7 @@ import { prepareBindings } from './duckdbHelpers';
 /**
  * A class to query postgres for the STATS and STATS/AGGREGATE endpoints
  */
-class StatsS3Search extends StatsSearch {
+class StatsIcebergSearch extends StatsSearch {
   private dbConnection: DuckDBConnection | undefined;
   private knexBuilder: Knex;
 
@@ -71,4 +71,4 @@ class StatsS3Search extends StatsSearch {
   }
 }
 
-export { StatsS3Search };
+export { StatsIcebergSearch };
