@@ -75,7 +75,6 @@ export const up = async (knex: Knex): Promise<void> => {
     `);
 
   await knex.raw(`
-
     CREATE TRIGGER executions_global_unique_delete_trigger
     AFTER DELETE ON executions
     FOR EACH ROW
@@ -92,7 +91,5 @@ export const down = async (knex: Knex): Promise<void> => {
     DROP FUNCTION IF EXISTS executions_global_unique_insert;
     DROP FUNCTION IF EXISTS executions_global_unique_update;
     DROP FUNCTION IF EXISTS executions_global_unique_delete;
-
-    DROP TABLE IF EXISTS executions_global_unique;
   `);
 };
