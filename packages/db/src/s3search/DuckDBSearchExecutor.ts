@@ -71,8 +71,10 @@ export class DuckDBSearchExecutor {
     for (const config of queryConfigs.filter((c) => c.query)) {
       const { sql, bindings } = config.query!.clone().toSQL().toNative();
       log.debug(`Executing SQL: ${sql}`);
+      const queryStart = Date.now();
       // eslint-disable-next-line no-await-in-loop
       const reader = await this.dbConnection.runAndReadAll(sql, prepareBindings(bindings));
+      log.debug(`Query "${config.key}" completed in ${Date.now() - queryStart}ms`);
       const result = reader.getRowObjectsJson();
 
       if (config.key === 'count') countResult = result;

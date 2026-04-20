@@ -3,7 +3,7 @@ locals {
         "OAUTH_PROVIDER"      = var.oauth_provider
         "api_config_secret_id" = var.api_config_secret_arn
         "AWS_ACCOUNT_ID"      = var.aws_account_id
-        "ICEBERG_GLUE_SCHEMA" = var.iceberg_glue_schema
+        "ICEBERG_NAMESPACE" = var.iceberg_namespace
   }
 }
 
@@ -31,7 +31,7 @@ resource "aws_ecs_task_definition" "iceberg_api" {
 
   runtime_platform {
     operating_system_family = "LINUX"
-    cpu_architecture        = "X86_64"
+    cpu_architecture        = "ARM64"
   }
 
   container_definitions = jsonencode([

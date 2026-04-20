@@ -316,7 +316,7 @@ variable "iceberg_s3_bucket" {
   type        = string
 }
 
-variable "iceberg_glue_schema" {
+variable "iceberg_namespace" {
   description = "AWS Glue schema (database) name containing the Iceberg tables"
   type        = string
 }

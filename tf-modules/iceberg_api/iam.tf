@@ -11,9 +11,8 @@ data "aws_iam_policy_document" "iceberg_task_assume_role_policy" {
 }
 
 resource "aws_iam_role" "iceberg_task_role" {
-  name                 = "${var.prefix}-iceberg-task-role"
-  assume_role_policy   = data.aws_iam_policy_document.iceberg_task_assume_role_policy.json
-  permissions_boundary = var.permissions_boundary_arn
+  name               = "${var.prefix}-iceberg-task-role"
+  assume_role_policy = data.aws_iam_policy_document.iceberg_task_assume_role_policy.json
 }
 
 data "aws_iam_policy_document" "iceberg_task_role_policy" {

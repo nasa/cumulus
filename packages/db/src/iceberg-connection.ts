@@ -15,7 +15,7 @@ let initPromise: Promise<void> | undefined;
 let dbVersionCache: string | undefined;
 
 const connectionPool: DuckDBConnection[] = [];
-const MAX_POOL_SIZE = Number(process.env.DUCKDB_MAX_POOL) || 20;
+const MAX_POOL_SIZE = Number(process.env.DUCKDB_MAX_POOL) || 3;
 
 /**
  * Executes settings that should apply to every individual connection.
@@ -24,13 +24,11 @@ const warmupConnection = async (conn: DuckDBConnection): Promise<void> => {
   const isLocal = process.env.NODE_ENV === 'development';
 
   if (isLocal) {
-    // On Mac, let DuckDB download/load the correct architecture automatically
-    // Using explicit INSTALL/LOAD ensures binaries exist on your local machine
     await conn.run('INSTALL httpfs; LOAD httpfs;');
     await conn.run('INSTALL iceberg; LOAD iceberg;');
     await conn.run('INSTALL aws; LOAD aws;');
   } else {
-    // Production: Use pre-bundled Linux AMD64 extensions from the Docker image
+    // Production: Use pre-bundled Linux ARM64 extensions from the Docker image
     if (!dbVersionCache) {
       const versionRes = await conn.run('SELECT version();');
       const rows = await versionRes.getRows();
@@ -38,7 +36,7 @@ const warmupConnection = async (conn: DuckDBConnection): Promise<void> => {
     }
 
     const extPath = '/app/.duckdb_extensions';
-    const extBase = `${extPath}/${dbVersionCache}/linux_amd64`;
+    const extBase = `${extPath}/${dbVersionCache}/linux_arm64`;
     await conn.run(`SET extension_directory='${extPath}';`);
 
     // Load bundled extensions
@@ -49,16 +47,11 @@ const warmupConnection = async (conn: DuckDBConnection): Promise<void> => {
     await conn.run(`LOAD '${extBase}/aws.duckdb_extension';`);
   }
 
-  // This is critical for Glue and S3 signing to work properly
   const region = process.env.AWS_REGION || 'us-east-1';
   await conn.run(`SET s3_region='${region}';`);
   await conn.run('SET s3_url_style=\'vhost\';');
 
-  // This populates DuckDB's internal session with your environment/profile credentials
   await conn.run('CALL load_aws_credentials();');
-
-  // The Iceberg extension requires a formal 'SECRET' object to authorize S3 calls
-  // 'credential_chain' allows it to automatically pick up the credentials from Step 2
   await conn.run('CREATE SECRET IF NOT EXISTS (TYPE S3, PROVIDER credential_chain);');
 };
 
@@ -80,15 +73,14 @@ export const initializeDuckDb = async (): Promise<void> => {
       const setupConn = await instance.connect();
       await warmupConnection(setupConn);
 
-      // Use your AWS Account ID and the specific schema name
       const awsAccountId = process.env.AWS_ACCOUNT_ID;
-      const glueSchema = process.env.ICEBERG_GLUE_SCHEMA;
+      const glueSchema = process.env.ICEBERG_NAMESPACE;
 
       if (!awsAccountId) {
         throw new Error('AWS_ACCOUNT_ID environment variable is required.');
       }
       if (!glueSchema) {
-        throw new Error('ICEBERG_GLUE_SCHEMA environment variable is required.');
+        throw new Error('ICEBERG_NAMESPACE environment variable is required.');
       }
 
       log.info(`Attaching Iceberg Glue catalog for account: ${awsAccountId}`);
@@ -98,7 +90,6 @@ export const initializeDuckDb = async (): Promise<void> => {
         `ATTACH '${awsAccountId}' AS glue_iceberg (TYPE iceberg, ENDPOINT_TYPE 'glue');`
       );
 
-      // Map only the tables you need from your specific schema
       const tableNames = [
         'granules', 'collections', 'executions', 'pdrs',
         'providers', 'rules', 'async_operations', 'granules_executions',
@@ -106,7 +97,6 @@ export const initializeDuckDb = async (): Promise<void> => {
 
       for (const tableName of tableNames) {
         try {
-          // Point specifically to your schema inside the attached catalog
           // eslint-disable-next-line no-await-in-loop
           await setupConn.run(
             `CREATE OR REPLACE VIEW ${quoteIdent(tableName)} AS
@@ -114,7 +104,6 @@ export const initializeDuckDb = async (): Promise<void> => {
           );
           log.debug(`View created for ${glueSchema}.${tableName}`);
         } catch (error) {
-          // Log warning if a specific table is missing from your schema
           log.warn(`Table ${tableName} not found in schema ${glueSchema}. Skipping.`);
         }
       }
@@ -170,9 +159,6 @@ export const releaseDuckDbConnection = async (conn: DuckDBConnection): Promise<v
   if (connectionPool.length < MAX_POOL_SIZE) {
     connectionPool.push(conn);
   } else {
-    // No .close() method exists on DuckDBConnection.
-    // Simply allowing the reference to be dropped is the correct way
-    // to handle connections that exceed the pool limit.
     log.debug('Pool full, discarding connection reference.');
   }
 };

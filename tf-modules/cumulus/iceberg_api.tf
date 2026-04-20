@@ -7,8 +7,6 @@ module "iceberg_api" {
   vpc_id = var.vpc_id
   tags   = var.tags
 
-  permissions_boundary_arn = var.permissions_boundary_arn
-
   oauth_provider        = var.oauth_provider
   api_config_secret_arn = module.archive.api_config_secret_arn
 
@@ -28,7 +26,7 @@ module "iceberg_api" {
   system_bucket     = var.system_bucket
 
   aws_account_id      = data.aws_caller_identity.current.account_id
-  iceberg_glue_schema = var.iceberg_glue_schema
+  iceberg_namespace = var.iceberg_namespace
 
   default_log_retention_days       = var.default_log_retention_days
   cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods

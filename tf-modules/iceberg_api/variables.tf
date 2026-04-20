@@ -3,12 +3,6 @@ variable "prefix" {
   type        = string
 }
 
-variable "permissions_boundary_arn" {
-  description = "ARN of the IAM permissions boundary to attach to all IAM roles (required in NGAP environments)"
-  type        = string
-  default     = null
-}
-
 variable "region" {
   description = "AWS region"
   type        = string
@@ -92,7 +86,7 @@ variable "aws_account_id" {
   type        = string
 }
 
-variable "iceberg_glue_schema" {
+variable "iceberg_namespace" {
   description = "AWS Glue schema (database) name containing the Iceberg tables"
   type        = string
 }

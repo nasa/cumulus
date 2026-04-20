@@ -54,14 +54,14 @@ const loadIcebergModule = (duckdbModule) =>
 test.before(() => {
   process.env.NODE_ENV = 'development';
   process.env.AWS_ACCOUNT_ID = '123456789012';
-  process.env.ICEBERG_GLUE_SCHEMA = 'test_schema';
+  process.env.ICEBERG_NAMESPACE = 'test_schema';
   process.env.AWS_REGION = 'us-east-1';
 });
 
 test.after(() => {
   delete process.env.NODE_ENV;
   delete process.env.AWS_ACCOUNT_ID;
-  delete process.env.ICEBERG_GLUE_SCHEMA;
+  delete process.env.ICEBERG_NAMESPACE;
   delete process.env.AWS_REGION;
 });
 
@@ -139,7 +139,7 @@ test.serial('releaseDuckDbConnection discards connections when pool is at MAX_PO
   await initializeDuckDb();
 
   // Drain the entire pool
-  const maxPool = Number(process.env.DUCKDB_MAX_POOL) || 20;
+  const maxPool = Number(process.env.DUCKDB_MAX_POOL) || 3;
   const drained = [];
   for (let i = 0; i < maxPool; i += 1) {
     // eslint-disable-next-line no-await-in-loop
@@ -266,18 +266,18 @@ test.serial('initializeDuckDb throws if AWS_ACCOUNT_ID is missing', async (t) =>
   );
 });
 
-test.serial('initializeDuckDb throws if ICEBERG_GLUE_SCHEMA is missing', async (t) => {
+test.serial('initializeDuckDb throws if ICEBERG_NAMESPACE is missing', async (t) => {
   const { duckdbModule } = makeDuckDBStub();
   const { initializeDuckDb } = loadIcebergModule(duckdbModule);
 
-  const saved = process.env.ICEBERG_GLUE_SCHEMA;
-  delete process.env.ICEBERG_GLUE_SCHEMA;
+  const saved = process.env.ICEBERG_NAMESPACE;
+  delete process.env.ICEBERG_NAMESPACE;
   t.teardown(() => {
-    process.env.ICEBERG_GLUE_SCHEMA = saved;
+    process.env.ICEBERG_NAMESPACE = saved;
   });
 
   await t.throwsAsync(
     () => initializeDuckDb(),
-    { message: /ICEBERG_GLUE_SCHEMA environment variable is required/ }
+    { message: /ICEBERG_NAMESPACE environment variable is required/ }
   );
 });

@@ -741,12 +741,12 @@ variable "iceberg_s3_bucket" {
     error_message = "iceberg_s3_bucket must be set to a non-empty value when deploy_iceberg_api is true."
   }
 }
-variable "iceberg_glue_schema" {
+variable "iceberg_namespace" {
   description = "AWS Glue schema (database) name containing the Iceberg tables"
   type        = string
   default     = null
   validation {
-    condition     = !var.deploy_iceberg_api || (var.iceberg_glue_schema != null && trimspace(var.iceberg_glue_schema) != "")
-    error_message = "iceberg_glue_schema must be set to a non-empty value when deploy_iceberg_api is true."
+    condition     = !var.deploy_iceberg_api || (var.iceberg_namespace != null && trimspace(var.iceberg_namespace) != "")
+      error_message = "iceberg_namespace must be set to a non-empty value when deploy_iceberg_api is true."
   }
 }

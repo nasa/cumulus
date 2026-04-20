@@ -51,7 +51,7 @@ The Iceberg API is packaged as a Docker image for ECS deployment:
 docker build -f packages/api/app/Dockerfile -t cumulus-iceberg-api:latest .
 ```
 
-The Dockerfile automatically uses `iceberg-index.js` as the entry point. In production the image is pushed to ECR and run by ECS — `AWS_ACCOUNT_ID` and `ICEBERG_GLUE_SCHEMA` are injected as ECS task environment variables by Terraform.
+The Dockerfile automatically uses `iceberg-index.js` as the entry point. In production the image is pushed to ECR and run by ECS — `AWS_ACCOUNT_ID` and `ICEBERG_NAMESPACE` are injected as ECS task environment variables by Terraform.
 
 ---
 
@@ -64,7 +64,7 @@ The Dockerfile automatically uses `iceberg-index.js` as the entry point. In prod
 | `api_config_secret_id` | AWS Secrets Manager secret ARN/name containing API configuration |
 | `dynamoTableNameString` | JSON string mapping table env-var names to DynamoDB table names, e.g. `{"AccessTokensTable":"my-table"}` |
 | `AWS_ACCOUNT_ID` | AWS account ID used to attach the Glue Iceberg catalog |
-| `ICEBERG_GLUE_SCHEMA` | AWS Glue schema (database) name containing the Iceberg tables |
+| `ICEBERG_NAMESPACE` | AWS Glue schema (database) name containing the Iceberg tables |
 
 ### Optional
 
@@ -92,7 +92,7 @@ NODE_ENV=development \
 api_config_secret_id=<your-secret-manager-arn> \
 dynamoTableNameString='{"AccessTokensTable":"<sandbox-table-name>"}' \
 AWS_ACCOUNT_ID=<your-aws-account-id> \
-ICEBERG_GLUE_SCHEMA=<your-glue-schema> \
+ICEBERG_NAMESPACE=<your-glue-schema> \
 AWS_REGION=us-east-1 \
 PORT=5001 \
 node app/iceberg-index.js
