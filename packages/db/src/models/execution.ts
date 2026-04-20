@@ -26,18 +26,20 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
     execution: PostgresExecution,
     writeConstraints: boolean = true
   ) {
-    // Try update existing execution by ARN
-    const updatePayload = (writeConstraints && execution.status === 'running')
-      ? {
-        created_at: execution.created_at,
-        updated_at: execution.updated_at,
-        timestamp: execution.timestamp,
-        original_payload: execution.original_payload,
-      }
-      : execution;
+    const updatePayload =
+      writeConstraints && execution.status === 'running'
+        ? {
+          created_at: execution.created_at,
+          updated_at: execution.updated_at,
+          timestamp: execution.timestamp,
+          original_payload: execution.original_payload,
+        }
+        : execution;
 
+    // Attempt update (should affect at most 1 row due to global uniqueness invariant)
     const updated = await knexOrTrx(this.tableName)
-      .where({ arn: execution.arn })
+      .where('arn', execution.arn)
+      .limit(1) // defensive (not enforced by PG)
       .update(updatePayload)
       .returning('*');
 
