@@ -179,12 +179,13 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       return await knexOrTrx(this.tableName)
         .insert(granule)
         .returning('*');
-    } catch (error: any) {
-      if (error.code !== '23505') throw error;
-
+    } catch (error) {
       // Trigger-raised duplicate, fallback to update
-      const updated = await updateQuery;
-      return updated; // may be []
+      if (error.code === '23505') {
+        const updated = await updateQuery;
+        return updated; // may be []
+      }
+      throw error;
     }
   }
 

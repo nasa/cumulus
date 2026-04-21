@@ -135,7 +135,7 @@ export const fakeGranuleRecordFactory = (
 
 export const fakeFileRecordFactory = (
   params: Partial<PostgresFile>
-): Omit<PostgresFile, 'granule_cumulus_id'> => ({
+): Partial<PostgresFile> => ({
   bucket: cryptoRandomString({ length: 3 }),
   key: cryptoRandomString({ length: 3 }),
   created_at: new Date(),
