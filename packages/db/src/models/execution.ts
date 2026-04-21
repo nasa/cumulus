@@ -36,21 +36,24 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
         }
         : execution;
 
-    // Attempt update (should affect at most 1 row due to global uniqueness invariant)
-    const updated = await knexOrTrx(this.tableName)
-      .where('arn', execution.arn)
-      .limit(1) // defensive (not enforced by PG)
-      .update(updatePayload)
-      .returning('*');
-
-    if (updated.length > 0) {
-      return updated;
+    try {
+      // Try to insert new execution (trigger enforces global uniqueness)
+      return await knexOrTrx(this.tableName)
+        .insert(execution)
+        .returning('*');
+    } catch (error) {
+      // Trigger-raised duplicate, fallback to update
+      // Attempt update (should affect at most 1 row due to global uniqueness invariant)
+      if (error.code === '23505') {
+        const updated = await await knexOrTrx(this.tableName)
+          .where('arn', execution.arn)
+          .limit(1) // defensive (not enforced by PG)
+          .update(updatePayload)
+          .returning('*');
+        return updated; // may be []
+      }
+      throw error;
     }
-
-    // Insert new execution (trigger enforces global uniqueness)
-    return await knexOrTrx(this.tableName)
-      .insert(execution)
-      .returning('*');
   }
 
   /**
