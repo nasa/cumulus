@@ -125,8 +125,8 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     executionPgModel?: ExecutionPgModel;
     writeConstraints: boolean;
   }) : Promise<PostgresGranuleRecord[]> {
-    const updatePayload =
-      writeConstraints && (granule.status === 'running' || granule.status === 'queued')
+    const updatePayload
+      = writeConstraints && (granule.status === 'running' || granule.status === 'queued')
         ? {
           status: granule.status,
           timestamp: granule.timestamp,
@@ -141,14 +141,6 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
         `Granule upsert called with write constraints but no created_at set: ${JSON.stringify(granule)}`
       );
     }
-
-    const existing = await knexOrTrx(this.tableName)
-      .select('granule_id')
-      .where({
-        granule_id: granule.granule_id,
-        collection_cumulus_id: granule.collection_cumulus_id,
-      })
-      .first();
 
     // Attempt UPDATE if granule exists
     let updateQuery = knexOrTrx(this.tableName)
@@ -182,16 +174,18 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       }
     }
 
-    if (existing) {
-      // conflict exists
-      // may still return [] if constraints block it
-      return await updateQuery.returning('*');
-    }
+    // Try insert
+    try {
+      return await knexOrTrx(this.tableName)
+        .insert(granule)
+        .returning('*');
+    } catch (error: any) {
+      if (error.code !== '23505') throw error;
 
-    // Insert new granule (trigger enforces global uniqueness)
-    return await knexOrTrx(this.tableName)
-      .insert(granule)
-      .returning('*');
+      // Trigger-raised duplicate, fallback to update
+      const updated = await updateQuery;
+      return updated; // may be []
+    }
   }
 
   /**

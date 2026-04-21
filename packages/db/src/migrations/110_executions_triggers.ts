@@ -12,7 +12,7 @@ export const up = async (knex: Knex): Promise<void> => {
       RETURN NEW;
     EXCEPTION
       WHEN unique_violation THEN
-        RAISE EXCEPTION 'Duplicate ARN or URL: %, %', NEW.arn, NEW.url;
+        RAISE unique_violation USING MESSAGE = 'Duplicate ARN or URL: ' || NEW.arn || ', ' || NEW.url;
     END;
     $$ LANGUAGE plpgsql;
     `);

@@ -12,7 +12,7 @@ export const up = async (knex: Knex): Promise<void> => {
       RETURN NEW;
     EXCEPTION
       WHEN unique_violation THEN
-        RAISE EXCEPTION 'Duplicate granule_id: %', NEW.granule_id;
+        RAISE unique_violation USING MESSAGE = 'Duplicate granule_id: ' || NEW.granule_id;
     END;
     $$ LANGUAGE plpgsql;
   `);

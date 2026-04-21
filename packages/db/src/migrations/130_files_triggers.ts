@@ -13,7 +13,7 @@ export const up = async (knex: Knex): Promise<void> => {
 
     EXCEPTION
       WHEN unique_violation THEN
-        RAISE EXCEPTION 'Duplicate file: bucket=%, key=%', NEW.bucket, NEW.key;
+        RAISE unique_violation USING MESSAGE = 'Duplicate file: bucket=' || NEW.bucket || ', key=' || NEW.key;
     END;
     $$ LANGUAGE plpgsql;
   `);
