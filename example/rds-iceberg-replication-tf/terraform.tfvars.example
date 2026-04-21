@@ -1,0 +1,25 @@
+prefix                 = "PREFIX"
+db_admin_username      = "USERNAME"
+db_admin_password      = "PASSWORD"
+region                 = "us-east-1"
+vpc_id                 = "vpc-12345"
+subnets                = ["subnet-12345"]
+tags                   = { "Deployment" = "my_prefix" }
+rds_endpoint           = "prefix-rds-cluster-v2.cluster-12345.us-east-1.rds.amazonaws.com"
+connect_image = "<account ID>.dkr.ecr.us-east-1.amazonaws.com/cumulus/debezium/connect:0.3"
+kafka_image = "<account ID>.dkr.ecr.us-east-1.amazonaws.com/cumulus/debezium/kafka:3.4
+bootstrap_image = "<account ID>.dkr.ecr.us-east-1.amazonaws.com/cumulus/replication-bootstrap:0.1"
+data_persistence_remote_state_config = {
+  bucket = "PREFIX-tf-state"
+  key    = "PREFIX/data-persistence/terraform.tfstate"
+  region = "us-east-1"
+}
+rds_cluster_remote_state_config = {
+  bucket = "PREFIX-sandbox-tfstate"
+  key    = "PREFIX/rds-cluster/terraform.tfstate"
+  region = "us-east-1"
+}
+iceberg_namespace = "SOME_NAMESPACE"
+iceberg_s3_bucket = "YOUR_BUCKET"
+pg_db = "postgres"
+pg_schema = "public"

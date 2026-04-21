@@ -321,6 +321,7 @@ data "aws_iam_policy_document" "ecs_task_role_policy" {
     resources = [
       aws_secretsmanager_secret.api_cmr_password.arn,
       aws_secretsmanager_secret.api_launchpad_passphrase.arn,
+      aws_secretsmanager_secret.api_config.arn,
       var.rds_user_access_secret_arn
     ]
   }

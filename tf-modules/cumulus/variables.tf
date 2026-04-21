@@ -3,7 +3,7 @@
 variable "async_operation_image" {
   description = "docker image to use for Cumulus async operations tasks"
   type        = string
-  default     = "cumuluss/async-operation:55"
+  default     = "cumuluss/async-operation:56"
 }
 
 variable "cmr_client_id" {
@@ -688,8 +688,65 @@ variable "archive_records_config" {
   }
 }
 
-variable "enable_otel_tracing" {
-  description = "Enable OpenTelemetry tracing and X-Ray"
+# Iceberg API Configuration
+
+variable "deploy_iceberg_api" {
+  description = "Whether to deploy the Iceberg API"
   type        = bool
   default     = false
+}
+
+variable "iceberg_api_cpu" {
+  description = "CPU allocation for Iceberg API ECS task"
+  type        = number
+  default     = 256
+}
+
+variable "iceberg_api_memory" {
+  description = "Memory allocation for Iceberg API ECS task"
+  type        = number
+  default     = 512
+}
+
+variable "cumulus_iceberg_api_image_version" {
+  description = "Version of the Cumulus Iceberg API image"
+  type        = string
+  default     = "latest"
+}
+
+variable "api_service_autoscaling_min_capacity" {
+  description = "Minimum capacity for API service autoscaling"
+  type        = number
+  default     = 1
+}
+
+variable "api_service_autoscaling_max_capacity" {
+  description = "Maximum capacity for API service autoscaling"
+  type        = number
+  default     = 10
+}
+
+variable "api_service_autoscaling_target_cpu" {
+  description = "Target CPU utilization for API service autoscaling"
+  type        = number
+  default     = 70
+}
+
+variable "iceberg_s3_bucket" {
+  description = "Name of the S3 bucket the Iceberg API task needs read access to"
+  type        = string
+  default     = null
+  validation {
+    condition     = !var.deploy_iceberg_api || (var.iceberg_s3_bucket != null && trimspace(var.iceberg_s3_bucket) != "")
+    error_message = "iceberg_s3_bucket must be set to a non-empty value when deploy_iceberg_api is true."
+  }
+}
+variable "iceberg_namespace" {
+  description = "AWS Glue schema (database) name containing the Iceberg tables"
+  type        = string
+  default     = null
+  validation {
+    condition     = !var.deploy_iceberg_api || (var.iceberg_namespace != null && trimspace(var.iceberg_namespace) != "")
+      error_message = "iceberg_namespace must be set to a non-empty value when deploy_iceberg_api is true."
+  }
 }

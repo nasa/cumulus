@@ -1,0 +1,141 @@
+import { Knex } from 'knex';
+import pick from 'lodash/pick';
+import { DuckDBConnection } from '@duckdb/node-api';
+import Logger from '@cumulus/logger';
+
+import { CollectionSearch, Statuses, StatsRecords, CollectionRecordApi } from '../search/CollectionSearch';
+import { TableNames } from '../tables';
+import { translatePostgresCollectionToApiCollection } from '../translate/collections';
+import { PostgresCollectionRecord } from '../types/collection';
+import { QueryEvent } from '../types/search';
+import { prepareBindings } from './duckdbHelpers';
+import { GranuleIcebergSearch } from './GranuleIcebergSearch';
+import { executeDuckDBSearch } from './DuckDBSearchExecutor';
+
+const log = new Logger({ sender: '@cumulus/db/CollectionIcebergSearch' });
+
+/**
+ * Class to build and execute DuckDB search query for collections
+ */
+export class CollectionIcebergSearch extends CollectionSearch {
+  private readonly dbConnection: DuckDBConnection | undefined;
+
+  constructor(event: QueryEvent, dbConnection?: DuckDBConnection) {
+    super(event);
+    this.dbConnection = dbConnection;
+  }
+
+  /**
+   * Executes stats query to get granules' status aggregation
+   *
+   * @param collectionCumulusIds - array of cumulusIds of the collections
+   * @param knexClient - knex for the stats query
+   * @returns the collection's granules status' aggregation
+   */
+  private async fetchGranuleStatusAggregation(
+    collectionCumulusIds: number[],
+    knexClient: Knex,
+    dbConnection: DuckDBConnection
+  ): Promise<StatsRecords> {
+    const granulesTable = TableNames.granules;
+    let statsQuery = knexClient(granulesTable);
+
+    if (this.active) {
+      const granuleIcebergSearch = new GranuleIcebergSearch(
+        { queryStringParameters: this.queryStringParameters }
+      );
+      const { countQuery } = granuleIcebergSearch.buildSearchForActiveCollections(knexClient);
+      statsQuery = countQuery.clear('select');
+    }
+
+    statsQuery
+      .select(`${granulesTable}.collection_cumulus_id`, `${granulesTable}.status`)
+      .count('* as count')
+      .groupBy(`${granulesTable}.collection_cumulus_id`, `${granulesTable}.status`)
+      .whereIn(`${granulesTable}.collection_cumulus_id`, collectionCumulusIds);
+
+    log.debug(`fetchGranuleStatusAggregation statsQuery: ${statsQuery?.toSQL().sql}`);
+    const { sql, bindings } = statsQuery.toSQL().toNative();
+    const reader = await dbConnection.runAndReadAll(
+      sql,
+      prepareBindings(bindings)
+    );
+    const results = reader.getRowObjectsJson();
+    const reduced = results.reduce((acc: Record<number, Statuses>, record) => {
+      const cumulusId = Number(record.collection_cumulus_id);
+      if (!acc[cumulusId]) {
+        acc[cumulusId] = {
+          queued: 0,
+          completed: 0,
+          failed: 0,
+          running: 0,
+          total: 0,
+        };
+      }
+      acc[cumulusId][record.status as keyof Statuses] += Number(record.count);
+      acc[cumulusId]['total'] += Number(record.count);
+      return acc;
+    }, {} as StatsRecords);
+    return reduced;
+  }
+
+  /**
+   * Translate postgres records to api records
+   *
+   * @param pgRecords - postgres Collection records returned from query
+   * @param knexClient - knex for the stats query if incldueStats is true
+   * @returns translated api records
+   */
+  private async translateRecords(
+    pgRecords: PostgresCollectionRecord[],
+    knexClient: Knex,
+    dbConnection: DuckDBConnection
+  ): Promise<Partial<CollectionRecordApi>[]> {
+    log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
+
+    const { fields } = this.dbQueryParameters;
+    let statsRecords: StatsRecords;
+    const cumulusIds = pgRecords.map((record) => record.cumulus_id);
+    if (this.includeStats) {
+      statsRecords = await this.fetchGranuleStatusAggregation(cumulusIds, knexClient, dbConnection);
+    }
+
+    const apiRecords = pgRecords.map((record) => {
+      const apiRecord: CollectionRecordApi = translatePostgresCollectionToApiCollection(
+        record
+      );
+      const apiRecordFinal = fields ? pick(apiRecord, fields) : apiRecord;
+
+      if (statsRecords) {
+        apiRecordFinal.stats = statsRecords[record.cumulus_id] ? statsRecords[record.cumulus_id]
+          : {
+            queued: 0,
+            completed: 0,
+            failed: 0,
+            running: 0,
+            total: 0,
+          };
+      }
+      return apiRecordFinal;
+    });
+    return apiRecords;
+  }
+
+  /**
+   * Build and execute search query.
+   * Uses the connection supplied at construction time (e.g. in tests), or
+   * borrows one from the pool and releases it when done.
+   *
+   * @returns search result
+   */
+  async query() {
+    return executeDuckDBSearch({
+      injectedConnection: this.dbConnection,
+      dbQueryParameters: this.dbQueryParameters,
+      getMetaTemplate: this._metaTemplate.bind(this),
+      makeTranslateRecords: (conn) => (records, knexClient) =>
+        this.translateRecords(records, knexClient, conn),
+      buildSearch: (knexBuilder) => this.buildSearch(knexBuilder),
+    });
+  }
+}

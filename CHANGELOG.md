@@ -6,6 +6,102 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+- **CUMULUS-4576 Upgrade Cumulus to use the latest version of TEA (3.0.0)
+  ** UPGRADE NOTE: When upgrading the TEA module version, use a two-phase apply to prevent rollback failures
+  caused by Terraform destroying old lambda S3 objects before the CloudFormation stack update completes.
+
+### Migration Notes
+
+All core tasks that enqueue messages to launch workflows are updated to use collection defined cmrProvider. Any daac/consolidation tasks which perform the same function need to ensure they do the same.
+
+Phase 1 — upload new S3 objects and update CF stack (keeps old S3 objects intact as rollback targets if the CF update fails):
+   ````
+   terraform apply \
+     -target=module.thin_egress_app.aws_s3_object.cloudformation_template \
+     -target=module.thin_egress_app.aws_s3_object.lambda_source \
+     -target=module.thin_egress_app.aws_s3_object.lambda_code_dependency_archive \
+     -target=module.thin_egress_app.aws_s3_bucket.lambda_source \
+     -target=module.thin_egress_app.aws_cloudformation_stack.thin_egress_app \
+     -var-file=env/sandbox.tfvars
+   ````
+Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
+````terraform apply -var-file=env/sandbox.tfvars````
+
+### Added
+
+- **CUMULUS-4708**
+  - Implement list of executions route in iceberg search api
+- **CUMULUS-4707**
+  - Implement list of granules route in iceberg search api
+- **CUMULUS-4534**
+  - collection db model has added non-optional cmr_provider field
+  - update requires db-migration to add cmr_provider to collection model
+- **CUMULUS-4706**
+  - Define and serve the iceberg search api routes through the iceberg api server.
+- **CUMULUS-4606**
+  - Add terraform module and example deployment for RDS to Iceberg replication Fargate cluster
+    and associated service/task.
+- **CUMULUS-4558**
+  - Added provisioning ECS Fargate infrastructure for cumulus api using terraform.
+- **CUMULUS-4557**
+  - Make a containerized iceberg api that can be deployed to ECS.
+- **async-operations-update**
+  - Update Async Operation container to new version 56, `cumuluss/async-operation:56`. Users should update their references to `async-operation` with the new version.
+
+### Changed
+
+- **CUMULUS-4788**
+  - split replication service into multiple services, one for each replication table group
+- **CUMULUS-4534**
+  - collection translate functions pass cmr_provider/cmrProvider back and forth
+  - sf-scheduler lambda function uses collection cmr_provider to fill provider in cmr section of message template meta
+  - enqueueParsePdrMessage, enqueueGranuleIngestMessage, enqueueWorkflowMessage also use collection cmr_provider to fill provider in cmr section of message template meta
+  - enqueueWorkflowMessage (used in queue-workflow task) uses collection cmr_provider to fill provider in cmr section of message template meta
+  - enqueueParsePdrMessage (used in queue-pdrs task) uses collection cmr_provider to fill provider in cmr section of message template meta
+  - enqueueGranuleIngestMessage (used in queue-granules task) uses collection cmr_provider to fill provider in cmr section of message template meta
+
+### Fixed
+
+- **Security Vulnerabilities**
+  - Upgraded package `lodash` to version 4.18.1.
+  - Updated package overrides to address CVEs GHSA-43fc-jf86-j433 and GHSA-r5fr-rjxr-66jc.
+  - added a `webpack` override to `/website/package.json` due to docusaurus conflicts
+- **CSD-100**
+  - made changes to the `PrivateApiLambda` and `ApiEndpoints` lambdas to ensure the environment variables
+    are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported
+- **CUMULUS-4606**
+  - Added prefix to IAM resource names to prevent collisions from multiple deployments in sandbox environment
+
+## [v21.3.3] 2026-04-10
+
+- Upgraded package `lodash` to version 4.18.1.
+
+- **CUMULUS-4576** Upgrade Cumulus to use the latest version of TEA (3.0.0)
+  ** UPGRADE NOTE: When upgrading the TEA module version, use a two-phase apply to prevent rollback failures
+  caused by Terraform destroying old lambda S3 objects before the CloudFormation stack update completes.
+
+ Phase 1 — upload new S3 objects and update CF stack (keeps old S3 objects intact as rollback targets if the CF update fails):
+   ````terraform apply \
+     -target=module.thin_egress_app.aws_s3_object.cloudformation_template \
+     -target=module.thin_egress_app.aws_s3_object.lambda_source \
+     -target=module.thin_egress_app.aws_s3_object.lambda_code_dependency_archive \
+     -target=module.thin_egress_app.aws_s3_bucket.lambda_source \
+     -target=module.thin_egress_app.aws_cloudformation_stack.thin_egress_app \
+     -var-file=env/sandbox.tfvars
+   ````
+ Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
+````terraform apply -var-file=env/sandbox.tfvars````
+
+### Changed
+
+- **CSD-100**
+  - made changes to the `PrivateApiLambda` and `ApiEndpoints` lambdas to ensure the environment variables
+    are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported
+- **CUMULUS-4567**
+  - Add SQL and TypeScript migration files to alter the executions_cumulus_id sequence type.
+
+## [v21.3.2] 2026-03-20
+
 ### Migration Notes
 
 - **CUMULUS-4395 Core CnmResponse task lambda log group import**
@@ -31,6 +127,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Changed `update-granules-cmr-metadata-file-links` task config to accept a variable `excludeDataGranule`
     for whether or not to add or update a `Granule.DataGranule` to the granule's metadata, for users who do not want one added or updated from what their granule metadata already is (defaults to `false`). See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
 
+- **CSD-91**
+  - Added a task config var to update-granules-cmr-metadata-file-links `updateGranuleIdentifiers` for whether or not to update the Granule metadata's identifiers and `GranuleUR`, defaults to true. See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
+
 ### Breaking Changes
 
 - **CUMULUS-4107**
@@ -45,6 +144,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-4564**
   - Added private_api_lambda_arn as an output in the Cumulus terraform module
+
 - **CUMULUS-4473**
   - Updated Granules Bulk Operations API endpoints to support `granuleInventoryReportName` and
     `s3GranuleIdInputFile` in the payload. `batchSize` added as an optional parameter for
@@ -61,8 +161,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added python code for CnmResponse task adapted from https://github.com/podaac/cumulus-cnm-response-task
 - **CUMULUS-4395**
   - Added supporting Terraform for the CnmResponse task that allows it to be included in the Cumulus terraform zipfile and deployed with Cumulus.
-- **CUMULUS-4498**
-  - Added `states:StartExecution` action to the `<prefix>-steprole` IAM role.
 - **CUMULUS-4352**
   - Implemented multi-part download support for checksum computation in addMissingFileChecksums task.
 - **CUMULUS-4542**
@@ -114,6 +212,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CSD-85**
   - Changed `update-granules-cmr-metadata-file-links` task config to accept a variable `excludeDataGranule`
     for whether or not to add or update a `Granule.DataGranule` to the granule's metadata, for users who do not want one added or updated from what their granule metadata already is (defaults to `false`). See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
+- **CUMULUS-4570**
+  - Update corified tasks to use the common cumulus-task module
+  - Rename tasks to use PascalCase and update casing of acronyms to match existing core tasks
+    | old | new
+    | --- | ---
+    | aws-api-proxy | AwsApiProxy
+    | CNMToCMA | CnmToCma
+    | granule-invalidator-task | GranuleInvalidator
+- **CUMULUS-4599**
+  - Added the ability to easily modify version numbers for all python packages in order to keep them in sync with the Cumulus version.
 - **CUMULUS-4562**
   - Upgraded lerna to v9.
   - Updated monorepo configuration and root package.json to align with Lerna v9.
@@ -123,26 +231,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated the markdownlint-cli package and fixed linting errors or disabled specific rules.
   - Fixed security vulnerabilities related to minimatch, uuid, fast-xml-parser packages etc.
   - Replaced legacy querystring module with URLSearchParams.
-- **CUMULUS-4570**
-  - Update corified tasks to use the common cumulus-task module
-  - Rename tasks to use PascalCase and update casing of acronyms to match existing core tasks
-    | old | new
-    | --- | ---
-    | aws-api-proxy | AwsApiProxy
-    | CNMToCMA | CnmToCma
-    | granule-invalidator-task | GranuleInvalidator
-- **CUMULUS-4610**
-  - Ran `terraform fmt` on the respository, making non-functional updates to make the Terraform formatting consistent throughout.
-  - Added `terraform fmt` as a precommit hook.
-- **CUMULUS-4599**
-  - Added the ability to easily modify version numbers for all python packages in order to keep them in sync with the Cumulus version.
-- **CUMULUS-4608**
-  - The worfkow list endpoint /workflows endpoint now returns a null field value in the api response for any workflow fields that are undefined
+- **CSD-91**
+  - Added a task config var to update-granules-cmr-metadata-file-links `updateGranuleIdentifiers` for whether or not to update the Granule metadata's identifiers and `GranuleUR`, defaults to true. See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
 
 ### Fixed
 
 - **CUMULUS-4564**
   - hotfix for a terraform deployment issue found in the granule invalidator workflow causing the PrivateApiLambda to not be recreated
+- **CUMULUS-4516**
+  - Updated sftp-client to explicitly tear down stream in sftp-client/syncFromS3
+  - Updated sftp-client to warn/log on `No response from server` errors in `end` method
+- **CUMULUS-4608**
+  - Fixed bug where workflow list endpoint /workflows would error if a workflow field was undefined.   The API response now returns null for undefined fields and the sort method converts the value to string before sorting.
 - **CUMULUS-4566**
   - Updated AJV to ^8.18.0
     - Updated task components to resolve malformed/errant task schemas in the following lambdas:
@@ -153,11 +253,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       - LzardsBackup
       - ChangeGranuleCollectionS3
   - Update aws-sdk versions to ^3.993.0
-- **CUMULUS-4516**
-  - Updated sftp-client to explicitly tear down stream in sftp-client/syncFromS3
-  - Updated sftp-client to warn/log on `No response from server` errors in `end` method
-- **CUMULUS-4608**
-  - Fixed bug where worfkow list endpoint /workflows would error if a workflow field was undefined.   The API response now returns null for undefined fields and the sort method converts the value to string before sorting.
 
 ## [v21.3.1] 2026-02-16
 
@@ -269,6 +364,25 @@ Please complete the following steps before upgrading Cumulus.
   - Added `allowProviderMismatchOnRuleFilter` to the `meta` field of `rules` in `/api/lib/schemas`s
 - **CUMULUS-4458**
   - Fixed a small bug with `message_consumer` lambda env and function variable names to match so the lambda env var `allowProviderMismatchOnRuleFilter` can be properly used when set
+
+## [v21.2.1] 2025-03-17
+
+### Notable Changes
+- **CSD-85**
+  - Changed `update-granules-cmr-metadata-file-links` task config to accept a variable `excludeDataGranule`
+    for whether or not to add or update a `Granule.DataGranule` to the granule's metadata, for users who do not want one added or updated from what their granule metadata already is (defaults to `false`). See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
+
+- **CSD-91**
+  - Added a task config var to update-granules-cmr-metadata-file-links `updateGranuleIdentifiers` for whether or not to update the Granule metadata's identifiers and `GranuleUR`, defaults to true. See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
+
+### Changed
+
+- **CSD-85**
+  - Changed `update-granules-cmr-metadata-file-links` task config to accept a variable `excludeDataGranule`
+    for whether or not to add or update a `Granule.DataGranule` to the granule's metadata, for users who do not want one added or updated from what their granule metadata already is (defaults to `false`). See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
+
+- **CSD-91**
+  - Added a task config var to update-granules-cmr-metadata-file-links `updateGranuleIdentifiers` for whether or not to update the Granule metadata's identifiers and `GranuleUR`, defaults to true. See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
 
 ## [v21.2.0] 2025-12-06
 
@@ -570,6 +684,17 @@ v21.0.0 documentation should be used for this release.
   - Moved `@cumulus/api/lib/utils.errorify` function to `@cumulus/errors` and updated it to remove circular reference
   - Used `errorify` instead of `JSON.stringify` for AWS errors
   - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
+
+## [v20.3.3] 2025-04-13 [BACKPORT]
+
+Please note changes in 20.3.3 may not yet be released in future versions, as this is a backport and patch release on the 20.3.x series of releases. Updates that are included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Fixed
+
+- Upgraded package `lodash` to version 4.18.1.
+- **CSD-100**
+  - made changes to the `PrivateApiLambda` and `ApiEndpoints` lambdas to ensure the environment variables
+    are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported
 
 ## [v20.3.2] 2025-12-04 [BACKPORT]
 
@@ -9605,12 +9730,16 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v21.3.1...HEAD
-[v21.3.0]: https://github.com/nasa/cumulus/compare/v21.3.0...v21.3.1
-[v21.3.0]: https://github.com/nasa/cumulus/compare/v21.2.0...v21.3.0
+[Unreleased]: https://github.com/nasa/cumulus/compare/v21.3.3...HEAD
+[v21.3.3]: https://github.com/nasa/cumulus/compare/v21.3.2...v21.3.3
+[v21.3.2]: https://github.com/nasa/cumulus/compare/v21.3.1...v21.3.2
+[v21.3.1]: https://github.com/nasa/cumulus/compare/v21.3.0...v21.3.1
+[v21.3.0]: https://github.com/nasa/cumulus/compare/v21.2.1...v21.3.0
+[v21.2.1]: https://github.com/nasa/cumulus/compare/v21.2.0...v21.2.1
 [v21.2.0]: https://github.com/nasa/cumulus/compare/v21.0.1...v21.2.0
 [v21.0.1]: https://github.com/nasa/cumulus/compare/v21.0.0...v21.0.1
-[v21.0.0]: https://github.com/nasa/cumulus/compare/v20.3.2...v21.0.0
+[v21.0.0]: https://github.com/nasa/cumulus/compare/v20.3.3...v21.0.0
+[v20.3.3]: https://github.com/nasa/cumulus/compare/v20.3.2...v20.3.3
 [v20.3.2]: https://github.com/nasa/cumulus/compare/v20.3.1...v20.3.2
 [v20.3.1]: https://github.com/nasa/cumulus/compare/v20.3.0...v20.3.1
 [v20.3.0]: https://github.com/nasa/cumulus/compare/v20.2.3...v20.3.0

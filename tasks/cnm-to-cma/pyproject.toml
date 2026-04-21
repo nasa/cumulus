@@ -1,6 +1,6 @@
 [project]
 name = "cnm-to-cma"
-version = "21.3.1"
+version = "21.3.3"
 description = "Translate CNM message to CMA"
 authors = [
     { name = "ESHINDavid Yen", email = "david.yen@jpl.nasa.gov" }

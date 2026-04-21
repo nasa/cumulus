@@ -82,7 +82,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/0d/0f/6a8b3f739ab748b5b
 
 [[package]]
 name = "cumulus-python-reference-activity"
-version = "21.3.1"
+version = "21.3.3"
 source = { virtual = "." }
 dependencies = [
     { name = "boto3" },
