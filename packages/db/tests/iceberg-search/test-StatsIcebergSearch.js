@@ -12,13 +12,13 @@ const {
   stageAndLoadDuckDBTableFromData,
 } = require('../../dist/test-duckdb-utils');
 const {
-  collectionsS3TableSql,
-  executionsS3TableSql,
-  granulesS3TableSql,
-  providersS3TableSql,
-  pdrsS3TableSql,
-  reconciliationReportsS3TableSql,
-} = require('../../dist/s3search/s3TableSchemas');
+  collectionsIcebergSql,
+  executionsIcebergSql,
+  granulesIcebergSql,
+  providersIcebergSql,
+  pdrsIcebergSql,
+  reconciliationReportsIcebergSql,
+} = require('../../dist/iceberg-search/IcebergSchemas');
 
 const {
   fakeCollectionRecordFactory,
@@ -29,7 +29,7 @@ const {
   fakeReconciliationReportRecordFactory,
 } = require('../../dist');
 
-const { StatsS3Search } = require('../../dist/s3search/StatsS3Search');
+const { StatsIcebergSearch } = require('../../dist/iceberg-search/StatsIcebergSearch');
 
 test.before(async (t) => {
   t.context.knexBuilder = knex({ client: 'pg' });
@@ -103,7 +103,7 @@ test.before(async (t) => {
     connection,
     t.context.knexBuilder,
     'collections',
-    collectionsS3TableSql,
+    collectionsIcebergSql,
     collections,
     `${duckdbS3Prefix}collections.parquet`
   );
@@ -113,7 +113,7 @@ test.before(async (t) => {
     connection,
     t.context.knexBuilder,
     'providers',
-    providersS3TableSql,
+    providersIcebergSql,
     providers,
     `${duckdbS3Prefix}providers.parquet`
   );
@@ -123,7 +123,7 @@ test.before(async (t) => {
     connection,
     t.context.knexBuilder,
     'granules',
-    granulesS3TableSql,
+    granulesIcebergSql,
     granules,
     `${duckdbS3Prefix}granules.parquet`
   );
@@ -133,7 +133,7 @@ test.before(async (t) => {
     connection,
     t.context.knexBuilder,
     'executions',
-    executionsS3TableSql,
+    executionsIcebergSql,
     executions,
     `${duckdbS3Prefix}executions.parquet`
   );
@@ -143,7 +143,7 @@ test.before(async (t) => {
     connection,
     t.context.knexBuilder,
     'pdrs',
-    pdrsS3TableSql,
+    pdrsIcebergSql,
     pdrs,
     `${duckdbS3Prefix}pdrs.parquet`
   );
@@ -153,7 +153,7 @@ test.before(async (t) => {
     connection,
     t.context.knexBuilder,
     'reconciliation_reports',
-    reconciliationReportsS3TableSql,
+    reconciliationReportsIcebergSql,
     reconReports,
     `${duckdbS3Prefix}reconciliation_reports.parquet`
   );
@@ -164,9 +164,9 @@ test.after.always(async (t) => {
   await t.context.connection.closeSync();
 });
 
-test.serial('StatsS3Search aggregate returns correct response for basic query with type granules', async (t) => {
+test.serial('StatsIcebergSearch aggregate returns correct response for basic query with type granules', async (t) => {
   const { connection } = t.context;
-  const AggregateSearch = new StatsS3Search({}, 'granule', connection);
+  const AggregateSearch = new StatsIcebergSearch({}, 'granule', connection);
   const results = await AggregateSearch.aggregate(knex);
   const expectedResponse = [
     { key: 'completed', count: 25 },
@@ -178,14 +178,14 @@ test.serial('StatsS3Search aggregate returns correct response for basic query wi
   t.deepEqual(results.count, expectedResponse);
 });
 
-test.serial('StatsS3Search aggregate filters granules correctly by date', async (t) => {
+test.serial('StatsIcebergSearch aggregate filters granules correctly by date', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     timestamp__from: `${(new Date(2020, 1, 28)).getTime()}`,
     timestamp__to: `${(new Date(2022, 2, 30)).getTime()}`,
   };
 
-  const AggregateSearch = new StatsS3Search({ queryStringParameters }, 'granule', connection);
+  const AggregateSearch = new StatsIcebergSearch({ queryStringParameters }, 'granule', connection);
   const results = await AggregateSearch.aggregate(knex);
   const expectedResponse = [
     { key: 'completed', count: 9 },
@@ -197,13 +197,13 @@ test.serial('StatsS3Search aggregate filters granules correctly by date', async 
   t.deepEqual(results.count, expectedResponse);
 });
 
-test.serial('StatsS3Search aggregate filters executions correctly', async (t) => {
+test.serial('StatsIcebergSearch aggregate filters executions correctly', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     field: 'status',
   };
 
-  const AggregateSearch = new StatsS3Search({ queryStringParameters }, 'execution', connection);
+  const AggregateSearch = new StatsIcebergSearch({ queryStringParameters }, 'execution', connection);
   const results = await AggregateSearch.aggregate(knex);
   const expectedResponse1 = [
     { key: 'completed', count: 7 },
@@ -219,7 +219,7 @@ test.serial('StatsS3Search aggregate filters executions correctly', async (t) =>
     timestamp__from: `${(new Date(2021, 1, 28)).getTime()}`,
   };
 
-  const AggregateSearch2 = new StatsS3Search({ queryStringParameters }, 'execution', connection);
+  const AggregateSearch2 = new StatsIcebergSearch({ queryStringParameters }, 'execution', connection);
   const results2 = await AggregateSearch2.aggregate(knex);
   const expectedResponse2 = [
     { key: 'completed', count: 3 },
@@ -237,20 +237,20 @@ test.serial('StatsS3Search aggregate filters executions correctly', async (t) =>
     status: 'running',
   };
 
-  const AggregateSearch3 = new StatsS3Search({ queryStringParameters }, 'execution', connection);
+  const AggregateSearch3 = new StatsIcebergSearch({ queryStringParameters }, 'execution', connection);
   const results3 = await AggregateSearch3.aggregate(knex);
   const expectedResponse3 = [{ key: 'running', count: 1 }];
   t.deepEqual(results3.count, expectedResponse3);
   t.is(results3.meta.count, 1);
 });
 
-test.serial('StatsS3Search aggregate filters PDRs correctly', async (t) => {
+test.serial('StatsIcebergSearch aggregate filters PDRs correctly', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     field: 'status',
   };
 
-  const AggregateSearch = new StatsS3Search({ queryStringParameters }, 'pdr', connection);
+  const AggregateSearch = new StatsIcebergSearch({ queryStringParameters }, 'pdr', connection);
   const results = await AggregateSearch.aggregate(knex);
   const expectedResponse = [
     { key: 'completed', count: 7 },
@@ -266,7 +266,7 @@ test.serial('StatsS3Search aggregate filters PDRs correctly', async (t) => {
     timestamp__from: `${(new Date(2018, 1, 28)).getTime()}`,
   };
 
-  const AggregateSearch2 = new StatsS3Search({ queryStringParameters }, 'pdr', connection);
+  const AggregateSearch2 = new StatsIcebergSearch({ queryStringParameters }, 'pdr', connection);
   const results2 = await AggregateSearch2.aggregate(knex);
   const expectedResponse2 = [{ key: 'completed', count: 4 }, { key: 'failed', count: 2 }];
   t.is(results2.meta.count, 6);
@@ -279,20 +279,20 @@ test.serial('StatsS3Search aggregate filters PDRs correctly', async (t) => {
     status: 'failed',
   };
 
-  const AggregateSearch3 = new StatsS3Search({ queryStringParameters }, 'pdr', connection);
+  const AggregateSearch3 = new StatsIcebergSearch({ queryStringParameters }, 'pdr', connection);
   const results3 = await AggregateSearch3.aggregate(knex);
   const expectedResponse3 = [{ key: 'failed', count: 2 }];
   t.is(results3.meta.count, 2);
   t.deepEqual(results3.count, expectedResponse3);
 });
 
-test.serial('StatsS3Search aggregate filters Reconciliation Reports correctly', async (t) => {
+test.serial('StatsIcebergSearch aggregate filters Reconciliation Reports correctly', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     field: 'type',
   };
 
-  const AggregateSearch = new StatsS3Search({ queryStringParameters }, 'reconciliationReport', connection);
+  const AggregateSearch = new StatsIcebergSearch({ queryStringParameters }, 'reconciliationReport', connection);
   const results = await AggregateSearch.aggregate(knex);
   const expectedResponse = [
     { key: 'Granule Inventory', count: 6 },
@@ -307,7 +307,7 @@ test.serial('StatsS3Search aggregate filters Reconciliation Reports correctly', 
     field: 'status',
   };
 
-  const AggregateSearch2 = new StatsS3Search({ queryStringParameters }, 'reconciliationReport', connection);
+  const AggregateSearch2 = new StatsIcebergSearch({ queryStringParameters }, 'reconciliationReport', connection);
   const results2 = await AggregateSearch2.aggregate(knex);
   const expectedResponse2 = [
     { key: 'Failed', count: 8 },
@@ -318,35 +318,35 @@ test.serial('StatsS3Search aggregate filters Reconciliation Reports correctly', 
   t.deepEqual(results2.count, expectedResponse2);
 });
 
-test.serial('StatsS3Search returns correct aggregate response for type granule when queried by provider', async (t) => {
+test.serial('StatsIcebergSearch returns correct aggregate response for type granule when queried by provider', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     field: 'status',
     provider: 'testProvider2',
   };
 
-  const AggregateSearch = new StatsS3Search({ queryStringParameters }, 'granule', connection);
+  const AggregateSearch = new StatsIcebergSearch({ queryStringParameters }, 'granule', connection);
   const results = await AggregateSearch.aggregate(knex);
   const expectedResponse = [{ key: 'completed', count: 5 }, { key: 'queued', count: 5 }];
   t.is(results.meta.count, 10);
   t.deepEqual(results.count, expectedResponse);
 });
 
-test.serial('StatsS3Search returns correct aggregate response for type granule when queried by collection', async (t) => {
+test.serial('StatsIcebergSearch returns correct aggregate response for type granule when queried by collection', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     field: 'status',
     collectionId: 'testCollection___8',
   };
 
-  const AggregateSearch = new StatsS3Search({ queryStringParameters }, 'granule', connection);
+  const AggregateSearch = new StatsIcebergSearch({ queryStringParameters }, 'granule', connection);
   const results = await AggregateSearch.aggregate(knex);
   const expectedResponse = [{ key: 'queued', count: 5 }];
   t.is(results.meta.count, 5);
   t.deepEqual(results.count, expectedResponse);
 });
 
-test.serial('StatsS3Search returns correct aggregate response for type granule when queried by collection and provider', async (t) => {
+test.serial('StatsIcebergSearch returns correct aggregate response for type granule when queried by collection and provider', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     field: 'status',
@@ -354,7 +354,7 @@ test.serial('StatsS3Search returns correct aggregate response for type granule w
     provider: 'testProvider1',
   };
 
-  const AggregateSearch = new StatsS3Search({ queryStringParameters }, 'granule', connection);
+  const AggregateSearch = new StatsIcebergSearch({ queryStringParameters }, 'granule', connection);
   const results = await AggregateSearch.aggregate(knex);
   const expectedResponse = [{ key: 'failed', count: 5 }];
   t.is(results.meta.count, 5);
@@ -368,7 +368,7 @@ test.serial('StatsS3Search returns correct aggregate response for type granule w
     timestamp__from: `${(new Date(2018, 1, 28)).getTime()}`,
   };
 
-  const AggregateSearch2 = new StatsS3Search({ queryStringParameters }, 'granule', connection);
+  const AggregateSearch2 = new StatsIcebergSearch({ queryStringParameters }, 'granule', connection);
   const results2 = await AggregateSearch2.aggregate(knex);
   const expectedResponse2 = [{ key: 'failed', count: 2 }];
   t.is(results2.meta.count, 2);
@@ -382,19 +382,19 @@ test.serial('StatsS3Search returns correct aggregate response for type granule w
     status: 'failed',
   };
 
-  const AggregateSearch3 = new StatsS3Search({ queryStringParameters }, 'granule', connection);
+  const AggregateSearch3 = new StatsIcebergSearch({ queryStringParameters }, 'granule', connection);
   const results3 = await AggregateSearch3.aggregate(knex);
   const expectedResponse3 = [{ key: 'failed', count: 2 }];
   t.is(results3.meta.count, 2);
   t.deepEqual(results3.count, expectedResponse3);
 });
 
-test.serial('StatsS3Search returns correct aggregate response for type granule when queried by error', async (t) => {
+test.serial('StatsIcebergSearch returns correct aggregate response for type granule when queried by error', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     field: 'error.Error.keyword',
   };
-  const AggregateSearch = new StatsS3Search({ queryStringParameters }, 'granule', connection);
+  const AggregateSearch = new StatsIcebergSearch({ queryStringParameters }, 'granule', connection);
   const results = await AggregateSearch.aggregate(knex);
   const expectedResponse1 = [
     { key: 'CmrFailure', count: 20 },
@@ -410,7 +410,7 @@ test.serial('StatsS3Search returns correct aggregate response for type granule w
     timestamp__to: `${(new Date(2021, 12, 9)).getTime()}`,
     timestamp__from: `${(new Date(2020, 1, 28)).getTime()}`,
   };
-  const AggregateSearch2 = new StatsS3Search({ queryStringParameters }, 'granule', connection);
+  const AggregateSearch2 = new StatsIcebergSearch({ queryStringParameters }, 'granule', connection);
   const results2 = await AggregateSearch2.aggregate(knex);
   const expectedResponse2 = [
     { key: 'CmrFailure', count: 8 },
@@ -428,19 +428,19 @@ test.serial('StatsS3Search returns correct aggregate response for type granule w
     timestamp__to: `${(new Date(2019, 12, 9)).getTime()}`,
     timestamp__from: `${(new Date(2018, 1, 28)).getTime()}`,
   };
-  const AggregateSearch3 = new StatsS3Search({ queryStringParameters }, 'granule', connection);
+  const AggregateSearch3 = new StatsIcebergSearch({ queryStringParameters }, 'granule', connection);
   const results3 = await AggregateSearch3.aggregate(knex);
   const expectedResponse3 = [{ key: 'CumulusMessageAdapterError', count: 2 }];
   t.is(results3.meta.count, 2);
   t.deepEqual(results3.count, expectedResponse3);
 });
 
-test.serial('StatsS3Search can query by infix and prefix when type is defined', async (t) => {
+test.serial('StatsIcebergSearch can query by infix and prefix when type is defined', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     infix: 'testGra',
   };
-  const AggregateSearch = new StatsS3Search({ queryStringParameters }, 'granule', connection);
+  const AggregateSearch = new StatsIcebergSearch({ queryStringParameters }, 'granule', connection);
   const results = await AggregateSearch.aggregate(knex);
   const expectedResponse1 = [{ key: 'completed', count: 25 }, { key: 'queued', count: 25 }];
   t.is(results.meta.count, 50);
@@ -449,7 +449,7 @@ test.serial('StatsS3Search can query by infix and prefix when type is defined', 
   queryStringParameters = {
     prefix: 'query',
   };
-  const AggregateSearch2 = new StatsS3Search({ queryStringParameters }, 'granule', connection);
+  const AggregateSearch2 = new StatsIcebergSearch({ queryStringParameters }, 'granule', connection);
   const results2 = await AggregateSearch2.aggregate(knex);
   const expectedResponse2 = [{ key: 'failed', count: 25 }, { key: 'running', count: 25 }];
   t.is(results2.meta.count, 50);
@@ -460,16 +460,16 @@ test.serial('StatsS3Search can query by infix and prefix when type is defined', 
     version: '8',
     field: 'name',
   };
-  const AggregateSearch3 = new StatsS3Search({ queryStringParameters }, 'collection', connection);
+  const AggregateSearch3 = new StatsIcebergSearch({ queryStringParameters }, 'collection', connection);
   const results3 = await AggregateSearch3.aggregate(knex);
   const expectedResponse3 = [{ key: 'testCollection', count: 1 }];
   t.is(results3.meta.count, 1);
   t.deepEqual(results3.count, expectedResponse3);
 });
 
-test.serial('StatsS3Search summary works', async (t) => {
+test.serial('StatsIcebergSearch summary works', async (t) => {
   const { connection } = t.context;
-  const StatsSummary = new StatsS3Search({}, 'granule', connection);
+  const StatsSummary = new StatsIcebergSearch({}, 'granule', connection);
   const results = await StatsSummary.summary(knex);
   t.is(results.collections.value, 20);
   t.is(results.granules.value, 100);
@@ -479,7 +479,7 @@ test.serial('StatsS3Search summary works', async (t) => {
     timestamp__to: `${(new Date(2019, 12, 9)).getTime()}`,
     timestamp__from: `${(new Date(2018, 1, 28)).getTime()}`,
   };
-  const StatsSummary2 = new StatsS3Search({ queryStringParameters }, 'granule', connection);
+  const StatsSummary2 = new StatsIcebergSearch({ queryStringParameters }, 'granule', connection);
   const results2 = await StatsSummary2.summary(knex);
   t.is(results2.collections.value, 15);
   t.is(results2.granules.value, 25);

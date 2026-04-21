@@ -21,6 +21,13 @@ const ignoredPackages = [
 
 const root = path.resolve(__dirname);
 
+/**
+ * This webpack configuration only builds Lambda functions.
+ * The Iceberg API (iceberg-index.js) runs in ECS without webpack bundling,
+ * allowing it to use native DuckDB libraries that cannot be bundled.
+ *
+ * Iceberg-specific files are explicitly excluded from Lambda builds below.
+ */
 module.exports = {
   mode: process.env.PRODUCTION ? 'production' : 'development',
   entry: {
@@ -72,6 +79,11 @@ module.exports = {
     new IgnorePlugin({
       resourceRegExp: new RegExp(`^(${ignoredPackages.join('|')})$`)
     }),
+    // Exclude Iceberg-specific files from Lambda builds.
+    // These files are only used by the ECS-based Iceberg API server.
+    new IgnorePlugin({
+      resourceRegExp: /iceberg-(index|routes|db|granules|collections|executions|providers|rules|pdrs|async-operations|reconciliation-reports)\.js$/
+    }),
   ],
   output: {
     chunkFormat: false,
@@ -86,7 +98,10 @@ module.exports = {
     /@aws-sdk\//,
     'electron',
     { formidable: 'url' },
-    { fsevents: "require('fsevents')" }
+    { fsevents: "require('fsevents')" },
+    /^@duckdb\/node-bindings-.*$/,
+    '@duckdb/node-api',
+    '@duckdb/node-bindings',
   ],
   module: {
     rules: [

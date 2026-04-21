@@ -19,12 +19,6 @@ export {
 
 export { isCollisionError } from './lib/errors';
 export { getKnexClient } from './connection';
-export {
-  getIcebergKnexClient,
-  initializeIcebergKnexClientSingleton,
-  destroyIcebergKnexClientSingleton,
-  isIcebergKnexClientSingletonInitialized,
-} from './iceberg-connection';
 export { getKnexConfig, localStackConnectionEnv } from './config';
 export { createRejectableTransaction } from './database';
 export { TableNames } from './tables';
@@ -180,10 +174,6 @@ export {
 export {
   ReconciliationReportSearch,
 } from './search/ReconciliationReportSearch';
-
-export {
-  CollectionS3Search,
-} from './s3search/CollectionS3Search';
 
 export { AsyncOperationPgModel } from './models/async_operation';
 export { BasePgModel } from './models/base';
