@@ -314,11 +314,13 @@ variable "api_service_autoscaling_target_cpu" {
 variable "iceberg_s3_bucket" {
   description = "Name of the S3 bucket the Iceberg API task needs read access to"
   type        = string
+  default = ""
 }
 
 variable "iceberg_namespace" {
   description = "AWS Glue schema (database) name containing the Iceberg tables"
   type        = string
+  default = ""
 }
 
 variable "archive_api_users" {
