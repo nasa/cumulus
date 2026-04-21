@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+- **async-operations-update**
+  - Updated Async Operation container to new version 57, `cumuluss/async-operation:57`. Users should update their references to `async-operation` with the new version.
+
 ## [v21.3.3] 2026-04-10
 
 - Upgraded package `lodash` to version 4.18.1.
