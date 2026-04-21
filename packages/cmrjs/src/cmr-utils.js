@@ -13,6 +13,8 @@ const path = require('path');
 const urljoin = require('url-join');
 const xml2js = require('xml2js');
 const omit = require('lodash/omit');
+const pRetry = require('p-retry');
+const { HeadObjectCommand } = require('@aws-sdk/client-s3');
 const {
   buildS3Uri,
   parseS3Uri,
@@ -250,9 +252,25 @@ function granulesToCmrFileObjects(granules, filterFunc = isCMRFile) {
  * @returns {Promise<Object>} CMR's success response which includes the concept-id
  */
 async function publishECHO10XML2CMR(cmrFile, cmrClient, revisionId) {
+  let res;
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(cmrFile.metadataObject);
-  const res = await cmrClient.ingestGranule(xml, revisionId);
+
+  await pRetry(
+    async () => {
+      try {
+        res = await cmrClient.ingestGranule(xml, revisionId);
+      } catch (error) {
+        if (error.statusCode === 401) {
+          await cmrClient.refreshLaunchpadToken();
+          throw error;
+        }
+        throw new pRetry.AbortError(error);
+      }
+    },
+    { retries: 10 } //hard-coded for now
+  );
+
   const conceptId = res.result['concept-id'];
   let resultLog = `Published ${cmrFile.granuleId} to the CMR. conceptId: ${conceptId}`;
 
@@ -280,8 +298,24 @@ async function publishECHO10XML2CMR(cmrFile, cmrClient, revisionId) {
  * @returns {Promise<Object>} CMR's success response which includes the concept-id
  */
 async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId) {
+  let res;
   const granuleId = cmrFile.metadataObject.GranuleUR;
-  const res = await cmrClient.ingestUMMGranule(cmrFile.metadataObject, revisionId);
+
+  await pRetry(
+    async () => {
+      try {
+        res = await cmrClient.ingestUMMGranule(cmrFile.metadataObject, revisionId);
+      } catch (error) {
+        if (error.statusCode === 401) {
+          await cmrClient.refreshLaunchpadToken();
+          throw error;
+        }
+        throw new pRetry.AbortError(error);
+      }
+    },
+    { retries: 10 } //hard-coded for now
+  );
+
   const conceptId = res['concept-id'];
 
   const filename = getS3UrlOfFile(cmrFile);
@@ -339,7 +373,20 @@ function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
  */
 async function removeFromCMR(granuleUR, creds) {
   const cmrClient = new CMR(creds);
-  return await cmrClient.deleteGranule(granuleUR);
+  return await pRetry(
+    async () => {
+      try {
+        return await cmrClient.deleteGranule(granuleUR);
+      } catch (error) {
+        if (error.statusCode === 401) {
+          await cmrClient.refreshLaunchpadToken();
+          throw error;
+        }
+        throw new pRetry.AbortError(error);
+      }
+    },
+    { retries: 10 } //hard-coded for now
+  );
 }
 
 /**
@@ -926,6 +973,30 @@ async function updateUMMGMetadata({
   return { metadataObject: updatedMetadataObject, etag };
 }
 
+/* eslint-disable no-await-in-loop */
+async function waitForLockFileRelease() {
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < 30000) {
+    try {
+      await s3().send(new HeadObjectCommand({
+        Bucket: process.env.system_bucket,
+        Key: `${process.env.system_bucket}/launchpad-token-lock.json`,
+      }));
+      // if the lock file exists, wait and retry
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+    } catch (error) {
+      if (error.name === 'NotFound') {
+        return;
+      }
+      throw error;
+    }
+  }
+
+  throw new Error('Timed out waiting for launchpad lock file to be released');
+}
+/* eslint-enable no-await-in-loop */
+
 /**
  * Helper to build an CMR settings object, used to initialize CMR.
  *
@@ -952,6 +1023,9 @@ async function getCmrSettings(cmrConfig = {}) {
   };
 
   if (oauthProvider === 'launchpad') {
+    // checking for lock file and waiting for its release if it exists
+    await waitForLockFileRelease();
+
     const launchpadPassphraseSecretName = cmrConfig.passphraseSecretName
       || process.env.launchpad_passphrase_secret_name;
     const passphrase = await getSecretString(
@@ -965,7 +1039,10 @@ async function getCmrSettings(cmrConfig = {}) {
     };
 
     log.debug('cmrjs.getCreds getLaunchpadToken');
+
+    // the following line could possibly be replaced by just getting the token from s3 and using it
     const token = await launchpad.getLaunchpadToken(config);
+
     return {
       ...cmrCredentials,
       token,
@@ -1359,9 +1436,24 @@ function buildCMRQuery(results) {
  * containing the found collections
  */
 async function getCollectionsByShortNameAndVersion(results) {
+  let headers;
   const query = buildCMRQuery(results);
   const cmrClient = new CMR(await getCmrSettings());
-  const headers = cmrClient.getReadHeaders({ token: await cmrClient.getToken() });
+
+  await pRetry(
+    async () => {
+      try {
+        headers = cmrClient.getReadHeaders({ token: await cmrClient.getToken() });
+      } catch (error) {
+        if (error.statusCode === 401) {
+          await cmrClient.refreshLaunchpadToken();
+          throw error;
+        }
+        throw new pRetry.AbortError(error);
+      }
+    },
+    { retries: 10 } //hard-coded for now
+  );
 
   const response = await got.post(
     `${getSearchUrl()}collections.json`,

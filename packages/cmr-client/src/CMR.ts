@@ -12,6 +12,7 @@ import getConceptMetadata from './getConcept';
 import { getIngestUrl } from './getUrl';
 import { UmmMetadata, ummVersion } from './UmmUtils';
 const log = new Logger({ sender: 'cmr-client' });
+const { LambdaClient, InvokeCommand } = require('@aws-sdk/client-lambda');
 const { getRequiredEnvVar } = require('@cumulus/common/env');
 
 const logDetails: { [key: string]: string } = {
@@ -43,6 +44,7 @@ export interface CMRConstructorParams {
   token?: string,
   username?: string,
   oauthProvider: string,
+  tokenTimestamp?: number;
 }
 
 /**
@@ -71,18 +73,25 @@ export interface CMRConstructorParams {
   * due to branch logic/complexity in token vs password/username handling
  */
 export class CMR {
-  clientId: string;
-  provider: string;
+  private static instance: CMR;
+
+  clientId!: string;
+  provider!: string;
   username?: string;
-  oauthProvider: string;
+  oauthProvider!: string;
   password?: string;
   passwordSecretName?: string;
   token?: string;
+  tokenTimestamp?: number;
 
   /**
    * The constructor for the CMR class
    */
   constructor(params: CMRConstructorParams) {
+    if (CMR.instance) {
+      return CMR.instance;
+    }
+
     this.clientId = params.clientId;
     this.provider = params.provider;
     this.username = params.username;
@@ -90,6 +99,9 @@ export class CMR {
     this.passwordSecretName = params.passwordSecretName;
     this.token = params.token;
     this.oauthProvider = params.oauthProvider;
+    this.tokenTimestamp = Date.now();
+
+    CMR.instance = this;
   }
 
   /**
@@ -131,6 +143,37 @@ export class CMR {
     return this.token
       ? this.token
       : updateToken(this.username, await this.getCmrPassword());
+  }
+
+  async refreshLaunchpadToken(): Promise<void> {
+    const refreshStartTime = Date.now();
+
+    const lambda = new LambdaClient();
+    const response = await lambda.send(new InvokeCommand({
+      FunctionName: `${process.env.stackName}-recreateLaunchpadToken`,
+      InvocationType: 'RequestResponse',
+      Payload: JSON.stringify({
+        config: {
+          // passing in CONFIG vars
+        },
+      }),
+    }));
+
+    if (response.FunctionError) {
+      const payload = JSON.parse((response.Payload).toString());
+      throw new Error(`Token refresh failed: ${payload.errorMessage}`);
+    }
+
+    const payload = JSON.parse((response.Payload).toString());
+    const newToken = payload.token;
+
+    if (!newToken) {
+      throw new Error('Token refresh Lambda returned no token');
+    }
+
+    // I THINK HERE THERE NEEDS TO BE MORE TIME CHECKING STUFF
+    this.token = newToken;
+    this.tokenTimestamp = refreshStartTime;
   }
 
   /**
