@@ -89,4 +89,3 @@ archive_api_users = [
 ]
 archive_api_url = "https://d3cuh567loctll.cloudfront.net/"
 cumulus_distribution_url = "https://djidssf1tx775.cloudfront.net/"
-enable_otel_tracing = true
