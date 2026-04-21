@@ -13,12 +13,12 @@ const {
   setupDuckDBWithS3ForTesting,
   stageAndLoadDuckDBTableFromData,
 } = require('../../dist/test-duckdb-utils');
-const { CollectionS3Search } = require('../../dist/s3search/CollectionS3Search');
+const { CollectionIcebergSearch } = require('../../dist/iceberg-search/CollectionIcebergSearch');
 const {
-  collectionsS3TableSql,
-  granulesS3TableSql,
-  providersS3TableSql,
-} = require('../../dist/s3search/s3TableSchemas');
+  collectionsIcebergSql,
+  granulesIcebergSql,
+  providersIcebergSql,
+} = require('../../dist/iceberg-search/IcebergSchemas');
 const { translatePostgresCollectionToApiCollection } = require('../../dist/translate/collections');
 
 const {
@@ -82,7 +82,7 @@ test.before(async (t) => {
     connection,
     t.context.knexBuilder,
     'collections',
-    collectionsS3TableSql,
+    collectionsIcebergSql,
     t.context.collections,
     `${duckdbS3Prefix}collections.parquet`
   );
@@ -91,7 +91,7 @@ test.before(async (t) => {
     connection,
     t.context.knexBuilder,
     'providers',
-    providersS3TableSql,
+    providersIcebergSql,
     t.context.provider,
     `${duckdbS3Prefix}providers.parquet`
   );
@@ -100,7 +100,7 @@ test.before(async (t) => {
     connection,
     t.context.knexBuilder,
     'granules',
-    granulesS3TableSql,
+    granulesIcebergSql,
     t.context.granules,
     `${duckdbS3Prefix}granules.parquet`
   );
@@ -111,21 +111,21 @@ test.after.always(async (t) => {
   await t.context.connection.closeSync();
 });
 
-test.serial('CollectionS3Search returns 10 collections by default', async (t) => {
+test.serial('CollectionIcebergSearch returns 10 collections by default', async (t) => {
   const { connection } = t.context;
-  const dbSearch = new CollectionS3Search({}, connection);
+  const dbSearch = new CollectionIcebergSearch({}, connection);
   const results = await dbSearch.query();
   t.is(results.meta.count, 100);
   t.is(results.results.length, 10);
 });
 
-test.serial('CollectionS3Search supports page and limit params', async (t) => {
+test.serial('CollectionIcebergSearch supports page and limit params', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 20,
     page: 2,
   };
-  let dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  let dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   let response = await dbSearch.query();
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 20);
@@ -134,7 +134,7 @@ test.serial('CollectionS3Search supports page and limit params', async (t) => {
     limit: 11,
     page: 10,
   };
-  dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 1);
@@ -143,79 +143,79 @@ test.serial('CollectionS3Search supports page and limit params', async (t) => {
     limit: 10,
     page: 11,
   };
-  dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 0);
 });
 
-test.serial('CollectionS3Search supports infix search', async (t) => {
+test.serial('CollectionIcebergSearch supports infix search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 20,
     infix: 'test',
   };
-  const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  const dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 20);
 });
 
-test.serial('CollectionS3Search supports prefix search', async (t) => {
+test.serial('CollectionIcebergSearch supports prefix search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 20,
     prefix: 'fake',
   };
-  const dbSearch2 = new CollectionS3Search({ queryStringParameters }, connection);
+  const dbSearch2 = new CollectionIcebergSearch({ queryStringParameters }, connection);
   const response2 = await dbSearch2.query();
   t.is(response2.meta.count, 50);
   t.is(response2.results?.length, 20);
 });
 
-test.serial('CollectionS3Search supports term search for boolean field', async (t) => {
+test.serial('CollectionIcebergSearch supports term search for boolean field', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
     reportToEms: 'false',
   };
-  const dbSearch4 = new CollectionS3Search({ queryStringParameters }, connection);
+  const dbSearch4 = new CollectionIcebergSearch({ queryStringParameters }, connection);
   const response4 = await dbSearch4.query();
   t.is(response4.meta.count, 50);
   t.is(response4.results?.length, 50);
 });
 
-test.serial('CollectionS3Search supports term search for date field', async (t) => {
+test.serial('CollectionIcebergSearch supports term search for date field', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
     updatedAt: `${t.context.collectionSearchTmestamp + 1}`,
   };
-  const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  const dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
 });
 
-test.serial('CollectionS3Search supports term search for number field', async (t) => {
+test.serial('CollectionIcebergSearch supports term search for number field', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
     version: '2',
   };
-  const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  const dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
 });
 
-test.serial('CollectionS3Search supports term search for string field', async (t) => {
+test.serial('CollectionIcebergSearch supports term search for string field', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
     _id: 'fakeCollection___71',
   };
-  const dbSearch2 = new CollectionS3Search({ queryStringParameters }, connection);
+  const dbSearch2 = new CollectionIcebergSearch({ queryStringParameters }, connection);
   const response2 = await dbSearch2.query();
   t.is(response2.meta.count, 1);
   t.is(response2.results?.length, 1);
@@ -224,7 +224,7 @@ test.serial('CollectionS3Search supports term search for string field', async (t
     limit: 200,
     process: 'publish',
   };
-  const dbSearch3 = new CollectionS3Search({ queryStringParameters }, connection);
+  const dbSearch3 = new CollectionIcebergSearch({ queryStringParameters }, connection);
   const response3 = await dbSearch3.query();
   t.is(response3.meta.count, 50);
   t.is(response3.results?.length, 50);
@@ -233,20 +233,20 @@ test.serial('CollectionS3Search supports term search for string field', async (t
     limit: 200,
     granuleId: 'testGranuleId',
   };
-  const dbSearch4 = new CollectionS3Search({ queryStringParameters }, connection);
+  const dbSearch4 = new CollectionIcebergSearch({ queryStringParameters }, connection);
   const response4 = await dbSearch4.query();
   t.is(response4.meta.count, 50);
   t.is(response4.results?.length, 50);
 });
 
-test.serial('CollectionS3Search supports range search', async (t) => {
+test.serial('CollectionIcebergSearch supports range search', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
     timestamp__from: `${t.context.collectionSearchTmestamp + 1}`,
     timestamp__to: `${t.context.collectionSearchTmestamp + 2}`,
   };
-  let dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  let dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   let response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
@@ -255,13 +255,13 @@ test.serial('CollectionS3Search supports range search', async (t) => {
     ...queryStringParameters,
     active: 'true',
   };
-  dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 0);
   t.is(response.results?.length, 0);
 });
 
-test.serial('CollectionS3Search supports search for multiple fields', async (t) => {
+test.serial('CollectionIcebergSearch supports search for multiple fields', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -271,46 +271,46 @@ test.serial('CollectionS3Search supports search for multiple fields', async (t) 
     process: 'ingest',
     reportToEms: 'true',
   };
-  const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  const dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
 });
 
-test.serial('CollectionS3Search non-existing fields are ignored', async (t) => {
+test.serial('CollectionIcebergSearch non-existing fields are ignored', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
     non_existing_field: `non_exist_${cryptoRandomString({ length: 5 })}`,
     non_existing_field__from: `non_exist_${cryptoRandomString({ length: 5 })}`,
   };
-  const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  const dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 100);
 });
 
-test.serial('CollectionS3Search returns fields specified', async (t) => {
+test.serial('CollectionIcebergSearch returns fields specified', async (t) => {
   const { connection } = t.context;
   const fields = 'name,version,reportToEms,process';
   const queryStringParameters = {
     fields,
   };
-  const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  const dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 10);
   response.results.forEach((collection) => t.deepEqual(Object.keys(collection), fields.split(',')));
 });
 
-test.serial('CollectionS3Search supports sorting', async (t) => {
+test.serial('CollectionIcebergSearch supports sorting', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
     sort_by: 'name',
     order: 'asc',
   };
-  const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  const dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 100);
@@ -321,7 +321,7 @@ test.serial('CollectionS3Search supports sorting', async (t) => {
     limit: 200,
     sort_key: ['-name'],
   };
-  const dbSearch2 = new CollectionS3Search({ queryStringParameters }, connection);
+  const dbSearch2 = new CollectionIcebergSearch({ queryStringParameters }, connection);
   const response2 = await dbSearch2.query();
   t.is(response2.meta.count, 100);
   t.is(response2.results?.length, 100);
@@ -332,7 +332,7 @@ test.serial('CollectionS3Search supports sorting', async (t) => {
     limit: 200,
     sort_by: 'version',
   };
-  const dbSearch3 = new CollectionS3Search({ queryStringParameters }, connection);
+  const dbSearch3 = new CollectionIcebergSearch({ queryStringParameters }, connection);
   const response3 = await dbSearch3.query();
   t.is(response3.meta.count, 100);
   t.is(response3.results?.length, 100);
@@ -340,13 +340,13 @@ test.serial('CollectionS3Search supports sorting', async (t) => {
   t.true(response3.results[49].version < response3.results[50].version);
 });
 
-test.serial('CollectionS3Search supports terms search', async (t) => {
+test.serial('CollectionIcebergSearch supports terms search', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
     process__in: ['ingest', 'archive'].join(','),
   };
-  let dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  let dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   let response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
@@ -356,7 +356,7 @@ test.serial('CollectionS3Search supports terms search', async (t) => {
     process__in: ['ingest', 'archive'].join(','),
     _id__in: ['testCollection___0', 'fakeCollection___1'].join(','),
   };
-  dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
@@ -365,19 +365,19 @@ test.serial('CollectionS3Search supports terms search', async (t) => {
     limit: 200,
     granuleId__in: ['testGranuleId', 'non-existent'].join(','),
   };
-  dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
 });
 
-test.serial('CollectionS3Search supports search when collection field does not match the given value', async (t) => {
+test.serial('CollectionIcebergSearch supports search when collection field does not match the given value', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
     process__not: 'publish',
   };
-  let dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  let dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   let response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
@@ -387,31 +387,31 @@ test.serial('CollectionS3Search supports search when collection field does not m
     process__not: 'publish',
     version__not: 18,
   };
-  dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 49);
   t.is(response.results?.length, 49);
 });
 
-test.serial('CollectionS3Search supports search which checks existence of collection field', async (t) => {
+test.serial('CollectionIcebergSearch supports search which checks existence of collection field', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
     url_path__exists: 'true',
   };
-  const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  const dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
 });
 
-test.serial('CollectionS3Search supports includeStats', async (t) => {
+test.serial('CollectionIcebergSearch supports includeStats', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
     includeStats: 'true',
   };
-  const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  const dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
 
   const expectedStats0 = { queued: 3, completed: 3, failed: 2, running: 3, total: 11 };
@@ -425,14 +425,14 @@ test.serial('CollectionS3Search supports includeStats', async (t) => {
   t.deepEqual(response.results[99].stats, expectedStats99);
 });
 
-test.serial('CollectionS3Search supports search for active collections', async (t) => {
+test.serial('CollectionIcebergSearch supports search for active collections', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: '200',
     active: 'true',
     includeStats: 'true',
   };
-  const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  const dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
 
   const expectedStats0 = { queued: 3, completed: 3, failed: 2, running: 3, total: 11 };
@@ -445,7 +445,7 @@ test.serial('CollectionS3Search supports search for active collections', async (
   t.deepEqual(response.results[98].stats, expectedStats98);
 });
 
-test.serial('CollectionS3Search supports search for active collections by infix/prefix', async (t) => {
+test.serial('CollectionIcebergSearch supports search for active collections by infix/prefix', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: '200',
@@ -454,7 +454,7 @@ test.serial('CollectionS3Search supports search for active collections by infix/
     infix: 'Collection',
     prefix: 'fake',
   };
-  const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  const dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
 
   // collection_cumulus_id 1
@@ -468,7 +468,7 @@ test.serial('CollectionS3Search supports search for active collections by infix/
   t.deepEqual(response.results[48].stats, expectedStats48);
 });
 
-test.serial('CollectionS3Search support search for active collections and stats with granules updated in the given time frame', async (t) => {
+test.serial('CollectionIcebergSearch support search for active collections and stats with granules updated in the given time frame', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: '200',
@@ -478,7 +478,7 @@ test.serial('CollectionS3Search support search for active collections and stats 
     timestamp__to: `${t.context.granuleSearchTmestamp + 98}`,
     sort_by: 'version',
   };
-  const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  const dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
 
   const expectedStats0 = { queued: 2, completed: 3, failed: 3, running: 2, total: 10 };
@@ -492,7 +492,7 @@ test.serial('CollectionS3Search support search for active collections and stats 
   t.deepEqual(response.results[88].stats, expectedStats98);
 });
 
-test.serial('CollectionS3Search support search for active collections and stats with granules from a given provider', async (t) => {
+test.serial('CollectionIcebergSearch support search for active collections and stats with granules from a given provider', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: '200',
@@ -501,7 +501,7 @@ test.serial('CollectionS3Search support search for active collections and stats 
     provider: t.context.provider.name,
     sort_by: 'version',
   };
-  const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  const dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
 
   // collection_cumulus_id 1
@@ -515,7 +515,7 @@ test.serial('CollectionS3Search support search for active collections and stats 
   t.deepEqual(response.results[48].stats, expectedStats48);
 });
 
-test.serial('CollectionS3Search support search for active collections and stats with granules in the granuleId list', async (t) => {
+test.serial('CollectionIcebergSearch support search for active collections and stats with granules in the granuleId list', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: '200',
@@ -524,7 +524,7 @@ test.serial('CollectionS3Search support search for active collections and stats 
     granuleId__in: [t.context.granules[0].granule_id, t.context.granules[5].granule_id].join(','),
     sort_by: 'version',
   };
-  const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  const dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
 
   // collection_cumulus_id 0
@@ -538,7 +538,7 @@ test.serial('CollectionS3Search support search for active collections and stats 
   t.deepEqual(response.results[1].stats, expectedStats1);
 });
 
-test.serial('CollectionS3Search returns the correct record', async (t) => {
+test.serial('CollectionIcebergSearch returns the correct record', async (t) => {
   const { connection } = t.context;
   const dbRecord = t.context.collections[2];
   const queryStringParameters = {
@@ -546,7 +546,7 @@ test.serial('CollectionS3Search returns the correct record', async (t) => {
     name: dbRecord.name,
     version: dbRecord.version,
   };
-  const dbSearch = new CollectionS3Search({ queryStringParameters }, connection);
+  const dbSearch = new CollectionIcebergSearch({ queryStringParameters }, connection);
   const { results, meta } = await dbSearch.query();
   t.is(meta.count, 1);
   t.is(results?.length, 1);

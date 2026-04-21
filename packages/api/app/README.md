@@ -1,115 +1,133 @@
 # Cumulus API Application
 
-This directory contains the main Express application for the Cumulus API.
+This directory contains two separate Express applications that share the same codebase but are deployed and operated differently.
 
-## Dual Deployment Modes
+---
 
-The Cumulus API supports two separate deployment modes with distinct entry points:
+## Cumulus API — Lambda (`index.js`)
 
-### Lambda Mode (Default) - `index.js`
+The main Cumulus API is deployed as an **AWS Lambda function** behind API Gateway. It is **not** run locally or in Docker — it is deployed and tested via Terraform and the standard Cumulus deployment process.
 
-The full Cumulus API runs as an AWS Lambda handler, serving all API endpoints:
-
-```javascript
-const { handler } = require('./index.js');
-// Use handler for Lambda invocations
-```
-
-- Uses AWS Serverless Express
-- Handles API Gateway events
+- Entry point: `index.js`
+- Uses AWS Serverless Express to handle API Gateway events
+- Serves all read/write API endpoints (collections, granules, executions, providers, rules, etc.)
+- Creates new Postgresql database connections per invocation
 - Deployed via Terraform as Lambda functions
-- Serves all API endpoints (collections, granules, executions, providers, rules, etc.)
-- Creates new database connections per invocation
 
-### Iceberg API Mode (ECS) - `iceberg-index.js`
+---
 
-A limited read-only API that runs as a standalone Express server in ECS:
+## Cumulus Iceberg API — ECS (`iceberg-index.js`)
 
-```bash
-node app/iceberg-index.js
-```
+A separate, limited **read-only** API deployed as a **long-running ECS Fargate service**. It queries Iceberg tables via AWS Glue and DuckDB instead of the primary Postgresql database.
 
-- Listens on HTTP port (default: 5001, configurable via `PORT`)
-- Suitable for container/ECS deployments
-- Does not use AWS Serverless Express middleware
+- Entry point: `iceberg-index.js`
+- Runs as a standalone Express HTTP server (port 5001 by default)
+- Deployed via Terraform as an ECS Fargate service with an Application Load Balancer
 - Only exposes read-only list endpoints:
-  - `GET /version`
-  - `GET /granules` (list)
-  - `GET /executions` (list)
-  - `GET /stats` and `GET /stats/aggregate/:type?`
-- Uses singleton database connection pool for better performance
 
-## Docker Deployment
+  | Endpoint | Description |
+  |---|---|
+  | `GET /version` | API version (no auth required) |
+  | `GET /granules` | List granules |
+  | `GET /collections` | List collections |
+  | `GET /executions` | List executions |
+  | `GET /providers` | List providers |
+  | `GET /pdrs` | List PDRs |
+  | `GET /rules` | List rules |
+  | `GET /async-operations` | List async operations |
+  | `GET /reconciliation-reports` | List reconciliation reports |
+  | `GET /stats` | Statistics summary |
+  | `GET /stats/aggregate/:type?` | Aggregate statistics |
 
-**Before building the Docker image**, you must compile TypeScript locally:
+  All list endpoints are also accessible under the `/v1/` prefix (e.g. `GET /v1/granules`).
+- Uses a singleton DuckDB connection pool for better performance
 
-```bash
-# From workspace root
-npm run tsc
-```
+### ECS Docker Image
 
-Then build and run the API as a containerized service:
+The Iceberg API is packaged as a Docker image for ECS deployment:
 
 ```bash
 # Build from workspace root
-docker build -f packages/api/app/Dockerfile -t cumulus-iceberg-api:latest .
-
-# Run the container
-docker run -p 5001:5001 \
-  -e api_config_secret_id=<your-secret-id> \
-  -e dynamoTableNameString='{"AccessTokensTable":"..."}' \
-  cumulus-iceberg-api:latest
+docker build --platform linux/arm64 -f packages/api/app/Dockerfile -t cumulus-iceberg-api:latest .
 ```
 
-The Dockerfile automatically uses `iceberg-index.js` as the entry point.
+The Dockerfile automatically uses `iceberg-index.js` as the entry point. In production the image is pushed to ECR and run by ECS — `AWS_ACCOUNT_ID` and `ICEBERG_NAMESPACE` are injected as ECS task environment variables by Terraform.
 
-## Required Environment Variables
+---
 
-### For Lambda (index.js)
-- `api_config_secret_id`: AWS Secrets Manager secret ID containing API configuration
-- `dynamoTableNameString`: JSON string with DynamoDB table names
+## Environment Variables (Iceberg API only)
 
-### For Iceberg API (iceberg-index.js)
-- `api_config_secret_id`: AWS Secrets Manager secret ID containing API configuration
-- `dynamoTableNameString`: JSON string with DynamoDB table names
-- `PORT` (optional): Server port, defaults to 5001
+### Required
 
-## Local Development
+| Variable | Description |
+|---|---|
+| `api_config_secret_id` | AWS Secrets Manager secret ARN/name containing API configuration |
+| `dynamoTableNameString` | JSON string mapping table env-var names to DynamoDB table names, e.g. `{"AccessTokensTable":"my-table"}` |
+| `AWS_ACCOUNT_ID` | AWS account ID used to attach the Glue Iceberg catalog |
+| `ICEBERG_NAMESPACE` | AWS Glue schema (database) name containing the Iceberg tables |
+
+### Optional
+
+| Variable | Default | Description |
+|---|---|---|
+| `PORT` | `5001` | HTTP port the server listens on |
+| `DUCKDB_MAX_POOL` | `20` | DuckDB connection pool size |
+| `AWS_REGION` | `us-east-1` | AWS region |
+| `NODE_ENV` | _(unset)_ | Set to `development` to have DuckDB auto-install extensions (Mac/local use); production uses pre-bundled extensions from the Docker image |
+
+---
+
+## Local Development (Iceberg API only)
+
+> **Note:** Local development applies only to the Iceberg API (`iceberg-index.js`). The main Cumulus API (`index.js`) is deployed via Lambda and is not run locally.
+
+AWS credentials must be configured in your environment (via `~/.aws`, SSO session, or env vars). The server connects to the real sandbox AWS Glue catalog.
 
 ### Running Locally (Node.js)
 
 ```bash
-# Lambda mode (for testing Lambda behavior)
-node index.js
+cd packages/api
 
-# Iceberg API mode (for local API server with limited endpoints)
-PORT=5001 node iceberg-index.js
+NODE_ENV=development \
+api_config_secret_id=<your-secret-manager-arn> \
+dynamoTableNameString='{"AccessTokensTable":"<sandbox-table-name>"}' \
+AWS_ACCOUNT_ID=<your-aws-account-id> \
+ICEBERG_NAMESPACE=<your-glue-schema> \
+AWS_REGION=us-east-1 \
+PORT=5001 \
+node app/iceberg-index.js
 ```
 
-### Running with LocalStack (Docker)
-
-For local development with full AWS service emulation:
+Then test it (`$token` is a Cumulus API token obtained from the [`/token` endpoint](https://nasa.github.io/cumulus-api/#token) of the deployed Cumulus API):
 
 ```bash
-# 1. Start LocalStack and dependencies (from workspace root)
-npm run start-unit-test-stack
-
-# 2. In another terminal, start the Iceberg API (from workspace root)
-npm run start-iceberg-local
-
-# 3. Access the API at http://localhost:5001
 curl http://localhost:5001/version
-
-# 4. Stop the Iceberg API when done
-npm run stop-iceberg-local
-
-# 5. Stop LocalStack and dependencies
-npm run stop-unit-test-stack
+curl -H "Authorization: Bearer $token" "http://localhost:5001/granules"
 ```
 
-The `start-iceberg-local` script:
-- Builds the Docker image from `packages/api/app/Dockerfile`
-- Runs the container connected to the LocalStack network
-- Configures database connection to the local PostgreSQL instance
-- Enables fake authentication for testing
-- Exposes the API on port 5001
+### Running With Docker
+
+An `env.local.example` file is provided as a template. Copy it and fill in your values before running:
+
+```bash
+cp packages/api/app/env.local.example packages/api/app/.env.local
+# Edit .env.local with your sandbox values
+```
+
+Then build and run:
+
+```bash
+# Build from workspace root
+docker build --platform linux/arm64 -f packages/api/app/Dockerfile -t cumulus-iceberg-api:latest .
+
+docker run --rm -p 5001:5001 \
+  --env-file packages/api/app/.env.local \
+  cumulus-iceberg-api:latest
+```
+
+Then test it (`$token` is a Cumulus API token obtained from the [`/token` endpoint](https://nasa.github.io/cumulus-api/#token) of the deployed Cumulus API):
+
+```bash
+curl http://localhost:5001/version
+curl -H "Authorization: Bearer $token" "http://localhost:5001/granules"
+```

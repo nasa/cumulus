@@ -14,9 +14,9 @@ const {
   stageAndLoadDuckDBTableFromData,
 } = require('../../dist/test-duckdb-utils');
 const {
-  asyncOperationsS3TableSql,
-} = require('../../dist/s3search/s3TableSchemas');
-const { AsyncOperationS3Search } = require('../../dist/s3search/AsyncOperationS3Search');
+  asyncOperationsIcebergSql,
+} = require('../../dist/iceberg-search/IcebergSchemas');
+const { AsyncOperationIcebergSearch } = require('../../dist/iceberg-search/AsyncOperationIcebergSearch');
 const {
   translatePostgresAsyncOperationToApiAsyncOperation,
 } = require('../../dist/translate/async_operations');
@@ -52,7 +52,7 @@ test.before(async (t) => {
     connection,
     t.context.knexBuilder,
     'async_operations',
-    asyncOperationsS3TableSql,
+    asyncOperationsIcebergSql,
     t.context.asyncOperations,
     `${duckdbS3Prefix}async_operations.parquet`
   );
@@ -63,21 +63,21 @@ test.after.always(async (t) => {
   await t.context.connection.closeSync();
 });
 
-test.serial('AsyncOperationS3Search returns 10 async operations by default', async (t) => {
+test.serial('AsyncOperationIcebergSearch returns 10 async operations by default', async (t) => {
   const { connection } = t.context;
-  const dbSearch = new AsyncOperationS3Search({}, connection);
+  const dbSearch = new AsyncOperationIcebergSearch({}, connection);
   const { results, meta } = await dbSearch.query();
   t.is(meta.count, 100);
   t.is(results.length, 10);
 });
 
-test.serial('AsyncOperationS3Search supports page and limit params', async (t) => {
+test.serial('AsyncOperationIcebergSearch supports page and limit params', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 20,
     page: 2,
   };
-  let dbSearch = new AsyncOperationS3Search({ queryStringParameters }, connection);
+  let dbSearch = new AsyncOperationIcebergSearch({ queryStringParameters }, connection);
   let response = await dbSearch.query();
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 20);
@@ -86,7 +86,7 @@ test.serial('AsyncOperationS3Search supports page and limit params', async (t) =
     limit: 11,
     page: 10,
   };
-  dbSearch = new AsyncOperationS3Search({ queryStringParameters }, connection);
+  dbSearch = new AsyncOperationIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 1);
@@ -95,146 +95,146 @@ test.serial('AsyncOperationS3Search supports page and limit params', async (t) =
     limit: 10,
     page: 11,
   };
-  dbSearch = new AsyncOperationS3Search({ queryStringParameters }, connection);
+  dbSearch = new AsyncOperationIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 0);
 });
 
-test.serial('AsyncOperationS3Search supports infix search', async (t) => {
+test.serial('AsyncOperationIcebergSearch supports infix search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 20,
     infix: t.context.asyncOperations[5].id.slice(1),
   };
-  const dbSearch = new AsyncOperationS3Search({ queryStringParameters }, connection);
+  const dbSearch = new AsyncOperationIcebergSearch({ queryStringParameters }, connection);
   const { results, meta } = await dbSearch.query();
   t.is(meta.count, 1);
   t.is(results?.length, 1);
 });
 
-test.serial('AsyncOperationS3Search supports prefix search', async (t) => {
+test.serial('AsyncOperationIcebergSearch supports prefix search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 20,
     prefix: t.context.asyncOperations[5].id.slice(0, -1),
   };
-  const dbSearch = new AsyncOperationS3Search({ queryStringParameters }, connection);
+  const dbSearch = new AsyncOperationIcebergSearch({ queryStringParameters }, connection);
   const { results, meta } = await dbSearch.query();
   t.is(meta.count, 1);
   t.is(results?.length, 1);
 });
 
-test.serial('AsyncOperationS3Search supports term search for uuid field', async (t) => {
+test.serial('AsyncOperationIcebergSearch supports term search for uuid field', async (t) => {
   const { connection } = t.context;
   const dbRecord = t.context.asyncOperations[5];
   const queryStringParameters = {
     limit: 200,
     id: dbRecord.id,
   };
-  const dbSearch = new AsyncOperationS3Search({ queryStringParameters }, connection);
+  const dbSearch = new AsyncOperationIcebergSearch({ queryStringParameters }, connection);
   const { results, meta } = await dbSearch.query();
   t.is(meta.count, 1);
   t.is(results?.length, 1);
 });
 
-test.serial('AsyncOperationS3Search supports term search for date field', async (t) => {
+test.serial('AsyncOperationIcebergSearch supports term search for date field', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
     updatedAt: `${t.context.asyncOperationSearchTimestamp + 1}`,
   };
-  const dbSearch = new AsyncOperationS3Search({ queryStringParameters }, connection);
+  const dbSearch = new AsyncOperationIcebergSearch({ queryStringParameters }, connection);
   const { results, meta } = await dbSearch.query();
   t.is(meta.count, 50);
   t.is(results?.length, 50);
 });
 
-test.serial('AsyncOperationS3Search supports term search for _id field', async (t) => {
+test.serial('AsyncOperationIcebergSearch supports term search for _id field', async (t) => {
   const { connection } = t.context;
   const dbRecord = t.context.asyncOperations[5];
   const queryStringParameters = {
     limit: 200,
     _id: dbRecord.id,
   };
-  const dbSearch = new AsyncOperationS3Search({ queryStringParameters }, connection);
+  const dbSearch = new AsyncOperationIcebergSearch({ queryStringParameters }, connection);
   const { results, meta } = await dbSearch.query();
   t.is(meta.count, 1);
   t.is(results?.length, 1);
 });
 
-test.serial('AsyncOperationS3Search supports term search for string field', async (t) => {
+test.serial('AsyncOperationIcebergSearch supports term search for string field', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
     operationType: 'Bulk Granules',
   };
-  const dbSearch = new AsyncOperationS3Search({ queryStringParameters }, connection);
+  const dbSearch = new AsyncOperationIcebergSearch({ queryStringParameters }, connection);
   const { results, meta } = await dbSearch.query();
   t.is(meta.count, 50);
   t.is(results?.length, 50);
 });
 
-test.serial('AsyncOperationS3Search supports range search', async (t) => {
+test.serial('AsyncOperationIcebergSearch supports range search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
     timestamp__from: `${t.context.asyncOperationSearchTimestamp + 1}`,
     timestamp__to: `${t.context.asyncOperationSearchTimestamp + 2}`,
   };
-  const dbSearch = new AsyncOperationS3Search({ queryStringParameters }, connection);
+  const dbSearch = new AsyncOperationIcebergSearch({ queryStringParameters }, connection);
   const { results, meta } = await dbSearch.query();
   t.is(meta.count, 50);
   t.is(results?.length, 50);
 });
 
-test.serial('AsyncOperationS3Search supports search for multiple fields', async (t) => {
+test.serial('AsyncOperationIcebergSearch supports search for multiple fields', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
     id: t.context.asyncOperations[2].id,
     updatedAt: `${t.context.asyncOperationSearchTimestamp}`,
   };
-  const dbSearch = new AsyncOperationS3Search({ queryStringParameters }, connection);
+  const dbSearch = new AsyncOperationIcebergSearch({ queryStringParameters }, connection);
   const { results, meta } = await dbSearch.query();
   t.is(meta.count, 1);
   t.is(results?.length, 1);
 });
 
-test.serial('AsyncOperationS3Search non-existing fields are ignored', async (t) => {
+test.serial('AsyncOperationIcebergSearch non-existing fields are ignored', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
     non_existing_field: `non_exist_${cryptoRandomString({ length: 5 })}`,
     non_existing_field__from: `non_exist_${cryptoRandomString({ length: 5 })}`,
   };
-  const dbSearch = new AsyncOperationS3Search({ queryStringParameters }, connection);
+  const dbSearch = new AsyncOperationIcebergSearch({ queryStringParameters }, connection);
   const { results, meta } = await dbSearch.query();
   t.is(meta.count, 100);
   t.is(results?.length, 100);
 });
 
-test.serial('AsyncOperationS3Search returns fields specified', async (t) => {
+test.serial('AsyncOperationIcebergSearch returns fields specified', async (t) => {
   const { connection } = t.context;
   const fields = 'id,operationType,status,taskArn';
   const queryStringParameters = {
     fields,
   };
-  const dbSearch = new AsyncOperationS3Search({ queryStringParameters }, connection);
+  const dbSearch = new AsyncOperationIcebergSearch({ queryStringParameters }, connection);
   const { results, meta } = await dbSearch.query();
   t.is(meta.count, 100);
   t.is(results?.length, 10);
   results.forEach((asyncOperation) => t.deepEqual(Object.keys(asyncOperation), fields.split(',')));
 });
 
-test.serial('AsyncOperationS3Search supports sorting', async (t) => {
+test.serial('AsyncOperationIcebergSearch supports sorting', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
     sort_by: 'id',
     order: 'asc',
   };
-  const dbSearch = new AsyncOperationS3Search({ queryStringParameters }, connection);
+  const dbSearch = new AsyncOperationIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 100);
@@ -245,7 +245,7 @@ test.serial('AsyncOperationS3Search supports sorting', async (t) => {
     limit: 200,
     sort_key: ['-id'],
   };
-  const dbSearch2 = new AsyncOperationS3Search({ queryStringParameters }, connection);
+  const dbSearch2 = new AsyncOperationIcebergSearch({ queryStringParameters }, connection);
   const response2 = await dbSearch2.query();
   t.is(response2.meta.count, 100);
   t.is(response2.results?.length, 100);
@@ -256,7 +256,7 @@ test.serial('AsyncOperationS3Search supports sorting', async (t) => {
     limit: 200,
     sort_by: 'operationType',
   };
-  const dbSearch3 = new AsyncOperationS3Search({ queryStringParameters }, connection);
+  const dbSearch3 = new AsyncOperationIcebergSearch({ queryStringParameters }, connection);
   const response3 = await dbSearch3.query();
   t.is(response3.meta.count, 100);
   t.is(response3.results?.length, 100);
@@ -264,13 +264,13 @@ test.serial('AsyncOperationS3Search supports sorting', async (t) => {
   t.true(response3.results[49].operationType < response3.results[50].operationType);
 });
 
-test.serial('AsyncOperationS3Search supports terms search', async (t) => {
+test.serial('AsyncOperationIcebergSearch supports terms search', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
     operationType__in: ['Bulk Granules', 'NOTEXIST'].join(','),
   };
-  let dbSearch = new AsyncOperationS3Search({ queryStringParameters }, connection);
+  let dbSearch = new AsyncOperationIcebergSearch({ queryStringParameters }, connection);
   let response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
@@ -280,19 +280,19 @@ test.serial('AsyncOperationS3Search supports terms search', async (t) => {
     operationType__in: ['Bulk Granules', 'NOTEXIST'].join(','),
     _id__in: [t.context.asyncOperations[2].id, uuidv4()].join(','),
   };
-  dbSearch = new AsyncOperationS3Search({ queryStringParameters }, connection);
+  dbSearch = new AsyncOperationIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
 });
 
-test.serial('AsyncOperationS3Search supports search when asyncOperation field does not match the given value', async (t) => {
+test.serial('AsyncOperationIcebergSearch supports search when asyncOperation field does not match the given value', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
     operationType__not: 'Bulk Granules',
   };
-  let dbSearch = new AsyncOperationS3Search({ queryStringParameters }, connection);
+  let dbSearch = new AsyncOperationIcebergSearch({ queryStringParameters }, connection);
   let response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
@@ -302,33 +302,33 @@ test.serial('AsyncOperationS3Search supports search when asyncOperation field do
     operationType__not: 'Bulk Granules',
     id__not: t.context.asyncOperations[1].id,
   };
-  dbSearch = new AsyncOperationS3Search({ queryStringParameters }, connection);
+  dbSearch = new AsyncOperationIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 49);
   t.is(response.results?.length, 49);
 });
 
-test.serial('AsyncOperationS3Search supports search which checks existence of asyncOperation field', async (t) => {
+test.serial('AsyncOperationIcebergSearch supports search which checks existence of asyncOperation field', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
     taskArn__exists: 'false',
     output_exists: 'true',
   };
-  const dbSearch = new AsyncOperationS3Search({ queryStringParameters }, connection);
+  const dbSearch = new AsyncOperationIcebergSearch({ queryStringParameters }, connection);
   const { results, meta } = await dbSearch.query();
   t.is(meta.count, 50);
   t.is(results?.length, 50);
 });
 
-test.serial('AsyncOperationS3Search returns the correct record', async (t) => {
+test.serial('AsyncOperationIcebergSearch returns the correct record', async (t) => {
   const { connection } = t.context;
   const dbRecord = t.context.asyncOperations[2];
   const queryStringParameters = {
     limit: 200,
     id: dbRecord.id,
   };
-  const dbSearch = new AsyncOperationS3Search({ queryStringParameters }, connection);
+  const dbSearch = new AsyncOperationIcebergSearch({ queryStringParameters }, connection);
   const { results, meta } = await dbSearch.query();
   t.is(meta.count, 1);
   t.is(results?.length, 1);

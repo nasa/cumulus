@@ -311,6 +311,16 @@ variable "api_service_autoscaling_target_cpu" {
   description = "Target CPU utilization percentage for API service autoscaling"
 }
 
+variable "iceberg_s3_bucket" {
+  description = "Name of the S3 bucket the Iceberg API task needs read access to"
+  type        = string
+}
+
+variable "iceberg_namespace" {
+  description = "AWS Glue schema (database) name containing the Iceberg tables"
+  type        = string
+}
+
 variable "archive_api_users" {
   description = "Earthdata (URS) usernames that should be allowed to access the archive API"
   type        = list(string)
