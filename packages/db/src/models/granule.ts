@@ -142,7 +142,15 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       );
     }
 
-    // Attempt UPDATE first
+    const existing = await knexOrTrx(this.tableName)
+      .select('granule_id')
+      .where({
+        granule_id: granule.granule_id,
+        collection_cumulus_id: granule.collection_cumulus_id,
+      })
+      .first();
+
+    // Attempt UPDATE if granule exists
     let updateQuery = knexOrTrx(this.tableName)
       .where('granule_id', granule.granule_id)
       .limit(1)
@@ -174,10 +182,10 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       }
     }
 
-    const updated = await updateQuery.returning('*');
-
-    if (updated.length > 0) {
-      return updated;
+    if (existing) {
+      // conflict exists
+      // may still return [] if constraints block it
+      return await updateQuery.returning('*');
     }
 
     // Insert new granule (trigger enforces global uniqueness)

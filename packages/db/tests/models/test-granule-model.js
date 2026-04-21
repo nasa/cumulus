@@ -49,6 +49,7 @@ test.beforeEach(async (t) => {
     fakeExecutionRecordFactory()
   );
   t.context.executionCumulusId = pgExecution.cumulus_id;
+  t.context.executionCreatedAt = pgExecution.created_at;
 
   const [completedPgExecution] = await t.context.executionPgModel.create(
     t.context.knex,
@@ -1477,6 +1478,7 @@ test.serial('GranulePgModel.upsert() will not allow a running granule linked to 
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    executionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -1488,6 +1490,7 @@ test.serial('GranulePgModel.upsert() will not allow a running granule linked to 
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
   });
 
   const [newExecution] = await executionPgModel.create(
@@ -1888,6 +1891,7 @@ test('GranulePgModel.delete() deletes granule and granule/execution join records
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    executionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -1900,7 +1904,9 @@ test('GranulePgModel.delete() deletes granule and granule/execution join records
     const innerGranuleCumulusId = innerPgGranule.cumulus_id;
     await granulesExecutionsPgModel.create(trx, {
       execution_cumulus_id: executionCumulusId,
+      execution_created_at: executionCreatedAt,
       granule_cumulus_id: innerGranuleCumulusId,
+      collection_cumulus_id: collectionCumulusId,
     });
     return innerGranuleCumulusId;
   });
@@ -1968,6 +1974,7 @@ test('GranulePgModel.delete() deletes granule and file records', async (t) => {
     const innerGranuleCumulusId = pgGranule.cumulus_id;
     file = fakeFileRecordFactory({
       granule_cumulus_id: innerGranuleCumulusId,
+      collection_cumulus_id: pgGranule.collection_cumulus_id,
     });
     await filePgModel.create(trx, file);
     return innerGranuleCumulusId;

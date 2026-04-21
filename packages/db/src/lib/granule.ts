@@ -37,6 +37,7 @@ export const getGranuleCollectionId = async (
  * @param {Knex.Transaction} knexTransaction - A Knex client transaction
  * @param {PostgresGranule} granule - Granule data
  * @param {number} [executionCumulusId] - Execution record cumulus_id value
+ * @param {number} [executionCreatedAt] - Execution record create time
  * @param {Object} [granulePgModel] - Granule PG model class instance
  * @param {Object} [granulesExecutionsPgModel]
  *   Granules/executions PG model class instance
@@ -46,6 +47,7 @@ export const upsertGranuleWithExecutionJoinRecord = async ({
   knexTransaction,
   granule,
   executionCumulusId,
+  executionCreatedAt,
   granulePgModel = new GranulePgModel(),
   granulesExecutionsPgModel = new GranulesExecutionsPgModel(),
   writeConstraints = true,
@@ -53,6 +55,7 @@ export const upsertGranuleWithExecutionJoinRecord = async ({
   knexTransaction: Knex.Transaction;
   granule: PostgresGranule;
   executionCumulusId?: number;
+  executionCreatedAt?: Date;
   granulePgModel?: GranulePgModel;
   granulesExecutionsPgModel?: GranulesExecutionsPgModel;
   writeConstraints?: boolean;
@@ -70,10 +73,12 @@ export const upsertGranuleWithExecutionJoinRecord = async ({
   if (!pgGranule) {
     return [];
   }
-  if (executionCumulusId) {
+  if (executionCumulusId && executionCreatedAt) {
     await granulesExecutionsPgModel.upsert(knexTransaction, {
       granule_cumulus_id: pgGranule.cumulus_id,
+      collection_cumulus_id: pgGranule.collection_cumulus_id,
       execution_cumulus_id: executionCumulusId,
+      execution_created_at: executionCreatedAt,
     });
   }
   return [pgGranule];
