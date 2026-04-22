@@ -2,9 +2,12 @@
 
 const router = require('express-promise-router')();
 const get = require('lodash/get');
+const Logger = require('@cumulus/logger');
 const { StatsIcebergSearch } = require('@cumulus/db/duckdb');
 const omit = require('lodash/omit');
 const { getType } = require('../lib/statsHelpers');
+
+const log = new Logger({ sender: '@cumulus/api/iceberg-stats' });
 
 /**
  * get summary stats
@@ -14,18 +17,29 @@ const { getType } = require('../lib/statsHelpers');
  * @returns {Promise<Object>} the promise of express response object
  */
 async function summary(req, res) {
-  const params = req.query;
+  try {
+    const params = req.query;
 
-  const now = Date.now();
-  params.timestamp__from = Number.parseInt(get(
-    params,
-    'timestamp__from',
-    now - 24 * 3600 * 1000
-  ), 10);
-  params.timestamp__to = Number.parseInt(get(params, 'timestamp__to', now), 10);
-  const stats = new StatsIcebergSearch({ queryStringParameters: params }, 'granule');
-  const r = await stats.summary();
-  return res.send(r);
+    const now = Date.now();
+    params.timestamp__from = Number.parseInt(get(
+      params,
+      'timestamp__from',
+      now - 24 * 3600 * 1000
+    ), 10);
+    params.timestamp__to = Number.parseInt(get(params, 'timestamp__to', now), 10);
+    const stats = new StatsIcebergSearch({ queryStringParameters: params }, 'granule');
+    const r = await stats.summary();
+    return res.send(r);
+  } catch (error) {
+    log.error('StatsIcebergSearch Summary Query Failed', error);
+    if (res.boom) {
+      return res.boom.badImplementation('Error querying S3/Iceberg data');
+    }
+    return res.status(500).send({
+      error: 'Internal Server Error',
+      message: 'Error querying S3/Iceberg data',
+    });
+  }
 }
 
 /**
@@ -36,18 +50,29 @@ async function summary(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function aggregate(req, res) {
-  const type = getType(req);
-  if (type) {
-    const stats = new StatsIcebergSearch(
-      { queryStringParameters: omit(req.query, 'type') },
-      type
+  try {
+    const type = getType(req);
+    if (type) {
+      const stats = new StatsIcebergSearch(
+        { queryStringParameters: omit(req.query, 'type') },
+        type
+      );
+      const r = await stats.aggregate();
+      return res.send(r);
+    }
+    return res.boom.badRequest(
+      'Type must be included in the Stats Aggregate path parameter or query string parameters'
     );
-    const r = await stats.aggregate();
-    return res.send(r);
+  } catch (error) {
+    log.error('StatsIcebergSearch Aggregate Query Failed', error);
+    if (res.boom) {
+      return res.boom.badImplementation('Error querying S3/Iceberg data');
+    }
+    return res.status(500).send({
+      error: 'Internal Server Error',
+      message: 'Error querying S3/Iceberg data',
+    });
   }
-  return res.boom.badRequest(
-    'Type must be included in Stats Aggregate query string parameters'
-  );
 }
 
 router.get('/aggregate/:type?', aggregate);
