@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-
+import isNil from 'lodash/isNil';
 import {
   collectionIdSeparator,
   constructCollectionId,
@@ -34,14 +34,16 @@ export const getGranuleCollectionId = async (
 /**
  * Upsert a granule and a record in the granules/executions join table.
  *
- * @param {Knex.Transaction} knexTransaction - A Knex client transaction
- * @param {PostgresGranule} granule - Granule data
- * @param {number} [executionCumulusId] - Execution record cumulus_id value
- * @param {number} [executionCreatedAt] - Execution record create time
- * @param {Object} [granulePgModel] - Granule PG model class instance
- * @param {Object} [granulesExecutionsPgModel]
+ * @param {object} params
+ * @param params.knexTransaction - A Knex client transaction
+ * @param params.granule - Granule data
+ * @param [params.executionCumulusId] - Execution record cumulus_id value
+ * @param [params.executionCreatedAt] - Execution record create time
+ * @param [params.granulePgModel] - Granule PG model class instance
+ * @param [params.granulesExecutionsPgModel] -
  *   Granules/executions PG model class instance
- * @returns {Promise<PostgresGranuleRecord[]>}
+ * @param [params.writeConstraints]
+ * @returns
  */
 export const upsertGranuleWithExecutionJoinRecord = async ({
   knexTransaction,
@@ -72,6 +74,10 @@ export const upsertGranuleWithExecutionJoinRecord = async ({
   // without granuleCumulusId regardless.
   if (!pgGranule) {
     return [];
+  }
+
+  if (isNil(executionCumulusId) !== isNil(executionCreatedAt)) {
+    throw new Error('executionCumulusId and executionCreatedAt must either both be set or both be unset');
   }
   if (executionCumulusId && executionCreatedAt) {
     await granulesExecutionsPgModel.upsert(knexTransaction, {
@@ -206,10 +212,7 @@ export const getGranulesByApiPropertiesQuery = ({
           });
         }
       }
-    })
-    .groupBy(`${granulesTable}.cumulus_id`)
-    .groupBy(`${collectionsTable}.cumulus_id`)
-    .groupBy(`${providersTable}.cumulus_id`);
+    });
 };
 
 /**

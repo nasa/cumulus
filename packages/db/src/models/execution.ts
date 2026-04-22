@@ -26,15 +26,14 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
     execution: PostgresExecution,
     writeConstraints: boolean = true
   ) {
-    const updatePayload =
-      writeConstraints && execution.status === 'running'
-        ? {
-          created_at: execution.created_at,
-          updated_at: execution.updated_at,
-          timestamp: execution.timestamp,
-          original_payload: execution.original_payload,
-        }
-        : execution;
+    const updatePayload = writeConstraints && execution.status === 'running'
+      ? {
+        created_at: execution.created_at,
+        updated_at: execution.updated_at,
+        timestamp: execution.timestamp,
+        original_payload: execution.original_payload,
+      }
+      : execution;
 
     try {
       // Try to insert new execution (trigger enforces global uniqueness)
