@@ -136,14 +136,18 @@ test.beforeEach(async (t) => {
     t.context.knex,
     {
       granule_cumulus_id: t.context.granuleCumulusId,
+      collection_cumulus_id: t.context.collectionCumulusId,
       execution_cumulus_id: executionACumulusId,
+      execution_created_at: executionA.created_at,
     }
   );
   await granulesExecutionsPgModel.create(
     t.context.knex,
     {
       granule_cumulus_id: t.context.granuleCumulusId,
+      collection_cumulus_id: t.context.collectionCumulusId,
       execution_cumulus_id: executionBCumulusId,
+      execution_created_at: executionB.created_at,
     }
   );
 
@@ -158,6 +162,7 @@ test.beforeEach(async (t) => {
       bucket: 'cumulus-test-sandbox-private',
       checksum_type: 'md5',
       checksum_value: 'bogus-value',
+      collection_cumulus_id: t.context.collectionCumulusId,
       created_at: createdAt,
       file_name: t.context.fileKeys[0],
       file_size: 2098711627776,
@@ -171,6 +176,7 @@ test.beforeEach(async (t) => {
       bucket: 'cumulus-test-sandbox-private',
       checksum_type: 'md5',
       checksum_value: 'bogus-value',
+      collection_cumulus_id: t.context.collectionCumulusId,
       created_at: createdAt,
       file_name: t.context.fileKeys[1],
       file_size: 1099511627776,
