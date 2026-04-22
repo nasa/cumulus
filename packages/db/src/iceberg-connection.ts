@@ -13,9 +13,21 @@ const quoteIdent = (ident: string): string => `"${ident.replace(/"/g, '""')}"`;
 let instance: DuckDBInstance | undefined;
 let initPromise: Promise<void> | undefined;
 let dbVersionCache: string | undefined;
+let poolCacheWarmupPromise: Promise<void> | undefined;
 
 const connectionPool: DuckDBConnection[] = [];
 const MAX_POOL_SIZE = Number(process.env.DUCKDB_MAX_POOL) || 3;
+const ENABLE_CACHE_WARMUP = process.env.DUCKDB_ENABLE_CACHE_WARMUP !== 'false';
+const tableNames = [
+  'granules',
+  'collections',
+  'executions',
+  'pdrs',
+  'providers',
+  'rules',
+  'async_operations',
+  'granules_executions',
+];
 
 /**
  * Executes settings that should apply to every individual connection.
@@ -56,6 +68,54 @@ const warmupConnection = async (conn: DuckDBConnection): Promise<void> => {
 };
 
 /**
+ * Pre-populate connection-level metadata and file/cache state for known views.
+ */
+const populateConnectionCache = async (conn: DuckDBConnection): Promise<void> => {
+  for (const tableName of tableNames) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      await conn.run(`SELECT COUNT(*) FROM ${quoteIdent(tableName)};`);
+    } catch (error) {
+      log.debug(`Cache warmup skipped for table ${tableName}.`);
+    }
+  }
+};
+
+/**
+ * Start one-time background cache population for currently pooled connections.
+ */
+const startPoolCacheWarmup = (): void => {
+  if (!ENABLE_CACHE_WARMUP) {
+    log.info('DuckDB cache warmup disabled by DUCKDB_ENABLE_CACHE_WARMUP.');
+    return;
+  }
+
+  if (poolCacheWarmupPromise) return;
+
+  poolCacheWarmupPromise = (async () => {
+    log.info('Starting background cache warmup for pooled DuckDB connections...');
+    await Promise.all(connectionPool.map((conn) => populateConnectionCache(conn)));
+    log.info('Background cache warmup for pooled connections complete.');
+  })().catch((error) => {
+    log.warn('Background cache warmup encountered an error. Continuing without blocking startup.', error);
+  });
+};
+
+/**
+ * Start background cache warmup for a single connection.
+ */
+const startConnectionCacheWarmup = (conn: DuckDBConnection): void => {
+  if (!ENABLE_CACHE_WARMUP) {
+    return;
+  }
+
+  const cacheWarmupPromise = populateConnectionCache(conn);
+  cacheWarmupPromise.catch((error) => {
+    log.debug('Background cache warmup for connection failed.', error);
+  });
+};
+
+/**
  * Initialize the DuckDB Instance and load required extensions.
  */
 export const initializeDuckDb = async (): Promise<void> => {
@@ -90,11 +150,6 @@ export const initializeDuckDb = async (): Promise<void> => {
         `ATTACH '${awsAccountId}' AS glue_iceberg (TYPE iceberg, ENDPOINT_TYPE 'glue');`
       );
 
-      const tableNames = [
-        'granules', 'collections', 'executions', 'pdrs',
-        'providers', 'rules', 'async_operations', 'granules_executions',
-      ];
-
       for (const tableName of tableNames) {
         try {
           // eslint-disable-next-line no-await-in-loop
@@ -123,6 +178,8 @@ export const initializeDuckDb = async (): Promise<void> => {
         connectionPool.push(...newConns);
       }
 
+      startPoolCacheWarmup();
+
       log.info('DuckDB initialization and view creation complete.');
     } catch (error) {
       log.error('Failed to initialize DuckDB:', error);
@@ -149,6 +206,7 @@ export const acquireDuckDbConnection = async (): Promise<DuckDBConnection> => {
 
   const conn = await instance!.connect();
   await warmupConnection(conn);
+  startConnectionCacheWarmup(conn);
   return conn;
 };
 
@@ -172,4 +230,5 @@ export const destroyDuckDb = async (): Promise<void> => {
   instance = undefined;
   initPromise = undefined;
   dbVersionCache = undefined;
+  poolCacheWarmupPromise = undefined;
 };
