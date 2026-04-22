@@ -18,7 +18,7 @@ locals {
   replication_services = {
     small-tables = {
       slot_name          = "${var.prefix}-small-tables"
-      table_include_list = "${var.pg_schema}.collections,${var.pg_schema}.async_operations,${var.pg_schema}.providers,${var.pg_schema}.pdrs,${var.pg_schema}.reconciliation_reports,${var.pg_schema}.rules"
+      table_include_list = "${var.pg_schema}.collections,${var.pg_schema}.async_operations,${var.pg_schema}.providers,${var.pg_schema}.pdrs,${var.pg_schema}.reconciliation_reports,${var.pg_schema}.rules,${var.pg_schema}.granules_executions"
     }
     executions = {
       slot_name          = "${var.prefix}-executions"
@@ -69,7 +69,7 @@ module "replication_services" {
   pg_db                   = var.pg_db
   ecs_infrastructure_role = module.cluster.ecs_infrastructure_role
   ecs_task_execution_role = module.cluster.task_execution_role
-  fargate_task_role       = module.cluster.task_execution_role
+  fargate_task_role       = module.cluster.fargate_task_role
   rds_security_group      = var.rds_security_group
   task_security_group_id  = module.cluster.no_ingress_all_egress_security_group.id
   ecs_cluster             = module.cluster.replication_ecs_cluster

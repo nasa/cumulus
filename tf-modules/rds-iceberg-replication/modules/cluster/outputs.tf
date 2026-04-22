@@ -3,7 +3,7 @@ output "task_execution_role" {
   value = aws_iam_role.ecs_task_execution_role
 }
 
-output "task_role" {
+output "fargate_task_role" {
   description = "IAM role used to allow task containers to access AWS services"
   value = aws_iam_role.fargate_task_role
 }
