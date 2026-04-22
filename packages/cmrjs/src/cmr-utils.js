@@ -981,7 +981,7 @@ async function waitForLockFileRelease() {
     try {
       await s3().send(new HeadObjectCommand({
         Bucket: process.env.system_bucket,
-        Key: `${process.env.system_bucket}/launchpad-token-lock.json`,
+        Key: `${process.env.stackName}/launchpad-token-lock.json`,
       }));
       // if the lock file exists, wait and retry
       await new Promise((resolve) => setTimeout(resolve, 3000));

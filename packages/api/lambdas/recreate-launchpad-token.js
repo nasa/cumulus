@@ -11,8 +11,8 @@ const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const { launchpad, getEnvVar } = require('@cumulus/launchpad-auth');
 
 const bucket = getEnvVar('system_bucket');
-const lockFileKey = `${bucket}/launchpad-token-lock.json`;
-const tokenFileKey = `${bucket}/launchpad-token.json`;
+const lockFileKey = `${getEnvVar('stackName')}/launchpad-token-lock.json`;
+const tokenFileKey = `${getEnvVar('stackName')}/launchpad-token.json`;
 
 /**
  * Create a Launchpad token using passphrase, API, and certificate.
@@ -79,6 +79,7 @@ async function createLockFile() {
     Key: lockFileKey,
     Body: JSON.stringify({ lockedAt: new Date().toISOString() }),
     ContentType: 'application/json',
+    IfNoneMatch: '*', // only create if it doesn't already exist
   }));
 }
 
@@ -109,26 +110,35 @@ async function putTokenInS3(token) {
  */
 async function handler(event) {
   const config = event.config || {};
-  const key = `${getEnvVar('stackName')}/launchpad/token.json`;
-
-  await createLockFile();
+  let createdLock = false;
   try {
-    try {
-      await s3().send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
-      await s3().send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
-    } catch (error) {
-      if (error.name !== 'NotFound') {
-        throw error;
-      }
+    // check if lock file already exists
+    const isLocked = await lockFileExists();
+    if (!isLocked) {
+     // lock file doesn't already exist, so create it and the token + store them
+      await createLockFile();
+      createdLock = true;
+      // here we need to make the distinction between create/get and just get
+      // in this if the token should be removed/a new one created and stored
+      // might need 2 different functions to do that
+      const token = await generateLaunchpadToken(config);
+      await putTokenInS3(token);
+      return { statusCode: 200, token };
+    } else {
+      // lock file does exist, so return the token that's already in s3
+      // in this we just need to GET the token (no creating or removing just get)
+      const token = await generateLaunchpadToken(config);
+      // possibly should have unique status/message compared to the if there is no lock
+      return { statusCode: 200, token };
     }
-    const token = await generateLaunchpadToken(config);
-    await putTokenInS3(token);
-    return { statusCode: 200, token };
   } catch (error) {
     log.error('Error during Launchpad token generation:', error);
     throw error;
   } finally {
-    await removeLockFile();
+    // only remove the lock in case this invocation created it
+    if (createdLock) {
+      await removeLockFile();
+    }
   }
 }
 
