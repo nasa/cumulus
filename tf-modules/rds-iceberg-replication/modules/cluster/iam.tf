@@ -51,7 +51,8 @@ resource "aws_iam_policy" "s3_access_policy" {
           "s3:GetObject",
           "s3:ListBucket",
           "s3:PutObject",
-          "s3:DeleteObject"
+          "s3:DeleteObject",
+          "s3:CreateBucket"
         ],
         Resource = [
           "arn:aws:s3:::${var.iceberg_s3_bucket}",
