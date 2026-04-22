@@ -89,3 +89,7 @@ archive_api_users = [
 ]
 archive_api_url = "https://d3cuh567loctll.cloudfront.net/"
 cumulus_distribution_url = "https://djidssf1tx775.cloudfront.net/"
+
+deploy_iceberg_api = true
+iceberg_s3_bucket = "cdd-test-iceberg"
+iceberg_namespace = "cdd_deploy"
