@@ -224,6 +224,8 @@ module "cumulus" {
   api_service_autoscaling_min_capacity = var.api_service_autoscaling_min_capacity
   api_service_autoscaling_max_capacity = var.api_service_autoscaling_max_capacity
   api_service_autoscaling_target_cpu = var.api_service_autoscaling_target_cpu
+  iceberg_s3_bucket = var.iceberg_s3_bucket
+  iceberg_namespace = var.iceberg_namespace
 }
 
 resource "aws_security_group" "no_ingress_all_egress" {

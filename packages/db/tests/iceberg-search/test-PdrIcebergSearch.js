@@ -15,12 +15,12 @@ const {
   stageAndLoadDuckDBTableFromData,
 } = require('../../dist/test-duckdb-utils');
 const {
-  collectionsS3TableSql,
-  executionsS3TableSql,
-  providersS3TableSql,
-  pdrsS3TableSql,
-} = require('../../dist/s3search/s3TableSchemas');
-const { PdrS3Search } = require('../../dist/s3search/PdrS3Search');
+  collectionsIcebergSql,
+  executionsIcebergSql,
+  providersIcebergSql,
+  pdrsIcebergSql,
+} = require('../../dist/iceberg-search/IcebergSchemas');
+const { PdrIcebergSearch } = require('../../dist/iceberg-search/PdrIcebergSearch');
 
 const {
   fakeCollectionRecordFactory,
@@ -138,7 +138,7 @@ test.before(async (t) => {
     connection,
     t.context.knexBuilder,
     'collections',
-    collectionsS3TableSql,
+    collectionsIcebergSql,
     collections,
     `${duckdbS3Prefix}collections.parquet`
   );
@@ -148,7 +148,7 @@ test.before(async (t) => {
     connection,
     t.context.knexBuilder,
     'providers',
-    providersS3TableSql,
+    providersIcebergSql,
     t.context.provider,
     `${duckdbS3Prefix}providers.parquet`
   );
@@ -158,7 +158,7 @@ test.before(async (t) => {
     connection,
     t.context.knexBuilder,
     'executions',
-    executionsS3TableSql,
+    executionsIcebergSql,
     t.context.execution,
     `${duckdbS3Prefix}executions.parquet`
   );
@@ -168,7 +168,7 @@ test.before(async (t) => {
     connection,
     t.context.knexBuilder,
     'pdrs',
-    pdrsS3TableSql,
+    pdrsIcebergSql,
     t.context.pdrs,
     `${duckdbS3Prefix}pdrs.parquet`
   );
@@ -179,10 +179,10 @@ test.after.always(async (t) => {
   await t.context.connection.closeSync();
 });
 
-test.serial('PdrS3Search returns 10 PDR records by default', async (t) => {
+test.serial('PdrIcebergSearch returns 10 PDR records by default', async (t) => {
   const { connection } = t.context;
   const execution = `https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/${t.context.execution.arn}`;
-  const dbSearch = new PdrS3Search({}, connection);
+  const dbSearch = new PdrIcebergSearch({}, connection);
   const response = await dbSearch.query();
 
   t.is(response.meta.count, 50);
@@ -196,13 +196,13 @@ test.serial('PdrS3Search returns 10 PDR records by default', async (t) => {
   t.is(validatedRecords.length, apiPdrs.length);
 });
 
-test.serial('PdrS3Search supports page and limit params', async (t) => {
+test.serial('PdrIcebergSearch supports page and limit params', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 25,
     page: 2,
   };
-  let dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  let dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   let response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 25);
@@ -211,7 +211,7 @@ test.serial('PdrS3Search supports page and limit params', async (t) => {
     limit: 10,
     page: 5,
   };
-  dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 10);
@@ -220,104 +220,104 @@ test.serial('PdrS3Search supports page and limit params', async (t) => {
     limit: 10,
     page: 11,
   };
-  dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 0);
 });
 
-test.serial('PdrS3Search supports infix search', async (t) => {
+test.serial('PdrIcebergSearch supports infix search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 100,
     infix: 'infix',
   };
-  const dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
 });
 
-test.serial('PdrS3Search supports prefix search', async (t) => {
+test.serial('PdrIcebergSearch supports prefix search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 100,
     prefix: 'prefix',
   };
-  const dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 2);
   t.is(response.results?.length, 2);
 });
 
-test.serial('PdrS3Search supports collectionId term search', async (t) => {
+test.serial('PdrIcebergSearch supports collectionId term search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 100,
     collectionId: t.context.collectionId2,
   };
-  const dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
 });
 
-test.serial('PdrS3Search supports provider term search', async (t) => {
+test.serial('PdrIcebergSearch supports provider term search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 100,
     provider: t.context.provider.name,
   };
-  const dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
 });
 
-test.serial('PdrS3Search supports execution term search', async (t) => {
+test.serial('PdrIcebergSearch supports execution term search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 100,
     execution: `https://example.com/${t.context.execution.arn}`,
   };
-  const dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
 });
 
-test.serial('PdrS3Search supports term search for boolean field', async (t) => {
+test.serial('PdrIcebergSearch supports term search for boolean field', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 100,
     PANSent: 'true',
   };
-  const dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
 });
 
-test.serial('PdrS3Search supports term search for date field', async (t) => {
+test.serial('PdrIcebergSearch supports term search for date field', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 100,
     updatedAt: `${t.context.pdrSearchFields.updatedAt}`,
   };
-  const dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
 });
 
-test.serial('PdrS3Search supports term search for number field', async (t) => {
+test.serial('PdrIcebergSearch supports term search for number field', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 100,
     duration__from: `${t.context.pdrSearchFields.duration - FLOAT_EPSILON}`,
     duration__to: `${t.context.pdrSearchFields.duration + FLOAT_EPSILON}`,
   };
-  let dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  let dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   let response = await dbSearch.query();
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
@@ -327,19 +327,19 @@ test.serial('PdrS3Search supports term search for number field', async (t) => {
     progress__from: `${t.context.pdrSearchFields.progress - FLOAT_EPSILON}`,
     progress__to: `${t.context.pdrSearchFields.progress + FLOAT_EPSILON}`,
   };
-  dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
 });
 
-test.serial('PdrS3Search supports term search for string field', async (t) => {
+test.serial('PdrIcebergSearch supports term search for string field', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 100,
     status: t.context.pdrSearchFields.status,
   };
-  let dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  let dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   let response = await dbSearch.query();
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
@@ -352,25 +352,25 @@ test.serial('PdrS3Search supports term search for string field', async (t) => {
     originalUrl: dbRecord.original_url,
     PANmessage: dbRecord.pan_message,
   };
-  dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
 });
 
-test.serial('PdrS3Search supports term search for timestamp', async (t) => {
+test.serial('PdrIcebergSearch supports term search for timestamp', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 100,
     timestamp: `${t.context.pdrSearchFields.timestamp}`,
   };
-  const dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
 });
 
-test.serial('PdrS3Search supports range search', async (t) => {
+test.serial('PdrIcebergSearch supports range search', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 100,
@@ -379,7 +379,7 @@ test.serial('PdrS3Search supports range search', async (t) => {
     timestamp__from: `${t.context.pdrSearchFields.timestamp}`,
     timestamp__to: `${t.context.pdrSearchFields.timestamp + 1600}`,
   };
-  let dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  let dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   let response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
@@ -389,7 +389,7 @@ test.serial('PdrS3Search supports range search', async (t) => {
     timestamp__from: t.context.pdrSearchFields.timestamp,
     timestamp__to: t.context.pdrSearchFields.timestamp + 500,
   };
-  dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
@@ -398,13 +398,13 @@ test.serial('PdrS3Search supports range search', async (t) => {
     limit: 100,
     duration__from: `${t.context.pdrSearchFields.duration + 2}`,
   };
-  dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 0);
   t.is(response.results?.length, 0);
 });
 
-test.serial('PdrS3Search supports search for multiple fields', async (t) => {
+test.serial('PdrIcebergSearch supports search for multiple fields', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 100,
@@ -416,45 +416,45 @@ test.serial('PdrS3Search supports search for multiple fields', async (t) => {
     timestamp__to: t.context.pdrSearchFields.timestamp + 500,
     sort_key: ['collectionId', '-timestamp'],
   };
-  const dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
 });
 
-test.serial('PdrS3Search non-existing fields are ignored', async (t) => {
+test.serial('PdrIcebergSearch non-existing fields are ignored', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 100,
     non_existing_field: `non_exist_${cryptoRandomString({ length: 5 })}`,
     non_existing_field__from: `non_exist_${cryptoRandomString({ length: 5 })}`,
   };
-  const dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
 });
 
-test.serial('PdrS3Search returns fields specified', async (t) => {
+test.serial('PdrIcebergSearch returns fields specified', async (t) => {
   const { connection } = t.context;
   const fields = 'pdrName,collectionId,progress,PANSent,status';
   const queryStringParameters = {
     fields,
   };
-  const dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 10);
   response.results.forEach((pdr) => t.deepEqual(Object.keys(pdr), fields.split(',')));
 });
 
-test.serial('PdrS3Search supports sorting', async (t) => {
+test.serial('PdrIcebergSearch supports sorting', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 100,
     sort_by: 'timestamp',
   };
-  const dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
@@ -466,7 +466,7 @@ test.serial('PdrS3Search supports sorting', async (t) => {
     sort_by: 'timestamp',
     order: 'desc',
   };
-  const dbSearch2 = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch2 = new PdrIcebergSearch({ queryStringParameters }, connection);
   const response2 = await dbSearch2.query();
   t.is(response2.meta.count, 50);
   t.is(response2.results?.length, 50);
@@ -477,7 +477,7 @@ test.serial('PdrS3Search supports sorting', async (t) => {
     limit: 100,
     sort_key: ['-timestamp'],
   };
-  const dbSearch3 = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch3 = new PdrIcebergSearch({ queryStringParameters }, connection);
   const response3 = await dbSearch3.query();
   t.is(response3.meta.count, 50);
   t.is(response3.results?.length, 50);
@@ -488,7 +488,7 @@ test.serial('PdrS3Search supports sorting', async (t) => {
     limit: 100,
     sort_key: ['+progress'],
   };
-  const dbSearch4 = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch4 = new PdrIcebergSearch({ queryStringParameters }, connection);
   const response4 = await dbSearch4.query();
   t.is(response4.meta.count, 50);
   t.is(response4.results?.length, 50);
@@ -499,7 +499,7 @@ test.serial('PdrS3Search supports sorting', async (t) => {
     limit: 100,
     sort_key: ['-timestamp', '+progress'],
   };
-  const dbSearch5 = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch5 = new PdrIcebergSearch({ queryStringParameters }, connection);
   const response5 = await dbSearch5.query();
   t.is(response5.meta.count, 50);
   t.is(response5.results?.length, 50);
@@ -514,7 +514,7 @@ test.serial('PdrS3Search supports sorting', async (t) => {
     sort_by: 'timestamp',
     order: 'asc',
   };
-  const dbSearch6 = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch6 = new PdrIcebergSearch({ queryStringParameters }, connection);
   const response6 = await dbSearch6.query();
   t.is(response6.meta.count, 50);
   t.is(response6.results?.length, 50);
@@ -522,14 +522,14 @@ test.serial('PdrS3Search supports sorting', async (t) => {
   t.true(response6.results[1].updatedAt < response6.results[40].updatedAt);
 });
 
-test.serial('PdrS3Search supports sorting by CollectionId', async (t) => {
+test.serial('PdrIcebergSearch supports sorting by CollectionId', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 100,
     sort_by: 'collectionId',
     order: 'asc',
   };
-  const dbSearch8 = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch8 = new PdrIcebergSearch({ queryStringParameters }, connection);
   const response8 = await dbSearch8.query();
   t.is(response8.meta.count, 50);
   t.is(response8.results?.length, 50);
@@ -540,7 +540,7 @@ test.serial('PdrS3Search supports sorting by CollectionId', async (t) => {
     limit: 100,
     sort_key: ['-collectionId'],
   };
-  const dbSearch9 = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch9 = new PdrIcebergSearch({ queryStringParameters }, connection);
   const response9 = await dbSearch9.query();
   t.is(response9.meta.count, 50);
   t.is(response9.results?.length, 50);
@@ -548,14 +548,14 @@ test.serial('PdrS3Search supports sorting by CollectionId', async (t) => {
   t.true(response9.results[1].collectionId > response9.results[40].collectionId);
 });
 
-test.serial('PdrS3Search supports terms search', async (t) => {
+test.serial('PdrIcebergSearch supports terms search', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 100,
     pdrName__in: [t.context.pdrNames[0], t.context.pdrNames[5]].join(','),
     PANSent__in: 'true,false',
   };
-  let dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  let dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   let response = await dbSearch.query();
   t.is(response.meta.count, 2);
   t.is(response.results?.length, 2);
@@ -565,19 +565,19 @@ test.serial('PdrS3Search supports terms search', async (t) => {
     pdrName__in: [t.context.pdrNames[0], t.context.pdrNames[5]].join(','),
     PANSent__in: 'true',
   };
-  dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
 });
 
-test.serial('PdrS3Search supports collectionId terms search', async (t) => {
+test.serial('PdrIcebergSearch supports collectionId terms search', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 100,
     collectionId__in: [t.context.collectionId2, constructCollectionId('fakecollectionterms', 'v1')].join(','),
   };
-  let dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  let dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   let response = await dbSearch.query();
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
@@ -586,44 +586,44 @@ test.serial('PdrS3Search supports collectionId terms search', async (t) => {
     limit: 100,
     collectionId__in: [t.context.collectionId, t.context.collectionId2].join(','),
   };
-  dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
 });
 
-test.serial('PdrS3Search supports provider terms search', async (t) => {
+test.serial('PdrIcebergSearch supports provider terms search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 100,
     provider__in: [t.context.provider.name, 'fakeproviderterms'].join(','),
   };
-  const dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
 });
 
-test.serial('PdrS3Search supports execution terms search', async (t) => {
+test.serial('PdrIcebergSearch supports execution terms search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 100,
     execution__in: [`https://example.con/${t.context.execution.arn}`, 'fakepdrterms'].join(','),
   };
-  const dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
 });
 
-test.serial('PdrS3Search supports search when pdr field does not match the given value', async (t) => {
+test.serial('PdrIcebergSearch supports search when pdr field does not match the given value', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 100,
     pdrName__not: t.context.pdrNames[0],
     PANSent__not: 'true',
   };
-  let dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  let dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   let response = await dbSearch.query();
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
@@ -633,31 +633,31 @@ test.serial('PdrS3Search supports search when pdr field does not match the given
     pdrName__not: t.context.pdrNames[0],
     PANSent__not: 'false',
   };
-  dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 24);
   t.is(response.results?.length, 24);
 });
 
-test.serial('PdrS3Search supports search which collectionId does not match the given value', async (t) => {
+test.serial('PdrIcebergSearch supports search which collectionId does not match the given value', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 100,
     collectionId__not: t.context.collectionId2,
   };
-  const dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
 });
 
-test.serial('PdrS3Search supports search which provider does not match the given value', async (t) => {
+test.serial('PdrIcebergSearch supports search which provider does not match the given value', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 100,
     provider__not: t.context.provider.name,
   };
-  let dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  let dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   let response = await dbSearch.query();
   t.is(response.meta.count, 0);
   t.is(response.results?.length, 0);
@@ -666,19 +666,19 @@ test.serial('PdrS3Search supports search which provider does not match the given
     limit: 100,
     provider__not: 'providernotexist',
   };
-  dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
 });
 
-test.serial('PdrS3Search supports search which execution does not match the given value', async (t) => {
+test.serial('PdrIcebergSearch supports search which execution does not match the given value', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 100,
     execution__not: `https://example.com/${t.context.execution.arn}`,
   };
-  let dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  let dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   let response = await dbSearch.query();
   t.is(response.meta.count, 0);
   t.is(response.results?.length, 0);
@@ -687,31 +687,31 @@ test.serial('PdrS3Search supports search which execution does not match the give
     limit: 100,
     execution__not: 'executionnotexist',
   };
-  dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
 });
 
-test.serial('PdrS3Search supports search which checks existence of PDR field', async (t) => {
+test.serial('PdrIcebergSearch supports search which checks existence of PDR field', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 100,
     originalUrl__exists: 'true',
   };
-  const dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
 });
 
-test.serial('PdrS3Search supports search which checks existence of collectionId', async (t) => {
+test.serial('PdrIcebergSearch supports search which checks existence of collectionId', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 100,
     collectionId__exists: 'true',
   };
-  let dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  let dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   let response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
@@ -719,19 +719,19 @@ test.serial('PdrS3Search supports search which checks existence of collectionId'
     limit: 100,
     collectionId__exists: 'false',
   };
-  dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 0);
   t.is(response.results?.length, 0);
 });
 
-test.serial('PdrS3Search supports search which checks existence of provider', async (t) => {
+test.serial('PdrIcebergSearch supports search which checks existence of provider', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 100,
     provider__exists: 'true',
   };
-  let dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  let dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   let response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
@@ -740,19 +740,19 @@ test.serial('PdrS3Search supports search which checks existence of provider', as
     limit: 100,
     provider__exists: 'false',
   };
-  dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 0);
   t.is(response.results?.length, 0);
 });
 
-test.serial('PdrS3Search supports search which checks existence of execution', async (t) => {
+test.serial('PdrIcebergSearch supports search which checks existence of execution', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 100,
     execution__exists: 'true',
   };
-  let dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  let dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   let response = await dbSearch.query();
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
@@ -761,20 +761,20 @@ test.serial('PdrS3Search supports search which checks existence of execution', a
     limit: 100,
     execution__exists: 'false',
   };
-  dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 25);
   t.is(response.results?.length, 25);
 });
 
-test.serial('PdrS3Search returns the correct record', async (t) => {
+test.serial('PdrIcebergSearch returns the correct record', async (t) => {
   const { connection } = t.context;
   const dbRecord = t.context.pdrs[2];
   const queryStringParameters = {
     limit: 100,
     pdrName: dbRecord.name,
   };
-  const dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   const { results, meta } = await dbSearch.query();
   t.is(meta.count, 1);
   t.is(results?.length, 1);
@@ -808,12 +808,12 @@ test.serial('PdrS3Search returns the correct record', async (t) => {
   );
 });
 
-test.serial('PdrS3Search only returns count if countOnly is set to true', async (t) => {
+test.serial('PdrIcebergSearch only returns count if countOnly is set to true', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     countOnly: 'true',
   };
-  const dbSearch = new PdrS3Search({ queryStringParameters }, connection);
+  const dbSearch = new PdrIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.true(response.meta.count > 0, 'Expected response.meta.count to be greater than 0');
   t.is(response.results?.length, 0);

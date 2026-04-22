@@ -32,7 +32,6 @@ module "iceberg_api" {
   cumulus_iceberg_api_image_version = "latest"
 
   ecs_execution_role_arn   = "arn:aws:iam::123456789012:role/cumulus-ecs-execution-role"
-  ecs_task_role_arn        = "arn:aws:iam::123456789012:role/cumulus-ecs-task-role"
   ecs_cluster_arn          = "arn:aws:ecs:us-west-2:123456789012:cluster/cumulus-cluster"
   ecs_cluster_name         = "cumulus-cluster"
   ecs_cluster_instance_subnet_ids = ["subnet-12345678", "subnet-87654321"]
@@ -65,7 +64,6 @@ module "iceberg_api" {
 | iceberg_api_memory | Memory allocation for Iceberg API ECS task | `number` | `512` | no |
 | cumulus_iceberg_api_image_version | Version of the Cumulus Iceberg API image | `string` | n/a | yes |
 | ecs_execution_role_arn | ARN of the ECS execution role | `string` | n/a | yes |
-| ecs_task_role_arn | ARN of the ECS task role | `string` | n/a | yes |
 | ecs_cluster_arn | ARN of the ECS cluster | `string` | n/a | yes |
 | ecs_cluster_name | Name of the ECS cluster | `string` | n/a | yes |
 | ecs_cluster_instance_subnet_ids | Subnet IDs for ECS cluster instances | `list(string)` | n/a | yes |

@@ -7,7 +7,13 @@
  * It's designed to run in ECS and only exposes read-only list endpoints:
  * - GET /version
  * - GET /granules (list)
+ * - GET /collections (list)
  * - GET /executions (list)
+ * - GET /providers (list)
+ * - GET /pdrs (list)
+ * - GET /rules (list)
+ * - GET /async-operations (list)
+ * - GET /reconciliation-reports (list)
  * - GET /stats
  * - GET /stats/aggregate/:type?
  */
@@ -27,16 +33,17 @@ const Logger = require('@cumulus/logger');
 const icebergRouter = require('./iceberg-routes');
 const { jsonBodyParser } = require('./middleware');
 const boom = require('../lib/expressBoom');
-const { initializeKnexClient, destroyKnexClient } = require('./iceberg-db');
+
+const { initializeDuckDbClient, destroyDuckDbClient } = require('./iceberg-db');
 
 const log = new Logger({ sender: '@api/iceberg-index' });
 
-log.info('Initializing Iceberg API (limited endpoints for ECS deployment)');
+log.info('Initializing Iceberg API (DuckDB/Iceberg mode)');
 
 // Load Environment Variables
 const initEnvVarsFunction = async () => {
   if (inTestMode() && process.env.INIT_ENV_VARS_FUNCTION_TEST !== 'true') {
-    return undefined;
+    return;
   }
   log.info('Initializing environment variables');
   const apiConfigSecretId = getRequiredEnvVar('api_config_secret_id');
@@ -44,12 +51,7 @@ const initEnvVarsFunction = async () => {
     const response = await secretsManager().getSecretValue(
       { SecretId: apiConfigSecretId }
     );
-    let envSecret;
-    try {
-      envSecret = JSON.parse(response.SecretString);
-    } catch (error) {
-      throw new SyntaxError(`Secret string returned for SecretId ${apiConfigSecretId} could not be parsed`, { cause: error });
-    }
+    const envSecret = JSON.parse(response.SecretString);
 
     for (const [key, value] of Object.entries(envSecret)) {
       if (!(key in process.env)) {
@@ -57,10 +59,9 @@ const initEnvVarsFunction = async () => {
       }
     }
   } catch (error) {
-    log.error(`Encountered error trying to set environment variables from secret ${apiConfigSecretId}`, error);
+    log.error(`Error setting environment variables from secret ${apiConfigSecretId}`, error);
     throw error;
   }
-  return undefined;
 };
 const initEnvVars = initEnvVarsFunction();
 
@@ -89,56 +90,48 @@ app.use(bodyParser.urlencoded({ limit: '6mb', extended: true }));
 app.use(jsonBodyParser);
 app.use(hsts({ maxAge: 31536000 }));
 
-// v1 routes (limited Iceberg API endpoints only)
+// v1 routes
 app.use('/v1', icebergRouter);
-
-// default routes
 app.use('/', icebergRouter);
 
-// global 404 response when page is not found
 app.use((_req, res) => {
   res.boom.notFound('requested page not found');
 });
 
-// catch all error handling
 app.use((err, _req, res, _next) => {
   res.error = JSON.stringify(err, Object.getOwnPropertyNames(err));
-  return res.boom.badImplementation('Something broke!');
+  return res.boom.badImplementation('Internal Server Error');
 });
 
-// Initialize environment variables and start server
+// Initialize and start server
 const startServer = async () => {
   await initEnvVars;
   const dynamoTableNames = JSON.parse(getRequiredEnvVar('dynamoTableNameString'));
-  // Set Dynamo table names as environment variables
   Object.keys(dynamoTableNames).forEach((tableEnvVarName) => {
     process.env[tableEnvVarName] = dynamoTableNames[tableEnvVarName];
   });
 
-  // Initialize singleton Knex client for Iceberg API
-  await initializeKnexClient();
+  log.info('Initializing DuckDB...');
+  await initializeDuckDbClient();
 
   const port = process.env.PORT || 5001;
   const icebergServer = app.listen(port, () => {
     log.info(`Iceberg API server listening on port ${port}`);
-    log.info('Available endpoints: /version, /granules, /executions, /stats');
   });
 
   // Graceful shutdown handler
   const shutdown = (signal) => {
-    log.info(`${signal} signal received: closing HTTP server and database connections`);
+    log.info(`${signal} signal received: closing HTTP server and DuckDB connections`);
     icebergServer.close(async () => {
       log.info('HTTP server closed');
       try {
-        await destroyKnexClient();
-        log.info('Database connections closed');
+        await destroyDuckDbClient();
         log.info('Graceful shutdown complete');
-        // eslint-disable-next-line no-process-exit
-        process.exit(0);
+        process.exitCode = 0;
       } catch (error) {
         log.error('Error during graceful shutdown:', error);
-        // eslint-disable-next-line no-process-exit
-        process.exit(1);
+        process.exitCode = 1;
+        throw error;
       }
     });
   };
@@ -147,7 +140,6 @@ const startServer = async () => {
   process.on('SIGINT', () => shutdown('SIGINT'));
 };
 
-// Start the server
 log.info('Starting Iceberg API server');
 startServer().catch((error) => {
   log.error('Failed to start Iceberg API server:', error);
@@ -156,6 +148,5 @@ startServer().catch((error) => {
 
 module.exports = {
   app,
-  initEnvVarsFunction,
   startServer,
 };

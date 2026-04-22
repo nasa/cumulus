@@ -13,9 +13,9 @@ const {
   stageAndLoadDuckDBTableFromData,
 } = require('../../dist/test-duckdb-utils');
 const {
-  providersS3TableSql,
-} = require('../../dist/s3search/s3TableSchemas');
-const { ProviderS3Search } = require('../../dist/s3search/ProviderS3Search');
+  providersIcebergSql,
+} = require('../../dist/iceberg-search/IcebergSchemas');
+const { ProviderIcebergSearch } = require('../../dist/iceberg-search/ProviderIcebergSearch');
 const {
   translatePostgresProviderToApiProvider,
 } = require('../../dist/translate/providers');
@@ -53,7 +53,7 @@ test.before(async (t) => {
     connection,
     t.context.knexBuilder,
     'providers',
-    providersS3TableSql,
+    providersIcebergSql,
     t.context.providers,
     `${duckdbS3Prefix}providers.parquet`
   );
@@ -64,21 +64,21 @@ test.after.always(async (t) => {
   await t.context.connection.closeSync();
 });
 
-test.serial('ProviderS3Search returns 10 providers by default', async (t) => {
+test.serial('ProviderIcebergSearch returns 10 providers by default', async (t) => {
   const { connection } = t.context;
-  const dbSearch = new ProviderS3Search({}, connection);
+  const dbSearch = new ProviderIcebergSearch({}, connection);
   const results = await dbSearch.query();
   t.is(results.meta.count, 100);
   t.is(results.results.length, 10);
 });
 
-test.serial('ProviderS3Search supports page and limit params', async (t) => {
+test.serial('ProviderIcebergSearch supports page and limit params', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 20,
     page: 2,
   };
-  let dbSearch = new ProviderS3Search({ queryStringParameters }, connection);
+  let dbSearch = new ProviderIcebergSearch({ queryStringParameters }, connection);
   let response = await dbSearch.query();
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 20);
@@ -87,7 +87,7 @@ test.serial('ProviderS3Search supports page and limit params', async (t) => {
     limit: 11,
     page: 10,
   };
-  dbSearch = new ProviderS3Search({ queryStringParameters }, connection);
+  dbSearch = new ProviderIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 1);
@@ -96,79 +96,79 @@ test.serial('ProviderS3Search supports page and limit params', async (t) => {
     limit: 10,
     page: 11,
   };
-  dbSearch = new ProviderS3Search({ queryStringParameters }, connection);
+  dbSearch = new ProviderIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 0);
 });
 
-test.serial('ProviderS3Search supports infix search', async (t) => {
+test.serial('ProviderIcebergSearch supports infix search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 20,
     infix: 'test',
   };
-  const dbSearch = new ProviderS3Search({ queryStringParameters }, connection);
+  const dbSearch = new ProviderIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 20);
   t.true(response.results?.every((provider) => provider.id.includes('test')));
 });
 
-test.serial('ProviderS3Search supports prefix search', async (t) => {
+test.serial('ProviderIcebergSearch supports prefix search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 20,
     prefix: 'fake',
   };
-  const dbSearch = new ProviderS3Search({ queryStringParameters }, connection);
+  const dbSearch = new ProviderIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 20);
   t.true(response.results?.every((provider) => provider.id.startsWith('fake')));
 });
 
-test.serial('ProviderS3Search supports term search for date field', async (t) => {
+test.serial('ProviderIcebergSearch supports term search for date field', async (t) => {
   const { connection } = t.context;
   const testUpdatedAt = t.context.providerSearchTimestamp + 1;
   const queryStringParameters = {
     limit: 200,
     updatedAt: `${testUpdatedAt}`,
   };
-  const dbSearch = new ProviderS3Search({ queryStringParameters }, connection);
+  const dbSearch = new ProviderIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
   t.true(response.results?.every((provider) => provider.updatedAt === testUpdatedAt));
 });
 
-test.serial('ProviderS3Search supports term search for number field', async (t) => {
+test.serial('ProviderIcebergSearch supports term search for number field', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
     globalConnectionLimit: '10',
   };
-  const dbSearch = new ProviderS3Search({ queryStringParameters }, connection);
+  const dbSearch = new ProviderIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
   t.true(response.results?.every((provider) => provider.globalConnectionLimit === 10));
 });
 
-test.serial('ProviderS3Search supports term search for string field', async (t) => {
+test.serial('ProviderIcebergSearch supports term search for string field', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
     host: 'cumulus-sit',
   };
-  const dbSearch = new ProviderS3Search({ queryStringParameters }, connection);
+  const dbSearch = new ProviderIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
   t.true(response.results?.every((provider) => provider.host === 'cumulus-sit'));
 });
 
-test.serial('ProviderS3Search supports range search', async (t) => {
+test.serial('ProviderIcebergSearch supports range search', async (t) => {
   const { connection } = t.context;
   const timestamp1 = t.context.providerSearchTimestamp + 1;
   const timestamp2 = t.context.providerSearchTimestamp + 2;
@@ -177,7 +177,7 @@ test.serial('ProviderS3Search supports range search', async (t) => {
     timestamp__from: `${timestamp1}`,
     timestamp__to: `${timestamp2}`,
   };
-  const dbSearch = new ProviderS3Search({ queryStringParameters }, connection);
+  const dbSearch = new ProviderIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
@@ -185,7 +185,7 @@ test.serial('ProviderS3Search supports range search', async (t) => {
     && provider.updatedAt <= timestamp2));
 });
 
-test.serial('ProviderS3Search supports search for multiple fields', async (t) => {
+test.serial('ProviderIcebergSearch supports search for multiple fields', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -203,33 +203,33 @@ test.serial('ProviderS3Search supports search for multiple fields', async (t) =>
     protocol: 's3',
     updatedAt: 1579352700000,
   };
-  const dbSearch = new ProviderS3Search({ queryStringParameters }, connection);
+  const dbSearch = new ProviderIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 1);
   t.is(response.results?.length, 1);
   t.deepEqual(response.results[0], expectedResponse);
 });
 
-test.serial('ProviderS3Search non-existing fields are ignored', async (t) => {
+test.serial('ProviderIcebergSearch non-existing fields are ignored', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
     non_existing_field: `non_exist_${cryptoRandomString({ length: 5 })}`,
     non_existing_field__from: `non_exist_${cryptoRandomString({ length: 5 })}`,
   };
-  const dbSearch = new ProviderS3Search({ queryStringParameters }, connection);
+  const dbSearch = new ProviderIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 100);
 });
 
-test.serial('ProviderS3Search returns fields specified', async (t) => {
+test.serial('ProviderIcebergSearch returns fields specified', async (t) => {
   const { connection } = t.context;
   let fields = 'id';
   let queryStringParameters = {
     fields,
   };
-  let dbSearch = new ProviderS3Search({ queryStringParameters }, connection);
+  let dbSearch = new ProviderIcebergSearch({ queryStringParameters }, connection);
   let response = await dbSearch.query();
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 10);
@@ -239,21 +239,21 @@ test.serial('ProviderS3Search returns fields specified', async (t) => {
   queryStringParameters = {
     fields,
   };
-  dbSearch = new ProviderS3Search({ queryStringParameters }, connection);
+  dbSearch = new ProviderIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 10);
   response.results.forEach((provider) => t.deepEqual(Object.keys(provider), fields.split(',')));
 });
 
-test.serial('ProviderS3Search supports sorting', async (t) => {
+test.serial('ProviderIcebergSearch supports sorting', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
     sort_by: 'id',
     order: 'asc',
   };
-  const dbSearch = new ProviderS3Search({ queryStringParameters }, connection);
+  const dbSearch = new ProviderIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 100);
   t.is(response.results?.length, 100);
@@ -264,7 +264,7 @@ test.serial('ProviderS3Search supports sorting', async (t) => {
     limit: 200,
     sort_key: ['-id'],
   };
-  const dbSearch2 = new ProviderS3Search({ queryStringParameters }, connection);
+  const dbSearch2 = new ProviderIcebergSearch({ queryStringParameters }, connection);
   const response2 = await dbSearch2.query();
   t.is(response2.meta.count, 100);
   t.is(response2.results?.length, 100);
@@ -275,7 +275,7 @@ test.serial('ProviderS3Search supports sorting', async (t) => {
     limit: 200,
     sort_by: 'globalConnectionLimit',
   };
-  const dbSearch3 = new ProviderS3Search({ queryStringParameters }, connection);
+  const dbSearch3 = new ProviderIcebergSearch({ queryStringParameters }, connection);
   const response3 = await dbSearch3.query();
   t.is(response3.meta.count, 100);
   t.is(response3.results?.length, 100);
@@ -283,26 +283,26 @@ test.serial('ProviderS3Search supports sorting', async (t) => {
   t.true(response3.results[49].globalConnectionLimit < response3.results[50].globalConnectionLimit);
 });
 
-test.serial('ProviderS3Search supports terms search', async (t) => {
+test.serial('ProviderIcebergSearch supports terms search', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
     id__in: ['fakeProvider85', 'testProvider86'].join(','),
   };
-  const dbSearch = new ProviderS3Search({ queryStringParameters }, connection);
+  const dbSearch = new ProviderIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 2);
   t.is(response.results?.length, 2);
   t.true(response.results?.every((provider) => ['fakeProvider85', 'testProvider86'].includes(provider.id)));
 });
 
-test.serial('ProviderS3Search supports search when provider field does not match the given value', async (t) => {
+test.serial('ProviderIcebergSearch supports search when provider field does not match the given value', async (t) => {
   const { connection } = t.context;
   let queryStringParameters = {
     limit: 200,
     host__not: 'cumulus-uat',
   };
-  let dbSearch = new ProviderS3Search({ queryStringParameters }, connection);
+  let dbSearch = new ProviderIcebergSearch({ queryStringParameters }, connection);
   let response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
@@ -313,34 +313,34 @@ test.serial('ProviderS3Search supports search when provider field does not match
     host__not: 'cumulus-uat',
     id__not: 'testProvider38',
   };
-  dbSearch = new ProviderS3Search({ queryStringParameters }, connection);
+  dbSearch = new ProviderIcebergSearch({ queryStringParameters }, connection);
   response = await dbSearch.query();
   t.is(response.meta.count, 49);
   t.is(response.results?.length, 49);
   t.true(response.results?.every((provider) => provider.host !== 'cumulus-uat' && provider.id !== 'testProvider38'));
 });
 
-test.serial('ProviderS3Search supports search which checks existence of provider field', async (t) => {
+test.serial('ProviderIcebergSearch supports search which checks existence of provider field', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 200,
     privateKey__exists: 'true',
   };
-  const dbSearch = new ProviderS3Search({ queryStringParameters }, connection);
+  const dbSearch = new ProviderIcebergSearch({ queryStringParameters }, connection);
   const response = await dbSearch.query();
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
   t.true(response.results?.every((provider) => provider.privateKey));
 });
 
-test.serial('ProviderS3Search returns the correct record', async (t) => {
+test.serial('ProviderIcebergSearch returns the correct record', async (t) => {
   const { connection } = t.context;
   const dbRecord = t.context.providers[2];
   const queryStringParameters = {
     limit: 200,
     name: dbRecord.name,
   };
-  const dbSearch = new ProviderS3Search({ queryStringParameters }, connection);
+  const dbSearch = new ProviderIcebergSearch({ queryStringParameters }, connection);
   const { results, meta } = await dbSearch.query();
   t.is(meta.count, 1);
   t.is(results?.length, 1);

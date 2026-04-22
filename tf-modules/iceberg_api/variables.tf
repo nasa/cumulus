@@ -32,13 +32,13 @@ variable "api_config_secret_arn" {
 variable "iceberg_api_cpu" {
   description = "CPU allocation for Iceberg API ECS task"
   type        = number
-  default     = 256
+  default     = 512
 }
 
 variable "iceberg_api_memory" {
   description = "Memory allocation for Iceberg API ECS task"
   type        = number
-  default     = 512
+  default     = 1024
 }
 
 variable "cumulus_iceberg_api_image_version" {
@@ -48,11 +48,6 @@ variable "cumulus_iceberg_api_image_version" {
 
 variable "ecs_execution_role_arn" {
   description = "ARN of the ECS execution role"
-  type        = string
-}
-
-variable "ecs_task_role_arn" {
-  description = "ARN of the ECS task role"
   type        = string
 }
 
@@ -73,6 +68,26 @@ variable "ecs_cluster_instance_subnet_ids" {
 
 variable "rds_security_group_id" {
   description = "ID of the RDS security group"
+  type        = string
+}
+
+variable "iceberg_s3_bucket" {
+  description = "Name of the S3 bucket the Iceberg API task needs read access to"
+  type        = string
+}
+
+variable "system_bucket" {
+  description = "Name of the Cumulus system S3 bucket (used for auth config and other system resources)"
+  type        = string
+}
+
+variable "aws_account_id" {
+  description = "AWS account ID used to attach the Glue Iceberg catalog"
+  type        = string
+}
+
+variable "iceberg_namespace" {
+  description = "AWS Glue schema (database) name containing the Iceberg tables"
   type        = string
 }
 

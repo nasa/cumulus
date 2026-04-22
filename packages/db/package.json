@@ -5,6 +5,20 @@
   "license": "Apache-2.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./duckdb": {
+      "types": "./dist/duckdb.d.ts",
+      "default": "./dist/duckdb.js"
+    },
+    "./package.json": "./package.json",
+    "./dist": "./dist/index.js",
+    "./dist/*": "./dist/*.js",
+    "./*": "./dist/*.js"
+  },
   "files": [
     "dist/**/*.js",
     "dist/**/*.d.ts"

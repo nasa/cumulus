@@ -29,6 +29,10 @@ Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
 
 ### Added
 
+- **CUMULUS-4708**
+  - Implement list of executions route in iceberg search api
+- **CUMULUS-4707**
+  - Implement list of granules route in iceberg search api
 - **CUMULUS-4534**
   - collection db model has added non-optional cmr_provider field
   - update requires db-migration to add cmr_provider to collection model
@@ -678,6 +682,17 @@ v21.0.0 documentation should be used for this release.
   - Moved `@cumulus/api/lib/utils.errorify` function to `@cumulus/errors` and updated it to remove circular reference
   - Used `errorify` instead of `JSON.stringify` for AWS errors
   - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
+
+## [v20.3.3] 2025-04-13 [BACKPORT]
+
+Please note changes in 20.3.3 may not yet be released in future versions, as this is a backport and patch release on the 20.3.x series of releases. Updates that are included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Fixed
+
+- Upgraded package `lodash` to version 4.18.1.
+- **CSD-100**
+  - made changes to the `PrivateApiLambda` and `ApiEndpoints` lambdas to ensure the environment variables
+    are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported
 
 ## [v20.3.2] 2025-12-04 [BACKPORT]
 
@@ -9713,14 +9728,16 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v21.3.2...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v21.3.3...HEAD
+[v21.3.3]: https://github.com/nasa/cumulus/compare/v21.3.2...v21.3.3
 [v21.3.2]: https://github.com/nasa/cumulus/compare/v21.3.1...v21.3.2
 [v21.3.1]: https://github.com/nasa/cumulus/compare/v21.3.0...v21.3.1
 [v21.3.0]: https://github.com/nasa/cumulus/compare/v21.2.1...v21.3.0
 [v21.2.1]: https://github.com/nasa/cumulus/compare/v21.2.0...v21.2.1
 [v21.2.0]: https://github.com/nasa/cumulus/compare/v21.0.1...v21.2.0
 [v21.0.1]: https://github.com/nasa/cumulus/compare/v21.0.0...v21.0.1
-[v21.0.0]: https://github.com/nasa/cumulus/compare/v20.3.2...v21.0.0
+[v21.0.0]: https://github.com/nasa/cumulus/compare/v20.3.3...v21.0.0
+[v20.3.3]: https://github.com/nasa/cumulus/compare/v20.3.2...v20.3.3
 [v20.3.2]: https://github.com/nasa/cumulus/compare/v20.3.1...v20.3.2
 [v20.3.1]: https://github.com/nasa/cumulus/compare/v20.3.0...v20.3.1
 [v20.3.0]: https://github.com/nasa/cumulus/compare/v20.2.3...v20.3.0

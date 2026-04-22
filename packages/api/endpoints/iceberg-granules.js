@@ -7,7 +7,7 @@
 
 const router = require('express-promise-router')();
 const Logger = require('@cumulus/logger');
-const { GranuleSearch } = require('@cumulus/db');
+const { GranuleIcebergSearch } = require('@cumulus/db/duckdb');
 const { addOrcaRecoveryStatus } = require('../lib/orca');
 
 const log = new Logger({ sender: '@cumulus/api/iceberg-granules' });
@@ -23,13 +23,28 @@ async function list(req, res) {
   log.debug(`list query ${JSON.stringify(req.query)}`);
   const { getRecoveryStatus, ...queryStringParameters } = req.query;
 
-  const dbSearch = new GranuleSearch({ queryStringParameters });
-  const result = await dbSearch.query();
+  let result;
+  try {
+    result = await new GranuleIcebergSearch({ queryStringParameters }).query();
+  } catch (error) {
+    log.error('GranuleIcebergSearch Query Failed', error);
 
-  if (getRecoveryStatus === 'true') {
-    return res.send(await addOrcaRecoveryStatus(result));
+    if (res.boom) {
+      return res.boom.badImplementation('Error querying S3/Iceberg data');
+    }
+
+    return res.status(500).send({
+      error: 'Internal Server Error',
+      message: 'Error querying S3/Iceberg data',
+    });
   }
-  return res.send(result);
+
+  let finalResult = result;
+  if (getRecoveryStatus === 'true') {
+    finalResult = await addOrcaRecoveryStatus(result);
+  }
+
+  return res.send(finalResult);
 }
 
 // Only expose the list endpoint for Iceberg API
