@@ -44,6 +44,13 @@ export const up = async (knex: Knex): Promise<void> => {
     PARTITION BY RANGE (created_at);
   `);
 
+  // DEFAULT PARTITION (SAFETY NET)
+  await knex.raw(`
+    CREATE TABLE executions_default
+    PARTITION OF executions
+    DEFAULT;
+  `);
+
   // QUARTERLY PARTITIONS
   const partitions: string[] = [];
 
