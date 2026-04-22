@@ -95,7 +95,7 @@ resource "aws_ecs_service" "iceberg_api" {
 }
 
 resource "aws_lb" "iceberg_api" {
-  name               = "${var.prefix}-iceberg-api-alb"
+  name               = "${var.prefix}-iceberg-api"
   internal           = true
   load_balancer_type = "application"
   security_groups    = [aws_security_group.iceberg_alb_sg.id]
