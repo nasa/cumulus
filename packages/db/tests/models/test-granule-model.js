@@ -56,6 +56,7 @@ test.beforeEach(async (t) => {
     fakeExecutionRecordFactory({ status: 'completed' })
   );
   t.context.completedExecutionCumulusId = completedPgExecution.cumulus_id;
+  t.context.completedExecutionCreatedAt = completedPgExecution.created_at;
 });
 
 test.after.always(async (t) => {
@@ -260,6 +261,7 @@ test('GranulePgModel.upsert() will only overwrite allowed fields of a granule if
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    executionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -270,6 +272,7 @@ test('GranulePgModel.upsert() will only overwrite allowed fields of a granule if
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
   });
 
   const [newExecution] = await executionPgModel.create(
@@ -326,6 +329,7 @@ test('GranulePgModel.upsert() overwrites all fields of a granule if update is to
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    executionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -336,6 +340,7 @@ test('GranulePgModel.upsert() overwrites all fields of a granule if update is to
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
   });
 
   const [newExecution] = await executionPgModel.create(
@@ -385,6 +390,7 @@ test('GranulePgModel.upsert() will overwrite allowed fields of a running granule
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    executionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -395,6 +401,7 @@ test('GranulePgModel.upsert() will overwrite allowed fields of a running granule
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
   });
 
   const [newExecution] = await executionPgModel.create(
@@ -432,6 +439,7 @@ test('GranulePgModel.upsert() will overwrite allowed fields of a running granule
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    executionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -442,6 +450,7 @@ test('GranulePgModel.upsert() will overwrite allowed fields of a running granule
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
   });
 
   const [newExecution] = await executionPgModel.create(
@@ -499,6 +508,7 @@ test('GranulePgModel.upsert() overwrites a completed granule if writeConstraints
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    executionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -511,6 +521,7 @@ test('GranulePgModel.upsert() overwrites a completed granule if writeConstraints
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
   });
 
   const updatedGranule = {
@@ -542,6 +553,7 @@ test('GranulePgModel.upsert() overwrites a completed granule if writeConstraints
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    executionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -554,6 +566,7 @@ test('GranulePgModel.upsert() overwrites a completed granule if writeConstraints
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
   });
 
   const updatedGranule = {
@@ -580,7 +593,13 @@ test('GranulePgModel.upsert() overwrites a completed granule if writeConstraints
 });
 
 test('GranulePgModel.upsert() will allow a completed status to replace a running status for same execution if writeConstraints is set to true', async (t) => {
-  const { knex, granulePgModel, collectionCumulusId, executionCumulusId } = t.context;
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+    executionCreatedAt,
+  } = t.context;
 
   const granule = fakeGranuleRecordFactory({
     status: 'running',
@@ -591,6 +610,7 @@ test('GranulePgModel.upsert() will allow a completed status to replace a running
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
   });
 
   const updatedGranule = {
@@ -614,7 +634,13 @@ test('GranulePgModel.upsert() will allow a completed status to replace a running
 });
 
 test('GranulePgModel.upsert() will allow a completed status to replace a running status for same execution if writeConstraints is set to false', async (t) => {
-  const { knex, granulePgModel, collectionCumulusId, executionCumulusId } = t.context;
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+    executionCreatedAt,
+  } = t.context;
 
   const granule = fakeGranuleRecordFactory({
     status: 'running',
@@ -625,6 +651,7 @@ test('GranulePgModel.upsert() will allow a completed status to replace a running
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
   });
 
   const updatedGranule = {
@@ -653,6 +680,7 @@ test('GranulePgModel.upsert() will not allow a running status to replace a compl
     granulePgModel,
     collectionCumulusId,
     completedExecutionCumulusId,
+    completedExecutionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -664,6 +692,7 @@ test('GranulePgModel.upsert() will not allow a running status to replace a compl
     knexTransaction: knex,
     granule,
     executionCumulusId: completedExecutionCumulusId,
+    executionCreatedAt: completedExecutionCreatedAt,
   });
 
   const updatedGranule = {
@@ -675,6 +704,7 @@ test('GranulePgModel.upsert() will not allow a running status to replace a compl
     knexOrTrx: knex,
     granule: updatedGranule,
     executionCumulusId: completedExecutionCumulusId,
+    executionCreatedAt: completedExecutionCreatedAt,
     writeConstraints: true,
   });
 
@@ -691,6 +721,7 @@ test('GranulePgModel.upsert() will allow a running status to replace a completed
     granulePgModel,
     collectionCumulusId,
     completedExecutionCumulusId,
+    completedExecutionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -702,6 +733,7 @@ test('GranulePgModel.upsert() will allow a running status to replace a completed
     knexTransaction: knex,
     granule,
     executionCumulusId: completedExecutionCumulusId,
+    executionCreatedAt: completedExecutionCreatedAt,
   });
 
   const updatedGranule = {
@@ -713,6 +745,7 @@ test('GranulePgModel.upsert() will allow a running status to replace a completed
     knexOrTrx: knex,
     granule: updatedGranule,
     executionCumulusId: completedExecutionCumulusId,
+    executionCreatedAt: completedExecutionCreatedAt,
     writeConstraints: false,
   });
 
@@ -730,6 +763,7 @@ test('GranulePgModel.upsert() will allow a running status to replace a non-runni
     granulePgModel,
     collectionCumulusId,
     completedExecutionCumulusId,
+    completedExecutionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -741,6 +775,7 @@ test('GranulePgModel.upsert() will allow a running status to replace a non-runni
     knexTransaction: knex,
     granule,
     executionCumulusId: completedExecutionCumulusId,
+    executionCreatedAt: completedExecutionCreatedAt,
   });
 
   const [newExecution] = await executionPgModel.create(
@@ -775,6 +810,7 @@ test('GranulePgModel.upsert() will allow a running status to replace a non-runni
     granulePgModel,
     collectionCumulusId,
     completedExecutionCumulusId,
+    completedExecutionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -786,6 +822,7 @@ test('GranulePgModel.upsert() will allow a running status to replace a non-runni
     knexTransaction: knex,
     granule,
     executionCumulusId: completedExecutionCumulusId,
+    executionCreatedAt: completedExecutionCreatedAt,
   });
 
   const [newExecution] = await executionPgModel.create(
@@ -820,6 +857,7 @@ test('GranulePgModel.upsert() will allow a newer running status to replace an ol
     granulePgModel,
     collectionCumulusId,
     completedExecutionCumulusId,
+    completedExecutionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -831,6 +869,7 @@ test('GranulePgModel.upsert() will allow a newer running status to replace an ol
     knexTransaction: knex,
     granule,
     executionCumulusId: completedExecutionCumulusId,
+    executionCreatedAt: completedExecutionCreatedAt,
   });
 
   const [newExecution] = await executionPgModel.create(
@@ -868,6 +907,7 @@ test('GranulePgModel.upsert() will allow a newer running status to replace an ol
     granulePgModel,
     collectionCumulusId,
     completedExecutionCumulusId,
+    completedExecutionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -879,6 +919,7 @@ test('GranulePgModel.upsert() will allow a newer running status to replace an ol
     knexTransaction: knex,
     granule,
     executionCumulusId: completedExecutionCumulusId,
+    executionCreatedAt: completedExecutionCreatedAt,
   });
 
   const [newExecution] = await executionPgModel.create(
@@ -916,6 +957,7 @@ test('GranulePgModel.upsert() will allow an older running status to replace a ne
     granulePgModel,
     collectionCumulusId,
     completedExecutionCumulusId,
+    completedExecutionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -927,6 +969,7 @@ test('GranulePgModel.upsert() will allow an older running status to replace a ne
     knexTransaction: knex,
     granule,
     executionCumulusId: completedExecutionCumulusId,
+    executionCreatedAt: completedExecutionCreatedAt,
   });
 
   const [newExecution] = await executionPgModel.create(
@@ -963,6 +1006,7 @@ test('GranulePgModel.upsert() will not allow an older running status to replace 
     granulePgModel,
     collectionCumulusId,
     completedExecutionCumulusId,
+    completedExecutionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -974,6 +1018,7 @@ test('GranulePgModel.upsert() will not allow an older running status to replace 
     knexTransaction: knex,
     granule,
     executionCumulusId: completedExecutionCumulusId,
+    executionCreatedAt: completedExecutionCreatedAt,
   });
 
   const [newExecution] = await executionPgModel.create(
@@ -1007,6 +1052,7 @@ test('GranulePgModel.upsert() will not allow a queued status to replace a comple
   const {
     collectionCumulusId,
     completedExecutionCumulusId,
+    completedExecutionCreatedAt,
     granulePgModel,
     knex,
   } = t.context;
@@ -1020,6 +1066,7 @@ test('GranulePgModel.upsert() will not allow a queued status to replace a comple
     knexTransaction: knex,
     granule,
     executionCumulusId: completedExecutionCumulusId,
+    executionCreatedAt: completedExecutionCreatedAt,
     writeConstraints: true,
   });
 
@@ -1032,6 +1079,7 @@ test('GranulePgModel.upsert() will not allow a queued status to replace a comple
     knexOrTrx: knex,
     granule: updatedGranule,
     executionCumulusId: completedExecutionCumulusId,
+    executionCreatedAt: completedExecutionCreatedAt,
     writeConstraints: true,
   });
 
@@ -1046,6 +1094,7 @@ test('GranulePgModel.upsert() will allow a queued status to replace a completed 
   const {
     collectionCumulusId,
     completedExecutionCumulusId,
+    completedExecutionCreatedAt,
     granulePgModel,
     knex,
   } = t.context;
@@ -1059,6 +1108,7 @@ test('GranulePgModel.upsert() will allow a queued status to replace a completed 
     knexTransaction: knex,
     granule,
     executionCumulusId: completedExecutionCumulusId,
+    executionCreatedAt: completedExecutionCreatedAt,
   });
 
   const updatedGranule = {
@@ -1070,6 +1120,7 @@ test('GranulePgModel.upsert() will allow a queued status to replace a completed 
     knexOrTrx: knex,
     granule: updatedGranule,
     executionCumulusId: completedExecutionCumulusId,
+    executionCreatedAt: completedExecutionCreatedAt,
     writeConstraints: false,
   });
 
@@ -1081,7 +1132,13 @@ test('GranulePgModel.upsert() will allow a queued status to replace a completed 
 });
 
 test('GranulePgModel.upsert() will not allow a queued status to replace a running status for same execution if writeConstraints is set to true', async (t) => {
-  const { knex, granulePgModel, collectionCumulusId, executionCumulusId } = t.context;
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+    executionCreatedAt,
+  } = t.context;
 
   const granule = fakeGranuleRecordFactory({
     status: 'running',
@@ -1092,6 +1149,7 @@ test('GranulePgModel.upsert() will not allow a queued status to replace a runnin
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
     writeConstraints: true,
   });
 
@@ -1120,6 +1178,7 @@ test('GranulePgModel.upsert() will allow a queued status to replace a running st
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    executionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -1131,6 +1190,7 @@ test('GranulePgModel.upsert() will allow a queued status to replace a running st
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
   });
 
   const updatedGranule = {
@@ -1159,6 +1219,7 @@ test('GranulePgModel.upsert() will allow a queued status to replace a non-queued
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    executionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -1176,6 +1237,7 @@ test('GranulePgModel.upsert() will allow a queued status to replace a non-queued
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
   });
 
   const updatedGranule = {
@@ -1203,6 +1265,7 @@ test('GranulePgModel.upsert() will allow a queued status to replace a non-queued
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    executionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -1220,6 +1283,7 @@ test('GranulePgModel.upsert() will allow a queued status to replace a non-queued
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
     writeConstraints: true,
   });
 
@@ -1247,6 +1311,7 @@ test('GranulePgModel.upsert() will allow a completed status to replace a queued 
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    executionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -1258,6 +1323,7 @@ test('GranulePgModel.upsert() will allow a completed status to replace a queued 
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
   });
 
   const updatedGranule = {
@@ -1283,6 +1349,7 @@ test('GranulePgModel.upsert() will allow a completed status to replace a queued 
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    executionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -1294,6 +1361,7 @@ test('GranulePgModel.upsert() will allow a completed status to replace a queued 
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
   });
 
   const updatedGranule = {
@@ -1319,6 +1387,7 @@ test('GranulePgModel.upsert() will allow a running granule status to replace a q
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    executionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -1330,6 +1399,7 @@ test('GranulePgModel.upsert() will allow a running granule status to replace a q
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
     writeConstraints: true,
   });
 
@@ -1352,6 +1422,7 @@ test('GranulePgModel.upsert() will allow a running granule status to replace a q
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    executionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -1363,6 +1434,7 @@ test('GranulePgModel.upsert() will allow a running granule status to replace a q
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
     writeConstraints: false,
   });
 
@@ -1386,6 +1458,7 @@ test('GranulePgModel.upsert() will not allow a final granule status from an olde
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    executionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -1397,6 +1470,7 @@ test('GranulePgModel.upsert() will not allow a final granule status from an olde
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
   });
 
   const [newExecution] = await executionPgModel.create(
@@ -1432,6 +1506,7 @@ test('GranulePgModel.upsert() will allow a final granule status from an older co
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    executionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -1443,6 +1518,7 @@ test('GranulePgModel.upsert() will allow a final granule status from an older co
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
   });
 
   const [newExecution] = await executionPgModel.create(
@@ -1526,6 +1602,7 @@ test.serial('GranulePgModel.upsert() will allow a running granule linked to a co
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    executionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -1537,6 +1614,7 @@ test.serial('GranulePgModel.upsert() will allow a running granule linked to a co
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
   });
 
   const [newExecution] = await executionPgModel.create(
@@ -1572,6 +1650,7 @@ test.serial('GranulePgModel.upsert() will not allow a running granule linked to 
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    executionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -1583,6 +1662,7 @@ test.serial('GranulePgModel.upsert() will not allow a running granule linked to 
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
   });
 
   const [newExecution] = await executionPgModel.create(
@@ -1616,6 +1696,7 @@ test.serial('GranulePgModel.upsert() throws if a granule upsert is attempted for
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    executionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -1627,6 +1708,7 @@ test.serial('GranulePgModel.upsert() throws if a granule upsert is attempted for
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
   });
 
   const [newExecution] = await executionPgModel.create(
@@ -1664,6 +1746,7 @@ test.serial('GranulePgModel.upsert() throws if a granule upsert is attempted for
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    executionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -1675,6 +1758,7 @@ test.serial('GranulePgModel.upsert() throws if a granule upsert is attempted for
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
   });
 
   const [newExecution] = await executionPgModel.create(
@@ -1712,6 +1796,7 @@ test.serial('GranulePgModel.upsert() will allow a running state granule referenc
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    executionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -1723,6 +1808,7 @@ test.serial('GranulePgModel.upsert() will allow a running state granule referenc
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
   });
 
   const [newExecution] = await executionPgModel.create(
@@ -1758,6 +1844,7 @@ test.serial('GranulePgModel.upsert() will not allow a running state granule refe
     granulePgModel,
     collectionCumulusId,
     executionCumulusId,
+    executionCreatedAt,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -1769,6 +1856,7 @@ test.serial('GranulePgModel.upsert() will not allow a running state granule refe
     knexTransaction: knex,
     granule,
     executionCumulusId,
+    executionCreatedAt,
   });
 
   const [newExecution] = await executionPgModel.create(

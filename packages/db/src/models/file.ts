@@ -21,9 +21,10 @@ class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
 
     // Try a standard insert first (fastest path)
     try {
-      return await knexOrTrx(this.tableName)
-        .insert(files)
-        .returning('*');
+      return await knexOrTrx.transaction(async (trx) =>
+        await trx(this.tableName)
+          .insert(files)
+          .returning('*'));
     } catch (error: any) {
       // Catch the unique_violation (23505) thrown the trigger
       if (error.code === '23505') {

@@ -174,16 +174,17 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       }
     }
 
-    // Try insert
+    // isolate INSERT in savepoint
     try {
-      return await knexOrTrx(this.tableName)
-        .insert(granule)
-        .returning('*');
+      return await knexOrTrx.transaction(async (trx) =>
+        await trx(this.tableName)
+          .insert(granule)
+          .returning('*'));
     } catch (error) {
       // Trigger-raised duplicate, fallback to update
       if (error.code === '23505') {
-        const updated = await updateQuery;
-        return updated; // may be []
+        // outer transaction is NOT aborted
+        return await updateQuery; // may be []
       }
       throw error;
     }
