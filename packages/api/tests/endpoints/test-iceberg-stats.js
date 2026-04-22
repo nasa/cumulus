@@ -13,8 +13,8 @@ const aggregate = icebergStats.__get__('aggregate');
 test.serial('summary returns badImplementation when StatsIcebergSearch summary query throws', async (t) => {
   const queryError = new Error('summary query failed');
   class MockStatsIcebergSearch {
-    async summary() {
-      throw queryError;
+    summary() {
+      return Promise.reject(queryError);
     }
   }
 
@@ -38,8 +38,8 @@ test.serial('summary returns badImplementation when StatsIcebergSearch summary q
 test.serial('aggregate returns badImplementation when StatsIcebergSearch aggregate query throws', async (t) => {
   const queryError = new Error('aggregate query failed');
   class MockStatsIcebergSearch {
-    async aggregate() {
-      throw queryError;
+    aggregate() {
+      return Promise.reject(queryError);
     }
   }
 
