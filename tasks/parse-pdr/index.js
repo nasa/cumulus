@@ -127,7 +127,18 @@ const parseSpec = (pdrName, spec) => {
   const fileType = getter('FILE_TYPE');
 
   const checksumType = getter('FILE_CKSUM_TYPE', false);
-  const checksum = getter('FILE_CKSUM_VALUE', false);
+  // For MD5, FILE_CKSUM_VALUE must be a string. If the value is unquoted and contains
+  // only decimal digits, the PVL parser classifies it as PVLNumeric and calls Number(),
+  // which loses precision for large values (e.g. "73806951753129206387143405718909" → 7.38e+31).
+  // Use rawValue (the original string before Number() conversion) for MD5 checksums.
+  // We check typeof === 'string' rather than !== undefined because rawValue must be set
+  // before Number() conversion to be useful; if set after, it would be the precision-lost float.
+  // CKSUM values are legitimately numeric and should remain as numbers.
+  const checksumItem = spec.get('FILE_CKSUM_VALUE');
+  let checksum = checksumItem ? checksumItem.value : undefined;
+  if (checksumItem && checksumType === 'MD5' && isString(checksumItem.rawValue)) {
+    checksum = checksumItem.rawValue;
+  }
 
   // Validate fileType is in the mapping
   if (fileType) {
