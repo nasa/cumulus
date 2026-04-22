@@ -9,6 +9,7 @@ const {
   translatePostgresGranuleToApiGranuleWithoutDbQuery,
 } = require('../../dist/translate/granules');
 const {
+  destroyLocalTestDb,
   CollectionPgModel,
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
@@ -251,6 +252,13 @@ test.before(async (t) => {
       execution_created_at: executionRecords[99 - i].created_at,
     }))
   );
+});
+
+test.after.always(async (t) => {
+  await destroyLocalTestDb({
+    ...t.context,
+    testDbName,
+  });
 });
 
 test('GranuleSearch returns 10 granule records by default', async (t) => {

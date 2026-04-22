@@ -1038,7 +1038,7 @@ test('getGranulesByGranuleId() returns empty list when called with a granuleId t
   t.deepEqual(records, []);
 });
 
-test.skip('updateBatchGranulesCollection() sucessfully updates granules to the new collection_cumulus_id', async (t) => {
+test('updateBatchGranulesCollection() sucessfully updates granules to the new collection_cumulus_id', async (t) => {
   const {
     knex,
     granulePgModel,
