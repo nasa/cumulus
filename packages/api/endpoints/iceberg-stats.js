@@ -1,10 +1,8 @@
-//@ts-check
-
 'use strict';
 
 const router = require('express-promise-router')();
 const get = require('lodash/get');
-const { StatsSearch } = require('@cumulus/db');
+const { StatsIcebergSearch } = require('@cumulus/db/duckdb');
 const omit = require('lodash/omit');
 const { getType } = require('../lib/statsHelpers');
 
@@ -25,7 +23,7 @@ async function summary(req, res) {
     now - 24 * 3600 * 1000
   ), 10);
   params.timestamp__to = Number.parseInt(get(params, 'timestamp__to', now), 10);
-  const stats = new StatsSearch({ queryStringParameters: params }, 'granule');
+  const stats = new StatsIcebergSearch({ queryStringParameters: params }, 'granule');
   const r = await stats.summary();
   return res.send(r);
 }
@@ -40,11 +38,16 @@ async function summary(req, res) {
 async function aggregate(req, res) {
   const type = getType(req);
   if (type) {
-    const stats = new StatsSearch({ queryStringParameters: omit(req.query, 'type') }, type);
+    const stats = new StatsIcebergSearch(
+      { queryStringParameters: omit(req.query, 'type') },
+      type
+    );
     const r = await stats.aggregate();
     return res.send(r);
   }
-  return res.boom.badRequest('Type must be included in Stats Aggregate query string parameters');
+  return res.boom.badRequest(
+    'Type must be included in Stats Aggregate query string parameters'
+  );
 }
 
 router.get('/aggregate/:type?', aggregate);
