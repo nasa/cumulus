@@ -93,3 +93,5 @@ cumulus_distribution_url = "https://djidssf1tx775.cloudfront.net/"
 deploy_iceberg_api = true
 iceberg_s3_bucket = "cdd-test-iceberg"
 iceberg_namespace = "cdd_deploy"
+iceberg_api_memory = 16384
+iceberg_api_cpu = 4096
