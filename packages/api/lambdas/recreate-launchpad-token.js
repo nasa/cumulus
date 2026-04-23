@@ -13,11 +13,14 @@ const { launchpad, getEnvVar } = require('@cumulus/launchpad-auth');
 const bucket = getEnvVar('system_bucket');
 const lockFileKey = `${getEnvVar('stackName')}/launchpad-token-lock.json`;
 const tokenFileKey = `${getEnvVar('stackName')}/launchpad-token.json`;
+const LOCK_WAIT_TIMEOUT_MS = Number(process.env.LAUNCHPAD_LOCK_WAIT_MS) || 60000;
+const LOCK_INITIAL_DELAY_MS = 250;
+const LOCK_MAX_DELAY_MS = 5000;
 
 /**
  * Create a Launchpad token using passphrase, API, and certificate.
  *
- * @returns {Promise<string>} - Generated Launchpad token
+ * @returns {Promise<string>} - generated Launchpad token
  */
 async function generateLaunchpadToken(config = {}) {
   const launchpadPassphraseSecretName =
@@ -31,10 +34,75 @@ async function generateLaunchpadToken(config = {}) {
     certificate: config.certificate || process.env.launchpad_certificate,
   };
 
-  // this should GENERATE A TOKEN, NOT GET AN EXISTING ONE
-  // NEED TO FIGURE OUT HOW TO DO THAT
+  // delete old token and regen a new one
+  try {
+    await s3().send(new DeleteObjectCommand({
+      Bucket: bucket,
+      Key: tokenFileKey,
+    }));
+  } catch (error) {
+    if (error.name !== 'NoSuchKey' && error.name !== 'NotFound') {
+      throw error;
+    }
+  }
+
   return await launchpad.getLaunchpadToken(launchpadConfig);
 }
+
+/**
+ * Get a Launchpad token using passphrase, API, and certificate.
+ *
+ * @returns {Promise<string>} - retrieved Launchpad token
+ */
+async function getLaunchpadToken(config = {}) {
+  const launchpadPassphraseSecretName =
+    config.passphraseSecretName || process.env.launchpad_passphrase_secret_name;
+
+  const passphrase = await getSecretString(launchpadPassphraseSecretName);
+
+  const launchpadConfig = {
+    passphrase,
+    api: config.api || process.env.launchpad_api,
+    certificate: config.certificate || process.env.launchpad_certificate,
+  };
+
+  return await launchpad.getLaunchpadToken(launchpadConfig);
+}
+
+/**
+ * Poll S3 until the launchpad token lock file is NotFound or times out.
+ *
+ */
+/* eslint-disable no-await-in-loop */
+async function waitForLockFileRelease() {
+  const startTime = Date.now();
+  let delay = LOCK_INITIAL_DELAY_MS;
+
+  while (Date.now() - startTime < LOCK_WAIT_TIMEOUT_MS) {
+    try {
+      await s3().send(new HeadObjectCommand({
+        Bucket: bucket,
+        Key: lockFileKey,
+      }));
+    } catch (error) {
+      if (error.name === 'NotFound') {
+        return;
+      }
+      throw error;
+    }
+
+    // jitter + retry
+    const jitter = delay * 0.25 * (Math.random() * 2 - 1);
+    const sleepMs = Math.max(50, delay + jitter);
+    await new Promise((resolve) => setTimeout(resolve, sleepMs));
+    delay = Math.min(delay * 2, LOCK_MAX_DELAY_MS);
+  }
+
+  throw new Error(
+    `Timed out after ${LOCK_WAIT_TIMEOUT_MS}ms waiting for launchpad lock file to be released`
+  );
+}
+/* eslint-enable no-await-in-loop */
 
 /**
  * Check if lock file exists in S3.
@@ -84,21 +152,14 @@ async function createLockFile() {
 }
 
 /**
- * Write the generated token to S3.
+ * Wait for the lock file to release and read/return the created token
  *
- * @param {string} token - the Launchpad token to store
  * @returns {Promise<Object>} - S3 put response
  */
-async function putTokenInS3(token) {
-  return await s3().send(new PutObjectCommand({
-    Bucket: bucket,
-    Key: tokenFileKey,
-    Body: JSON.stringify({
-      token,
-      createdAt: new Date().toISOString(),
-    }),
-    ContentType: 'application/json',
-  }));
+async function waitAndReadToken() {
+  await waitForLockFileRelease();
+  const token = await getLaunchpadToken();
+  return { statusCode: 200, token };
 }
 
 /**
@@ -112,30 +173,30 @@ async function handler(event) {
   const config = event.config || {};
   let createdLock = false;
   try {
-    // check if lock file already exists
     const isLocked = await lockFileExists();
-    if (!isLocked) {
-     // lock file doesn't already exist, so create it and the token + store them
+
+    if (isLocked) {
+      // Someone else is creating the token, wait for lock file release and just use that one
+      return await waitAndReadToken();
+    }
+    // lock is not there, so we can create it here and try to make the token
+    try {
       await createLockFile();
       createdLock = true;
-      // here we need to make the distinction between create/get and just get
-      // in this if the token should be removed/a new one created and stored
-      // might need 2 different functions to do that
-      const token = await generateLaunchpadToken(config);
-      await putTokenInS3(token);
-      return { statusCode: 200, token };
-    } else {
-      // lock file does exist, so return the token that's already in s3
-      // in this we just need to GET the token (no creating or removing just get)
-      const token = await generateLaunchpadToken(config);
-      // possibly should have unique status/message compared to the if there is no lock
-      return { statusCode: 200, token };
+    } catch (err) {
+      if (err.name !== 'PreconditionFailed') {
+        throw err;
+      }
+      // Lost the token-creating race, so we wait and read like before
+      return await waitAndReadToken();
     }
+
+    const token = await generateLaunchpadToken(config);
+    return { statusCode: 200, token };
   } catch (error) {
     log.error('Error during Launchpad token generation:', error);
     throw error;
   } finally {
-    // only remove the lock in case this invocation created it
     if (createdLock) {
       await removeLockFile();
     }
@@ -147,6 +208,5 @@ module.exports = {
   generateLaunchpadToken,
   lockFileExists,
   createLockFile,
-  putTokenInS3,
   removeLockFile,
 };

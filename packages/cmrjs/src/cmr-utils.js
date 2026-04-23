@@ -97,6 +97,11 @@ const log = new Logger({ sender: '@cumulus/cmrjs/src/cmr-utils' });
 
 const s3CredsEndpoint = 's3credentials';
 
+const LOCK_KEY = `${process.env.stackName}/launchpad-token-lock.json`;
+const LOCK_WAIT_TIMEOUT_MS = Number(process.env.LAUNCHPAD_LOCK_WAIT_MS) || 60000;
+const LOCK_INITIAL_DELAY_MS = 250;
+const LOCK_MAX_DELAY_MS = 5000;
+
 function getS3KeyOfFile(file) {
   if (file.filename) return parseS3Uri(file.filename).Key;
   if (file.filepath) return file.filepath;
@@ -262,7 +267,7 @@ async function publishECHO10XML2CMR(cmrFile, cmrClient, revisionId) {
         res = await cmrClient.ingestGranule(xml, revisionId);
       } catch (error) {
         if (error.statusCode === 401) {
-          await cmrClient.refreshLaunchpadToken();
+          await cmrClient.checkRefreshLaunchpadToken();
           throw error;
         }
         throw new pRetry.AbortError(error);
@@ -307,13 +312,13 @@ async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId) {
         res = await cmrClient.ingestUMMGranule(cmrFile.metadataObject, revisionId);
       } catch (error) {
         if (error.statusCode === 401) {
-          await cmrClient.refreshLaunchpadToken();
+          await cmrClient.checkRefreshLaunchpadToken();
           throw error;
         }
         throw new pRetry.AbortError(error);
       }
     },
-    { retries: 10 } //hard-coded for now
+    { retries: 10 }
   );
 
   const conceptId = res['concept-id'];
@@ -379,7 +384,7 @@ async function removeFromCMR(granuleUR, creds) {
         return await cmrClient.deleteGranule(granuleUR);
       } catch (error) {
         if (error.statusCode === 401) {
-          await cmrClient.refreshLaunchpadToken();
+          await cmrClient.checkRefreshLaunchpadToken();
           throw error;
         }
         throw new pRetry.AbortError(error);
@@ -973,27 +978,38 @@ async function updateUMMGMetadata({
   return { metadataObject: updatedMetadataObject, etag };
 }
 
+/**
+ * Poll S3 until the launchpad token lock file is absent (NotFound).
+ *
+ */
 /* eslint-disable no-await-in-loop */
 async function waitForLockFileRelease() {
   const startTime = Date.now();
+  let delay = LOCK_INITIAL_DELAY_MS;
 
-  while (Date.now() - startTime < 30000) {
+  while (Date.now() - startTime < LOCK_WAIT_TIMEOUT_MS) {
     try {
       await s3().send(new HeadObjectCommand({
         Bucket: process.env.system_bucket,
-        Key: `${process.env.stackName}/launchpad-token-lock.json`,
+        Key: LOCK_KEY,
       }));
-      // if the lock file exists, wait and retry
-      await new Promise((resolve) => setTimeout(resolve, 3000));
     } catch (error) {
       if (error.name === 'NotFound') {
         return;
       }
       throw error;
     }
+
+    // jitter + retry
+    const jitter = delay * 0.25 * (Math.random() * 2 - 1);
+    const sleepMs = Math.max(50, delay + jitter);
+    await new Promise((resolve) => setTimeout(resolve, sleepMs));
+    delay = Math.min(delay * 2, LOCK_MAX_DELAY_MS);
   }
 
-  throw new Error('Timed out waiting for launchpad lock file to be released');
+  throw new Error(
+    `Timed out after ${LOCK_WAIT_TIMEOUT_MS}ms waiting for launchpad lock file to be released`
+  );
 }
 /* eslint-enable no-await-in-loop */
 
@@ -1040,7 +1056,6 @@ async function getCmrSettings(cmrConfig = {}) {
 
     log.debug('cmrjs.getCreds getLaunchpadToken');
 
-    // the following line could possibly be replaced by just getting the token from s3 and using it
     const token = await launchpad.getLaunchpadToken(config);
 
     return {
@@ -1446,7 +1461,7 @@ async function getCollectionsByShortNameAndVersion(results) {
         headers = cmrClient.getReadHeaders({ token: await cmrClient.getToken() });
       } catch (error) {
         if (error.statusCode === 401) {
-          await cmrClient.refreshLaunchpadToken();
+          await cmrClient.checkRefreshLaunchpadToken();
           throw error;
         }
         throw new pRetry.AbortError(error);

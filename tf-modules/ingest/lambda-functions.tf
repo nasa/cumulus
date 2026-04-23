@@ -164,7 +164,7 @@ resource "aws_lambda_function" "recreate_launchpad_token" {
     variables = {
       stackName                      = var.prefix
       system_bucket                  = var.system_bucket
-      launchpad_passphrase_secret_name = var.launchpad_passphrase_secret_name
+      launchpad_passphrase_secret_name = length(var.launchpad_passphrase) == 0 ? null : aws_secretsmanager_secret.api_launchpad_passphrase.name
       launchpad_api                  = var.launchpad_api
       launchpad_certificate          = var.launchpad_certificate
     }

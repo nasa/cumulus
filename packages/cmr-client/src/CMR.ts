@@ -74,6 +74,9 @@ export interface CMRConstructorParams {
  */
 export class CMR {
   private static instance: CMR;
+  // the variable below is to ensure that if the token is refreshed that all
+  // concurrent workers do not call the refreshTokenLambda
+  private refreshPromise?: Promise<void>;
 
   clientId!: string;
   provider!: string;
@@ -145,33 +148,52 @@ export class CMR {
       : updateToken(this.username, await this.getCmrPassword());
   }
 
-  async refreshLaunchpadToken(): Promise<void> {
+  /**
+   * Checks if a worker calling the cmrClient is in the process of creating a new launchpad token
+   *
+   * @returns {Promise.<void>} refresh promise
+   */
+  async checkRefreshLaunchpadToken(): Promise<void> {
+    if (this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    this.refreshPromise = this.refreshLaunchpadToken().finally(() => {
+      this.refreshPromise = undefined;
+    });
+
+    return this.refreshPromise;
+  }
+
+  /**
+   * Refreshes the launchpad token due to authentication failures with launchpad/CMR
+   *
+   * @returns {Promise.<void>} refresh promise
+   */
+  private async refreshLaunchpadToken(): Promise<void> {
     const refreshStartTime = Date.now();
 
     const lambda = new LambdaClient();
     const response = await lambda.send(new InvokeCommand({
       FunctionName: `${process.env.stackName}-recreateLaunchpadToken`,
       InvocationType: 'RequestResponse',
-      Payload: JSON.stringify({
-        config: {
-          // passing in CONFIG vars
-        },
-      }),
+      Payload: JSON.stringify({ config: {
+        // need to get this straight
+      } }),
     }));
 
     if (response.FunctionError) {
-      const payload = JSON.parse((response.Payload).toString());
+      const payload = JSON.parse(new TextDecoder().decode(response.Payload));
       throw new Error(`Token refresh failed: ${payload.errorMessage}`);
     }
 
-    const payload = JSON.parse((response.Payload).toString());
+    const payload = JSON.parse(new TextDecoder().decode(response.Payload));
     const newToken = payload.token;
 
     if (!newToken) {
       throw new Error('Token refresh Lambda returned no token');
     }
 
-    // I THINK HERE THERE NEEDS TO BE MORE TIME CHECKING STUFF
     this.token = newToken;
     this.tokenTimestamp = refreshStartTime;
   }
