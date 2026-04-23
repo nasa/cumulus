@@ -10,7 +10,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "system_bucket_lifecycle_config
     content {
       id     = "${var.prefix}_{rule.value.id}"
       filter {
-        prefix = "${var.prefix}${var.value.prefix}"
+        prefix = "${var.prefix}${rule.value.prefix}"
       }
       expiration {
           days = rule.value.days
