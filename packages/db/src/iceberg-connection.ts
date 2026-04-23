@@ -8,7 +8,9 @@ const log = new Logger({ sender: '@cumulus/db/iceberg-connection' });
  * by doubling them (standard SQL identifier quoting).
  * e.g. foo -> "foo", foo"bar -> "foo""bar"
  */
-const quoteIdent = (ident: string): string => `"${ident.replace(/"/g, '""')}"`;
+function quoteIdent(ident: string): string {
+  return `"${ident.replace(/"/g, '""')}"`;
+}
 
 let instance: DuckDBInstance | undefined;
 let initPromise: Promise<void> | undefined;
@@ -32,7 +34,7 @@ const tableNames = [
 /**
  * Executes settings that should apply to every individual connection.
  */
-const warmupConnection = async (conn: DuckDBConnection): Promise<void> => {
+async function warmupConnection(conn: DuckDBConnection): Promise<void> {
   const isLocal = process.env.NODE_ENV === 'development';
 
   if (isLocal) {
@@ -62,15 +64,28 @@ const warmupConnection = async (conn: DuckDBConnection): Promise<void> => {
   const region = process.env.AWS_REGION || 'us-east-1';
   await conn.run(`SET s3_region='${region}';`);
   await conn.run('SET s3_url_style=\'vhost\';');
+  // Performance and memory settings
+  // ECS_TASK_MEMORY is in MiB; use half of that for DuckDB.
+  // ECS_TASK_CPU is in CPU units (1024 = 1 vCPU); derive thread count from it.
+  const ecsMemoryMiB = Number(process.env.ECS_TASK_MEMORY) || 1024;
+  const ecsCpuUnits = Number(process.env.ECS_TASK_CPU) || 1024;
+  const memoryLimitMiB = Math.floor(ecsMemoryMiB / 2);
+  const threadCount = Math.max(1, Math.floor(ecsCpuUnits / 1024));
+  await conn.run(`SET memory_limit='${memoryLimitMiB}MB';`);
+  await conn.run(`SET threads=${threadCount};`);
+  await conn.run('SET parquet_metadata_cache=true;');
+  await conn.run('SET enable_http_metadata_cache=true;');
+  await conn.run('SET enable_object_cache=true;');
+  await conn.run('SET http_keep_alive=true;');
 
   await conn.run('CALL load_aws_credentials();');
   await conn.run('CREATE SECRET IF NOT EXISTS (TYPE S3, PROVIDER credential_chain);');
-};
+}
 
 /**
  * Pre-populate connection-level metadata and file/cache state for known views.
  */
-const populateConnectionCache = async (conn: DuckDBConnection): Promise<void> => {
+async function populateConnectionCache(conn: DuckDBConnection): Promise<void> {
   for (const tableName of tableNames) {
     try {
       // eslint-disable-next-line no-await-in-loop
@@ -79,12 +94,12 @@ const populateConnectionCache = async (conn: DuckDBConnection): Promise<void> =>
       log.debug(`Cache warmup skipped for table ${tableName}.`);
     }
   }
-};
+}
 
 /**
  * Start one-time background cache population for currently pooled connections.
  */
-const startPoolCacheWarmup = (): void => {
+function startPoolCacheWarmup(): void {
   if (!ENABLE_CACHE_WARMUP) {
     log.info('DuckDB cache warmup disabled by DUCKDB_ENABLE_CACHE_WARMUP.');
     return;
@@ -99,26 +114,26 @@ const startPoolCacheWarmup = (): void => {
   })().catch((error) => {
     log.warn('Background cache warmup encountered an error. Continuing without blocking startup.', error);
   });
-};
+}
 
 /**
  * Start background cache warmup for a single connection.
  */
-const startConnectionCacheWarmup = (conn: DuckDBConnection): void => {
+function startConnectionCacheWarmup(conn: DuckDBConnection): void {
   if (!ENABLE_CACHE_WARMUP) {
     return;
   }
 
   const cacheWarmupPromise = populateConnectionCache(conn);
   cacheWarmupPromise.catch((error) => {
-    log.debug('Background cache warmup for connection failed.', error);
+    log.warn('Background cache warmup for connection failed.', error);
   });
-};
+}
 
 /**
  * Initialize the DuckDB Instance and load required extensions.
  */
-export const initializeDuckDb = async (): Promise<void> => {
+export async function initializeDuckDb(): Promise<void> {
   if (instance) return;
   if (initPromise) {
     await initPromise;
@@ -190,12 +205,12 @@ export const initializeDuckDb = async (): Promise<void> => {
   })();
 
   await initPromise;
-};
+}
 
 /**
  * Acquire a connection from the pool or create a new one.
  */
-export const acquireDuckDbConnection = async (): Promise<DuckDBConnection> => {
+export async function acquireDuckDbConnection(): Promise<DuckDBConnection> {
   if (!instance) {
     await initializeDuckDb();
   }
@@ -208,27 +223,27 @@ export const acquireDuckDbConnection = async (): Promise<DuckDBConnection> => {
   await warmupConnection(conn);
   startConnectionCacheWarmup(conn);
   return conn;
-};
+}
 
 /**
  * Release a connection back to the pool for reuse.
  */
-export const releaseDuckDbConnection = async (conn: DuckDBConnection): Promise<void> => {
+export async function releaseDuckDbConnection(conn: DuckDBConnection): Promise<void> {
   if (connectionPool.length < MAX_POOL_SIZE) {
     connectionPool.push(conn);
   } else {
     log.debug('Pool full, discarding connection reference.');
   }
-};
+}
 
 /**
  * Cleanup function for graceful shutdown.
  */
-export const destroyDuckDb = async (): Promise<void> => {
+export async function destroyDuckDb(): Promise<void> {
   log.info('Shutting down DuckDB...');
   connectionPool.length = 0;
   instance = undefined;
   initPromise = undefined;
   dbVersionCache = undefined;
   poolCacheWarmupPromise = undefined;
-};
+}
