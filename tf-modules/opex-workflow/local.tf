@@ -5,7 +5,7 @@ locals {
   account_id = data.aws_caller_identity.current.account_id
   region = data.aws_region.current.name
   module_prefix = "${var.PREFIX}-opera"
-  system_bucket = "${var.PREFIX}-internal"
+  system_bucket = "${var.BUCKET_PREFIX}-internal"
   default_tags = {
     Deployment = var.PREFIX
   }
@@ -15,8 +15,8 @@ locals {
   distribution_url = ""  # Do we need this
 
   cumulus_remote_state_config = {
-    bucket = "${var.PREFIX}-tf-state"  # Do I want to add the last 4 digits of the AWS Account?
-    key    = "cumulus/terraform.tfstate"
+    bucket = "cumulus-sit-tfstate"  # Do I want to add the last 4 digits of the AWS Account?
+    key    = "nsidc-cumulus-prod/cumulus/terraform.tfstate"
     region = data.aws_region.current.name
   }
 
@@ -73,10 +73,10 @@ locals {
   }
 
     # Bucket types. These lists should not overlap
-  standard_bucket_names  = toset([for n, cfg in local.bucket_config : "${var.PREFIX}-${n}" if cfg.type == "standard"])
-  protected_bucket_names = toset([for n, cfg in local.bucket_config : "${var.PREFIX}-${n}" if cfg.type == "protected"])
-  public_bucket_names    = toset([for n, cfg in local.bucket_config : "${var.PREFIX}-${n}" if cfg.type == "public"])
-  workflow_bucket_names  = toset([for n, cfg in local.bucket_config : "${var.PREFIX}-${n}" if cfg.type == "workflow"])
+  standard_bucket_names  = toset([for n, cfg in local.bucket_config : "${var.BUCKET_PREFIX}-${n}" if cfg.type == "standard"])
+  protected_bucket_names = toset([for n, cfg in local.bucket_config : "${var.BUCKET_PREFIX}-${n}" if cfg.type == "protected"])
+  public_bucket_names    = toset([for n, cfg in local.bucket_config : "${var.BUCKET_PREFIX}-${n}" if cfg.type == "public"])
+  workflow_bucket_names  = toset([for n, cfg in local.bucket_config : "${var.BUCKET_PREFIX}-${n}" if cfg.type == "workflow"])
 
       dar_yes_tags = {
     DAR = "YES"
@@ -87,13 +87,13 @@ locals {
 
     base_bucket_map = {
     for n, cfg in local.bucket_config : n => {
-      name = "${var.PREFIX}-${n}"
+      name = "${var.BUCKET_PREFIX}-${n}"
       type = cfg.type == "standard" ? n : cfg.type
     }
   }
   internal_bucket_map = {
     internal = {
-      name = "${var.PREFIX}-internal"
+      name = "${var.BUCKET_PREFIX}-internal"
       type = "internal"
     }
   }
