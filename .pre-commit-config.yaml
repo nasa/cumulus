@@ -1,7 +1,7 @@
 repos:
   # Pre-commit hooks for general files
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
         exclude: '^(website/|node_modules/|\.venv/|\.git/|\.vscode/|\.ruff_cache/|build/|dist/|\.nyc_output/|coverage/|\.final_nyc_output/)'
@@ -27,7 +27,7 @@ repos:
         exclude: '^(website/|node_modules/|\.venv/|\.git/|\.vscode/|\.ruff_cache/|build/|dist/|\.nyc_output/|coverage/|\.final_nyc_output/)'
 
   - repo: https://github.com/aws-cloudformation/cfn-lint
-    rev: v1.43.2  # Check for latest version
+    rev: v1.49.0  # Check for latest version
     hooks:
       - id: cfn-lint
         files: '.*-cf\.ya?ml$'
@@ -45,7 +45,7 @@ repos:
         args: []
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.10
+    rev: v0.15.11
     hooks:
       - id: ruff
         name: Ruff linting
@@ -56,7 +56,7 @@ repos:
 
   # Markdown linting using the same library as package.json
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.47.0 # Using same version as in package.json
+    rev: v0.48.0 # Using same version as in package.json
     hooks:
       - id: markdownlint
         files: '^(docs|tf-modules)/.*\.md$'
