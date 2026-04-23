@@ -397,3 +397,21 @@ variable "dead_letter_recovery_memory" {
   default = 1024
   description = "The amount of memory in MB to reserve for the dead letter recovery Async Operation Fargate Task"
 }
+
+variable "aws_s3_bucket_lifecycle_rules" {
+  type = list(object(
+    {
+      id = string
+      prefix = string
+      days = number
+    }
+  ))
+  default = [
+    {
+      id = "expire_temporary_execution_status_files"
+      prefix = "/data/execution-status/"
+      days = 1
+    }
+  ]
+  description = "List of lifecycle rules to apply to s3 bucket"
+}
