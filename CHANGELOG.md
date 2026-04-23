@@ -236,6 +236,7 @@ Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
 
 ### Fixed
 
+- **CUMULUS-4556**
 - **CUMULUS-4564**
   - hotfix for a terraform deployment issue found in the granule invalidator workflow causing the PrivateApiLambda to not be recreated
 - **CUMULUS-4516**
