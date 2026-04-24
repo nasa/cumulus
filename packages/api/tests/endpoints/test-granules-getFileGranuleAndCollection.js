@@ -101,6 +101,7 @@ test.before(async (t) => {
 
   t.context.fakePGFile = fakeFileRecordFactory({
     granule_cumulus_id: t.context.pgGranuleRecord[0].cumulus_id,
+    collection_cumulus_id: t.context.pgGranuleRecord[0].collection_cumulus_id,
     file_name: t.context.pgGranuleRecord[0].granule_id + '.hdf',
     updated_at: new Date().toISOString(),
     bucket: t.context.collectionId,

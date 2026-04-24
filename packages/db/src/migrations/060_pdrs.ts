@@ -15,7 +15,7 @@ export const up = async (knex: Knex): Promise<void> => {
       .notNullable();
 
     table.bigInteger('execution_cumulus_id');
-    table.timestamp('execution_created_at', { useTz: true });
+    table.timestamp('execution_created_at', { useTz: true, precision: 3 });
 
     table.foreign(['execution_cumulus_id', 'execution_created_at'])
       .references(['cumulus_id', 'created_at'])

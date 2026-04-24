@@ -5,7 +5,7 @@ export const up = async (knex: Knex): Promise<void> => {
     table.bigInteger('granule_cumulus_id').notNullable();
     table.bigInteger('collection_cumulus_id').notNullable();
     table.bigInteger('execution_cumulus_id').notNullable();
-    table.timestamp('execution_created_at', { useTz: true }).notNullable();
+    table.timestamp('execution_created_at', { useTz: true, precision: 3 }).notNullable();
 
     table.foreign(['granule_cumulus_id', 'collection_cumulus_id'])
       .references(['cumulus_id', 'collection_cumulus_id'])

@@ -195,6 +195,29 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
   }
 
   /**
+   * Get records from Postgres matching the provided column values,
+   * returning only the specified fields.
+   *
+   * @param knexOrTransaction - DB client or transaction
+   * @param columnNames - Column names used in the WHERE IN clause (supports composite keys)
+   * @param values -  record values for whereIn query
+   * @param returningFields - Fields to select and return from matching records
+   * @returns An array of objects containing only the requested fields
+   */
+  async getRecords<K extends keyof RecordType>(
+    knexOrTransaction: Knex | Knex.Transaction,
+    columnNames: Array<keyof RecordType>,
+    values: Array<any[]>, // tuples matching columnNames
+    returningFields: K[]
+  ): Promise<Array<Pick<RecordType, K>>> {
+    const records = await knexOrTransaction(this.tableName)
+      .select(returningFields as string[])
+      .whereIn(columnNames as string[], values);
+
+    return records as Array<Pick<RecordType, K>>;
+  }
+
+  /**
    * Checks if an item is present in Postgres
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction

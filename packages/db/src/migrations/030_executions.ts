@@ -31,8 +31,8 @@ export const up = async (knex: Knex): Promise<void> => {
 
       "timestamp" TIMESTAMPTZ,
 
-      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
-      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      created_at TIMESTAMPTZ(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      updated_at TIMESTAMPTZ(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
 
       archived BOOLEAN DEFAULT FALSE NOT NULL,
 

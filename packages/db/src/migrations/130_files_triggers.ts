@@ -1,53 +1,32 @@
 import { Knex } from 'knex';
 
 export const up = async (knex: Knex): Promise<void> => {
-  // INSERT trigger
   await knex.raw(`
-    CREATE OR REPLACE FUNCTION files_global_unique_insert()
-    RETURNS trigger AS $$
-    BEGIN
-      INSERT INTO files_global_unique (bucket, key)
-      VALUES (NEW.bucket, NEW.key);
-
-      RETURN NEW;
-
-    EXCEPTION
-      WHEN unique_violation THEN
-        RAISE unique_violation USING MESSAGE = 'Duplicate file: bucket=' || NEW.bucket || ', key=' || NEW.key;
-    END;
-    $$ LANGUAGE plpgsql;
-  `);
-
-  await knex.raw(`
-    CREATE TRIGGER files_global_unique_insert_trigger
-    BEFORE INSERT ON files
-    FOR EACH ROW
-    EXECUTE FUNCTION files_global_unique_insert();
-  `);
-
-  // UPDATE trigger (validate existence only)
-  await knex.raw(`
-    CREATE OR REPLACE FUNCTION files_global_unique_update()
+    CREATE OR REPLACE FUNCTION files_enforce_global_uniqueness()
     RETURNS trigger AS $$
     DECLARE
-      exists_file TEXT;
+      rows smallint;
     BEGIN
-      SELECT bucket
-      INTO exists_file
-      FROM files_global_unique
-      WHERE bucket = OLD.bucket
+      IF (TG_OP IN ('DELETE', 'UPDATE')) THEN
+        DELETE FROM files_global_unique
+        WHERE bucket = OLD.bucket
         AND key = OLD.key;
 
-      IF NOT FOUND THEN
-        RAISE EXCEPTION
-          'Invariant violation: file (%, %) not found in files_global_unique',
-          OLD.bucket,
-          OLD.key;
+      -- Don't block delete if guard row missing
+        IF TG_OP = 'DELETE' THEN
+          RETURN OLD;
+        END IF;
       END IF;
 
-      IF NEW.bucket IS DISTINCT FROM OLD.bucket
-      OR NEW.key IS DISTINCT FROM OLD.key THEN
-        RAISE EXCEPTION 'bucket and key are immutable and cannot be updated';
+      IF (TG_OP IN ('INSERT', 'UPDATE')) THEN
+        INSERT INTO files_global_unique (bucket, key)
+        VALUES (NEW.bucket, NEW.key);
+      END IF;
+
+      GET DIAGNOSTICS rows = ROW_COUNT;
+
+      IF rows != 1 THEN
+        RAISE EXCEPTION '% affected % rows (expected: 1)', TG_OP, rows;
       END IF;
 
       RETURN NEW;
@@ -56,42 +35,17 @@ export const up = async (knex: Knex): Promise<void> => {
   `);
 
   await knex.raw(`
-    CREATE TRIGGER files_global_unique_update_trigger
-    AFTER UPDATE ON files
+    CREATE TRIGGER files_enforce_unique_bucket_key_trigger
+    BEFORE INSERT OR UPDATE OF bucket, key OR DELETE
+    ON files
     FOR EACH ROW
-    EXECUTE FUNCTION files_global_unique_update();
-  `);
-
-  // DELETE trigger
-  await knex.raw(`
-    CREATE OR REPLACE FUNCTION files_global_unique_delete()
-    RETURNS trigger AS $$
-    BEGIN
-      DELETE FROM files_global_unique
-      WHERE bucket = OLD.bucket
-        AND key = OLD.key;
-
-      RETURN OLD;
-    END;
-    $$ LANGUAGE plpgsql;
-  `);
-
-  await knex.raw(`
-    CREATE TRIGGER files_global_unique_delete_trigger
-    AFTER DELETE ON files
-    FOR EACH ROW
-    EXECUTE FUNCTION files_global_unique_delete();
+    EXECUTE FUNCTION files_enforce_global_uniqueness();
   `);
 };
 
 export const down = async (knex: Knex): Promise<void> => {
   await knex.raw(`
-    DROP TRIGGER IF EXISTS files_global_unique_insert_trigger ON files;
-    DROP TRIGGER IF EXISTS files_global_unique_update_trigger ON files;
-    DROP TRIGGER IF EXISTS files_global_unique_delete_trigger ON files;
-
-    DROP FUNCTION IF EXISTS files_global_unique_insert;
-    DROP FUNCTION IF EXISTS files_global_unique_update;
-    DROP FUNCTION IF EXISTS files_global_unique_delete;
+    DROP TRIGGER IF EXISTS files_enforce_unique_bucket_key_trigger ON files;
+    DROP FUNCTION IF EXISTS files_global_uniqueness();
   `);
 };

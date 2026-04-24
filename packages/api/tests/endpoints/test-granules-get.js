@@ -194,6 +194,7 @@ test.beforeEach(async (t) => {
   const granuleId1 = t.context.createGranuleId();
   const granuleId2 = t.context.createGranuleId();
   const granuleId3 = t.context.createGranuleId();
+  const granuleId4 = t.context.createGranuleId();
   const timestamp = new Date();
 
   // create fake Postgres granule records
@@ -225,9 +226,8 @@ test.beforeEach(async (t) => {
       timestamp,
       updated_at: timestamp,
     }),
-    // granule with same granule_id as above but different collection_cumulus_id
     fakeGranuleRecordFactory({
-      granule_id: granuleId3,
+      granule_id: granuleId4,
       status: 'failed',
       collection_cumulus_id: t.context.collectionCumulusId2,
       duration: 52.235,
@@ -241,6 +241,7 @@ test.beforeEach(async (t) => {
         knexTransaction: t.context.knex,
         granule,
         executionCumulusId: t.context.testExecutionCumulusId,
+        executionCreatedAt: testExecution.created_at,
         granulePgModel: t.context.granulePgModel,
       }))
   );
@@ -510,7 +511,7 @@ test.serial('LIST endpoint with countOnly set returns only count of matching gra
     .expect(200);
 
   const { meta, results } = response.body;
-  t.is(meta.count, 2);
+  t.is(meta.count, 1);
   t.is(results.length, 0);
 });
 
@@ -520,13 +521,13 @@ test.serial('LIST endpoint returns search result correctly', async (t) => {
     granuleId: granuleIds[3],
   });
   const response = await request(app)
-    .get(`/granules?limit=1&page=2&${searchParams}`)
+    .get(`/granules?limit=1&page=1&${searchParams}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
   const { meta, results } = response.body;
-  t.is(meta.count, 2);
+  t.is(meta.count, 1);
   t.is(results.length, 1);
   t.true([granuleIds[2], granuleIds[3]].includes(results[0].granuleId));
 

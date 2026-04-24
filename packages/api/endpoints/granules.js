@@ -703,6 +703,7 @@ const associateExecution = async (req, res) => {
     await writeGranuleRecordAndPublishSns({
       apiGranuleRecord,
       executionCumulusId: pgExecution.cumulus_id,
+      executionCreatedAt: pgExecution.created_at,
       granulePgModel,
       postgresGranuleRecord: updatedPgGranule,
       knex,

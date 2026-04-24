@@ -158,6 +158,7 @@ test('translateApiExecutionToPostgresExecution converts API execution to Postgre
   const collectionCumulusId = 1;
   const asyncOperationCumulusId = 2;
   const executionCumulusId = 3;
+  const executionCreatedAt = new Date();
 
   const fakeDbClient = {};
 
@@ -168,7 +169,10 @@ test('translateApiExecutionToPostgresExecution converts API execution to Postgre
     getRecordCumulusId: () => Promise.resolve(asyncOperationCumulusId),
   };
   const fakeExecutionPgModel = {
-    getRecordCumulusId: () => Promise.resolve(executionCumulusId),
+    get: () => Promise.resolve({
+      cumulus_id: executionCumulusId,
+      created_at: executionCreatedAt,
+    }),
   };
 
   const expectedPostgresExecution = {
@@ -188,6 +192,7 @@ test('translateApiExecutionToPostgresExecution converts API execution to Postgre
     async_operation_cumulus_id: asyncOperationCumulusId,
     collection_cumulus_id: collectionCumulusId,
     parent_cumulus_id: executionCumulusId,
+    parent_created_at: executionCreatedAt,
   };
 
   const result = removeNilProperties(

@@ -3,9 +3,7 @@ import { Knex } from 'knex';
 export const up = async (knex: Knex): Promise<void> => {
   await knex.raw(`
     CREATE OR REPLACE FUNCTION granules_enforce_global_uniqueness()
-    RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
+    RETURNS trigger AS $$
     DECLARE
       rows smallint;
     BEGIN
@@ -32,11 +30,11 @@ export const up = async (knex: Knex): Promise<void> => {
 
       RETURN NEW;
     END;
-    $$;
+    $$ LANGUAGE plpgsql;
   `);
 
   await knex.raw(`
-    CREATE TRIGGER granules_enforce_unique_granule_id
+    CREATE TRIGGER granules_enforce_unique_granule_id_trigger
     BEFORE INSERT OR UPDATE OF granule_id OR DELETE
     ON granules
     FOR EACH ROW
@@ -46,7 +44,7 @@ export const up = async (knex: Knex): Promise<void> => {
 
 export const down = async (knex: Knex): Promise<void> => {
   await knex.raw(`
-    DROP TRIGGER IF EXISTS granules_enforce_unique_granule_id ON granules;
-    DROP FUNCTION IF EXISTS granules_enforce_global_uniqueness;
+    DROP TRIGGER IF EXISTS granules_enforce_unique_granule_id_trigger ON granules;
+    DROP FUNCTION IF EXISTS granules_enforce_global_uniqueness();
   `);
 };

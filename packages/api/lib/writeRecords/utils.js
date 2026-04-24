@@ -97,6 +97,31 @@ const getParentExecutionCumulusId = async (
   }
 };
 
+const getParentExecution = async (
+  parentExecutionArn,
+  knex,
+  executionPgModel = new ExecutionPgModel()
+) => {
+  try {
+    if (isNil(parentExecutionArn)) {
+      log.info('There is no parent execution ARN to lookup on the message, skipping');
+      return undefined;
+    }
+    return await executionPgModel.get(
+      knex,
+      {
+        arn: parentExecutionArn,
+      }
+    );
+  } catch (error) {
+    if (isFailedLookupError(error)) {
+      log.info(error.message);
+      return undefined;
+    }
+    throw error;
+  }
+};
+
 /**
  * Retrieves the Cumulus ID for a given collection name and version.
  *
@@ -207,6 +232,38 @@ const getExecutionCumulusId = async (
   }
 };
 
+/**
+ * Looks up an Execution by executionUrl.
+ *
+ * @param {string} [executionUrl = ''] - Full url of stepfunction execution
+ * @param {Knex} knex - knex Client
+ * @param {Object} executionPgModel - instance of the exection database model
+ * @returns {Promise<import('@cumulus/db').PostgresExecutionRecord>} The returned record
+ */
+const getExecution = async (
+  executionUrl = '',
+  knex,
+  executionPgModel = new ExecutionPgModel()
+) => {
+  try {
+    if (isEmpty(executionUrl)) {
+      log.info('There is no execution URL to lookup, skipping');
+      return undefined;
+    }
+    return await executionPgModel.get(
+      knex,
+      { url: executionUrl }
+    );
+  } catch (error) {
+    if (isFailedLookupError(error)) {
+      log.info(error.message);
+      return undefined;
+    }
+    log.error(`Encountered error trying to find ${executionUrl}`, error);
+    throw (error);
+  }
+};
+
 // TODO: we should implement these status helper methods in the db package,
 // test there, and make it exportable
 
@@ -229,7 +286,9 @@ const isStatusActiveState = (status) => status === 'running' || status === 'queu
 module.exports = {
   isPostRDSDeploymentExecution,
   getAsyncOperationCumulusId,
+  getExecution,
   getExecutionCumulusId,
+  getParentExecution,
   getParentExecutionCumulusId,
   getProviderCumulusId,
   getCollectionCumulusId,

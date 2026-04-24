@@ -140,11 +140,15 @@ const setUpExistingDatabaseRecords = async (t) => {
   const joinRecords = [
     {
       execution_cumulus_id: pgExecutions[0].cumulus_id,
+      execution_created_at: pgExecutions[0].created_at,
       granule_cumulus_id: pgGranules[0].cumulus_id,
+      collection_cumulus_id: pgGranules[0].collection_cumulus_id,
     },
     {
       execution_cumulus_id: pgExecutions[1].cumulus_id,
+      execution_created_at: pgExecutions[1].created_at,
       granule_cumulus_id: pgGranules[1].cumulus_id,
+      collection_cumulus_id: pgGranules[1].collection_cumulus_id,
     },
   ];
   await granulesExecutionsPgModel.create(t.context.knex, joinRecords);

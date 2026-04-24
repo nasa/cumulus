@@ -172,16 +172,17 @@ export const translateApiExecutionToPostgresExecutionWithoutNilsRemoved = async 
 
   // If we have a parentArn, try a lookup in Postgres. If there's a match, set the parent_cumulus_id
   if (!isNil(apiRecord.parentArn)) {
-    let parentId;
+    let parent;
 
     try {
-      parentId = await executionPgModel.getRecordCumulusId(
+      parent = await executionPgModel.get(
         knex,
         { arn: apiRecord.parentArn }
       );
 
-      if (parentId !== undefined) {
-        translatedRecord.parent_cumulus_id = parentId;
+      if (parent !== undefined) {
+        translatedRecord.parent_cumulus_id = parent.cumulus_id;
+        translatedRecord.parent_created_at = parent.created_at;
       }
     } catch (error) {
       if (error instanceof RecordDoesNotExist) {
