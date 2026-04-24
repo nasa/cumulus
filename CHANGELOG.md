@@ -9,10 +9,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CSD-99**
-  - Added a lambda `recreate-launchpad-token` that runs during CMR launchpad 401 failures to try to get
-  generate a new launchpad token
-  - Changed CMR class object to a singleton
-  - Changed `getCMRSettings` run the `recreate-launchpad-token` lambda upon a 401 launchpad token failure and retry
+  - Added a lambda `recreate-launchpad-token` that runs during CMR launchpad 401 failures during `post-to-cmr` invocations to try to generate and use a new launchpad token
+  - Added an iam policy in terraform for the `post-to-cmr` lambda to be able to invoke the `recreate-launchpad-token` lambda
+  - Changed the `CMR` class to a singleton
+  - Changed `cmr-utils` functions that call the `CMR` class functions to retry upon 401 authentication failures
+  - Added functions `checkRefreshLaunchpadToken` and `refreshLaunchpadToken` to the `CMR` class to be invoked upon a 401 authentication failure and runs the aforementioned lambda
+  
 - **async-operations-update**
   - Updated Async Operation container to new version 57, `cumuluss/async-operation:57`. Users should update their references to `async-operation` with the new version.
 

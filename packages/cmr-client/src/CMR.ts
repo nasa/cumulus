@@ -39,12 +39,15 @@ async function updateToken(
 export interface CMRConstructorParams {
   clientId: string,
   password?: string,
-  passwordSecretName?: string
+  passwordSecretName?: string,
   provider: string,
   token?: string,
   username?: string,
   oauthProvider: string,
-  tokenTimestamp?: number;
+  tokenTimestamp?: number
+  passphrase?: string;
+  api?: string;
+  certificate?: string;
 }
 
 /**
@@ -86,6 +89,9 @@ export class CMR {
   passwordSecretName?: string;
   token?: string;
   tokenTimestamp?: number;
+  passphrase?: string;
+  api?: string;
+  certificate?: string;
 
   /**
    * The constructor for the CMR class
@@ -103,6 +109,9 @@ export class CMR {
     this.token = params.token;
     this.oauthProvider = params.oauthProvider;
     this.tokenTimestamp = Date.now();
+    this.passphrase = params.passphrase;
+    this.api = params.api;
+    this.certificate = params.certificate;
 
     CMR.instance = this;
   }
@@ -178,7 +187,9 @@ export class CMR {
       FunctionName: `${process.env.stackName}-recreateLaunchpadToken`,
       InvocationType: 'RequestResponse',
       Payload: JSON.stringify({ config: {
-        // need to get this straight
+        passphrase: this.passphrase,
+        api: this.api,
+        certificate: this.certificate,
       } }),
     }));
 

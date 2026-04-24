@@ -14,7 +14,6 @@ const urljoin = require('url-join');
 const xml2js = require('xml2js');
 const omit = require('lodash/omit');
 const pRetry = require('p-retry');
-const { HeadObjectCommand } = require('@aws-sdk/client-s3');
 const {
   buildS3Uri,
   parseS3Uri,
@@ -34,6 +33,7 @@ const { CMR, getSearchUrl, ummVersion } = require('@cumulus/cmr-client');
 const { constructDistributionUrl } = require('@cumulus/distribution-utils');
 const { getBucketAccessUrl } = require('@cumulus/cmr-client/getUrl');
 const { constructCollectionId } = require('@cumulus/message/Collections');
+const { waitForLockFileRelease } = require('@cumulus/api/lambdas/recreate-launchpad-token');
 const {
   xmlParseOptions,
   ummVersionToMetadataFormat,
@@ -96,11 +96,6 @@ const { updateUMMGGranuleURAndGranuleIdentifier } = require('./ummgModifiers');
 const log = new Logger({ sender: '@cumulus/cmrjs/src/cmr-utils' });
 
 const s3CredsEndpoint = 's3credentials';
-
-const LOCK_KEY = `${process.env.stackName}/launchpad-token-lock.json`;
-const LOCK_WAIT_TIMEOUT_MS = Number(process.env.LAUNCHPAD_LOCK_WAIT_MS) || 60000;
-const LOCK_INITIAL_DELAY_MS = 250;
-const LOCK_MAX_DELAY_MS = 5000;
 
 function getS3KeyOfFile(file) {
   if (file.filename) return parseS3Uri(file.filename).Key;
@@ -979,41 +974,6 @@ async function updateUMMGMetadata({
 }
 
 /**
- * Poll S3 until the launchpad token lock file is absent (NotFound).
- *
- */
-/* eslint-disable no-await-in-loop */
-async function waitForLockFileRelease() {
-  const startTime = Date.now();
-  let delay = LOCK_INITIAL_DELAY_MS;
-
-  while (Date.now() - startTime < LOCK_WAIT_TIMEOUT_MS) {
-    try {
-      await s3().send(new HeadObjectCommand({
-        Bucket: process.env.system_bucket,
-        Key: LOCK_KEY,
-      }));
-    } catch (error) {
-      if (error.name === 'NotFound') {
-        return;
-      }
-      throw error;
-    }
-
-    // jitter + retry
-    const jitter = delay * 0.25 * (Math.random() * 2 - 1);
-    const sleepMs = Math.max(50, delay + jitter);
-    await new Promise((resolve) => setTimeout(resolve, sleepMs));
-    delay = Math.min(delay * 2, LOCK_MAX_DELAY_MS);
-  }
-
-  throw new Error(
-    `Timed out after ${LOCK_WAIT_TIMEOUT_MS}ms waiting for launchpad lock file to be released`
-  );
-}
-/* eslint-enable no-await-in-loop */
-
-/**
  * Helper to build an CMR settings object, used to initialize CMR.
  *
  * @param {Object} cmrConfig - CMR configuration object
@@ -1060,6 +1020,7 @@ async function getCmrSettings(cmrConfig = {}) {
 
     return {
       ...cmrCredentials,
+      ...config,
       token,
     };
   }

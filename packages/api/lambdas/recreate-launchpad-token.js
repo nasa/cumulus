@@ -7,7 +7,6 @@ const {
   HeadObjectCommand,
 } = require('@aws-sdk/client-s3');
 const log = require('@cumulus/common/log');
-const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const { launchpad, getEnvVar } = require('@cumulus/launchpad-auth');
 
 const bucket = getEnvVar('system_bucket');
@@ -23,17 +22,6 @@ const LOCK_MAX_DELAY_MS = 5000;
  * @returns {Promise<string>} - generated Launchpad token
  */
 async function generateLaunchpadToken(config = {}) {
-  const launchpadPassphraseSecretName =
-    config.passphraseSecretName || process.env.launchpad_passphrase_secret_name;
-
-  const passphrase = await getSecretString(launchpadPassphraseSecretName);
-
-  const launchpadConfig = {
-    passphrase,
-    api: config.api || process.env.launchpad_api,
-    certificate: config.certificate || process.env.launchpad_certificate,
-  };
-
   // delete old token and regen a new one
   try {
     await s3().send(new DeleteObjectCommand({
@@ -46,27 +34,7 @@ async function generateLaunchpadToken(config = {}) {
     }
   }
 
-  return await launchpad.getLaunchpadToken(launchpadConfig);
-}
-
-/**
- * Get a Launchpad token using passphrase, API, and certificate.
- *
- * @returns {Promise<string>} - retrieved Launchpad token
- */
-async function getLaunchpadToken(config = {}) {
-  const launchpadPassphraseSecretName =
-    config.passphraseSecretName || process.env.launchpad_passphrase_secret_name;
-
-  const passphrase = await getSecretString(launchpadPassphraseSecretName);
-
-  const launchpadConfig = {
-    passphrase,
-    api: config.api || process.env.launchpad_api,
-    certificate: config.certificate || process.env.launchpad_certificate,
-  };
-
-  return await launchpad.getLaunchpadToken(launchpadConfig);
+  return await launchpad.getLaunchpadToken(config);
 }
 
 /**
@@ -156,9 +124,9 @@ async function createLockFile() {
  *
  * @returns {Promise<Object>} - S3 put response
  */
-async function waitAndReadToken() {
+async function waitAndReadToken(config = {}) {
   await waitForLockFileRelease();
-  const token = await getLaunchpadToken();
+  const token = await launchpad.getLaunchpadToken(config);
   return { statusCode: 200, token };
 }
 
@@ -171,13 +139,19 @@ async function waitAndReadToken() {
  */
 async function handler(event) {
   const config = event.config || {};
+  const launchpadConfig = {
+    passphrase: config.passphrase,
+    api: config.api,
+    certificate: config.certificate,
+  };
+
   let createdLock = false;
   try {
     const isLocked = await lockFileExists();
 
     if (isLocked) {
       // Someone else is creating the token, wait for lock file release and just use that one
-      return await waitAndReadToken();
+      return await waitAndReadToken(launchpadConfig);
     }
     // lock is not there, so we can create it here and try to make the token
     try {
@@ -188,10 +162,10 @@ async function handler(event) {
         throw err;
       }
       // Lost the token-creating race, so we wait and read like before
-      return await waitAndReadToken();
+      return await waitAndReadToken(launchpadConfig);
     }
 
-    const token = await generateLaunchpadToken(config);
+    const token = await generateLaunchpadToken(launchpadConfig);
     return { statusCode: 200, token };
   } catch (error) {
     log.error('Error during Launchpad token generation:', error);
@@ -209,4 +183,5 @@ module.exports = {
   lockFileExists,
   createLockFile,
   removeLockFile,
+  waitForLockFileRelease,
 };
