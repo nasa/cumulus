@@ -12,6 +12,7 @@ import getConceptMetadata from './getConcept';
 import { getIngestUrl } from './getUrl';
 import { UmmMetadata, ummVersion } from './UmmUtils';
 const log = new Logger({ sender: 'cmr-client' });
+const { LambdaClient, InvokeCommand } = require('@aws-sdk/client-lambda');
 const { getRequiredEnvVar } = require('@cumulus/common/env');
 
 const logDetails: { [key: string]: string } = {
@@ -38,11 +39,15 @@ async function updateToken(
 export interface CMRConstructorParams {
   clientId: string,
   password?: string,
-  passwordSecretName?: string
+  passwordSecretName?: string,
   provider: string,
   token?: string,
   username?: string,
   oauthProvider: string,
+  tokenTimestamp?: number
+  passphrase?: string;
+  api?: string;
+  certificate?: string;
 }
 
 /**
@@ -71,18 +76,31 @@ export interface CMRConstructorParams {
   * due to branch logic/complexity in token vs password/username handling
  */
 export class CMR {
-  clientId: string;
-  provider: string;
+  private static instance: CMR;
+  // the variable below is to ensure that if the token is refreshed that all
+  // concurrent workers do not call the refreshTokenLambda
+  private refreshPromise?: Promise<void>;
+
+  clientId!: string;
+  provider!: string;
   username?: string;
-  oauthProvider: string;
+  oauthProvider!: string;
   password?: string;
   passwordSecretName?: string;
   token?: string;
+  tokenTimestamp?: number;
+  passphrase?: string;
+  api?: string;
+  certificate?: string;
 
   /**
    * The constructor for the CMR class
    */
   constructor(params: CMRConstructorParams) {
+    if (CMR.instance) {
+      return CMR.instance;
+    }
+
     this.clientId = params.clientId;
     this.provider = params.provider;
     this.username = params.username;
@@ -90,6 +108,12 @@ export class CMR {
     this.passwordSecretName = params.passwordSecretName;
     this.token = params.token;
     this.oauthProvider = params.oauthProvider;
+    this.tokenTimestamp = Date.now();
+    this.passphrase = params.passphrase;
+    this.api = params.api;
+    this.certificate = params.certificate;
+
+    CMR.instance = this;
   }
 
   /**
@@ -131,6 +155,58 @@ export class CMR {
     return this.token
       ? this.token
       : updateToken(this.username, await this.getCmrPassword());
+  }
+
+  /**
+   * Checks if a worker calling the cmrClient is in the process of creating a new launchpad token
+   *
+   * @returns {Promise.<void>} refresh promise
+   */
+  async checkRefreshLaunchpadToken(): Promise<void> {
+    if (this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    this.refreshPromise = this.refreshLaunchpadToken().finally(() => {
+      this.refreshPromise = undefined;
+    });
+
+    return this.refreshPromise;
+  }
+
+  /**
+   * Refreshes the launchpad token due to authentication failures with launchpad/CMR
+   *
+   * @returns {Promise.<void>} refresh promise
+   */
+  private async refreshLaunchpadToken(): Promise<void> {
+    const refreshStartTime = Date.now();
+
+    const lambda = new LambdaClient();
+    const response = await lambda.send(new InvokeCommand({
+      FunctionName: `${process.env.stackName}-recreateLaunchpadToken`,
+      InvocationType: 'RequestResponse',
+      Payload: JSON.stringify({ config: {
+        passphrase: this.passphrase,
+        api: this.api,
+        certificate: this.certificate,
+      } }),
+    }));
+
+    if (response.FunctionError) {
+      const payload = JSON.parse(new TextDecoder().decode(response.Payload));
+      throw new Error(`Token refresh failed: ${payload.errorMessage}`);
+    }
+
+    const payload = JSON.parse(new TextDecoder().decode(response.Payload));
+    const newToken = payload.token;
+
+    if (!newToken) {
+      throw new Error('Token refresh Lambda returned no token');
+    }
+
+    this.token = newToken;
+    this.tokenTimestamp = refreshStartTime;
   }
 
   /**
