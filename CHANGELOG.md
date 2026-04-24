@@ -30,12 +30,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update Async Operation container to new version 56, `cumuluss/async-operation:56`. Users should update their references to `async-operation` with the new version.
 
 ### Changed
-- CSD-104
+
+- **CSD-104**
   - `PVLNumeric` now stores the original string value as `rawValue` before converting to `Number()`, preserving precision for large numeric strings.
   - Fixed `PDRParsingError` when a PDR contains an MD5 `FILE_CKSUM_VALUE` that is an unquoted all-decimal string (e.g. `73806951753129206387143405718909`). The PVL parser previously classified such values as numeric, causing precision loss via JavaScript's `Number()` conversion. The original string is now preserved via `PVLNumeric.rawValue` and used for MD5 checksum validation.
   - MD5 checksum values are now validated as 32-character hex strings, providing a clearer error message for values that are not valid MD5 hashes.
 
-- CUMULUS-4576 Upgrade Cumulus to use the latest version of TEA (3.0.0)
+- **CUMULUS-4576** Upgrade Cumulus to use the latest version of TEA (3.0.0)
   ** UPGRADE NOTE: When upgrading the TEA module version, use a two-phase apply to prevent rollback failures
   caused by Terraform destroying old lambda S3 objects before the CloudFormation stack update completes.
 
@@ -57,6 +58,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   ````
   terraform apply -var-file=env/sandbox.tfvars
   ````
+  
 - **CUMULUS-4788**
   - split replication service into multiple services, one for each replication table group
 - **CUMULUS-4534**
