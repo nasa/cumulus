@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-4710**
   - Implement list of stats route in iceberg search api
+  - Add warming up of duckdb connections
 - **CUMULUS-4708**
   - Implement list of executions route in iceberg search api
 - **CUMULUS-4707**
