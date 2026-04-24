@@ -165,18 +165,7 @@ export async function initializeDuckDb(): Promise<void> {
         `ATTACH '${awsAccountId}' AS glue_iceberg (TYPE iceberg, ENDPOINT_TYPE 'glue');`
       );
 
-      for (const tableName of tableNames) {
-        try {
-          // eslint-disable-next-line no-await-in-loop
-          await setupConn.run(
-            `CREATE OR REPLACE VIEW ${quoteIdent(tableName)} AS
-             SELECT * FROM glue_iceberg.${quoteIdent(glueSchema)}.${quoteIdent(tableName)};`
-          );
-          log.debug(`View created for ${glueSchema}.${tableName}`);
-        } catch (error) {
-          log.warn(`Table ${tableName} not found in schema ${glueSchema}. Skipping.`);
-        }
-      }
+      await setupConn.run(`SET search_path = "glue_iceberg.${glueSchema}";`);
 
       // Fill the pool
       connectionPool.push(setupConn);
@@ -187,6 +176,7 @@ export async function initializeDuckDb(): Promise<void> {
           Array.from({ length: remainingCount }).map(async () => {
             const conn = await instance!.connect();
             await warmupConnection(conn);
+            await conn.run(`SET search_path = "glue_iceberg.${glueSchema}";`);
             return conn;
           })
         );

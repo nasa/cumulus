@@ -31,6 +31,7 @@ Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
 
 - **CUMULUS-4710**
   - Implement list of stats route in iceberg search api
+  - Add warming up of duckdb connections
 - **CUMULUS-4708**
   - Implement list of executions route in iceberg search api
 - **CUMULUS-4707**
