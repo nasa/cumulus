@@ -64,6 +64,10 @@ const buildExecutionRecord = ({
   const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
   const workflowStopTime = getMessageWorkflowStopTime(cumulusMessage);
 
+  if (isNil(parentExecutionCumulusId) !== isNil(parentExecutionCreatedAt)) {
+    throw new Error('parentExecutionCumulusId and parentExecutionCreatedAt must either both be set or both be unset');
+  }
+
   const record = {
     arn,
     status: getMetaStatus(cumulusMessage),

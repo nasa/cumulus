@@ -164,6 +164,7 @@ const writeRecords = async ({
     asyncOperationCumulusId,
     messageParentExecutionArn,
     parentExecutionCumulusId,
+    parentExecutionCreatedAt,
   };
   if (!shouldWriteExecutionToPostgres(fieldsToMeetRequirements)) {
     log.debug(`Could not satisfy requirements for writing records, fieldsToMeetRequirements: ${JSON.stringify(fieldsToMeetRequirements)}`);

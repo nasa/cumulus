@@ -848,13 +848,14 @@ const writeGranuleFromApi = async (
     let executionCumulusId;
     let executionCreatedAt;
     if (execution) {
-      ({
-        cumulus_id: executionCumulusId, created_at: executionCreatedAt,
-      } = await getExecution(execution, knex));
-      if (executionCumulusId === undefined) {
+      const executionRecord = await getExecution(execution, knex);
+      if (executionRecord === undefined) {
         throw new Error(`Could not find execution in PostgreSQL database with url ${execution}`);
       }
+      executionCumulusId = executionRecord.cumulus_id;
+      executionCreatedAt = executionRecord.created_at;
     }
+
     const apiGranuleRecord = await generateGranuleApiRecord({
       cmrTemporalInfo,
       cmrUtils,
@@ -934,6 +935,7 @@ const _granulesWithIds = (unknownGranuleArray) => {
  * @param {CumulusMessage} params.cumulusMessage - The Cumulus workflow message.
  * @param {number} params.executionCumulusId - Cumulus ID for the execution referenced
  *   in the workflow message.
+ * @param {Date} params.executionCreatedAt - Execution record create time
  * @param {Knex} params.knex - A Knex client instance for interacting with PostgreSQL.
  * @param {GranulePgModel} [params.granulePgModel] - Optional override for the GranulePgModel.
  * @param {GranulesExecutionsPgModel} [params.granulesExecutionsPgModel] - Optional
@@ -945,6 +947,7 @@ const _granulesWithIds = (unknownGranuleArray) => {
 const writeGranuleExecutionAssociationsFromMessage = async ({
   cumulusMessage,
   executionCumulusId,
+  executionCreatedAt,
   knex,
   granulePgModel = new GranulePgModel(),
   granulesExecutionsPgModel = new GranulesExecutionsPgModel(),
@@ -969,6 +972,7 @@ const writeGranuleExecutionAssociationsFromMessage = async ({
         granule_cumulus_id: granuleCollectionCumulusId.cumulus_id,
         collection_cumulus_id: granuleCollectionCumulusId.collection_cumulus_id,
         execution_cumulus_id: executionCumulusId,
+        execution_created_at: executionCreatedAt,
       }))
   );
 
@@ -984,6 +988,7 @@ const writeGranuleExecutionAssociationsFromMessage = async ({
  * @param {Object} params.cumulusMessage - A workflow message
  * @param {string} params.executionCumulusId
  *   Cumulus ID for execution referenced in workflow message, if any
+ * @param {Date}  params.executionCreatedAt - Execution record create time
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
  * @param {Object} [params.granulePgModel]
  *   Optional override for the granule model writing to PostgreSQL database

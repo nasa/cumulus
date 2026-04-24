@@ -166,6 +166,7 @@ test('buildExecutionRecord builds correct record for "running" execution', (t) =
 
   const now = new Date();
   const updatedAt = Date.now();
+  const parentExecutionCreatedAt = new Date();
   const record = buildExecutionRecord({
     cumulusMessage,
     now,
@@ -173,6 +174,7 @@ test('buildExecutionRecord builds correct record for "running" execution', (t) =
     asyncOperationCumulusId: 1,
     collectionCumulusId: 2,
     parentExecutionCumulusId: 3,
+    parentExecutionCreatedAt,
   });
 
   t.deepEqual(
@@ -190,6 +192,7 @@ test('buildExecutionRecord builds correct record for "running" execution', (t) =
       async_operation_cumulus_id: 1,
       collection_cumulus_id: 2,
       parent_cumulus_id: 3,
+      parent_created_at: parentExecutionCreatedAt,
       created_at: new Date(cumulusMessage.cumulus_meta.workflow_start_time),
       timestamp: now,
       updated_at: new Date(updatedAt),
@@ -342,13 +345,18 @@ test.serial('writeExecutionRecordFromMessage() does not publish an SNS messagee 
     QueueUrl,
   } = t.context;
 
-  const knexStub = sinon.stub(knex, 'insert').returns({
-    insert: () => {
-      throw new Error('execution RDS error');
-    },
-  });
+  const error = new Error('execution RDS error');
 
-  t.teardown(() => knexStub.restore());
+  const queryBuilderMock = {
+    insert: sinon.stub().throws(error),
+    returning: sinon.stub(), // never reached
+  };
+
+  const trxMock = sinon.stub().returns(queryBuilderMock);
+
+  const knexStub = {
+    transaction: sinon.stub().callsFake((cb) => cb(trxMock)),
+  };
 
   await t.throwsAsync(
     writeExecutionRecordFromMessage({ cumulusMessage, knex: knexStub }),
