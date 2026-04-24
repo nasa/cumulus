@@ -3,15 +3,6 @@ import Logger from '@cumulus/logger';
 
 const log = new Logger({ sender: '@cumulus/db/iceberg-connection' });
 
-/**
- * Wraps an identifier in double-quotes and escapes any embedded double-quotes
- * by doubling them (standard SQL identifier quoting).
- * e.g. foo -> "foo", foo"bar -> "foo""bar"
- */
-function quoteIdent(ident: string): string {
-  return `"${ident.replace(/"/g, '""')}"`;
-}
-
 let instance: DuckDBInstance | undefined;
 let initPromise: Promise<void> | undefined;
 let dbVersionCache: string | undefined;
@@ -32,11 +23,38 @@ const tableNames = [
 ];
 
 /**
- * Executes settings that should apply to every individual connection.
+ * Wraps an identifier in double-quotes and escapes any embedded double-quotes
+ * by doubling them (standard SQL identifier quoting).
+ * e.g. foo -> "foo", foo"bar -> "foo""bar"
  */
-async function warmupConnection(conn: DuckDBConnection): Promise<void> {
-  const isLocal = process.env.NODE_ENV === 'development';
+function quoteIdent(ident: string): string {
+  return `"${ident.replace(/"/g, '""')}"`;
+}
 
+/**
+ * Retrieves the value of a required environment variable.
+ * Throws an error if the variable is not set or empty.
+ */
+function getRequiredEnv(name: 'AWS_ACCOUNT_ID' | 'ICEBERG_NAMESPACE'): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} environment variable is required.`);
+  }
+
+  return value;
+}
+
+/**
+ * Creates a new DuckDB connection from the shared instance and fully configures it:
+ * loads required extensions, applies performance settings, refreshes AWS credentials,
+ * attaches the Iceberg Glue catalog, and sets the default search path to the configured namespace.
+ */
+async function getConnection(): Promise<DuckDBConnection> {
+  const isLocal = process.env.NODE_ENV === 'development';
+  const awsAccountId = getRequiredEnv('AWS_ACCOUNT_ID');
+  const glueSchema = getRequiredEnv('ICEBERG_NAMESPACE');
+
+  const conn = await instance!.connect();
   if (isLocal) {
     await conn.run('INSTALL httpfs; LOAD httpfs;');
     await conn.run('INSTALL iceberg; LOAD iceberg;');
@@ -64,12 +82,12 @@ async function warmupConnection(conn: DuckDBConnection): Promise<void> {
   const region = process.env.AWS_REGION || 'us-east-1';
   await conn.run(`SET s3_region='${region}';`);
   await conn.run('SET s3_url_style=\'vhost\';');
-  // Performance and memory settings
+
   // ECS_TASK_MEMORY is in MiB; use half of that for DuckDB.
-  // ECS_TASK_CPU is in CPU units (1024 = 1 vCPU); derive thread count from it.
   const ecsMemoryMiB = Number(process.env.ECS_TASK_MEMORY) || 1024;
-  const ecsCpuUnits = Number(process.env.ECS_TASK_CPU) || 1024;
   const memoryLimitMiB = Math.floor(ecsMemoryMiB / 2);
+  // ECS_TASK_CPU is in CPU units (1024 = 1 vCPU); derive thread count from it.
+  const ecsCpuUnits = Number(process.env.ECS_TASK_CPU) || 1024;
   const threadCount = Math.max(1, Math.floor(ecsCpuUnits / 1024));
   await conn.run(`SET memory_limit='${memoryLimitMiB}MB';`);
   await conn.run(`SET threads=${threadCount};`);
@@ -80,6 +98,22 @@ async function warmupConnection(conn: DuckDBConnection): Promise<void> {
 
   await conn.run('CALL load_aws_credentials();');
   await conn.run('CREATE SECRET IF NOT EXISTS (TYPE S3, PROVIDER credential_chain);');
+
+  // ATTACH is instance-level: only run it once; subsequent connections reuse the catalog.
+  const attached = await conn.run(
+    'SELECT count(*) FROM duckdb_databases() WHERE database_name = \'glue_iceberg\';'
+  );
+  const rows = await attached.getRows();
+  const alreadyAttached = (rows[0][0] as number) > 0;
+  if (!alreadyAttached) {
+    await conn.run(
+      `ATTACH '${awsAccountId}' AS glue_iceberg (TYPE iceberg, ENDPOINT_TYPE 'glue');`
+    );
+  }
+
+  await conn.run(`SET search_path = 'glue_iceberg.${glueSchema}';`);
+
+  return conn;
 }
 
 /**
@@ -145,47 +179,16 @@ export async function initializeDuckDb(): Promise<void> {
       log.info('Initializing DuckDB Instance for Iceberg API...');
       instance = await DuckDBInstance.create(':memory:');
 
-      const setupConn = await instance.connect();
-      await warmupConnection(setupConn);
-
-      const awsAccountId = process.env.AWS_ACCOUNT_ID;
-      const glueSchema = process.env.ICEBERG_NAMESPACE;
-
-      if (!awsAccountId) {
-        throw new Error('AWS_ACCOUNT_ID environment variable is required.');
-      }
-      if (!glueSchema) {
-        throw new Error('ICEBERG_NAMESPACE environment variable is required.');
-      }
-
-      log.info(`Attaching Iceberg Glue catalog for account: ${awsAccountId}`);
-
-      // Attach the account-level catalog
-      await setupConn.run(
-        `ATTACH '${awsAccountId}' AS glue_iceberg (TYPE iceberg, ENDPOINT_TYPE 'glue');`
-      );
-
-      await setupConn.run(`SET search_path = "glue_iceberg.${glueSchema}";`);
-
-      // Fill the pool
-      connectionPool.push(setupConn);
-      const remainingCount = MAX_POOL_SIZE - connectionPool.length;
-
-      if (remainingCount > 0) {
-        const newConns = await Promise.all(
-          Array.from({ length: remainingCount }).map(async () => {
-            const conn = await instance!.connect();
-            await warmupConnection(conn);
-            await conn.run(`SET search_path = "glue_iceberg.${glueSchema}";`);
-            return conn;
-          })
-        );
-        connectionPool.push(...newConns);
+      // Connections must be initialized sequentially to avoid write-write conflicts
+      // in DuckDB's catalog (e.g. concurrent CREATE SECRET calls).
+      for (let i = 0; i < MAX_POOL_SIZE; i += 1) {
+        // eslint-disable-next-line no-await-in-loop
+        connectionPool.push(await getConnection());
       }
 
       startPoolCacheWarmup();
 
-      log.info('DuckDB initialization and view creation complete.');
+      log.info(`DuckDB initialized with a pool of ${connectionPool.length}/${MAX_POOL_SIZE} connections.`);
     } catch (error) {
       log.error('Failed to initialize DuckDB:', error);
       instance = undefined;
@@ -209,8 +212,7 @@ export async function acquireDuckDbConnection(): Promise<DuckDBConnection> {
     return connectionPool.pop()!;
   }
 
-  const conn = await instance!.connect();
-  await warmupConnection(conn);
+  const conn = await getConnection();
   startConnectionCacheWarmup(conn);
   return conn;
 }
