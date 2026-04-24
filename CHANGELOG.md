@@ -58,7 +58,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   ````
   terraform apply -var-file=env/sandbox.tfvars
   ````
-  
+
 - **CUMULUS-4788**
   - split replication service into multiple services, one for each replication table group
 - **CUMULUS-4534**
