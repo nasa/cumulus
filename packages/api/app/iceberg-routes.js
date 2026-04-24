@@ -4,7 +4,7 @@ const router = require('express-promise-router')();
 const Logger = require('@cumulus/logger');
 
 const { defaultErrorHandler } = require('./middleware');
-const stats = require('../endpoints/stats');
+const stats = require('../endpoints/iceberg-stats');
 const version = require('../endpoints/version');
 
 const log = new Logger('@cumulus/api/iceberg-routes');
