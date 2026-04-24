@@ -10,12 +10,14 @@ export const up = async (knex: Knex): Promise<void> => {
     table.foreign(['granule_cumulus_id', 'collection_cumulus_id'])
       .references(['cumulus_id', 'collection_cumulus_id'])
       .inTable('granules')
-      .onDelete('CASCADE');
+      .onDelete('CASCADE')
+      .onUpdate('CASCADE');
 
     table.foreign(['execution_cumulus_id', 'execution_created_at'])
       .references(['cumulus_id', 'created_at'])
       .inTable('executions')
-      .onDelete('CASCADE');
+      .onDelete('CASCADE')
+      .onUpdate('CASCADE');
 
     table.primary(['granule_cumulus_id', 'execution_cumulus_id']);
   });

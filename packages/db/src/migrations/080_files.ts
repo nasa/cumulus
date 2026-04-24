@@ -54,7 +54,8 @@ export const up = async (knex: Knex): Promise<void> => {
     ADD CONSTRAINT files_granule_cumulus_id_foreign
     FOREIGN KEY (granule_cumulus_id, collection_cumulus_id)
     REFERENCES granules(cumulus_id, collection_cumulus_id)
-    ON DELETE CASCADE;
+    ON DELETE CASCADE
+    ON UPDATE CASCADE;
   `);
 
   // Comments

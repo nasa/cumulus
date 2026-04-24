@@ -20,7 +20,8 @@ export const up = async (knex: Knex): Promise<void> => {
     table.foreign(['execution_cumulus_id', 'execution_created_at'])
       .references(['cumulus_id', 'created_at'])
       .inTable('executions')
-      .onDelete('SET NULL');
+      .onDelete('SET NULL')
+      .onUpdate('CASCADE');
 
     table.text('status').notNullable();
     table.text('name').notNullable();
