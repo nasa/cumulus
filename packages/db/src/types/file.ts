@@ -1,6 +1,7 @@
 export interface PostgresFile {
   bucket?: string,
   key?: string,
+  collection_cumulus_id: number,
   granule_cumulus_id: number,
   checksum_type?: string,
   checksum_value?: string,

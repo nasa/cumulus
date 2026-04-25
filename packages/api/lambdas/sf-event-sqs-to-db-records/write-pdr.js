@@ -28,6 +28,7 @@ const generatePdrRecord = ({
   collectionCumulusId,
   providerCumulusId,
   executionCumulusId,
+  executionCreatedAt,
   now = Date.now(),
   updatedAt = Date.now(),
 }) => {
@@ -44,6 +45,7 @@ const generatePdrRecord = ({
     stats,
     progress,
     execution_cumulus_id: executionCumulusId,
+    execution_created_at: executionCreatedAt,
     collection_cumulus_id: collectionCumulusId,
     provider_cumulus_id: providerCumulusId,
     created_at: new Date(workflowStartTime),
@@ -59,6 +61,7 @@ const writePdrViaTransaction = async ({
   collectionCumulusId,
   providerCumulusId,
   executionCumulusId,
+  executionCreatedAt,
   pdrPgModel = new PdrPgModel(),
   updatedAt,
 }) => {
@@ -67,6 +70,7 @@ const writePdrViaTransaction = async ({
     collectionCumulusId,
     providerCumulusId,
     executionCumulusId,
+    executionCreatedAt,
     updatedAt,
   });
 
@@ -89,6 +93,7 @@ const writePdr = async ({
   collectionCumulusId,
   providerCumulusId,
   executionCumulusId,
+  executionCreatedAt,
   knex,
   updatedAt = Date.now(),
 }) => {
@@ -110,6 +115,7 @@ const writePdr = async ({
       providerCumulusId,
       trx,
       executionCumulusId,
+      executionCreatedAt,
       updatedAt,
     });
     return pgPdr.cumulus_id;

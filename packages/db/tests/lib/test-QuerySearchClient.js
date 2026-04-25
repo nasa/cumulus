@@ -58,6 +58,7 @@ test.after.always(async (t) => {
 });
 
 const createFileRecords = async ({
+  collectionCumulusId,
   granuleCumulusId,
   filePgModel,
   knex,
@@ -68,6 +69,7 @@ const createFileRecords = async ({
       bucket,
       key: `${index}_${cryptoRandomString({ length: 5 })}`,
       granule_cumulus_id: granuleCumulusId,
+      collection_cumulus_id: collectionCumulusId,
     }));
   const records = await filePgModel.insert(
     knex,

@@ -97,6 +97,7 @@ data "aws_lambda_invocation" "db_migration" {
   depends_on    = [aws_lambda_function.db_migration]
   function_name = aws_lambda_function.db_migration.function_name
   input = jsonencode({
+    useBootstrap       = var.use_bootstrap
     replacementTrigger = timestamp()
   })
 }

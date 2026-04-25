@@ -137,7 +137,9 @@ async function addGranules(granules, knexClient) {
         dynamoRecord: newGranule,
         knexOrTransaction: knex,
       });
-      const executionCumulusId = await executionPgModel.getRecordCumulusId(knex, {
+      const {
+        cumulus_id: executionCumulusId, created_at: executionCreatedAt,
+      } = await executionPgModel.get(knex, {
         url: newGranule.execution,
       });
 
@@ -145,12 +147,14 @@ async function addGranules(granules, knexClient) {
         knexTransaction: knex,
         granule: dbRecord,
         executionCumulusId,
+        executionCreatedAt,
       });
 
       if (newGranule.files.length > 0) {
         await filePgModel.insert(knex, newGranule.files.map((file) => {
           const translatedFile = translateApiFiletoPostgresFile(file);
           translatedFile.granule_cumulus_id = upsertedGranule[0].cumulus_id;
+          translatedFile.collection_cumulus_id = upsertedGranule[0].collection_cumulus_id;
           return translatedFile;
         }));
       }

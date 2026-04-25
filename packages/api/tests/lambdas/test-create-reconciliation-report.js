@@ -205,12 +205,13 @@ async function generateRandomGranules(t, {
     range(granuleRange).map(() => fakeGranuleRecordFactory({
       collection_cumulus_id: collectionCumulusId,
     })),
-    ['cumulus_id', 'granule_id']
+    ['cumulus_id', 'collection_cumulus_id', 'granule_id']
   );
   const files = range(fileRange).map((i) => ({
     bucket: dataBuckets[i % dataBuckets.length],
     key: randomId('key', 10),
     granule_cumulus_id: pgGranules[i].cumulus_id,
+    collection_cumulus_id: pgGranules[i].collection_cumulus_id,
   }));
 
   // Store the files to S3 and postgres
@@ -625,11 +626,13 @@ test.serial('Generates valid reconciliation report when there are extra internal
     bucket: sample(dataBuckets),
     key: randomString(),
     granule_cumulus_id: extraFileGranule1.cumulus_id,
+    collection_cumulus_id: extraFileGranule1.collection_cumulus_id,
   };
   const extraDbFile2 = {
     bucket: sample(dataBuckets),
     key: randomString(),
     granule_cumulus_id: extraFileGranule2.cumulus_id,
+    collection_cumulus_id: extraFileGranule2.collection_cumulus_id,
   };
 
   await t.context.filePgModel.insert(t.context.knex, [extraDbFile1, extraDbFile2]);
@@ -696,12 +699,14 @@ test.serial('Generates valid reconciliation report when internally, there are bo
   }));
   const pgGranules = await granulePgModel.insert(
     knex,
-    granules
+    granules,
+    ['cumulus_id', 'collection_cumulus_id']
   );
   const matchingFiles = range(10).map((i) => ({
     bucket: sample(dataBuckets),
     key: randomId('key'),
     granule_cumulus_id: pgGranules[i].cumulus_id,
+    collection_cumulus_id: pgGranules[i].collection_cumulus_id,
   }));
 
   const extraS3File1 = { bucket: sample(dataBuckets), key: randomString() };
@@ -711,12 +716,14 @@ test.serial('Generates valid reconciliation report when internally, there are bo
     bucket: sample(dataBuckets),
     key: randomString(),
     granule_cumulus_id: pgGranules[10].cumulus_id,
+    collection_cumulus_id: pgGranules[10].collection_cumulus_id,
     granule_id: granules[10].granule_id,
   };
   const extraDbFile2 = {
     bucket: sample(dataBuckets),
     key: randomString(),
     granule_cumulus_id: pgGranules[11].cumulus_id,
+    collection_cumulus_id: pgGranules[11].collection_cumulus_id,
     granule_id: granules[11].granule_id,
   };
 
@@ -880,12 +887,14 @@ test.serial(
     }));
     const pgGranules = await granulePgModel.insert(
       knex,
-      granules
+      granules,
+      ['cumulus_id', 'collection_cumulus_id']
     );
     const files = range(10).map((i) => ({
       bucket: sample(dataBuckets),
       key: randomId('key'),
       granule_cumulus_id: pgGranules[i].cumulus_id,
+      collection_cumulus_id: pgGranules[i].collection_cumulus_id,
     }));
 
     // Store the files to S3 and DynamoDB
@@ -1856,6 +1865,7 @@ test.serial('A valid ORCA Backup reconciliation report is generated', async (t) 
       filePgModel.create(knex, {
         ...translateApiFiletoPostgresFile(file),
         granule_cumulus_id: pgGranuleRecord[0].cumulus_id,
+        collection_cumulus_id: pgGranuleRecord[0].collection_cumulus_id,
       }))
   );
 

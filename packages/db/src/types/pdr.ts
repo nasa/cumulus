@@ -6,6 +6,7 @@ export interface PostgresPdr {
   collection_cumulus_id: number
   provider_cumulus_id: number
   execution_cumulus_id?: number
+  execution_created_at?: Date
   progress?: number
   pan_sent?: boolean
   pan_message?: string

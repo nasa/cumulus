@@ -87,12 +87,14 @@ test('getGranuleIdAndCollectionIdFromFile returns expected values', async (t) =>
     bucket,
     key: firstKey,
     granule_cumulus_id: granuleCumulusId1,
+    collection_cumulus_id: collectionCumulusId,
   });
   const secondKey = `b_${cryptoRandomString({ length: 10 })}`;
   await filePgModel.create(knex, {
     bucket,
     key: secondKey,
     granule_cumulus_id: granuleCumulusId2,
+    collection_cumulus_id: collectionCumulusId,
   });
 
   const result = await getGranuleIdAndCollectionIdFromFile({
@@ -147,12 +149,14 @@ test('getFilesAndGranuleInfoQuery returns expected records', async (t) => {
     bucket,
     key: firstKey,
     granule_cumulus_id: granuleCumulusId1,
+    collection_cumulus_id: collectionCumulusId,
   });
   const secondKey = `b_${cryptoRandomString({ length: 10 })}`;
   await filePgModel.create(knex, {
     bucket,
     key: secondKey,
     granule_cumulus_id: granuleCumulusId2,
+    collection_cumulus_id: collectionCumulusId,
   });
 
   const records = await getFilesAndGranuleInfoQuery({
@@ -167,12 +171,14 @@ test('getFilesAndGranuleInfoQuery returns expected records', async (t) => {
     key: firstKey,
     granule_cumulus_id: granuleCumulusId1,
     granule_id: testGranule1.granule_id,
+    collection_cumulus_id: collectionCumulusId,
   });
   t.like(records[1], {
     bucket,
     key: secondKey,
     granule_cumulus_id: granuleCumulusId2,
     granule_id: testGranule2.granule_id,
+    collection_cumulus_id: collectionCumulusId,
   });
 });
 
@@ -194,6 +200,7 @@ test('getFilesAndGranuleInfoQuery works with no granule columns specified', asyn
     bucket,
     key: firstKey,
     granule_cumulus_id: granuleCumulusId1,
+    collection_cumulus_id: collectionCumulusId,
   });
 
   const records = await getFilesAndGranuleInfoQuery({
@@ -206,6 +213,7 @@ test('getFilesAndGranuleInfoQuery works with no granule columns specified', asyn
     bucket,
     key: firstKey,
     granule_cumulus_id: granuleCumulusId1,
+    collection_cumulus_id: collectionCumulusId,
   });
 });
 
@@ -236,12 +244,14 @@ test('getFilesAndGranuleInfoQuery filters on GranuleIds', async (t) => {
     bucket,
     key: firstKey,
     granule_cumulus_id: granuleCumulusId1,
+    collection_cumulus_id: collectionCumulusId,
   });
   const secondKey = `b_${cryptoRandomString({ length: 10 })}`;
   await filePgModel.create(knex, {
     bucket,
     key: secondKey,
     granule_cumulus_id: granuleCumulusId2,
+    collection_cumulus_id: collectionCumulusId,
   });
 
   const records = await getFilesAndGranuleInfoQuery({
@@ -257,6 +267,7 @@ test('getFilesAndGranuleInfoQuery filters on GranuleIds', async (t) => {
     key: secondKey,
     granule_cumulus_id: granuleCumulusId2,
     granule_id: testGranule2.granule_id,
+    collection_cumulus_id: collectionCumulusId,
   });
 });
 
@@ -289,6 +300,7 @@ test('getFilesAndGranuleInfoQuery filters on collectionIds', async (t) => {
     bucket,
     key: firstKey,
     granule_cumulus_id: pgGranule1.cumulus_id,
+    collection_cumulus_id: collections[0].cumulus_id,
   });
 
   const secondKey = `b_${cryptoRandomString({ length: 10 })}`;
@@ -296,6 +308,7 @@ test('getFilesAndGranuleInfoQuery filters on collectionIds', async (t) => {
     bucket,
     key: secondKey,
     granule_cumulus_id: pgGranule2.cumulus_id,
+    collection_cumulus_id: collections[1].cumulus_id,
   });
 
   const records = await getFilesAndGranuleInfoQuery({
@@ -312,6 +325,7 @@ test('getFilesAndGranuleInfoQuery filters on collectionIds', async (t) => {
     key: secondKey,
     granule_cumulus_id: pgGranule2.cumulus_id,
     granule_id: testGranule2.granule_id,
+    collection_cumulus_id: collections[1].cumulus_id,
   });
 });
 
@@ -341,6 +355,7 @@ test('getFilesAndGranuleInfoQuery filters on providers', async (t) => {
     bucket,
     key: firstKey,
     granule_cumulus_id: pgGranule1.cumulus_id,
+    collection_cumulus_id: collections[0].cumulus_id,
   });
 
   const secondKey = `b_${cryptoRandomString({ length: 10 })}`;
@@ -348,6 +363,7 @@ test('getFilesAndGranuleInfoQuery filters on providers', async (t) => {
     bucket,
     key: secondKey,
     granule_cumulus_id: pgGranule2.cumulus_id,
+    collection_cumulus_id: collections[1].cumulus_id,
   });
 
   const records = await getFilesAndGranuleInfoQuery({
@@ -364,5 +380,6 @@ test('getFilesAndGranuleInfoQuery filters on providers', async (t) => {
     key: secondKey,
     granule_cumulus_id: pgGranule2.cumulus_id,
     granule_id: testGranule2.granule_id,
+    collection_cumulus_id: collections[1].cumulus_id,
   });
 });

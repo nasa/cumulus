@@ -57,11 +57,16 @@ const buildExecutionRecord = ({
   asyncOperationCumulusId,
   collectionCumulusId,
   parentExecutionCumulusId,
+  parentExecutionCreatedAt,
   updatedAt = Date.now(),
 }) => {
   const arn = getMessageExecutionArn(cumulusMessage);
   const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
   const workflowStopTime = getMessageWorkflowStopTime(cumulusMessage);
+
+  if (isNil(parentExecutionCumulusId) !== isNil(parentExecutionCreatedAt)) {
+    throw new Error('parentExecutionCumulusId and parentExecutionCreatedAt must either both be set or both be unset');
+  }
 
   const record = {
     arn,
@@ -80,6 +85,7 @@ const buildExecutionRecord = ({
     async_operation_cumulus_id: asyncOperationCumulusId,
     collection_cumulus_id: collectionCumulusId,
     parent_cumulus_id: parentExecutionCumulusId,
+    parent_created_at: parentExecutionCreatedAt,
   };
   return omitBy(record, isUndefined);
 };
@@ -144,6 +150,7 @@ const writeExecutionRecordFromMessage = async ({
   collectionCumulusId,
   asyncOperationCumulusId,
   parentExecutionCumulusId,
+  parentExecutionCreatedAt,
   updatedAt = Date.now(),
 }) => {
   const postgresRecord = buildExecutionRecord({
@@ -151,13 +158,14 @@ const writeExecutionRecordFromMessage = async ({
     collectionCumulusId,
     asyncOperationCumulusId,
     parentExecutionCumulusId,
+    parentExecutionCreatedAt,
     updatedAt,
   });
   const writeExecutionResponse = await _writeExecutionAndPublishSnsMessage({
     postgresRecord: omitBy(postgresRecord, isUndefined),
     knex,
   });
-  return writeExecutionResponse.cumulus_id;
+  return writeExecutionResponse;
 };
 
 const writeExecutionRecordFromApi = async ({

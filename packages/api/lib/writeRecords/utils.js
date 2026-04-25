@@ -72,7 +72,7 @@ const getAsyncOperationCumulusId = async (
   }
 };
 
-const getParentExecutionCumulusId = async (
+const getParentExecution = async (
   parentExecutionArn,
   knex,
   executionPgModel = new ExecutionPgModel()
@@ -82,7 +82,7 @@ const getParentExecutionCumulusId = async (
       log.info('There is no parent execution ARN to lookup on the message, skipping');
       return undefined;
     }
-    return await executionPgModel.getRecordCumulusId(
+    return await executionPgModel.get(
       knex,
       {
         arn: parentExecutionArn,
@@ -176,14 +176,14 @@ const getMessageProviderCumulusId = async (
 };
 
 /**
- * Looks up an Execution's cumulus_id by executionUrl.
+ * Looks up an Execution by executionUrl.
  *
  * @param {string} [executionUrl = ''] - Full url of stepfunction execution
  * @param {Knex} knex - knex Client
  * @param {Object} executionPgModel - instance of the exection database model
- * @returns {integer|undefined} - RDS internal cumulus_id
+ * @returns {Promise<import('@cumulus/db').PostgresExecutionRecord>} The returned record
  */
-const getExecutionCumulusId = async (
+const getExecution = async (
   executionUrl = '',
   knex,
   executionPgModel = new ExecutionPgModel()
@@ -193,7 +193,7 @@ const getExecutionCumulusId = async (
       log.info('There is no execution URL to lookup, skipping');
       return undefined;
     }
-    return await executionPgModel.getRecordCumulusId(
+    return await executionPgModel.get(
       knex,
       { url: executionUrl }
     );
@@ -229,8 +229,8 @@ const isStatusActiveState = (status) => status === 'running' || status === 'queu
 module.exports = {
   isPostRDSDeploymentExecution,
   getAsyncOperationCumulusId,
-  getExecutionCumulusId,
-  getParentExecutionCumulusId,
+  getExecution,
+  getParentExecution,
   getProviderCumulusId,
   getCollectionCumulusId,
   getMessageProviderCumulusId,

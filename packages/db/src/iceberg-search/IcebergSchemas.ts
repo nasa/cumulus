@@ -66,6 +66,7 @@ export const executionsIcebergSql = (tableName: string = 'executions') => `
     async_operation_cumulus_id INTEGER,
     collection_cumulus_id INTEGER,
     parent_cumulus_id BIGINT,
+    parent_created_at TIMESTAMPTZ,
     cumulus_version TEXT,
     url TEXT,
     status TEXT NOT NULL,
@@ -98,6 +99,7 @@ export const filesIcebergSql = (tableName: string = 'files') => `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     cumulus_id BIGINT PRIMARY KEY,
     granule_cumulus_id BIGINT NOT NULL,
+    collection_cumulus_id INTEGER NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     file_size BIGINT,
@@ -149,7 +151,9 @@ export const granulesIcebergSql = (tableName: string = 'granules') => `
 export const granulesExecutionsIcebergSql = (tableName: string = 'granules_executions') => `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     granule_cumulus_id BIGINT NOT NULL,
+    collection_cumulus_id INTEGER NOT NULL,
     execution_cumulus_id BIGINT NOT NULL,
+    execution_created_at TIMESTAMPTZ NOT NULL,
     CONSTRAINT granules_executions_granule_execution_unique
         UNIQUE (granule_cumulus_id, execution_cumulus_id),
     CONSTRAINT granules_executions_execution_cumulus_id_foreign
@@ -166,6 +170,7 @@ export const pdrsIcebergSql = (tableName: string = 'pdrs') => `
     collection_cumulus_id INTEGER NOT NULL,
     provider_cumulus_id INTEGER NOT NULL,
     execution_cumulus_id BIGINT,
+    execution_created_at TIMESTAMPTZ,
     status TEXT NOT NULL,
     name TEXT NOT NULL,
     progress REAL,

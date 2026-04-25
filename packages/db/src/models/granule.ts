@@ -125,33 +125,41 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     executionPgModel?: ExecutionPgModel;
     writeConstraints: boolean;
   }) : Promise<PostgresGranuleRecord[]> {
-    if (writeConstraints && (granule.status === 'running' || granule.status === 'queued')) {
-      const upsertQuery = knexOrTrx(this.tableName)
-        .insert(granule)
-        .onConflict(['granule_id', 'collection_cumulus_id'])
-        .merge({
+    const updatePayload
+      = writeConstraints && (granule.status === 'running' || granule.status === 'queued')
+        ? {
           status: granule.status,
           timestamp: granule.timestamp,
           updated_at: granule.updated_at,
           created_at: granule.created_at,
-        });
+        }
+        : granule;
 
-      // If upsert called with optional write constraints
-      if (!granule.created_at) {
-        throw new Error(
-          `Granule upsert called with write constraints but no createdAt set: ${JSON.stringify(granule)}`
-        );
-      }
-      upsertQuery.where(
+    // If upsert called with optional write constraints
+    if (writeConstraints && !granule.created_at) {
+      throw new Error(
+        `Granule upsert called with write constraints but no created_at set: ${JSON.stringify(granule)}`
+      );
+    }
+
+    // Attempt UPDATE if granule exists
+    let updateQuery = knexOrTrx(this.tableName)
+      .where('granule_id', granule.granule_id)
+      .limit(1)
+      .update(updatePayload)
+      .returning('*');
+
+    if (writeConstraints) {
+      updateQuery = updateQuery.where(
         knexOrTrx.raw(
-          `${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(granule.created_at)})`
+          `${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(granule.created_at!)})`
         )
       );
 
       // In reality, the only place where executionCumulusId should be
       // undefined is from the data migrations OR a queued granule from reingest
       // OR a patch API request
-      if (executionCumulusId) {
+      if (executionCumulusId && (granule.status === 'running' || granule.status === 'queued')) {
         const exclusionClause = this._buildExclusionClause(
           executionPgModel,
           executionCumulusId,
@@ -162,31 +170,24 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
         // For running granules, this means the execution does not exist in a state other
         // than 'running'.  For queued granules, this means that the execution does not
         // exist at all
-        upsertQuery.whereNotExists(exclusionClause);
+        updateQuery.whereNotExists(exclusionClause);
       }
-      return await upsertQuery.returning('*');
     }
 
-    const upsertQuery = knexOrTrx(this.tableName)
-      .insert(granule)
-      .onConflict(['granule_id', 'collection_cumulus_id'])
-      .merge();
-
-    if (writeConstraints) {
-      if (!granule.created_at) {
-        throw new Error(
-          `Granule upsert called with write constraints but no created_at set: ${JSON.stringify(granule)}`
-        );
+    // isolate INSERT in savepoint
+    try {
+      return await knexOrTrx.transaction(async (trx) =>
+        await trx(this.tableName)
+          .insert(granule)
+          .returning('*'));
+    } catch (error) {
+      // Trigger-raised duplicate, fallback to update
+      if (error.code === '23505') {
+        // outer transaction is NOT aborted
+        return await updateQuery; // may be []
       }
-      upsertQuery.where(
-        knexOrTrx.raw(
-          `${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(
-            granule.created_at
-          )})`
-        )
-      );
+      throw error;
     }
-    return await upsertQuery.returning('*');
   }
 
   /**

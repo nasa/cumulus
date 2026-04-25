@@ -79,7 +79,7 @@ const {
   publishGranuleSnsMessageByEventType,
 } = require('../publishSnsMessageUtils');
 const {
-  getExecutionCumulusId,
+  getExecution,
   isStatusFinalState,
 } = require('./utils');
 
@@ -107,13 +107,16 @@ const log = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-granules' 
  *
  * @param {Object} params
  * @param {Object} params.file - File object
+   @param {number} params.collectionCumulusId
+ *   Collection Cumulus ID of the granule for this file
  * @param {number} params.granuleCumulusId
  *   Cumulus ID of the granule for this file
  * @returns {Object} - a file record
  */
-const generateFilePgRecord = ({ file, granuleCumulusId }) => ({
+const generateFilePgRecord = ({ file, granuleCumulusId, collectionCumulusId }) => ({
   ...translateApiFiletoPostgresFile(file),
   granule_cumulus_id: granuleCumulusId,
+  collection_cumulus_id: collectionCumulusId,
 });
 
 /**
@@ -121,14 +124,17 @@ const generateFilePgRecord = ({ file, granuleCumulusId }) => ({
  *
  * @param {Object} params
  * @param {Object} params.files - File objects
+ * @param {number} params.collectionCumulusId
+ *   Collection Cumulus ID of the granule for this file
  * @param {number} params.granuleCumulusId
  *   Cumulus ID of the granule for this file
  * @returns {Array<Object>} - file records
  */
 const _generateFilePgRecords = ({
   files,
+  collectionCumulusId,
   granuleCumulusId,
-}) => files.map((file) => generateFilePgRecord({ file, granuleCumulusId }));
+}) => files.map((file) => generateFilePgRecord({ file, granuleCumulusId, collectionCumulusId }));
 
 /**
  * Write an array of file records to the database
@@ -195,6 +201,8 @@ const getGranuleFromQueryResultOrLookup = async ({
  * @param {PostgresGranuleRecord} params.granuleRecord - A postgres granule record
  * @param {number} params.executionCumulusId - Cumulus ID for execution referenced in workflow
  *                                             message, if any
+ * @param {Date} params.executionCreatedAt - CreatedAt for execution referenced in workflow
+ *                                             message, if any
  * @param {KnexTransaction} params.trx      - Transaction to interact with PostgreSQL database
  * @param {GranulePgModel} params.granulePgModel     - postgreSQL granule model
  * @param {boolean} params.writeConstraints  - Boolean flag to set if createdAt/execution write
@@ -208,6 +216,7 @@ const getGranuleFromQueryResultOrLookup = async ({
 const _writePostgresGranuleViaTransaction = async ({
   granuleRecord,
   executionCumulusId,
+  executionCreatedAt,
   trx,
   granulePgModel,
   writeConstraints = true,
@@ -216,6 +225,7 @@ const _writePostgresGranuleViaTransaction = async ({
     knexTransaction: trx,
     granule: granuleRecord,
     executionCumulusId,
+    executionCreatedAt,
     granulePgModel,
     writeConstraints,
   });
@@ -387,12 +397,15 @@ const updateGranuleStatusToFailed = async (params) => {
  * the database, and update granule status if file writes fail
  *
  * @param {Object} params
+ * @param {number} params.collectionCumulusId
+ *   Collection Cumulus ID of the granule for this file
  * @param {number} params.granuleCumulusId - Cumulus ID of the granule for this file
  * @param {ApiGranule} params.granule - Granule from the payload
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
  * @returns {Promise<ReturnType<GranuleFileWriteError> | undefined>}
  */
 const _writeGranuleFiles = async ({
+  collectionCumulusId,
   granuleCumulusId,
   granule,
   knex,
@@ -404,6 +417,7 @@ const _writeGranuleFiles = async ({
   if (isArray(files) && files.length > 0) {
     fileRecords = _generateFilePgRecords({
       files,
+      collectionCumulusId,
       granuleCumulusId,
     });
   }
@@ -450,6 +464,8 @@ const _writeGranuleFiles = async ({
  * the database, and update granule status if file writes fail
  *
  * @param {Object} params
+ * @param {number} params.collectionCumulusId
+ *   Collection Cumulus ID of the granule for this file
  * @param {number} params.granuleCumulusId - Cumulus ID of the granule for this file
  * @param {ApiGranule} params.granule - Granule from the payload
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
@@ -457,11 +473,13 @@ const _writeGranuleFiles = async ({
  * @returns {Promise<void>}
  */
 const _writeGranuleFilesAndThrowIfExpectedWriteError = async ({
+  collectionCumulusId,
   granuleCumulusId,
   granule,
   knex,
 }) => {
   const fileWriteError = await _writeGranuleFiles({
+    collectionCumulusId,
     granuleCumulusId,
     granule,
     knex,
@@ -480,6 +498,8 @@ const _writeGranuleFilesAndThrowIfExpectedWriteError = async ({
  * @param {ApiGranuleRecord}  params.apiGranuleRecord - Api Granule object to write to the database
  * @param {Knex}              params.knex - Knex object
  * @param {number}            params.executionCumulusId - Execution ID the granule was written from
+ * @param {Date}              params.executionCreatedAt - Execution record create time
+ *                            was written from
  * @param {boolean}           params.writeConstraints - Boolean flag to set if createdAt/execution
  *                                                      write constraints should restrict write
  *                                                      behavior in the database via
@@ -497,6 +517,7 @@ const _writeGranuleRecords = async (params) => {
     apiGranuleRecord,
     knex,
     executionCumulusId,
+    executionCreatedAt,
     granulePgModel,
     writeConstraints = true,
   } = params;
@@ -513,6 +534,7 @@ const _writeGranuleRecords = async (params) => {
       writePgGranuleResult = await _writePostgresGranuleViaTransaction({
         granuleRecord: postgresGranuleRecord,
         executionCumulusId,
+        executionCreatedAt,
         trx,
         granulePgModel,
         writeConstraints,
@@ -582,6 +604,8 @@ const _writeGranuleRecords = async (params) => {
  *                                                               to the database
  * @param {ApiGranuleRecord}  params.apiGranuleRecord - Api Granule object to write to the database
  * @param {number}            params.executionCumulusId - Execution ID the granule was written from
+ * @param {Date}              params.executionCreatedAt - EExecution record create time
+ *                            was written from
  * @param {GranulePgModel}    params.granulePgModel - @cumulus/db compatible granule module instance
  * @returns {Promise<void>}
  */
@@ -589,6 +613,7 @@ const _writeGranule = async ({
   postgresGranuleRecord,
   apiGranuleRecord,
   executionCumulusId,
+  executionCreatedAt,
   granulePgModel,
   knex,
   snsEventType,
@@ -599,6 +624,7 @@ const _writeGranule = async ({
   const writePgGranuleResult = await _writeGranuleRecords({
     apiGranuleRecord,
     executionCumulusId,
+    executionCreatedAt,
     granulePgModel,
     knex,
     postgresGranuleRecord,
@@ -613,6 +639,7 @@ const _writeGranule = async ({
     // `files` key will not.
     if ((writeConstraints === false || (isStatusFinalState(status))) && 'files' in apiGranuleRecord) {
       await writeGranuleFilesMethod({
+        collectionCumulusId: pgGranule.collection_cumulus_id,
         granuleCumulusId: pgGranule.cumulus_id,
         granule: apiGranuleRecord,
         knex,
@@ -663,6 +690,7 @@ const _filterGranuleWriteFailures = (results, errorMessage) => {
 * @param {Object}          params
 * @param {Object}          params.apiGranuleRecord - Api Granule object to write to the database
 * @param {number}          params.executionCumulusId - Execution ID the granule was written from
+* @param {Date}            params.executionCreatedAt - Execution record create time
 * @param {Object}          params.granulePgModel - @cumulus/db compatible granule module instance
 * @param {Knex}            params.knex - Knex object
 * @param {Object}          params.postgresGranuleRecord - PostgreSQL granule record to write
@@ -674,6 +702,7 @@ const writeGranuleRecordAndPublishSns = async ({
   postgresGranuleRecord,
   apiGranuleRecord,
   executionCumulusId,
+  executionCreatedAt,
   granulePgModel,
   knex,
   snsEventType = 'Update',
@@ -681,6 +710,7 @@ const writeGranuleRecordAndPublishSns = async ({
   const writePgGranuleResult = await _writeGranuleRecords({
     apiGranuleRecord: omit(apiGranuleRecord, 'files'),
     executionCumulusId,
+    executionCreatedAt,
     granulePgModel,
     knex,
     postgresGranuleRecord,
@@ -816,12 +846,16 @@ const writeGranuleFromApi = async (
     };
 
     let executionCumulusId;
+    let executionCreatedAt;
     if (execution) {
-      executionCumulusId = await getExecutionCumulusId(execution, knex);
-      if (executionCumulusId === undefined) {
+      const executionRecord = await getExecution(execution, knex);
+      if (executionRecord === undefined) {
         throw new Error(`Could not find execution in PostgreSQL database with url ${execution}`);
       }
+      executionCumulusId = executionRecord.cumulus_id;
+      executionCreatedAt = executionRecord.created_at;
     }
+
     const apiGranuleRecord = await generateGranuleApiRecord({
       cmrTemporalInfo,
       cmrUtils,
@@ -851,6 +885,7 @@ const writeGranuleFromApi = async (
     await _writeGranule({
       apiGranuleRecord,
       executionCumulusId,
+      executionCreatedAt,
       granulePgModel,
       knex,
       postgresGranuleRecord: omitBy(postgresGranuleRecord, isUndefined),
@@ -900,6 +935,7 @@ const _granulesWithIds = (unknownGranuleArray) => {
  * @param {CumulusMessage} params.cumulusMessage - The Cumulus workflow message.
  * @param {number} params.executionCumulusId - Cumulus ID for the execution referenced
  *   in the workflow message.
+ * @param {Date} params.executionCreatedAt - Execution record create time
  * @param {Knex} params.knex - A Knex client instance for interacting with PostgreSQL.
  * @param {GranulePgModel} [params.granulePgModel] - Optional override for the GranulePgModel.
  * @param {GranulesExecutionsPgModel} [params.granulesExecutionsPgModel] - Optional
@@ -911,6 +947,7 @@ const _granulesWithIds = (unknownGranuleArray) => {
 const writeGranuleExecutionAssociationsFromMessage = async ({
   cumulusMessage,
   executionCumulusId,
+  executionCreatedAt,
   knex,
   granulePgModel = new GranulePgModel(),
   granulesExecutionsPgModel = new GranulesExecutionsPgModel(),
@@ -925,15 +962,17 @@ const writeGranuleExecutionAssociationsFromMessage = async ({
 
   log.info(`Found granules: [${granuleIds.join(', ')}]. Fetching corresponding cumulus IDs...`);
 
-  const granuleCumulusIds = await granulePgModel.getRecordsCumulusIds(knex, ['granule_id'], granuleIds);
+  const granuleCollectionCumulusIds = await granulePgModel.getRecords(knex, ['granule_id'], granuleIds, ['cumulus_id', 'collection_cumulus_id']);
 
-  log.info(`Retrieved ${granuleCumulusIds.length} granule cumulus IDs for granule IDs: [${granuleIds.join(', ')}]`);
+  log.info(`Retrieved ${granuleCollectionCumulusIds.length} granule cumulus IDs for granule IDs: [${granuleIds.join(', ')}]`);
 
   const results = await Promise.allSettled(
-    granuleCumulusIds.map((granuleCumulusId) =>
+    granuleCollectionCumulusIds.map((granuleCollectionCumulusId) =>
       granulesExecutionsPgModel.upsert(knex, {
-        granule_cumulus_id: granuleCumulusId,
+        granule_cumulus_id: granuleCollectionCumulusId.cumulus_id,
+        collection_cumulus_id: granuleCollectionCumulusId.collection_cumulus_id,
         execution_cumulus_id: executionCumulusId,
+        execution_created_at: executionCreatedAt,
       }))
   );
 
@@ -949,6 +988,7 @@ const writeGranuleExecutionAssociationsFromMessage = async ({
  * @param {Object} params.cumulusMessage - A workflow message
  * @param {string} params.executionCumulusId
  *   Cumulus ID for execution referenced in workflow message, if any
+ * @param {Date}  params.executionCreatedAt - Execution record create time
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
  * @param {Object} [params.granulePgModel]
  *   Optional override for the granule model writing to PostgreSQL database
@@ -961,6 +1001,7 @@ const writeGranuleExecutionAssociationsFromMessage = async ({
 const writeGranulesFromMessage = async ({
   cumulusMessage,
   executionCumulusId,
+  executionCreatedAt,
   knex,
   granulePgModel = new GranulePgModel(),
   testOverrides = {}, // Used only for test mocks
@@ -1109,6 +1150,7 @@ const writeGranulesFromMessage = async ({
       return _writeGranule({
         apiGranuleRecord,
         executionCumulusId,
+        executionCreatedAt,
         granulePgModel,
         knex,
         postgresGranuleRecord: omitBy(postgresGranuleRecord, isUndefined),

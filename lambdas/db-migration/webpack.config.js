@@ -2,6 +2,8 @@ const path = require('path');
 const { IgnorePlugin } = require('webpack');
 const CopyPlugin = require('copy-webpack-plugin');
 
+const cumulusDbDir = path.dirname(require.resolve('@cumulus/db/package.json'));
+
 const ignoredPackages = [
   'cloudflare:sockets',
   'better-sqlite3',
@@ -25,11 +27,12 @@ module.exports = {
     new CopyPlugin({
       patterns: [
         {
-          from: path.join(
-            path.dirname(require.resolve('@cumulus/db/package.json')),
-            'dist/migrations'
-          ),
+          from: path.join(cumulusDbDir, 'dist/migrations'),
           to: 'migrations'
+        },
+        {
+          from: path.join(cumulusDbDir, 'dist/migrations-bootstrap'),
+          to: 'migrations-bootstrap'
         },
       ],
     }),
