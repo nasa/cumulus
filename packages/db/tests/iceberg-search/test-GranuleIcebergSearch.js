@@ -173,6 +173,7 @@ test.before(async (t) => {
         {
           cumulus_id: i,
           granule_cumulus_id: granule.cumulus_id,
+          collection_cumulus_id: t.context.granules[i].collection_cumulus_id,
           path: 'a.txt',
           checksum_type: 'md5',
         }
@@ -181,6 +182,7 @@ test.before(async (t) => {
         {
           cumulus_id: i + 100,
           granule_cumulus_id: granule.cumulus_id,
+          collection_cumulus_id: t.context.granules[i].collection_cumulus_id,
           path: 'b.txt',
           checksum_type: 'sha256',
         }
@@ -200,7 +202,9 @@ test.before(async (t) => {
   const earlierGranuleExecutions = t.context.granules
     .map((granule, i) => ({
       granule_cumulus_id: granule.cumulus_id,
+      collection_cumulus_id: granule.collection_cumulus_id,
       execution_cumulus_id: earlierExecutionRecords[i].cumulus_id,
+      execution_created_at: earlierExecutionRecords[i].created_at,
     }));
 
   // it's important for later testing that these are uploaded strictly in order
@@ -219,11 +223,15 @@ test.before(async (t) => {
     .flatMap((granule, i) => ([
       {
         granule_cumulus_id: granule.cumulus_id,
+        collection_cumulus_id: granule.collection_cumulus_id,
         execution_cumulus_id: laterExecutionRecords[i].cumulus_id,
+        execution_created_at: laterExecutionRecords[i].created_at,
       },
       {
         granule_cumulus_id: granule.cumulus_id,
+        collection_cumulus_id: granule.collection_cumulus_id,
         execution_cumulus_id: laterExecutionRecords[99 - i].cumulus_id,
+        execution_created_at: laterExecutionRecords[99 - i].created_at,
       },
     ]));
 
