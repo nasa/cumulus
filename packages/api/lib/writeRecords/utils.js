@@ -72,31 +72,6 @@ const getAsyncOperationCumulusId = async (
   }
 };
 
-const getParentExecutionCumulusId = async (
-  parentExecutionArn,
-  knex,
-  executionPgModel = new ExecutionPgModel()
-) => {
-  try {
-    if (isNil(parentExecutionArn)) {
-      log.info('There is no parent execution ARN to lookup on the message, skipping');
-      return undefined;
-    }
-    return await executionPgModel.getRecordCumulusId(
-      knex,
-      {
-        arn: parentExecutionArn,
-      }
-    );
-  } catch (error) {
-    if (isFailedLookupError(error)) {
-      log.info(error.message);
-      return undefined;
-    }
-    throw error;
-  }
-};
-
 const getParentExecution = async (
   parentExecutionArn,
   knex,
@@ -201,38 +176,6 @@ const getMessageProviderCumulusId = async (
 };
 
 /**
- * Looks up an Execution's cumulus_id by executionUrl.
- *
- * @param {string} [executionUrl = ''] - Full url of stepfunction execution
- * @param {Knex} knex - knex Client
- * @param {Object} executionPgModel - instance of the exection database model
- * @returns {integer|undefined} - RDS internal cumulus_id
- */
-const getExecutionCumulusId = async (
-  executionUrl = '',
-  knex,
-  executionPgModel = new ExecutionPgModel()
-) => {
-  try {
-    if (isEmpty(executionUrl)) {
-      log.info('There is no execution URL to lookup, skipping');
-      return undefined;
-    }
-    return await executionPgModel.getRecordCumulusId(
-      knex,
-      { url: executionUrl }
-    );
-  } catch (error) {
-    if (isFailedLookupError(error)) {
-      log.info(error.message);
-      return undefined;
-    }
-    log.error(`Encountered error trying to find ${executionUrl}`, error);
-    throw (error);
-  }
-};
-
-/**
  * Looks up an Execution by executionUrl.
  *
  * @param {string} [executionUrl = ''] - Full url of stepfunction execution
@@ -287,9 +230,7 @@ module.exports = {
   isPostRDSDeploymentExecution,
   getAsyncOperationCumulusId,
   getExecution,
-  getExecutionCumulusId,
   getParentExecution,
-  getParentExecutionCumulusId,
   getProviderCumulusId,
   getCollectionCumulusId,
   getMessageProviderCumulusId,

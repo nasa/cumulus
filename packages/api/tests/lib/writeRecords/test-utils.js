@@ -13,8 +13,8 @@ const {
 const {
   isPostRDSDeploymentExecution,
   getAsyncOperationCumulusId,
-  getParentExecutionCumulusId,
-  getExecutionCumulusId,
+  getParentExecution,
+  getExecution,
   getCollectionCumulusId,
   getMessageProviderCumulusId,
   isStatusFinalState,
@@ -137,33 +137,37 @@ test('getAsyncOperationCumulusId returns undefined if async operation cannot be 
   t.is(await getAsyncOperationCumulusId(asyncOperationId, knex), undefined);
 });
 
-test('getParentExecutionCumulusId returns correct parent execution cumulus_id', async (t) => {
+test('getParentExecution returns correct parent execution', async (t) => {
   const { parentExecutionArn } = t.context;
+  const parentExecution = {
+    cumulus_id: 9,
+    created_at: new Date(),
+  };
 
   const fakeExecutionPgModel = {
-    getRecordCumulusId: (_, record) => {
+    get: (_, record) => {
       if (record.arn === parentExecutionArn) {
-        return Promise.resolve(9);
+        return Promise.resolve(parentExecution);
       }
       return Promise.resolve();
     },
   };
 
-  t.is(
-    await getParentExecutionCumulusId(parentExecutionArn, {}, fakeExecutionPgModel),
-    9
+  t.deepEqual(
+    await getParentExecution(parentExecutionArn, {}, fakeExecutionPgModel),
+    parentExecution
   );
 });
 
-test('getParentExecutionCumulusId returns undefined if no parent execution ARN is provided', async (t) => {
+test('getParentExecution returns undefined if no parent execution ARN is provided', async (t) => {
   const { knex } = t.context;
-  t.is(await getParentExecutionCumulusId(undefined, knex), undefined);
+  t.is(await getParentExecution(undefined, knex), undefined);
 });
 
-test('getParentExecutionCumulusId returns undefined if parent execution cannot be found', async (t) => {
+test('getParentExecution returns undefined if parent execution cannot be found', async (t) => {
   const { knex } = t.context;
   const parentExecutionArn = 'fake-parent-arn';
-  t.is(await getParentExecutionCumulusId(parentExecutionArn, knex), undefined);
+  t.is(await getParentExecution(parentExecutionArn, knex), undefined);
 });
 
 test('getCollectionCumulusId returns correct collection cumulus_id', async (t) => {
@@ -225,29 +229,33 @@ test('getMessageProviderCumulusId returns undefined if provider cannot be found'
   t.is(await getMessageProviderCumulusId(cumulusMessage, knex), undefined);
 });
 
-test('getExecutionCumulusId returns correct execution cumulus_id', async (t) => {
+test('getExecution returns correct execution cumulus_id', async (t) => {
   const executionUrl = `http://${cryptoRandomString({ length: 5 })}`;
+  const executionRecord = {
+    cumulus_id: 987,
+    created_at: new Date(),
+  };
   const fakeExecutionModel = {
-    getRecordCumulusId: (_, url) => {
-      if (url.url === executionUrl) return Promise.resolve(987);
+    get: (_, url) => {
+      if (url.url === executionUrl) return Promise.resolve(executionRecord);
       return Promise.resolve(undefined);
     },
   };
 
-  t.is(
-    await getExecutionCumulusId(executionUrl, {}, fakeExecutionModel),
-    987
+  t.deepEqual(
+    await getExecution(executionUrl, {}, fakeExecutionModel),
+    executionRecord
   );
 });
 
-test('getExecutionCumulusId returns undefined if there is no executionUrl passed.', async (t) => {
+test('getExecution returns undefined if there is no executionUrl passed.', async (t) => {
   const { knex } = t.context;
-  t.is(await getExecutionCumulusId(undefined, knex), undefined);
+  t.is(await getExecution(undefined, knex), undefined);
 });
 
-test('getExecutionCumulusId returns undefined if url cannot be found.', async (t) => {
+test('getExecution returns undefined if url cannot be found.', async (t) => {
   const { knex } = t.context;
-  t.is(await getExecutionCumulusId('https://example.com/still/not/in/db', knex), undefined);
+  t.is(await getExecution('https://example.com/still/not/in/db', knex), undefined);
 });
 
 test('isStatusFinalState returns true if status only if status is "completed" or "failed"', (t) => {
