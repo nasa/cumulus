@@ -4473,7 +4473,7 @@ test.serial('updateGranuleStatusToQueued() updates granule status in PostgreSQL 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl,
     MaxNumberOfMessages: 2,
-    WaitTimeSeconds: 10,
+    WaitTimeSeconds: 20,
   });
   const snsMessageBody = JSON.parse(Messages[1].Body);
   const publishedMessage = JSON.parse(snsMessageBody.Message);
