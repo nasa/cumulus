@@ -96,3 +96,9 @@ variable "dbRecreation" {
   description = "**Warning** Data loss will occur if set to 'true'. Boolean flag to set user database to be wiped and recreated on provision for each deploy"
   default     = true
 }
+
+variable "use_bootstrap" {
+  description = "Whether to run the bootstrap migrations when creating database schemas"
+  type        = bool
+  default     = false
+}

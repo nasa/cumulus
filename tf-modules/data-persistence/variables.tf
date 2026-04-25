@@ -63,3 +63,9 @@ variable "lambda_memory_sizes" {
   type        = map(number)
   default     = {}
 }
+
+variable "use_bootstrap" {
+  description = "Whether to run the bootstrap migrations when creating database schemas"
+  type        = bool
+  default     = false
+}
