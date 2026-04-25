@@ -6,29 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-- **CUMULUS-4576 Upgrade Cumulus to use the latest version of TEA (3.0.0)
-  ** UPGRADE NOTE: When upgrading the TEA module version, use a two-phase apply to prevent rollback failures
-  caused by Terraform destroying old lambda S3 objects before the CloudFormation stack update completes.
-
-### Migration Notes
-
-All core tasks that enqueue messages to launch workflows are updated to use collection defined cmrProvider. Any daac/consolidation tasks which perform the same function need to ensure they do the same.
-
-Phase 1 — upload new S3 objects and update CF stack (keeps old S3 objects intact as rollback targets if the CF update fails):
-   ````
-   terraform apply \
-     -target=module.thin_egress_app.aws_s3_object.cloudformation_template \
-     -target=module.thin_egress_app.aws_s3_object.lambda_source \
-     -target=module.thin_egress_app.aws_s3_object.lambda_code_dependency_archive \
-     -target=module.thin_egress_app.aws_s3_bucket.lambda_source \
-     -target=module.thin_egress_app.aws_cloudformation_stack.thin_egress_app \
-     -var-file=env/sandbox.tfvars
-   ````
-Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
-````terraform apply -var-file=env/sandbox.tfvars````
-
 ### Added
 
+- **CUMULUS-4710**
+  - Implement list of stats route in iceberg search api
+  - Add warming up of duckdb connections
 - **CUMULUS-4708**
   - Implement list of executions route in iceberg search api
 - **CUMULUS-4707**
@@ -49,6 +31,34 @@ Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
   - Update Async Operation container to new version 56, `cumuluss/async-operation:56`. Users should update their references to `async-operation` with the new version.
 
 ### Changed
+
+- **CSD-104**
+  - `PVLNumeric` now stores the original string value as `rawValue` before converting to `Number()`, preserving precision for large numeric strings.
+  - Fixed `PDRParsingError` when a PDR contains an MD5 `FILE_CKSUM_VALUE` that is an unquoted all-decimal string (e.g. `73806951753129206387143405718909`). The PVL parser previously classified such values as numeric, causing precision loss via JavaScript's `Number()` conversion. The original string is now preserved via `PVLNumeric.rawValue` and used for MD5 checksum validation.
+  - MD5 checksum values are now validated as 32-character hex strings, providing a clearer error message for values that are not valid MD5 hashes.
+
+- **CUMULUS-4576** Upgrade Cumulus to use the latest version of TEA (3.0.0)
+  ** UPGRADE NOTE: When upgrading the TEA module version, use a two-phase apply to prevent rollback failures
+  caused by Terraform destroying old lambda S3 objects before the CloudFormation stack update completes.
+
+  #### Migration Notes
+
+  All core tasks that enqueue messages to launch workflows are updated to use collection defined cmrProvider. Any daac/consolidation tasks which perform the same function need to ensure they do the same.
+
+  Phase 1 — upload new S3 objects and update CF stack (keeps old S3 objects intact as rollback targets if the CF update fails):
+   ````
+   terraform apply \
+     -target=module.thin_egress_app.aws_s3_object.cloudformation_template \
+     -target=module.thin_egress_app.aws_s3_object.lambda_source \
+     -target=module.thin_egress_app.aws_s3_object.lambda_code_dependency_archive \
+     -target=module.thin_egress_app.aws_s3_bucket.lambda_source \
+     -target=module.thin_egress_app.aws_cloudformation_stack.thin_egress_app \
+     -var-file=env/sandbox.tfvars
+   ````
+  Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
+  ````
+  terraform apply -var-file=env/sandbox.tfvars
+  ````
 
 - **CUMULUS-4788**
   - split replication service into multiple services, one for each replication table group

@@ -11,10 +11,26 @@ const proxyquire = require('proxyquire').noCallThru();
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Build a fake DuckDBConnection whose run() always resolves. */
-const makeFakeConnection = () => ({
-  run: sinon.stub().resolves(),
-});
+/** Build a fake DuckDBConnection with minimal SQL-aware run() behavior. */
+const makeFakeConnection = () => {
+  let glueAttached = false;
+
+  return {
+    run: sinon.stub().callsFake((sql) => {
+      if (/duckdb_databases\(\)/i.test(sql)) {
+        return {
+          getRows: () => [[glueAttached ? 1 : 0]],
+        };
+      }
+
+      if (/attach\s+'.*'\s+as\s+glue_iceberg/.test(sql)) {
+        glueAttached = true;
+      }
+
+      return undefined;
+    }),
+  };
+};
 
 /**
  * Build a fake DuckDBInstance.
@@ -48,7 +64,7 @@ const loadIcebergModule = (duckdbModule) =>
   });
 
 // ---------------------------------------------------------------------------
-// Shared env setup – use development mode so warmupConnection skips
+// Shared env setup – use development mode so getConnection skips
 // the production extension-path logic and SELECT version() call.
 // ---------------------------------------------------------------------------
 test.before(() => {
