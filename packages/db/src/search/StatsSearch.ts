@@ -94,7 +94,7 @@ class StatsSearch extends BaseSearch {
     }
     return {
       meta: {
-        name: 'cumulus-api',
+        name: this._metaTemplate().name,
         count: totalCount,
         field: this.field,
       },

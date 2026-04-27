@@ -114,10 +114,11 @@ resource "aws_lb_target_group" "iceberg_api" {
 
   health_check {
     path                = "/version"
-    matcher             = "200-399" # Accept any success or redirect code
-    interval            = 20
+    matcher             = "200"
+    interval            = 30
     timeout             = 10
-    unhealthy_threshold = 6
+    healthy_threshold   = 3
+    unhealthy_threshold = 3
   }
 
   lifecycle {
