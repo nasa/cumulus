@@ -33,7 +33,6 @@ const { CMR, getSearchUrl, ummVersion } = require('@cumulus/cmr-client');
 const { constructDistributionUrl } = require('@cumulus/distribution-utils');
 const { getBucketAccessUrl } = require('@cumulus/cmr-client/getUrl');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { waitForLockFileRelease } = require('@cumulus/api/lambdas/recreate-launchpad-token');
 const {
   xmlParseOptions,
   ummVersionToMetadataFormat,
@@ -1000,7 +999,7 @@ async function getCmrSettings(cmrConfig = {}) {
 
   if (oauthProvider === 'launchpad') {
     // checking for lock file and waiting for its release if it exists
-    await waitForLockFileRelease();
+    await launchpad.waitForLockFileRelease();
 
     const launchpadPassphraseSecretName = cmrConfig.passphraseSecretName
       || process.env.launchpad_passphrase_secret_name;

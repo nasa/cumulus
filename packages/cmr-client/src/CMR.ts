@@ -1,6 +1,7 @@
 import get from 'lodash/get';
 import got, { Headers } from 'got';
 import { CMRInternalError } from '@cumulus/errors';
+import { getValidLaunchpadToken } from '@cumulus/launchpad-auth';
 import Logger from '@cumulus/logger';
 import * as secretsManagerUtils from '@cumulus/aws-client/SecretsManager';
 import { getEDLToken } from './EarthdataLogin';
@@ -80,10 +81,10 @@ export class CMR {
   // concurrent workers do not call the refreshTokenLambda
   private refreshPromise?: Promise<void>;
 
-  clientId!: string;
-  provider!: string;
+  clientId?: string;
+  provider?: string;
   username?: string;
-  oauthProvider!: string;
+  oauthProvider?: string;
   password?: string;
   passwordSecretName?: string;
   token?: string;
@@ -180,22 +181,7 @@ export class CMR {
    */
   private async refreshLaunchpadToken(): Promise<void> {
     const refreshStartTime = Date.now();
-
-    // ADD LAUNCHPAD-AUTH LOGIC HERE WHICH REPLACES THE HANDLER
-
-    if (response.FunctionError) {
-      const payload = JSON.parse(new TextDecoder().decode(response.Payload));
-      throw new Error(`Token refresh failed: ${payload.errorMessage}`);
-    }
-
-    const payload = JSON.parse(new TextDecoder().decode(response.Payload));
-    const newToken = payload.token;
-
-    if (!newToken) {
-      throw new Error('Token refresh Lambda returned no token');
-    }
-
-    this.token = newToken;
+    this.token = await getValidLaunchpadToken();
     this.tokenTimestamp = refreshStartTime;
   }
 
