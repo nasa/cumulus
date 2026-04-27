@@ -314,13 +314,13 @@ variable "api_service_autoscaling_target_cpu" {
 variable "iceberg_s3_bucket" {
   description = "Name of the S3 bucket the Iceberg API task needs read access to"
   type        = string
-  default = ""
+  default     = ""
 }
 
 variable "iceberg_namespace" {
   description = "AWS Glue schema (database) name containing the Iceberg tables"
   type        = string
-  default = ""
+  default     = ""
 }
 
 variable "archive_api_users" {
@@ -614,6 +614,6 @@ variable "workflow_configurations" {
 
 variable "cumulus_iceberg_api_image_version" {
   description = "The version of the Cumulus Iceberg API image to use"
-  type = string
-  default = "latest"
+  type        = string
+  default     = "latest"
 }
