@@ -12,7 +12,6 @@ import getConceptMetadata from './getConcept';
 import { getIngestUrl } from './getUrl';
 import { UmmMetadata, ummVersion } from './UmmUtils';
 const log = new Logger({ sender: 'cmr-client' });
-const { LambdaClient, InvokeCommand } = require('@aws-sdk/client-lambda');
 const { getRequiredEnvVar } = require('@cumulus/common/env');
 
 const logDetails: { [key: string]: string } = {
@@ -182,16 +181,7 @@ export class CMR {
   private async refreshLaunchpadToken(): Promise<void> {
     const refreshStartTime = Date.now();
 
-    const lambda = new LambdaClient();
-    const response = await lambda.send(new InvokeCommand({
-      FunctionName: `${process.env.stackName}-recreateLaunchpadToken`,
-      InvocationType: 'RequestResponse',
-      Payload: JSON.stringify({ config: {
-        passphrase: this.passphrase,
-        api: this.api,
-        certificate: this.certificate,
-      } }),
-    }));
+    // ADD LAUNCHPAD-AUTH LOGIC HERE WHICH REPLACES THE HANDLER
 
     if (response.FunctionError) {
       const payload = JSON.parse(new TextDecoder().decode(response.Payload));
