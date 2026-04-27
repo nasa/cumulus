@@ -36,32 +36,15 @@ const lockFileKey = `${getEnvVar('stackName')}/launchpad-token-lock.json`;
 const tokenFileKey = `${getEnvVar('stackName')}/launchpad-token.json`;
 
 /**
- * Delete the existing token and create a Launchpad token using passphrase, API, and certificate.
- *
- * @returns {Promise<string>} - generated Launchpad token
- */
-async function generateLaunchpadToken(config: LaunchpadTokenParams) {
-  try {
-    await deleteS3Object(bucket, tokenFileKey);
-  } catch (error) {
-    if (error.name !== 'NoSuchKey' && error.name !== 'NotFound') {
-      throw error;
-    }
-  }
-
-  return await getLaunchpadToken(config);
-}
-
-/**
  * Poll S3 until the launchpad token lock file is NotFound or times out.
  *
  */
 async function waitForLockFileRelease() {
-  const retryOptions = { retries: 10 }
-  try{
-    await headObject(bucket, lockFileKey, retryOptions)
-  } catch(error) {
-    throw new Error(`Timed out waiting for launchpad token lock file to be released`);
+  const retryOptions = { retries: 10 };
+  try {
+    await headObject(bucket, lockFileKey, retryOptions);
+  } catch (error) {
+    throw new Error('Timed out waiting for launchpad token lock file to be released');
   }
 }
 
@@ -92,7 +75,7 @@ async function createLockFile() {
   return await s3PutObject({
     Bucket: bucket,
     Key: lockFileKey,
-  })
+  });
 }
 
 /**
@@ -106,7 +89,6 @@ function launchpadTokenBucketKey(): {
   Bucket: string,
   Key: string
 } {
-  const bucket = getEnvVar('system_bucket');
   const stackName = getEnvVar('stackName');
   return {
     Bucket: bucket,
@@ -251,6 +233,23 @@ async function waitAndReadToken(config: LaunchpadTokenParams) {
 }
 
 /**
+ * Delete the existing token and create a Launchpad token using passphrase, API, and certificate.
+ *
+ * @returns {Promise<string>} - generated Launchpad token
+ */
+async function generateLaunchpadToken(config: LaunchpadTokenParams) {
+  try {
+    await deleteS3Object(bucket, tokenFileKey);
+  } catch (error) {
+    if (error.name !== 'NoSuchKey' && error.name !== 'NotFound') {
+      throw error;
+    }
+  }
+
+  return await getLaunchpadToken(config);
+}
+
+/**
  * Lambda handler that checks for a lock file, generates a Launchpad token if needed,
  * stores it in S3, then re-invokes the calling Lambda.
  *
@@ -258,11 +257,10 @@ async function waitAndReadToken(config: LaunchpadTokenParams) {
  * @returns {Promise<Object>} - Result from the re-invoked Lambda
  */
 export async function getValidLaunchpadToken(params: any) {
-  const config = params.config || {};
   const launchpadConfig = {
-    passphrase: config.passphrase,
-    api: config.api,
-    certificate: config.certificate,
+    passphrase: params.passphrase,
+    api: params.api,
+    certificate: params.certificate,
   };
 
   let createdLock = false;

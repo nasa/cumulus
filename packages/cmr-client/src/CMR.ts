@@ -81,10 +81,10 @@ export class CMR {
   // concurrent workers do not call the refreshTokenLambda
   private refreshPromise?: Promise<void>;
 
-  clientId?: string;
-  provider?: string;
+  clientId!: string;
+  provider!: string;
   username?: string;
-  oauthProvider?: string;
+  oauthProvider!: string;
   password?: string;
   passwordSecretName?: string;
   token?: string;
@@ -181,7 +181,11 @@ export class CMR {
    */
   private async refreshLaunchpadToken(): Promise<void> {
     const refreshStartTime = Date.now();
-    this.token = await getValidLaunchpadToken();
+    this.token = await getValidLaunchpadToken({
+      passphrase: this.passphrase,
+      api: this.api,
+      certificate: this.certificate,
+    });
     this.tokenTimestamp = refreshStartTime;
   }
 
