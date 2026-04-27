@@ -72,6 +72,7 @@ const { version } = require('../../lib/version');
 const {
   createFakeJwtAuthToken,
   fakeAccessTokenFactory,
+  fakeCollectionFactory,
   fakeGranuleFactoryV2,
   setAuthorizedOAuthUsers,
   fakeExecutionFactoryV2,
@@ -104,7 +105,7 @@ process.env.backgroundQueueUrl = randomId('backgroundQueueUrl');
 const { app } = require('../../app');
 
 // import addGranules from serveUtils after setting env variables
-const { addGranules } = require('../../bin/serveUtils');
+const { addCollections, addGranules } = require('../../bin/serveUtils');
 
 async function runTestUsingBuckets(buckets, testFunction) {
   try {
@@ -3520,14 +3521,15 @@ test.serial('ServeUtils.addGranules adds associated files to Postgres', async (t
   const collectionName = randomString();
   const collectionVersion = '006';
 
-  const fakePgCollection = fakeCollectionRecordFactory({
+  const fakePgCollection = fakeCollectionFactory({
     name: collectionName,
     version: collectionVersion,
   });
 
-  const [pgCollection] = await collectionPgModel.create(
-    knex,
-    fakePgCollection
+  await addCollections([fakePgCollection], knex);
+
+  const [pgCollection] = await collectionPgModel.search(
+    t.context.knex, { name: collectionName, version: collectionVersion }
   );
 
   const newCollectionId = constructCollectionId(pgCollection.name, pgCollection.version);

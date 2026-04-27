@@ -99,8 +99,8 @@ async function addAsyncOperations(asyncOperations) {
   );
 }
 
-async function addCollections(collections) {
-  const knex = await getKnexClient({
+async function addCollections(collections, knexClient) {
+  const knex = knexClient || await getKnexClient({
     env: {
       ...envParams,
       ...localStackConnectionEnv,
