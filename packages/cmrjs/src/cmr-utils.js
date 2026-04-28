@@ -240,6 +240,33 @@ function granulesToCmrFileObjects(granules, filterFunc = isCMRFile) {
 }
 
 /**
+ * Run a CMR operation with retry logic for launchpad failures. If the operation fails with a
+ * 401, refresh the Launchpad token and retry.
+ *
+ * @param {CMR} cmrClient - the CMR client whose token should be refreshed on 401
+ * @param {() => Promise} operation - the CMR function with args to execute
+ * @param {Object} [options]
+ * @param {number} [options.retries=10] - number of retry attempts
+ * @returns {Promise} - result of CMR function call
+ */
+async function withCmrTokenRefreshRetry(cmrClient, operation, { retries = 10 } = {}) {
+  return await pRetry(
+    async () => {
+      try {
+        return await operation();
+      } catch (error) {
+        if (error.statusCode === 401) {
+          await cmrClient.checkRefreshLaunchpadToken();
+          throw error;
+        }
+        throw new pRetry.AbortError(error);
+      }
+    },
+    { retries }
+  );
+}
+
+/**
  * Posts CMR XML files from S3 to CMR.
  *
  * @param {Object} cmrFile - an object representing the cmr file
@@ -251,23 +278,12 @@ function granulesToCmrFileObjects(granules, filterFunc = isCMRFile) {
  * @returns {Promise<Object>} CMR's success response which includes the concept-id
  */
 async function publishECHO10XML2CMR(cmrFile, cmrClient, revisionId) {
-  let res;
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(cmrFile.metadataObject);
 
-  await pRetry(
-    async () => {
-      try {
-        res = await cmrClient.ingestGranule(xml, revisionId);
-      } catch (error) {
-        if (error.statusCode === 401) {
-          await cmrClient.checkRefreshLaunchpadToken();
-          throw error;
-        }
-        throw new pRetry.AbortError(error);
-      }
-    },
-    { retries: 10 } //hard-coded for now
+  const res = await withCmrTokenRefreshRetry(
+    cmrClient,
+    () => cmrClient.ingestGranule(xml, revisionId)
   );
 
   const conceptId = res.result['concept-id'];
@@ -297,22 +313,11 @@ async function publishECHO10XML2CMR(cmrFile, cmrClient, revisionId) {
  * @returns {Promise<Object>} CMR's success response which includes the concept-id
  */
 async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId) {
-  let res;
   const granuleId = cmrFile.metadataObject.GranuleUR;
 
-  await pRetry(
-    async () => {
-      try {
-        res = await cmrClient.ingestUMMGranule(cmrFile.metadataObject, revisionId);
-      } catch (error) {
-        if (error.statusCode === 401) {
-          await cmrClient.checkRefreshLaunchpadToken();
-          throw error;
-        }
-        throw new pRetry.AbortError(error);
-      }
-    },
-    { retries: 10 }
+  const res = await withCmrTokenRefreshRetry(
+    cmrClient,
+    () => cmrClient.ingestUMMGranule(cmrFile.metadataObject, revisionId)
   );
 
   const conceptId = res['concept-id'];
@@ -372,19 +377,9 @@ function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
  */
 async function removeFromCMR(granuleUR, creds) {
   const cmrClient = new CMR(creds);
-  return await pRetry(
-    async () => {
-      try {
-        return await cmrClient.deleteGranule(granuleUR);
-      } catch (error) {
-        if (error.statusCode === 401) {
-          await cmrClient.checkRefreshLaunchpadToken();
-          throw error;
-        }
-        throw new pRetry.AbortError(error);
-      }
-    },
-    { retries: 10 } //hard-coded for now
+  return await withCmrTokenRefreshRetry(
+    cmrClient,
+    () => cmrClient.deleteGranule(granuleUR)
   );
 }
 
@@ -1411,36 +1406,19 @@ function buildCMRQuery(results) {
  * containing the found collections
  */
 async function getCollectionsByShortNameAndVersion(results) {
-  let headers;
   const query = buildCMRQuery(results);
   const cmrClient = new CMR(await getCmrSettings());
-
-  await pRetry(
-    async () => {
-      try {
-        headers = cmrClient.getReadHeaders({ token: await cmrClient.getToken() });
-      } catch (error) {
-        if (error.statusCode === 401) {
-          await cmrClient.checkRefreshLaunchpadToken();
-          throw error;
-        }
-        throw new pRetry.AbortError(error);
+  const response = await withCmrTokenRefreshRetry(cmrClient, async () => {
+    const headers = cmrClient.getReadHeaders({ token: await cmrClient.getToken() });
+    return got.post(
+      `${getSearchUrl()}collections.json`,
+      {
+        json: query,
+        responseType: 'json',
+        headers: { Accept: 'application/json', ...headers },
       }
-    },
-    { retries: 10 } //hard-coded for now
-  );
-
-  const response = await got.post(
-    `${getSearchUrl()}collections.json`,
-    {
-      json: query,
-      responseType: 'json',
-      headers: {
-        Accept: 'application/json',
-        ...headers,
-      },
-    }
-  );
+    );
+  });
   return response.body;
 }
 

@@ -62,6 +62,9 @@ test.before(async (t) => {
     PG_DATABASE: testDbName,
   };
 
+  process.env.system_bucket = randomString();
+  process.env.stackName = randomString();
+
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.granulePgModel = new GranulePgModel();
 
