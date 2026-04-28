@@ -5,9 +5,22 @@ import Logger from '@cumulus/logger';
 import { prepareBindings } from './duckdbHelpers';
 import { Meta } from '../search/BaseSearch';
 import { DbQueryParameters } from '../types/search';
-import { acquireDuckDbConnection, releaseDuckDbConnection } from '../iceberg-connection';
+import { acquireDuckDbConnection, releaseDuckDbConnection, reconfigureDuckDbConnection } from '../iceberg-connection';
 
 const log = new Logger({ sender: '@cumulus/db/DuckDBSearchExecutor' });
+
+/**
+ * Returns true when the error is DuckDB's specific Catalog Error for a missing table,
+ * e.g. "Catalog Error: Table with name granules does not exist!"
+ */
+export function isCatalogError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+
+  return (
+    /^catalog error:\s*table with name\s+["']?[\w.-]+["']?\s+does not exist!/i
+      .test(error.message)
+  );
+}
 
 /**
  * DuckDBSearchExecutor is a helper class for executing search queries on DuckDB.
@@ -131,7 +144,17 @@ export async function executeDuckDBSearch(params: {
       getMetaTemplate,
       translateRecords: makeTranslateRecords(dbConnection),
     });
-    return await executor.query(() => builtQueries);
+
+    try {
+      return await executor.query(() => builtQueries);
+    } catch (error) {
+      if (!injectedConnection && isCatalogError(error)) {
+        log.warn('Catalog error detected; reconfiguring connection and retrying query once.', error);
+        await reconfigureDuckDbConnection(dbConnection);
+        return await executor.query(() => builtQueries);
+      }
+      throw error;
+    }
   } finally {
     if (!injectedConnection) {
       await releaseDuckDbConnection(dbConnection);

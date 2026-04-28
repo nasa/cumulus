@@ -297,3 +297,79 @@ test.serial('initializeDuckDb throws if ICEBERG_NAMESPACE is missing', async (t)
     { message: /ICEBERG_NAMESPACE environment variable is required/ }
   );
 });
+
+// ---------------------------------------------------------------------------
+// 7. Reconfigure recovery for stale glue_iceberg catalog/search_path
+// ---------------------------------------------------------------------------
+
+test.serial('reconfigureDuckDbConnection detaches/reattaches glue catalog when SET search_path fails with missing catalog+schema', async (t) => {
+  let glueAttached = true;
+  let searchPathAttempts = 0;
+
+  const conn = {
+    run: sinon.stub().callsFake((sql) => {
+      if (/duckdb_databases\(\)/i.test(sql)) {
+        return {
+          getRows: () => [[glueAttached ? 1 : 0]],
+        };
+      }
+
+      if (/^detach\s+glue_iceberg;$/i.test(sql.trim())) {
+        glueAttached = false;
+        return undefined;
+      }
+
+      if (/attach\s+'.*'\s+as\s+glue_iceberg/i.test(sql)) {
+        glueAttached = true;
+        return undefined;
+      }
+
+      if (/^set\s+search_path\s*=\s*'glue_iceberg\./i.test(sql.trim())) {
+        searchPathAttempts += 1;
+        if (searchPathAttempts === 1) {
+          throw new Error('Catalog Error: SET search_path: No catalog + schema named "glue_iceberg.test_schema" found.');
+        }
+      }
+
+      return undefined;
+    }),
+  };
+
+  const { reconfigureDuckDbConnection } = loadIcebergModule({});
+
+  await t.notThrowsAsync(() => reconfigureDuckDbConnection(conn));
+  t.is(searchPathAttempts, 2, 'SET search_path should be retried once after reattach recovery');
+
+  const executedSql = conn.run.getCalls().map((call) => call.args[0]);
+  t.true(executedSql.some((sql) => /^detach\s+glue_iceberg;$/i.test(sql.trim())));
+  t.true(executedSql.some((sql) => /attach\s+'.*'\s+as\s+glue_iceberg/i.test(sql)));
+});
+
+test.serial('reconfigureDuckDbConnection rethrows non-matching SET search_path errors without detach/reattach', async (t) => {
+  const conn = {
+    run: sinon.stub().callsFake((sql) => {
+      if (/duckdb_databases\(\)/i.test(sql)) {
+        return {
+          getRows: () => [[1]],
+        };
+      }
+
+      if (/^set\s+search_path\s*=\s*'glue_iceberg\./i.test(sql.trim())) {
+        throw new Error('Binder Error: invalid schema reference');
+      }
+
+      return undefined;
+    }),
+  };
+
+  const { reconfigureDuckDbConnection } = loadIcebergModule({});
+
+  await t.throwsAsync(
+    () => reconfigureDuckDbConnection(conn),
+    { message: 'Binder Error: invalid schema reference' }
+  );
+
+  const executedSql = conn.run.getCalls().map((call) => call.args[0]);
+  t.false(executedSql.some((sql) => /^detach\s+glue_iceberg;$/i.test(sql.trim())));
+  t.false(executedSql.some((sql) => /attach\s+'.*'\s+as\s+glue_iceberg/i.test(sql)));
+});

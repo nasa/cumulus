@@ -45,16 +45,45 @@ function getRequiredEnv(name: 'AWS_ACCOUNT_ID' | 'ICEBERG_NAMESPACE'): string {
 }
 
 /**
- * Creates a new DuckDB connection from the shared instance and fully configures it:
+ * Applies all session-level configuration to an existing DuckDB connection:
  * loads required extensions, applies performance settings, refreshes AWS credentials,
- * attaches the Iceberg Glue catalog, and sets the default search path to the configured namespace.
+ * attaches (or re-attaches) the Iceberg Glue catalog, and sets the default search path.
+ *
+ * Safe to call on a freshly created connection as well as on a pooled connection
+ * that has lost its catalog state (e.g. after being idle overnight).
  */
-async function getConnection(): Promise<DuckDBConnection> {
+async function configureConnection(conn: DuckDBConnection): Promise<void> {
   const isLocal = process.env.NODE_ENV === 'development';
   const awsAccountId = getRequiredEnv('AWS_ACCOUNT_ID');
   const glueSchema = getRequiredEnv('ICEBERG_NAMESPACE');
 
-  const conn = await instance!.connect();
+  const isSearchPathCatalogError = (error: unknown): boolean => {
+    if (!(error instanceof Error)) return false;
+    return /catalog error:\s*set search_path:\s*no catalog \+ schema named/i.test(error.message);
+  };
+
+  const isGlueIcebergAttached = async (): Promise<boolean> => {
+    const attached = await conn.run(
+      'SELECT count(*) FROM duckdb_databases() WHERE database_name = \'glue_iceberg\';'
+    );
+    const rows = await attached.getRows();
+    return (rows[0][0] as number) > 0;
+  };
+
+  const attachGlueCatalog = async (): Promise<void> => {
+    await conn.run(
+      `ATTACH '${awsAccountId}' AS glue_iceberg (TYPE iceberg, ENDPOINT_TYPE 'glue');`
+    );
+  };
+
+  const detachGlueCatalog = async (): Promise<void> => {
+    try {
+      await conn.run('DETACH glue_iceberg;');
+    } catch (error) {
+      log.warn('Failed to detach existing glue_iceberg catalog. Continuing with re-attach attempt.', error);
+    }
+  };
+
   if (isLocal) {
     await conn.run('INSTALL httpfs; LOAD httpfs;');
     await conn.run('INSTALL iceberg; LOAD iceberg;');
@@ -100,20 +129,45 @@ async function getConnection(): Promise<DuckDBConnection> {
   await conn.run('CREATE SECRET IF NOT EXISTS (TYPE S3, PROVIDER credential_chain);');
 
   // ATTACH is instance-level: only run it once; subsequent connections reuse the catalog.
-  const attached = await conn.run(
-    'SELECT count(*) FROM duckdb_databases() WHERE database_name = \'glue_iceberg\';'
-  );
-  const rows = await attached.getRows();
-  const alreadyAttached = (rows[0][0] as number) > 0;
+  const alreadyAttached = await isGlueIcebergAttached();
   if (!alreadyAttached) {
-    await conn.run(
-      `ATTACH '${awsAccountId}' AS glue_iceberg (TYPE iceberg, ENDPOINT_TYPE 'glue');`
-    );
+    await attachGlueCatalog();
   }
 
-  await conn.run(`SET search_path = 'glue_iceberg.${glueSchema}';`);
+  try {
+    await conn.run(`SET search_path = 'glue_iceberg.${glueSchema}';`);
+  } catch (error) {
+    if (!isSearchPathCatalogError(error)) {
+      throw error;
+    }
 
+    log.warn('SET search_path failed due to missing catalog/schema; forcing glue_iceberg re-attach and retrying once.', error);
+    if (await isGlueIcebergAttached()) {
+      await detachGlueCatalog();
+    }
+    await attachGlueCatalog();
+    await conn.run(`SET search_path = 'glue_iceberg.${glueSchema}';`);
+  }
+}
+
+/**
+ * Creates a new DuckDB connection from the shared instance and fully configures it.
+ */
+async function getConnection(): Promise<DuckDBConnection> {
+  const conn = await instance!.connect();
+  await configureConnection(conn);
   return conn;
+}
+
+/**
+ * Re-applies all session-level configuration to an existing pooled connection.
+ * Call this when a connection has lost its catalog state (e.g. "Table does not exist"
+ * Catalog errors after the server has been idle for an extended period).
+ */
+export async function reconfigureDuckDbConnection(conn: DuckDBConnection): Promise<void> {
+  log.info('Reconfiguring DuckDB connection due to lost catalog state...');
+  await configureConnection(conn);
+  log.info('DuckDB connection reconfigured successfully.');
 }
 
 /**
