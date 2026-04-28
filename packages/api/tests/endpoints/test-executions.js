@@ -1348,7 +1348,7 @@ test.serial('PUT /executions overwrites a completed record with a running record
   t.deepEqual(translatedExecution, expectedApiRecord);
 });
 
-test.serial.only('PUT /executions removes execution fields when nullified fields are passed in', async (t) => {
+test.serial('PUT /executions removes execution fields when nullified fields are passed in', async (t) => {
   const execution = fakeExecutionFactoryV2({
     collectionId: t.context.collectionId,
     parentArn: t.context.fakeApiExecutions[1].arn,
