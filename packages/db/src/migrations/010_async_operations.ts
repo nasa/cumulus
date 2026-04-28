@@ -1,4 +1,5 @@
 import { Knex } from 'knex';
+import { TIMESTAMP_PRECISION } from '../lib/migration';
 
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('async_operations', (table) => {
@@ -11,8 +12,8 @@ export async function up(knex: Knex): Promise<void> {
     table.text('status').notNullable();
     table.text('task_arn');
 
-    table.timestamp('created_at', { useTz: true, precision: 3 }).defaultTo(knex.fn.now(3));
-    table.timestamp('updated_at', { useTz: true, precision: 3 }).defaultTo(knex.fn.now(3));
+    table.timestamp('created_at', { useTz: true, precision: TIMESTAMP_PRECISION }).defaultTo(knex.fn.now(TIMESTAMP_PRECISION));
+    table.timestamp('updated_at', { useTz: true, precision: TIMESTAMP_PRECISION }).defaultTo(knex.fn.now(TIMESTAMP_PRECISION));
 
     table.index(
       ['status', 'operation_type', 'cumulus_id'],

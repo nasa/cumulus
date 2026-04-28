@@ -1,4 +1,5 @@
 import { Knex } from 'knex';
+import { TIMESTAMP_PRECISION } from '../lib/migration';
 
 export const up = async (knex: Knex): Promise<void> => {
   await knex.schema.createTable('providers', (table) => {
@@ -20,8 +21,8 @@ export const up = async (knex: Knex): Promise<void> => {
     table.text('cm_key_id');
     table.text('certificate_uri');
 
-    table.timestamp('created_at', { useTz: true, precision: 3 }).defaultTo(knex.fn.now(3));
-    table.timestamp('updated_at', { useTz: true, precision: 3 }).defaultTo(knex.fn.now(3));
+    table.timestamp('created_at', { useTz: true, precision: TIMESTAMP_PRECISION }).defaultTo(knex.fn.now(TIMESTAMP_PRECISION));
+    table.timestamp('updated_at', { useTz: true, precision: TIMESTAMP_PRECISION }).defaultTo(knex.fn.now(TIMESTAMP_PRECISION));
 
     table.specificType('allowed_redirects', 'text[]');
 

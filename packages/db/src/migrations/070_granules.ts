@@ -1,39 +1,14 @@
 import { Knex } from 'knex';
+import { getPartitionCount, TIMESTAMP_PRECISION } from '../lib/migration';
 
 const DEFAULT_PARTITION_COUNT = 8;
-const MAX_PARTITION_COUNT = 64;
-
-function getPartitionCount(): number {
-  const raw = process.env.GRANULES_PARTITION_COUNT;
-
-  const value = raw ? Number(raw) : DEFAULT_PARTITION_COUNT;
-
-  if (!Number.isInteger(value) || value <= 0) {
-    throw new Error(
-      `Invalid GRANULES_PARTITION_COUNT: "${raw}". Must be a positive integer.`
-    );
-  }
-
-  if (value > MAX_PARTITION_COUNT) {
-    throw new Error(
-      `GRANULES_PARTITION_COUNT (${value}) exceeds max allowed (${MAX_PARTITION_COUNT})`
-    );
-  }
-
-  // enforce power-of-two
-  // eslint-disable-next-line no-bitwise
-  if ((value & (value - 1)) !== 0) {
-    throw new Error(
-      `GRANULES_PARTITION_COUNT (${value}) must be a power of two (e.g., 4, 8, 16)`
-    );
-  }
-
-  return value;
-}
-
-const PARTITION_COUNT: number = getPartitionCount();
+const MAX_PARTITION_COUNT = 128;
 
 export const up = async (knex: Knex): Promise<void> => {
+  const PARTITION_COUNT: number = getPartitionCount(
+    'GRANULES_PARTITION_COUNT', DEFAULT_PARTITION_COUNT, MAX_PARTITION_COUNT
+  );
+
   // Parent partitioned table
   await knex.raw(`
     CREATE TABLE granules (
@@ -41,8 +16,8 @@ export const up = async (knex: Knex): Promise<void> => {
       granule_id TEXT NOT NULL,
       status TEXT NOT NULL,
       collection_cumulus_id INTEGER NOT NULL,
-      created_at TIMESTAMPTZ(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
-      updated_at TIMESTAMPTZ(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      created_at TIMESTAMPTZ(${TIMESTAMP_PRECISION}) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      updated_at TIMESTAMPTZ(${TIMESTAMP_PRECISION}) DEFAULT CURRENT_TIMESTAMP NOT NULL,
       published BOOLEAN,
       duration REAL,
       time_to_archive REAL,
@@ -59,7 +34,7 @@ export const up = async (knex: Knex): Promise<void> => {
       processing_start_date_time TIMESTAMPTZ,
       production_date_time TIMESTAMPTZ,
       query_fields JSONB,
-      "timestamp" TIMESTAMPTZ(3),
+      "timestamp" TIMESTAMPTZ(${TIMESTAMP_PRECISION}),
       producer_granule_id TEXT NOT NULL,
       archived BOOLEAN DEFAULT FALSE NOT NULL,
 

@@ -1,47 +1,22 @@
 import { Knex } from 'knex';
+import { getPartitionCount, TIMESTAMP_PRECISION } from '../lib/migration';
 
 const DEFAULT_PARTITION_COUNT = 8;
-const MAX_PARTITION_COUNT = 64;
-
-function getPartitionCount(): number {
-  const raw = process.env.FILES_PARTITION_COUNT;
-
-  const value = raw ? Number(raw) : DEFAULT_PARTITION_COUNT;
-
-  if (!Number.isInteger(value) || value <= 0) {
-    throw new Error(
-      `Invalid FILES_PARTITION_COUNT: "${raw}". Must be a positive integer.`
-    );
-  }
-
-  if (value > MAX_PARTITION_COUNT) {
-    throw new Error(
-      `FILES_PARTITION_COUNT (${value}) exceeds max allowed (${MAX_PARTITION_COUNT})`
-    );
-  }
-
-  // enforce power-of-two
-  // eslint-disable-next-line no-bitwise
-  if ((value & (value - 1)) !== 0) {
-    throw new Error(
-      `FILES_PARTITION_COUNT (${value}) must be a power of two (e.g., 4, 8, 16)`
-    );
-  }
-
-  return value;
-}
-
-const PARTITION_COUNT: number = getPartitionCount();
+const MAX_PARTITION_COUNT = 128;
 
 export const up = async (knex: Knex): Promise<void> => {
+  const PARTITION_COUNT: number = getPartitionCount(
+    'FILES_PARTITION_COUNT', DEFAULT_PARTITION_COUNT, MAX_PARTITION_COUNT
+  );
+
   // Parent partitioned table
   await knex.raw(`
     CREATE TABLE files (
       cumulus_id BIGSERIAL,
       granule_cumulus_id BIGINT NOT NULL,
       collection_cumulus_id INTEGER NOT NULL,
-      created_at TIMESTAMPTZ(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
-      updated_at TIMESTAMPTZ(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      created_at TIMESTAMPTZ(${TIMESTAMP_PRECISION}) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      updated_at TIMESTAMPTZ(${TIMESTAMP_PRECISION}) DEFAULT CURRENT_TIMESTAMP NOT NULL,
 
       file_size BIGINT,
       bucket TEXT NOT NULL,

@@ -1,4 +1,5 @@
 import { Knex } from 'knex';
+import { TIMESTAMP_PRECISION } from '../lib/migration';
 
 const BASE_YEAR = Number(process.env.EXECUTIONS_PARTITION_BASE_YEAR ?? 2026);
 const TOTAL_YEARS = Number(process.env.EXECUTIONS_PARTITION_TOTAL_YEARS ?? 2);
@@ -13,7 +14,7 @@ export const up = async (knex: Knex): Promise<void> => {
       async_operation_cumulus_id INTEGER,
       collection_cumulus_id INTEGER,
       parent_cumulus_id BIGINT,
-      parent_created_at TIMESTAMPTZ(3),
+      parent_created_at TIMESTAMPTZ(${TIMESTAMP_PRECISION}),
 
       cumulus_version TEXT,
       url TEXT,
@@ -29,10 +30,10 @@ export const up = async (knex: Knex): Promise<void> => {
       original_payload JSONB,
       final_payload JSONB,
 
-      "timestamp" TIMESTAMPTZ(3),
+      "timestamp" TIMESTAMPTZ(${TIMESTAMP_PRECISION}),
 
-      created_at TIMESTAMPTZ(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
-      updated_at TIMESTAMPTZ(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      created_at TIMESTAMPTZ(${TIMESTAMP_PRECISION}) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      updated_at TIMESTAMPTZ(${TIMESTAMP_PRECISION}) DEFAULT CURRENT_TIMESTAMP NOT NULL,
 
       archived BOOLEAN DEFAULT FALSE NOT NULL,
 
