@@ -8,7 +8,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "system_bucket_lifecycle_config
   dynamic "rule" {
     for_each = var.aws_s3_bucket_lifecycle_rules
     content {
-      id     = "${var.prefix}_{rule.value.id}"
+      id     = "${var.prefix}_${rule.value.id}"
       filter {
         prefix = "${var.prefix}${rule.value.prefix}"
       }

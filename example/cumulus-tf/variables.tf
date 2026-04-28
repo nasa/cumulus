@@ -566,16 +566,18 @@ variable "workflow_configurations" {
 variable "aws_s3_bucket_lifecycle_rules" {
   type = list(object(
     {
-      id = string
-      prefix = string
-      days = number
+      id      = string
+      prefix  = string
+      days    = number
+      status  = string
     }
   ))
   default = [
     {
-      id = "expire_temporary_execution_status_files"
-      prefix = "/data/execution-status/"
-      days = 1
+      id      = "expire_temporary_execution_status_files"
+      prefix  = "/data/execution-status/"
+      days    = 1
+      status  = "Enabled"
     }
   ]
   description = "List of lifecycle rules to apply to s3 bucket"
