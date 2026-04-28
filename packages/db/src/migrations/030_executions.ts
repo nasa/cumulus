@@ -135,6 +135,7 @@ export const up = async (knex: Knex): Promise<void> => {
 
   // COMMENTS
   await knex.raw(`
+    COMMENT ON TABLE executions IS 'Table to store Step Function execution records';
     COMMENT ON COLUMN executions.arn IS 'Execution ARN';
     COMMENT ON COLUMN executions.cumulus_version IS 'Cumulus version for the execution';
     COMMENT ON COLUMN executions.url IS 'Execution page url on AWS console';

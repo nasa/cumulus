@@ -78,6 +78,7 @@ export const up = async (knex: Knex): Promise<void> => {
   `);
 
   await knex.raw(`
+    COMMENT ON TABLE pdrs IS 'Table to track PDRs and their processing status';
     COMMENT ON COLUMN pdrs.cumulus_id IS 'Internal Cumulus ID for a PDR';
     COMMENT ON COLUMN pdrs.status IS 'Status (running, failed, completed) of the PDR';
     COMMENT ON COLUMN pdrs.name IS 'PDR name';

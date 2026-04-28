@@ -21,6 +21,10 @@ export const up = async (knex: Knex): Promise<void> => {
 
     table.primary(['granule_cumulus_id', 'execution_cumulus_id']);
   });
+
+  await knex.raw(`
+    COMMENT ON TABLE granules_executions IS 'Join table mapping granules to executions for processing tracking';
+  `);
 };
 
 export const down = async (knex: Knex): Promise<void> => {

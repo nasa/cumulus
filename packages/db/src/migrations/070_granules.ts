@@ -108,6 +108,7 @@ export const up = async (knex: Knex): Promise<void> => {
 
   // Comments
   await knex.raw(`
+    COMMENT ON TABLE granules IS 'Table to store granules, the smallest independently managed data units associated with a collection';
     COMMENT ON COLUMN granules.cumulus_id IS 'Internal Cumulus ID for a granule';
     COMMENT ON COLUMN granules.granule_id IS 'Granule ID';
     COMMENT ON COLUMN granules.status IS 'Ingest status of the granule';

@@ -43,6 +43,7 @@ export const up = async (knex: Knex): Promise<void> => {
   `);
 
   await knex.raw(`
+    COMMENT ON TABLE reconciliation_reports IS 'Table to store reconciliation reports and track their generation status';
     COMMENT ON COLUMN reconciliation_reports.name IS 'Reconciliation Report name';
     COMMENT ON COLUMN reconciliation_reports.type IS 'Type of Reconciliation Report';
     COMMENT ON COLUMN reconciliation_reports.status IS 'Status of Reconciliation Report';

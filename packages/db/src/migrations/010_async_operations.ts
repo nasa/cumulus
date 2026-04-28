@@ -58,6 +58,7 @@ export async function up(knex: Knex): Promise<void> {
   `);
 
   await knex.raw(`
+    COMMENT ON TABLE async_operations IS 'Table to track long-running asynchronous operations and their status';
     COMMENT ON COLUMN async_operations.id IS 'Unique ID for async operation';
     COMMENT ON COLUMN async_operations.description IS 'description for async operation';
     COMMENT ON COLUMN async_operations.operation_type IS 'type of async operation';

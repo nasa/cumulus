@@ -47,6 +47,7 @@ export async function up(knex: Knex): Promise<void> {
   `);
 
   await knex.raw(`
+    COMMENT ON TABLE collections IS 'Table to store Cumulus collections and their configuration for ingest and processing';
     COMMENT ON COLUMN collections.name IS 'Collection short_name registered with the CMR';
     COMMENT ON COLUMN collections.version IS 'The version registered with the CMR';
     COMMENT ON COLUMN collections.sample_file_name IS 'Example filename for this collection';

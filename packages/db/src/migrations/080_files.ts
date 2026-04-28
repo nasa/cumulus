@@ -60,6 +60,7 @@ export const up = async (knex: Knex): Promise<void> => {
 
   // Comments
   await knex.raw(`
+    COMMENT ON TABLE files IS 'Table to store files associated with granules, including storage location and metadata';
     COMMENT ON COLUMN files.cumulus_id IS 'Internal Cumulus ID for a file';
     COMMENT ON COLUMN files.file_size IS 'Size of file (bytes)';
     COMMENT ON COLUMN files.bucket IS 'AWS Bucket file is archived in';

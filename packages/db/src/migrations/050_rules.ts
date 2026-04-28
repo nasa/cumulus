@@ -51,6 +51,7 @@ export const up = async (knex: Knex): Promise<void> => {
   `);
 
   await knex.raw(`
+    COMMENT ON TABLE rules IS 'Table to store rules that trigger workflows based on defined criteria';
     COMMENT ON COLUMN rules.name IS 'Rule name';
     COMMENT ON COLUMN rules.workflow IS 'Workflow name to invoke for this rule';
     COMMENT ON COLUMN rules.type IS 'Specifies how workflows are invoked for this rule';

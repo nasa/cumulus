@@ -45,6 +45,7 @@ export const up = async (knex: Knex): Promise<void> => {
   `);
 
   await knex.raw(`
+    COMMENT ON TABLE providers IS 'Table to store data providers (ingest endpoints) used by Cumulus workflows';
     COMMENT ON COLUMN providers.name IS 'Provider name';
     COMMENT ON COLUMN providers.protocol IS 'Protocol for the provider';
     COMMENT ON COLUMN providers.host IS 'Host name for the provider';
