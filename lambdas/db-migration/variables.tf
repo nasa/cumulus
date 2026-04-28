@@ -50,5 +50,4 @@ variable "db_partition_config" {
 variable "use_bootstrap" {
   description = "Whether to run the bootstrap migrations when creating database schemas"
   type        = bool
-  default     = false
 }

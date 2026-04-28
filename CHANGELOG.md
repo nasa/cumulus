@@ -9,7 +9,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Breaking Changes
 
 - **CUMULUS-4780**
-  - This update is incompatible with existing database instances. You must build from a fresh database.
+  - Database Partitioning: The database schema has been rebuilt using a partitioned structure.
+  - Incompatibility: Because the table structures have fundamentally changed, existing databases
+    cannot be updated. A fresh database is required.
 
 ### Added
 
@@ -35,7 +37,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **async-operations-update**
   - Update Async Operation container to new version 56, `cumuluss/async-operation:56`. Users should update their references to `async-operation` with the new version.
 - **CUMULUS-4780**
-  - Implemented partitioned schema for the consolidated database and updated the code for compatibility.
+  - Implemented partitioned schema for the consolidated database tables.
+- **CUMULUS-4804**
+  - Updated application logic to ensure compatibility with partitioned database schemas.
 
 ### Changed
 

@@ -18,7 +18,8 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
 
     // IF USE_BOOTSTRAP is requested AND collections table is missing, use bootstrap.
     // OTHERWISE, fall back to standard migrations.
-    const selectedDir = (process.env.USE_BOOTSTRAP && !hasCollections)
+    const useBootstrapRequested = String(process.env.USE_BOOTSTRAP).toLowerCase() === 'true';
+    const selectedDir = (useBootstrapRequested && !hasCollections)
       ? path.join(__dirname, 'migrations-bootstrap')
       : path.join(__dirname, 'migrations');
 
