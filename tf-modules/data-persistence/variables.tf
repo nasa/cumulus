@@ -64,12 +64,6 @@ variable "lambda_memory_sizes" {
   default     = {}
 }
 
-variable "use_bootstrap" {
-  description = "Whether to run the bootstrap migrations when creating database schemas"
-  type        = bool
-  default     = false
-}
-
 variable "db_partition_config" {
   type = object({
     executions_base_year   = number
@@ -91,4 +85,10 @@ variable "db_partition_config" {
     granules_count         = 8
     files_count            = 8
   }
+}
+
+variable "use_bootstrap" {
+  description = "Whether to run the bootstrap migrations when creating database schemas"
+  type        = bool
+  default     = false
 }

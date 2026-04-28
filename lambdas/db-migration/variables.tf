@@ -32,12 +32,6 @@ variable "tags" {
   default = {}
 }
 
-variable "use_bootstrap" {
-  description = "Whether to run the bootstrap migrations when creating database schemas"
-  type        = bool
-  default     = false
-}
-
 variable "vpc_id" {
   type    = string
   default = null
@@ -51,4 +45,10 @@ variable "db_partition_config" {
     files_count            = number
   })
   description = "Partitioning settings for the database migration Lambda"
+}
+
+variable "use_bootstrap" {
+  description = "Whether to run the bootstrap migrations when creating database schemas"
+  type        = bool
+  default     = false
 }
