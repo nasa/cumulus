@@ -226,6 +226,7 @@ module "cumulus" {
   api_service_autoscaling_target_cpu = var.api_service_autoscaling_target_cpu
   iceberg_s3_bucket = var.iceberg_s3_bucket
   iceberg_namespace = var.iceberg_namespace
+  iceberg_health_check_grace_period_seconds = var.iceberg_health_check_grace_period_seconds
 }
 
 resource "aws_security_group" "no_ingress_all_egress" {

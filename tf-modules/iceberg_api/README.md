@@ -36,8 +36,6 @@ module "iceberg_api" {
   ecs_cluster_name         = "cumulus-cluster"
   ecs_cluster_instance_subnet_ids = ["subnet-12345678", "subnet-87654321"]
 
-  rds_security_group_id = "sg-12345678"
-
   api_service_autoscaling_min_capacity = 1
   api_service_autoscaling_max_capacity = 10
   api_service_autoscaling_target_cpu   = 70
@@ -67,7 +65,6 @@ module "iceberg_api" {
 | ecs_cluster_arn | ARN of the ECS cluster | `string` | n/a | yes |
 | ecs_cluster_name | Name of the ECS cluster | `string` | n/a | yes |
 | ecs_cluster_instance_subnet_ids | Subnet IDs for ECS cluster instances | `list(string)` | n/a | yes |
-| rds_security_group_id | ID of the RDS security group | `string` | n/a | yes |
 | api_service_autoscaling_min_capacity | Minimum capacity for API service autoscaling | `number` | `1` | no |
 | api_service_autoscaling_max_capacity | Maximum capacity for API service autoscaling | `number` | `10` | no |
 | api_service_autoscaling_target_cpu | Target CPU utilization for API service autoscaling | `number` | `70` | no |

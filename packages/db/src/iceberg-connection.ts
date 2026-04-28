@@ -7,6 +7,7 @@ let instance: DuckDBInstance | undefined;
 let initPromise: Promise<void> | undefined;
 let dbVersionCache: string | undefined;
 let poolCacheWarmupPromise: Promise<void> | undefined;
+let isPoolCacheWarmupComplete = false;
 
 const connectionPool: DuckDBConnection[] = [];
 const MAX_POOL_SIZE = Number(process.env.DUCKDB_MAX_POOL) || 3;
@@ -198,6 +199,7 @@ function startPoolCacheWarmup(): void {
   poolCacheWarmupPromise = (async () => {
     log.info('Starting background cache warmup for pooled DuckDB connections...');
     await Promise.all(connectionPool.map((conn) => populateConnectionCache(conn)));
+    isPoolCacheWarmupComplete = true;
     log.info('Background cache warmup for pooled connections complete.');
   })().catch((error) => {
     log.warn('Background cache warmup encountered an error. Continuing without blocking startup.', error);
@@ -283,6 +285,14 @@ export async function releaseDuckDbConnection(conn: DuckDBConnection): Promise<v
 }
 
 /**
+ * Check if DuckDB is initialized and ready without acquiring a connection.
+ * Used for lightweight health checks to avoid pool contention.
+ */
+export function isDuckDbReady(): boolean {
+  return instance !== undefined && connectionPool.length > 0 && isPoolCacheWarmupComplete;
+}
+
+/**
  * Cleanup function for graceful shutdown.
  */
 export async function destroyDuckDb(): Promise<void> {
@@ -292,4 +302,5 @@ export async function destroyDuckDb(): Promise<void> {
   initPromise = undefined;
   dbVersionCache = undefined;
   poolCacheWarmupPromise = undefined;
+  isPoolCacheWarmupComplete = false;
 }
