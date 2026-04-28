@@ -69,3 +69,26 @@ variable "use_bootstrap" {
   type        = bool
   default     = false
 }
+
+variable "db_partition_config" {
+  type = object({
+    executions_base_year   = number
+    executions_total_years = number
+    granules_count         = number
+    files_count            = number
+  })
+  description = <<EOT
+    Configuration for database table partitioning:
+    - executions_base_year: The starting year for time-based partitions in the 'executions' table.
+    - executions_total_years: How many years worth of quarterly partitions to generate for 'executions'.
+    - granules_count: The number of hash/bigint-based partitions to create for the 'granules' table.
+    - files_count: The number of hash/bigint-based partitions to create for the 'files' table.
+  EOT
+
+  default = {
+    executions_base_year   = 2026
+    executions_total_years = 2
+    granules_count         = 8
+    files_count            = 8
+  }
+}

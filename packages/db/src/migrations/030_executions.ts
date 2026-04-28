@@ -1,7 +1,7 @@
 import { Knex } from 'knex';
 
-const BASE_YEAR = Number(process.env.PARTITION_BASE_YEAR ?? 2026);
-const TOTAL_YEARS = 2;
+const BASE_YEAR = Number(process.env.EXECUTIONS_PARTITION_BASE_YEAR ?? 2026);
+const TOTAL_YEARS = Number(process.env.EXECUTIONS_PARTITION_TOTAL_YEARS ?? 2);
 
 export const up = async (knex: Knex): Promise<void> => {
   // Parent partitioned table
@@ -13,7 +13,7 @@ export const up = async (knex: Knex): Promise<void> => {
       async_operation_cumulus_id INTEGER,
       collection_cumulus_id INTEGER,
       parent_cumulus_id BIGINT,
-      parent_created_at TIMESTAMPTZ,
+      parent_created_at TIMESTAMPTZ(3),
 
       cumulus_version TEXT,
       url TEXT,
@@ -52,37 +52,27 @@ export const up = async (knex: Knex): Promise<void> => {
   `);
 
   // QUARTERLY PARTITIONS
-  const partitions: string[] = [];
+  const partitionQueries: string[] = [];
+  for (let yearOffset = 0; yearOffset < TOTAL_YEARS; yearOffset += 1) {
+    const y = BASE_YEAR + yearOffset;
 
-  for (let year = 0; year < TOTAL_YEARS; year += 1) {
-    const y = BASE_YEAR + year;
+    const quarters = [
+      { name: 'q1', from: `${y}-01-01`, to: `${y}-04-01` },
+      { name: 'q2', from: `${y}-04-01`, to: `${y}-07-01` },
+      { name: 'q3', from: `${y}-07-01`, to: `${y}-10-01` },
+      { name: 'q4', from: `${y}-10-01`, to: `${y + 1}-01-01` },
+    ];
 
-    partitions.push(`
-      CREATE TABLE executions_${y}_q1
-      PARTITION OF executions
-      FOR VALUES FROM ('${y}-01-01') TO ('${y}-04-01');
-    `);
-
-    partitions.push(`
-      CREATE TABLE executions_${y}_q2
-      PARTITION OF executions
-      FOR VALUES FROM ('${y}-04-01') TO ('${y}-07-01');
-    `);
-
-    partitions.push(`
-      CREATE TABLE executions_${y}_q3
-      PARTITION OF executions
-      FOR VALUES FROM ('${y}-07-01') TO ('${y}-10-01');
-    `);
-
-    partitions.push(`
-      CREATE TABLE executions_${y}_q4
-      PARTITION OF executions
-      FOR VALUES FROM ('${y}-10-01') TO ('${y + 1}-01-01');
-    `);
+    quarters.forEach((q) => {
+      partitionQueries.push(`
+        CREATE TABLE executions_${y}_${q.name}
+        PARTITION OF executions
+        FOR VALUES FROM ('${q.from}') TO ('${q.to}');
+      `);
+    });
   }
 
-  await knex.raw(partitions.join('\n'));
+  await knex.raw(partitionQueries.join('\n'));
 
   // INDEXES (on parent → propagate)
   await knex.raw(`
@@ -93,7 +83,7 @@ export const up = async (knex: Knex): Promise<void> => {
       ON executions (collection_cumulus_id);
 
     CREATE INDEX executions_parent_cumulus_id_index
-      ON executions (parent_cumulus_id);
+      ON executions (parent_cumulus_id, parent_created_at);
 
     CREATE INDEX executions_status_collection_cumulus_id_index
       ON executions (status, collection_cumulus_id, cumulus_id);

@@ -1,6 +1,37 @@
 import { Knex } from 'knex';
 
-const PARTITION_COUNT = 8;
+const DEFAULT_PARTITION_COUNT = 8;
+const MAX_PARTITION_COUNT = 64;
+
+function getPartitionCount(): number {
+  const raw = process.env.FILES_PARTITION_COUNT;
+
+  const value = raw ? Number(raw) : DEFAULT_PARTITION_COUNT;
+
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error(
+      `Invalid FILES_PARTITION_COUNT: "${raw}". Must be a positive integer.`
+    );
+  }
+
+  if (value > MAX_PARTITION_COUNT) {
+    throw new Error(
+      `FILES_PARTITION_COUNT (${value}) exceeds max allowed (${MAX_PARTITION_COUNT})`
+    );
+  }
+
+  // enforce power-of-two
+  // eslint-disable-next-line no-bitwise
+  if ((value & (value - 1)) !== 0) {
+    throw new Error(
+      `FILES_PARTITION_COUNT (${value}) must be a power of two (e.g., 4, 8, 16)`
+    );
+  }
+
+  return value;
+}
+
+const PARTITION_COUNT: number = getPartitionCount();
 
 export const up = async (knex: Knex): Promise<void> => {
   // Parent partitioned table

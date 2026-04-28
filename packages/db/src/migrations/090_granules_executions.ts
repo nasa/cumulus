@@ -20,6 +20,11 @@ export const up = async (knex: Knex): Promise<void> => {
       .onUpdate('CASCADE');
 
     table.primary(['granule_cumulus_id', 'execution_cumulus_id']);
+
+    table.index(
+      ['execution_cumulus_id', 'execution_created_at'],
+      'granules_executions_executions_fkey_idx'
+    );
   });
 
   await knex.raw(`

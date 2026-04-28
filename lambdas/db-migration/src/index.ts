@@ -5,8 +5,7 @@ export type Command = 'latest' | 'rollback';
 
 export interface HandlerEvent {
   command?: Command,
-  env?: NodeJS.ProcessEnv,
-  useBootstrap?: boolean // Add a flag to toggle bootstrap mode
+  env?: NodeJS.ProcessEnv
 }
 
 export const handler = async (event: HandlerEvent): Promise<void> => {
@@ -17,9 +16,9 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
 
     const hasCollections = await knex.schema.hasTable('collections');
 
-    // IF useBootstrap is requested AND collections table is missing, use bootstrap.
+    // IF USE_BOOTSTRAP is requested AND collections table is missing, use bootstrap.
     // OTHERWISE, fall back to standard migrations.
-    const selectedDir = (event.useBootstrap && !hasCollections)
+    const selectedDir = (process.env.USE_BOOTSTRAP && !hasCollections)
       ? path.join(__dirname, 'migrations-bootstrap')
       : path.join(__dirname, 'migrations');
 

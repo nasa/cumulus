@@ -1,6 +1,37 @@
 import { Knex } from 'knex';
 
-const PARTITION_COUNT = 8;
+const DEFAULT_PARTITION_COUNT = 8;
+const MAX_PARTITION_COUNT = 64;
+
+function getPartitionCount(): number {
+  const raw = process.env.GRANULES_PARTITION_COUNT;
+
+  const value = raw ? Number(raw) : DEFAULT_PARTITION_COUNT;
+
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error(
+      `Invalid GRANULES_PARTITION_COUNT: "${raw}". Must be a positive integer.`
+    );
+  }
+
+  if (value > MAX_PARTITION_COUNT) {
+    throw new Error(
+      `GRANULES_PARTITION_COUNT (${value}) exceeds max allowed (${MAX_PARTITION_COUNT})`
+    );
+  }
+
+  // enforce power-of-two
+  // eslint-disable-next-line no-bitwise
+  if ((value & (value - 1)) !== 0) {
+    throw new Error(
+      `GRANULES_PARTITION_COUNT (${value}) must be a power of two (e.g., 4, 8, 16)`
+    );
+  }
+
+  return value;
+}
+
+const PARTITION_COUNT: number = getPartitionCount();
 
 export const up = async (knex: Knex): Promise<void> => {
   // Parent partitioned table
@@ -34,8 +65,8 @@ export const up = async (knex: Knex): Promise<void> => {
 
       CONSTRAINT granules_pkey PRIMARY KEY (cumulus_id, collection_cumulus_id),
 
-      CONSTRAINT granules_collection_cumulus_id_granule_id_unique
-        UNIQUE (collection_cumulus_id, granule_id)
+      CONSTRAINT granules_granule_id_unique
+        UNIQUE (granule_id, collection_cumulus_id)
     )
     PARTITION BY HASH (collection_cumulus_id);
   `);
@@ -60,9 +91,6 @@ export const up = async (knex: Knex): Promise<void> => {
 
     CREATE INDEX granules_collection_updated_idx
       ON granules (collection_cumulus_id, updated_at);
-
-    CREATE INDEX granules_granule_id_index
-      ON granules (granule_id);
 
     CREATE INDEX granules_producer_granule_id_index
       ON granules (producer_granule_id);
