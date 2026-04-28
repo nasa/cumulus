@@ -140,6 +140,10 @@ export class CMR {
     return this.password;
   }
 
+  static resetInstance() {
+    CMR.instance = undefined as any;
+  }
+
   /**
    * The method for getting the token
    *

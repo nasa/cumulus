@@ -31,21 +31,22 @@ import { getEnvVar } from './utils';
 
 const log = new Logger({ sender: '@cumulus/launchpad-auth' });
 
-const bucket = getEnvVar('system_bucket');
-const lockFileKey = `${getEnvVar('stackName')}/launchpad-token-lock.json`;
-const tokenFileKey = `${getEnvVar('stackName')}/launchpad-token.json`;
+const getBucket = () => getEnvVar('system_bucket');
+const getLockFileKey = () => `${getEnvVar('stackName')}/launchpad/token-lock.json`;
+const getTokenFileKey = () => `${getEnvVar('stackName')}/launchpad/token.json`;
 
 /**
  * Poll S3 until the launchpad token lock file is NotFound or times out.
  *
  */
-async function waitForLockFileRelease() {
-  const retryOptions = { retries: 10 };
+async function waitForLockFileRelease(retries: number = 10) {
   try {
-    await headObject(bucket, lockFileKey, retryOptions);
+    await headObject(getBucket(), getLockFileKey(), { retries });
   } catch (error) {
-    throw new Error('Timed out waiting for launchpad token lock file to be released');
+    if (error.name === 'NotFound') return;
+    throw error;
   }
+  throw new Error('Timed out waiting for launchpad token lock file to be released');
 }
 
 /**
@@ -54,7 +55,7 @@ async function waitForLockFileRelease() {
  * @returns {Promise<boolean>} - True: if lock file exists
  */
 async function lockFileExists() {
-  return await fileExists(bucket, lockFileKey);
+  return await fileExists(getBucket(), getLockFileKey());
 }
 
 /**
@@ -63,7 +64,7 @@ async function lockFileExists() {
  * @returns {Promise<Object>} - S3 delete response
  */
 async function removeLockFile() {
-  return await deleteS3Object(bucket, lockFileKey);
+  return await deleteS3Object(getBucket(), getLockFileKey());
 }
 
 /**
@@ -73,8 +74,8 @@ async function removeLockFile() {
  */
 async function createLockFile() {
   return await s3PutObject({
-    Bucket: bucket,
-    Key: lockFileKey,
+    Bucket: getBucket(),
+    Key: getLockFileKey(),
   });
 }
 
@@ -91,7 +92,7 @@ function launchpadTokenBucketKey(): {
 } {
   const stackName = getEnvVar('stackName');
   return {
-    Bucket: bucket,
+    Bucket: getBucket(),
     Key: s3Join(stackName, 'launchpad/token.json'),
   };
 }
@@ -228,7 +229,8 @@ async function validateLaunchpadToken(
  * @returns {Promise<Object>} - S3 put response
  */
 async function waitAndReadToken(config: LaunchpadTokenParams) {
-  await waitForLockFileRelease();
+  const retries = 10;
+  await waitForLockFileRelease(retries);
   return await getLaunchpadToken(config);
 }
 
@@ -239,7 +241,7 @@ async function waitAndReadToken(config: LaunchpadTokenParams) {
  */
 async function generateLaunchpadToken(config: LaunchpadTokenParams) {
   try {
-    await deleteS3Object(bucket, tokenFileKey);
+    await deleteS3Object(getBucket(), getTokenFileKey());
   } catch (error) {
     if (error.name !== 'NoSuchKey' && error.name !== 'NotFound') {
       throw error;
@@ -302,5 +304,6 @@ module.exports = {
   lockFileExists,
   createLockFile,
   removeLockFile,
+  waitAndReadToken,
   waitForLockFileRelease,
 };

@@ -8,6 +8,7 @@ const { randomString } = require('../../common/test-utils');
 
 test.before((t) => {
   process.env.stackName = randomString();
+  process.env.system_bucket = randomString();
   t.context.testPrefix = 'unitTestStack';
   t.context.collectionName = 'testCollection/name';
   t.context.collectionVersion = randomId('abc/e-f-g-123');

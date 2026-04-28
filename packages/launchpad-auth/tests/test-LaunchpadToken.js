@@ -5,17 +5,16 @@ const cryptoRandomString = require('crypto-random-string');
 const nock = require('nock');
 const rewire = require('rewire');
 const sinon = require('sinon');
+const S3 = require('@cumulus/aws-client/S3');
 const {
   createBucket,
+  fileExists,
   deleteS3Object,
   recursivelyDeleteS3Bucket,
   s3PutObject,
-} = require('@cumulus/aws-client/S3');
+} = S3;
 
 const LaunchpadToken = require('../LaunchpadToken');
-const launchpad = rewire('..');
-const { getLaunchpadToken, validateLaunchpadToken } = launchpad;
-const launchpadTokenBucketKey = launchpad.__get__('launchpadTokenBucketKey');
 
 const randomString = () => cryptoRandomString({ length: 10 });
 
@@ -23,6 +22,7 @@ const certificate = 'pki_certificate';
 const bucket = randomString();
 const stackName = randomString();
 const api = 'https://www.example.com:12345/api/';
+const lockFileKey = `${stackName}/launchpad/token-lock.json`;
 
 process.env.system_bucket = bucket;
 process.env.stackName = stackName;
@@ -52,6 +52,19 @@ const validateTokenResponse = {
   status: 'success',
 };
 
+const launchpad = rewire('..');
+const {
+  getLaunchpadToken,
+  validateLaunchpadToken,
+  getValidLaunchpadToken,
+  generateLaunchpadToken,
+  lockFileExists,
+  createLockFile,
+  removeLockFile,
+  waitForLockFileRelease,
+} = launchpad;
+const launchpadTokenBucketKey = launchpad.__get__('launchpadTokenBucketKey');
+
 test.before(async () => {
   // let's copy the key to s3
   await createBucket(bucket);
@@ -72,6 +85,184 @@ test.after.always(async () => {
 test.afterEach((t) => {
   t.true(nock.isDone());
   nock.cleanAll();
+});
+
+test.serial('createLockFile writes a lock file to S3', async (t) => {
+  t.teardown(() => deleteS3Object(bucket, lockFileKey));
+
+  await createLockFile();
+  t.truthy(await fileExists(bucket, lockFileKey));
+});
+
+test.serial('removeLockFile deletes the lock file from S3', async (t) => {
+  await s3PutObject({ Bucket: bucket, Key: lockFileKey });
+
+  await removeLockFile();
+  t.falsy(await fileExists(bucket, lockFileKey));
+});
+
+test.serial('lockFileExists returns true when the lock file is present', async (t) => {
+  await s3PutObject({ Bucket: bucket, Key: lockFileKey });
+  t.teardown(() => deleteS3Object(bucket, lockFileKey));
+
+  t.truthy(await lockFileExists());
+});
+
+test.serial('lockFileExists returns false when no lock file is present', async (t) => {
+  t.falsy(await lockFileExists());
+});
+
+test.serial('waitForLockFileRelease resolves when the lock file is absent', async (t) => {
+  const retries = 2;
+  await t.notThrowsAsync(waitForLockFileRelease(retries));
+});
+
+test.serial('waitForLockFileRelease throws a timeout error when the lock file persists', async (t) => {
+  const retries = 2;
+  await s3PutObject({ Bucket: bucket, Key: lockFileKey });
+  t.teardown(() => deleteS3Object(bucket, lockFileKey));
+
+  await t.throwsAsync(
+    waitForLockFileRelease(retries),
+    { message: /Timed out waiting for launchpad token lock file/ }
+  );
+});
+
+test.serial('generateLaunchpadToken issues a fresh token even when a cached token exists', async (t) => {
+  const { Bucket, Key } = launchpadTokenBucketKey();
+  t.teardown(() => deleteS3Object(Bucket, Key));
+
+  await s3PutObject({
+    Bucket,
+    Key,
+    Body: JSON.stringify({
+      sm_token: 'stale-token',
+      session_maxtimeout: 3600,
+      session_starttime: Date.now() / 1000,
+    }),
+  });
+
+  const fresh = randomString();
+  nock('https://www.example.com:12345')
+    .get('/api/gettoken')
+    .reply(200, JSON.stringify({ ...getTokenResponse, sm_token: fresh }));
+
+  const result = await generateLaunchpadToken(config);
+  t.is(result, fresh);
+});
+
+test.serial('generateLaunchpadToken handles NoSuchKey when no token file exists', async (t) => {
+  const { Bucket, Key } = launchpadTokenBucketKey();
+  t.teardown(() => deleteS3Object(Bucket, Key));
+
+  const fresh = randomString();
+  nock('https://www.example.com:12345')
+    .get('/api/gettoken')
+    .reply(200, JSON.stringify({ ...getTokenResponse, sm_token: fresh }));
+
+  const result = await generateLaunchpadToken(config);
+  t.is(result, fresh);
+});
+
+test.serial('generateLaunchpadToken rethrows non-NoSuchKey/NotFound errors from S3 delete', async (t) => {
+  const stub = sinon.stub(S3, 'deleteS3Object').rejects(
+    Object.assign(new Error('boom'), { name: 'AccessDenied' })
+  );
+  t.teardown(() => stub.restore());
+
+  await t.throwsAsync(generateLaunchpadToken(config), { message: 'boom' });
+});
+
+test.serial('getValidLaunchpadToken waits and reads when a lock file already exists', async (t) => {
+  const cachedToken = randomString();
+  const { Bucket, Key } = launchpadTokenBucketKey();
+
+  await s3PutObject({
+    Bucket,
+    Key,
+    Body: JSON.stringify({
+      sm_token: cachedToken,
+      session_maxtimeout: 3600,
+      session_starttime: Date.now() / 1000,
+    }),
+  });
+  t.teardown(() => deleteS3Object(Bucket, Key));
+
+  t.teardown(launchpad.__set__('lockFileExists', sinon.stub().resolves(true)));
+  t.teardown(launchpad.__set__('waitForLockFileRelease', sinon.stub().resolves()));
+
+  const result = await getValidLaunchpadToken(config);
+  t.is(result, cachedToken);
+});
+
+test.serial('getValidLaunchpadToken creates the lock, generates a token, and removes the lock', async (t) => {
+  const newToken = randomString();
+  const createLockFileStub = sinon.stub().resolves();
+  const removeLockFileStub = sinon.stub().resolves();
+  const generateStub = sinon.stub().resolves(newToken);
+
+  t.teardown(launchpad.__set__('lockFileExists', sinon.stub().resolves(false)));
+  t.teardown(launchpad.__set__('createLockFile', createLockFileStub));
+  t.teardown(launchpad.__set__('removeLockFile', removeLockFileStub));
+  t.teardown(launchpad.__set__('generateLaunchpadToken', generateStub));
+
+  const result = await getValidLaunchpadToken(config);
+
+  t.is(result, newToken);
+  t.true(createLockFileStub.calledOnce);
+  t.true(generateStub.calledOnce);
+  t.true(removeLockFileStub.calledOnce);
+});
+
+test.serial('getValidLaunchpadToken falls back to wait-and-read when createLockFile races (PreconditionFailed)', async (t) => {
+  const cachedToken = randomString();
+  const { Bucket, Key } = launchpadTokenBucketKey();
+
+  await s3PutObject({
+    Bucket,
+    Key,
+    Body: JSON.stringify({
+      sm_token: cachedToken,
+      session_maxtimeout: 3600,
+      session_starttime: Date.now() / 1000,
+    }),
+  });
+  t.teardown(() => deleteS3Object(Bucket, Key));
+
+  const removeLockFileStub = sinon.stub().resolves();
+
+  t.teardown(launchpad.__set__('lockFileExists', sinon.stub().resolves(false)));
+  t.teardown(launchpad.__set__(
+    'createLockFile',
+    sinon.stub().rejects(Object.assign(new Error('lost race'), { name: 'PreconditionFailed' }))
+  ));
+  t.teardown(launchpad.__set__('removeLockFile', removeLockFileStub));
+  t.teardown(launchpad.__set__('waitForLockFileRelease', sinon.stub().resolves()));
+
+  const result = await getValidLaunchpadToken(config);
+
+  t.is(result, cachedToken);
+  t.false(removeLockFileStub.called);
+});
+
+test.serial('getValidLaunchpadToken removes the lock file even when token generation throws', async (t) => {
+  const removeLockFileStub = sinon.stub().resolves();
+
+  t.teardown(launchpad.__set__('lockFileExists', sinon.stub().resolves(false)));
+  t.teardown(launchpad.__set__('createLockFile', sinon.stub().resolves()));
+  t.teardown(launchpad.__set__('removeLockFile', removeLockFileStub));
+  t.teardown(launchpad.__set__('generateLaunchpadToken', sinon.stub().rejects(new Error('launchpad down'))));
+
+  await t.throwsAsync(getValidLaunchpadToken(config), { message: 'launchpad down' });
+  t.true(removeLockFileStub.calledOnce);
+});
+
+test.serial('getValidLaunchpadToken rethrows non-PreconditionFailed errors from createLockFile', async (t) => {
+  t.teardown(launchpad.__set__('lockFileExists', sinon.stub().resolves(false)));
+  t.teardown(launchpad.__set__('createLockFile', sinon.stub().rejects(new Error('s3 unreachable'))));
+  t.teardown(launchpad.__set__('removeLockFile', sinon.stub().resolves()));
+
+  await t.throwsAsync(getValidLaunchpadToken(config), { message: 's3 unreachable' });
 });
 
 test.serial('LaunchpadToken.requestToken returns token', async (t) => {

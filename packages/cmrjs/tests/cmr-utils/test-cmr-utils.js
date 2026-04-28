@@ -75,6 +75,8 @@ const cmrPassword = randomId('cmr-password');
 
 test.before(async (t) => {
   process.env.CMR_ENVIRONMENT = 'OPS';
+  process.env.system_bucket = randomString();
+  process.env.stackName = randomString();
 
   process.env.cmr_provider = 'CUMULUS-TEST';
   process.env.cmr_client_id = 'Cumulus-Client-Id';
@@ -1347,8 +1349,11 @@ test('getCmrSettings uses values in environment variables by default for launchp
   const credentials = await getCmrSettings({ oauthProvider: 'launchpad' });
 
   t.deepEqual(credentials, {
+    api: 'launchpad-api',
+    certificate: 'launchpad-cert',
     provider: 'CUMULUS-TEST',
     clientId: 'Cumulus-Client-Id',
+    passphrase: launchpadPassphrase,
     token: `${launchpadPassphrase}-launchpad-api-launchpad-cert`,
     oauthProvider: 'launchpad',
   });
@@ -1404,6 +1409,9 @@ test('getCmrSettings uses values in config for launchpad oauth', async (t) => {
     });
 
     t.deepEqual(credentials, {
+      api: 'test-api',
+      certificate: 'test-certificate',
+      passphrase: testPassphrase,
       provider: 'CUMULUS-TEST',
       clientId: 'Cumulus-Client-Id',
       token: `${testPassphrase}-test-api-test-certificate`,

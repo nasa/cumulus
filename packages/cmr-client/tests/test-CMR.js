@@ -16,6 +16,7 @@ test.before(() => {
 
 test.afterEach.always(() => {
   nock.cleanAll();
+  CMR.resetInstance();
 });
 
 test.after.always(() => {
@@ -72,7 +73,7 @@ test.serial('CMR.searchCollection handles paging correctly.', async (t) => {
   expected.forEach((expectedItem) => t.true(some(results, expectedItem)));
 });
 
-test('getWriteHeaders returns correct Content-type for UMMG metadata', (t) => {
+test.serial('getWriteHeaders returns correct Content-type for UMMG metadata', (t) => {
   const cmrInstance = new CMR({
     provider: 'provider',
     clientId: 'clientID',
@@ -85,7 +86,7 @@ test('getWriteHeaders returns correct Content-type for UMMG metadata', (t) => {
   t.is(headers.Accept, 'application/json');
 });
 
-test('getWriteHeaders returns correct Content-type for xml metadata by default', (t) => {
+test.serial('getWriteHeaders returns correct Content-type for xml metadata by default', (t) => {
   const cmrInstance = new CMR({
     provider: 'provider',
     clientId: 'clientID',
@@ -98,7 +99,7 @@ test('getWriteHeaders returns correct Content-type for xml metadata by default',
   t.is(headers.Accept, undefined);
 });
 
-test('getWriteHeaders returns Cmr-Revision-Id when provided', (t) => {
+test.serial('getWriteHeaders returns Cmr-Revision-Id when provided', (t) => {
   const cmrInstance = new CMR({
     provider: 'provider',
     clientId: 'clientID',
@@ -110,7 +111,7 @@ test('getWriteHeaders returns Cmr-Revision-Id when provided', (t) => {
   t.is(headers['Cmr-Revision-Id'], '100');
 });
 
-test('getWriteHeaders returns token for earthdata', (t) => {
+test.serial('getWriteHeaders returns token for earthdata', (t) => {
   const cmrInstance = new CMR({
     provider: 'provider',
     clientId: 'test-client-id',
@@ -123,7 +124,7 @@ test('getWriteHeaders returns token for earthdata', (t) => {
   t.is(headers.Authorization, '12345');
 });
 
-test('getWriteHeaders returns token for launchpad', (t) => {
+test.serial('getWriteHeaders returns token for launchpad', (t) => {
   const cmrInstance = new CMR({
     provider: 'provider',
     clientId: 'test-client-id',
@@ -137,7 +138,7 @@ test('getWriteHeaders returns token for launchpad', (t) => {
   t.is(headers.Authorization, '12345');
 });
 
-test('getReadHeaders returns clientId and token for earthdata', (t) => {
+test.serial('getReadHeaders returns clientId and token for earthdata', (t) => {
   const cmrInstance = new CMR({
     provider: 'provider',
     clientId: 'test-client-id',
@@ -151,7 +152,7 @@ test('getReadHeaders returns clientId and token for earthdata', (t) => {
   t.is(headers.Authorization, '12345');
 });
 
-test('getReadHeaders returns clientId and token for launchpad', (t) => {
+test.serial('getReadHeaders returns clientId and token for launchpad', (t) => {
   const cmrInstance = new CMR({
     provider: 'provider',
     clientId: 'test-client-id',
@@ -220,13 +221,13 @@ test.serial('ingestUMMGranule() throws an exception if the input fails validatio
   );
 });
 
-test('getCmrPassword returns the set password if no secret exists', async (t) => {
+test.serial('getCmrPassword returns the set password if no secret exists', async (t) => {
   const cmr = new CMR({ password: 'test-password' });
 
   t.is(await cmr.getCmrPassword(), 'test-password');
 });
 
-test('getCmrPassword returns password from AWS secret when set', async (t) => {
+test.serial('getCmrPassword returns password from AWS secret when set', async (t) => {
   // Store the CMR password
   const secretName = 'secret-name';
   await awsServices.secretsManager().createSecret({
@@ -246,7 +247,7 @@ test('getCmrPassword returns password from AWS secret when set', async (t) => {
   }
 });
 
-test('getToken returns a token when the user\'s token is provided', async (t) => {
+test.serial('getToken returns a token when the user\'s token is provided', async (t) => {
   const cmrObj = new CMR({
     provider: 'CUMULUS',
     clientId: 'clientId',
@@ -258,7 +259,7 @@ test('getToken returns a token when the user\'s token is provided', async (t) =>
   t.is(await cmrObj.getToken(), 'abcde');
 });
 
-test('getToken throws if no username is provided when using Earthdata Login', async (t) => {
+test.serial('getToken throws if no username is provided when using Earthdata Login', async (t) => {
   const cmrObj = new CMR({
     provider: 'CUMULUS',
     clientId: 'clientId',
