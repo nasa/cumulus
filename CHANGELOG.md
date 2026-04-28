@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Breaking Changes
+
+- **CUMULUS-4780**
+  - This update is incompatible with existing database instances. You must build from a fresh database.
+
 ### Added
 
 - **CUMULUS-4710**
@@ -30,7 +35,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **async-operations-update**
   - Update Async Operation container to new version 56, `cumuluss/async-operation:56`. Users should update their references to `async-operation` with the new version.
 - **CUMULUS-4780**
-  - Implemented partitioned schema for consolidated database
+  - Implemented partitioned schema for the consolidated database and updated the code for compatibility.
 
 ### Changed
 
