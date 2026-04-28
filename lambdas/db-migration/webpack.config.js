@@ -34,6 +34,10 @@ module.exports = {
           from: path.join(cumulusDbDir, 'dist/migrations-bootstrap'),
           to: 'migrations-bootstrap'
         },
+        {
+          from: path.join(cumulusDbDir, 'dist/lib'),
+          to: 'lib'
+        },
       ],
     }),
   ],
