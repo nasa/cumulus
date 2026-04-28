@@ -11,7 +11,8 @@ export async function up(knex: Knex): Promise<void> {
     table.text('status').notNullable();
     table.text('task_arn');
 
-    table.timestamps(false, true);
+    table.timestamp('created_at', { useTz: true, precision: 3 }).defaultTo(knex.fn.now(3));
+    table.timestamp('updated_at', { useTz: true, precision: 3 }).defaultTo(knex.fn.now(3));
 
     table.index(
       ['status', 'operation_type', 'cumulus_id'],

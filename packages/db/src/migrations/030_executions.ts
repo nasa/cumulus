@@ -29,7 +29,7 @@ export const up = async (knex: Knex): Promise<void> => {
       original_payload JSONB,
       final_payload JSONB,
 
-      "timestamp" TIMESTAMPTZ,
+      "timestamp" TIMESTAMPTZ(3),
 
       created_at TIMESTAMPTZ(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
       updated_at TIMESTAMPTZ(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,

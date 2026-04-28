@@ -30,7 +30,8 @@ test.before(async (t) => {
     table.increments('cumulus_id').primary();
     table.bigInteger('test_cumulus_id');
     table.text('info');
-    table.timestamps(false, true);
+    table.timestamp('created_at', { useTz: true, precision: 3 }).defaultTo(t.context.knex.fn.now(3));
+    table.timestamp('updated_at', { useTz: true, precision: 3 }).defaultTo(t.context.knex.fn.now(3));
   });
   await t.context.knex.schema.createTable(t.context.emptyTableName, (table) => {
     table.increments('cumulus_id').primary();

@@ -20,7 +20,8 @@ export const up = async (knex: Knex): Promise<void> => {
     table.text('cm_key_id');
     table.text('certificate_uri');
 
-    table.timestamps(false, true);
+    table.timestamp('created_at', { useTz: true, precision: 3 }).defaultTo(knex.fn.now(3));
+    table.timestamp('updated_at', { useTz: true, precision: 3 }).defaultTo(knex.fn.now(3));
 
     table.specificType('allowed_redirects', 'text[]');
 

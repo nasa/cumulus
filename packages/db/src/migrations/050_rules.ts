@@ -30,7 +30,8 @@ export const up = async (knex: Knex): Promise<void> => {
 
     table.text('queue_url');
 
-    table.timestamps(false, true);
+    table.timestamp('created_at', { useTz: true, precision: 3 }).defaultTo(knex.fn.now(3));
+    table.timestamp('updated_at', { useTz: true, precision: 3 }).defaultTo(knex.fn.now(3));
 
     table.unique(['name']);
 

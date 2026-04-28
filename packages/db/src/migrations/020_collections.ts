@@ -24,7 +24,8 @@ export async function up(knex: Knex): Promise<void> {
     table.jsonb('meta');
     table.jsonb('tags');
 
-    table.timestamps(false, true);
+    table.timestamp('created_at', { useTz: true, precision: 3 }).defaultTo(knex.fn.now(3));
+    table.timestamp('updated_at', { useTz: true, precision: 3 }).defaultTo(knex.fn.now(3));
 
     table.text('cmr_provider').notNullable();
 

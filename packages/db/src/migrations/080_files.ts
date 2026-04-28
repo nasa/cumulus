@@ -9,8 +9,8 @@ export const up = async (knex: Knex): Promise<void> => {
       cumulus_id BIGSERIAL,
       granule_cumulus_id BIGINT NOT NULL,
       collection_cumulus_id INTEGER NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
-      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      created_at TIMESTAMPTZ(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      updated_at TIMESTAMPTZ(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
 
       file_size BIGINT,
       bucket TEXT NOT NULL,
