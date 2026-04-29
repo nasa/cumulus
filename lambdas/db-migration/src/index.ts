@@ -14,28 +14,32 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
     const env = event.env ?? process.env;
     knex = await getKnexClient({ env });
 
-    const hasCollections = await knex.schema.hasTable('collections');
-
-    // IF USE_BOOTSTRAP is requested AND collections table is missing, use bootstrap.
-    // OTHERWISE, fall back to standard migrations.
-    const useBootstrapRequested = process.env.USE_BOOTSTRAP?.toLowerCase() === 'true';
-    const selectedDir = (useBootstrapRequested && !hasCollections)
-      ? path.join(__dirname, 'migrations-bootstrap')
-      : path.join(__dirname, 'migrations');
-
-    const migrationConfig = {
-      directory: selectedDir,
-    };
-
     const command = event.command ?? 'latest';
+    const useBootstrapRequested = process.env.USE_BOOTSTRAP?.toLowerCase() === 'true';
+
+    const bootstrapDir = path.join(__dirname, 'migrations-bootstrap');
+    const standardDir = path.join(__dirname, 'migrations');
 
     switch (command) {
-      case 'latest':
-        await knex.migrate.latest(migrationConfig);
+      case 'latest': {
+        // LATEST: Only use bootstrap if requested AND the database is empty
+        const hasCollections = await knex.schema.hasTable('collections');
+        const selectedDir = (useBootstrapRequested && !hasCollections)
+          ? bootstrapDir
+          : standardDir;
+
+        await knex.migrate.latest({ directory: selectedDir });
         break;
-      case 'rollback':
-        await knex.migrate.rollback(migrationConfig);
+      }
+      case 'rollback': {
+        // ROLLBACK: Strictly follow the environment variable toggle
+        const selectedDir = useBootstrapRequested
+          ? bootstrapDir
+          : standardDir;
+
+        await knex.migrate.rollback({ directory: selectedDir });
         break;
+      }
       default:
         throw new Error(`Invalid command: ${command}`);
     }

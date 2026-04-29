@@ -16,8 +16,17 @@
     "build-lambda-zip": "(cd dist/webpack && node ../../../../bin/zip.js lambda.zip index.js migrations/*.js migrations-bootstrap/*.js lib/*.js)",
     "package": "npm run clean && npm run tsc && npm run webpack && npm run build-lambda-zip",
     "build": "npm run tsc",
+    "test": "../../node_modules/.bin/ava",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "tsc": "rm -rf dist && ../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"
+  },
+  "ava": {
+    "files": [
+      "tests/*.js"
+    ],
+    "timeout": "2m"
   },
   "dependencies": {
     "@cumulus/db": "21.3.3",
