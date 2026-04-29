@@ -3,6 +3,7 @@ import { Knex } from 'knex';
 import { BasePgModel } from './base';
 import { TableNames } from '../tables';
 
+import { isCollisionError } from '../lib/errors';
 import { PostgresFile, PostgresFileRecord } from '../types/file';
 
 class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
@@ -26,8 +27,8 @@ class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
           .insert(files)
           .returning('*'));
     } catch (error: any) {
-      // Catch the unique_violation (23505) thrown the trigger
-      if (error.code === '23505') {
+      // Catch the unique_violation thrown the trigger
+      if (isCollisionError(error)) {
         return await knexOrTrx.transaction(async (trx) => {
           const results: PostgresFileRecord[] = [];
           for (const file of files) {

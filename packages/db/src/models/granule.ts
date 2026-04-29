@@ -9,6 +9,7 @@ import { BasePgModel } from './base';
 import { ExecutionPgModel } from './execution';
 import { translateDateToUTC } from '../lib/timestamp';
 import { getSortFields } from '../lib/sort';
+import { isCollisionError } from '../lib/errors';
 
 interface RecordSelect {
   cumulus_id: number
@@ -182,7 +183,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
           .returning('*'));
     } catch (error) {
       // Trigger-raised duplicate, fallback to update
-      if (error.code === '23505') {
+      if (isCollisionError(error)) {
         // outer transaction is NOT aborted
         return await updateQuery; // may be []
       }

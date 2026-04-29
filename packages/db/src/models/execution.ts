@@ -5,6 +5,7 @@ import { TableNames } from '../tables';
 
 import { PostgresExecution, PostgresExecutionRecord } from '../types/execution';
 import { getSortFields } from '../lib/sort';
+import { isCollisionError } from '../lib/errors';
 class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionRecord> {
   constructor() {
     super({
@@ -44,8 +45,8 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
     } catch (error) {
       // Trigger-raised duplicate, fallback to update
       // Attempt update (should affect at most 1 row due to global uniqueness invariant)
-      if (error.code === '23505') {
-        const updated = await await knexOrTrx(this.tableName)
+      if (isCollisionError(error)) {
+        const updated = await knexOrTrx(this.tableName)
           .where('arn', execution.arn)
           .limit(1) // defensive (not enforced by PG)
           .update(updatePayload)
