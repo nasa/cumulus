@@ -44,9 +44,9 @@ export interface CMRConstructorParams {
   token?: string,
   username?: string,
   oauthProvider: string,
-  passphrase?: string;
-  api?: string;
-  certificate?: string;
+  passphrase?: string,
+  api?: string,
+  certificate?: string,
 }
 
 /**
