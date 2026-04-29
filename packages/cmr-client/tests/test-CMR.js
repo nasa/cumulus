@@ -16,6 +16,10 @@ test.before(() => {
 
 test.afterEach.always(() => {
   nock.cleanAll();
+  /* since the CMR class follows a singleton pattern, and in the tests below we create multiple
+  CMR instances to test a variety of different configurations, it is neccessary to reset the
+  CMR instance per suite so the suites can work with the respective one they create
+  */
   CMR.resetInstance();
 });
 

@@ -95,14 +95,14 @@ test.serial('createLockFile writes a lock file to S3', async (t) => {
 });
 
 test.serial('removeLockFile deletes the lock file from S3', async (t) => {
-  await s3PutObject({ Bucket: bucket, Key: lockFileKey });
+  await createLockFile();
 
   await removeLockFile();
   t.falsy(await fileExists(bucket, lockFileKey));
 });
 
 test.serial('lockFileExists returns true when the lock file is present', async (t) => {
-  await s3PutObject({ Bucket: bucket, Key: lockFileKey });
+  await createLockFile();
   t.teardown(() => deleteS3Object(bucket, lockFileKey));
 
   t.truthy(await lockFileExists());
@@ -113,13 +113,13 @@ test.serial('lockFileExists returns false when no lock file is present', async (
 });
 
 test.serial('waitForLockFileRelease resolves when the lock file is absent', async (t) => {
-  const retries = 2;
+  const retries = 0;
   await t.notThrowsAsync(waitForLockFileRelease(retries));
 });
 
 test.serial('waitForLockFileRelease throws a timeout error when the lock file persists', async (t) => {
   const retries = 2;
-  await s3PutObject({ Bucket: bucket, Key: lockFileKey });
+  await createLockFile();
   t.teardown(() => deleteS3Object(bucket, lockFileKey));
 
   await t.throwsAsync(
@@ -214,7 +214,7 @@ test.serial('getValidLaunchpadToken creates the lock, generates a token, and rem
   t.true(removeLockFileStub.calledOnce);
 });
 
-test.serial('getValidLaunchpadToken falls back to wait-and-read when createLockFile races (PreconditionFailed)', async (t) => {
+test.serial('getValidLaunchpadToken falls back to wait-and-read when createLockFile races', async (t) => {
   const cachedToken = randomString();
   const { Bucket, Key } = launchpadTokenBucketKey();
 

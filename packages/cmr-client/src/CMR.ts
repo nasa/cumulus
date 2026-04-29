@@ -44,7 +44,6 @@ export interface CMRConstructorParams {
   token?: string,
   username?: string,
   oauthProvider: string,
-  tokenTimestamp?: number
   passphrase?: string;
   api?: string;
   certificate?: string;
@@ -88,7 +87,6 @@ export class CMR {
   password?: string;
   passwordSecretName?: string;
   token?: string;
-  tokenTimestamp?: number;
   passphrase?: string;
   api?: string;
   certificate?: string;
@@ -108,7 +106,6 @@ export class CMR {
     this.passwordSecretName = params.passwordSecretName;
     this.token = params.token;
     this.oauthProvider = params.oauthProvider;
-    this.tokenTimestamp = Date.now();
     this.passphrase = params.passphrase;
     this.api = params.api;
     this.certificate = params.certificate;
@@ -140,6 +137,11 @@ export class CMR {
     return this.password;
   }
 
+  /**
+   * Resets the CMR singleton instance to undefined, only used for testing with
+   * suites that create multiple instances in sequence.
+   *
+   */
   static resetInstance() {
     CMR.instance = undefined as any;
   }
@@ -162,7 +164,10 @@ export class CMR {
   }
 
   /**
-   * Checks if a worker calling the cmrClient is in the process of creating a new launchpad token
+   * Checks if a process calling the cmrClient is in the middle of creating a new launchpad token.
+   * This function is called when a 401 launchpad auth error is encountered when using a launchpad
+   * token for cmr calls. It calls refreshLaunchpadToken and stores the refreshPromise
+   * so other calls that want to get a launchpad token know that a process is already doing that.
    *
    * @returns {Promise.<void>} refresh promise
    */
@@ -179,18 +184,19 @@ export class CMR {
   }
 
   /**
-   * Refreshes the launchpad token due to authentication failures with launchpad/CMR
+   * Refreshes the launchpad token due to authentication failures with launchpad/CMR. This function
+   * calls getValidLaunchpadToken which creates a lock file in S3 at the token's location, to tell
+   * other processes that a token recreation is in progress, fetches a new token from launchpad,
+   * stores it as a part of the CMR singleton class, and then use that one
    *
    * @returns {Promise.<void>} refresh promise
    */
   private async refreshLaunchpadToken(): Promise<void> {
-    const refreshStartTime = Date.now();
     this.token = await getValidLaunchpadToken({
       passphrase: this.passphrase,
       api: this.api,
       certificate: this.certificate,
     });
-    this.tokenTimestamp = refreshStartTime;
   }
 
   /**

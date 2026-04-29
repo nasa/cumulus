@@ -1,5 +1,5 @@
 /**
- * Utility functions for generating and validating Launchpad tokens
+ * Utility functions for generating, refreshing, and validating Launchpad tokens
  *
  * @module launchpad-auth
  */
@@ -38,8 +38,10 @@ const getTokenFileKey = () => `${getEnvVar('stackName')}/launchpad/token.json`;
 /**
  * Poll S3 until the launchpad token lock file is NotFound or times out.
  *
+ * @param {number} retries - number of retries in trying to find the lock file, defaults to 5
+ *
  */
-async function waitForLockFileRelease(retries: number = 10) {
+async function waitForLockFileRelease(retries: number = 5) {
   try {
     await headObject(getBucket(), getLockFileKey(), { retries });
   } catch (error) {
@@ -50,16 +52,16 @@ async function waitForLockFileRelease(retries: number = 10) {
 }
 
 /**
- * Check if lock file exists in S3.
+ * Check if the lock file exists in S3.
  *
- * @returns {Promise<boolean>} - True: if lock file exists
+ * @returns {Promise<boolean>} - boolean for whether or not the lock file exists
  */
 async function lockFileExists() {
   return await fileExists(getBucket(), getLockFileKey());
 }
 
 /**
- * Remove lock file from S3.
+ * Remove the launchpad token lock file from S3.
  *
  * @returns {Promise<Object>} - S3 delete response
  */
@@ -68,7 +70,8 @@ async function removeLockFile() {
 }
 
 /**
- * Create a lock file in S3
+ * Create a launchpad token lock file in S3, lets other processes know that a new launchpad token is
+ * actively being created by another process
  *
  * @returns {Promise<Object>} - S3 put response
  */
@@ -226,7 +229,12 @@ async function validateLaunchpadToken(
 /**
  * Wait for the lock file to release and read/return the created token
  *
- * @returns {Promise<Object>} - S3 put response
+ * @param {Object} params - the configuration parameters for creating LaunchpadToken object
+ * @param {string} params.api - the Launchpad token service api endpoint
+ * @param {string} params.passphrase - the passphrase of the Launchpad PKI certificate
+ * @param {string} params.certificate - the name of the Launchpad PKI pfx certificate
+ *
+ * @returns {Promise<string>} - the Launchpad token
  */
 async function waitAndReadToken(config: LaunchpadTokenParams) {
   const retries = 10;
@@ -235,7 +243,12 @@ async function waitAndReadToken(config: LaunchpadTokenParams) {
 }
 
 /**
- * Delete the existing token and create a Launchpad token using passphrase, API, and certificate.
+ * Remove the failing existing token and create a new launchpad token using the launchpad config
+ *
+ * @param {Object} params - the configuration parameters for creating LaunchpadToken object
+ * @param {string} params.api - the Launchpad token service api endpoint
+ * @param {string} params.passphrase - the passphrase of the Launchpad PKI certificate
+ * @param {string} params.certificate - the name of the Launchpad PKI pfx certificate
  *
  * @returns {Promise<string>} - generated Launchpad token
  */
@@ -255,23 +268,21 @@ async function generateLaunchpadToken(config: LaunchpadTokenParams) {
  * Lambda handler that checks for a lock file, generates a Launchpad token if needed,
  * stores it in S3, then re-invokes the calling Lambda.
  *
- * @param {Object} params - Payload with callerEvent and callerFunctionName
- * @returns {Promise<Object>} - Result from the re-invoked Lambda
+ * @param {Object} params - the configuration parameters for creating LaunchpadToken object
+ * @param {string} params.api - the Launchpad token service api endpoint
+ * @param {string} params.passphrase - the passphrase of the Launchpad PKI certificate
+ * @param {string} params.certificate - the name of the Launchpad PKI pfx certificate
+ *
+ * @returns {Promise<string>} - valid Launchpad token
  */
-export async function getValidLaunchpadToken(params: any) {
-  const launchpadConfig = {
-    passphrase: params.passphrase,
-    api: params.api,
-    certificate: params.certificate,
-  };
-
+export async function getValidLaunchpadToken(params: LaunchpadTokenParams) {
   let createdLock = false;
   try {
     const isLocked = await lockFileExists();
 
     if (isLocked) {
       // Someone else is creating the token, wait for lock file release and just use that one
-      return await waitAndReadToken(launchpadConfig);
+      return await waitAndReadToken(params);
     }
     // lock is not there, so we can create it here and try to make the token
     try {
@@ -282,10 +293,10 @@ export async function getValidLaunchpadToken(params: any) {
         throw err;
       }
       // Lost the token-creating race, so we wait and read like before
-      return await waitAndReadToken(launchpadConfig);
+      return await waitAndReadToken(params);
     }
 
-    return await generateLaunchpadToken(launchpadConfig);
+    return await generateLaunchpadToken(params);
   } catch (error) {
     log.error('Error during Launchpad token generation:', error);
     throw error;
