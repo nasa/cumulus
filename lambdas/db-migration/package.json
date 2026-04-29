@@ -29,6 +29,7 @@
     "timeout": "2m"
   },
   "dependencies": {
+    "@cumulus/common": "21.3.3",
     "@cumulus/db": "21.3.3",
     "knex": "2.4.1",
     "pg": "~8.13"

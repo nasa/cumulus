@@ -28,24 +28,15 @@ module.exports = {
       patterns: [
         {
           from: path.join(cumulusDbDir, 'dist/migrations'),
-          to: 'migrations',
-          globOptions: {
-            ignore: ['**/*.d.ts']
-          }
+          to: 'migrations'
         },
         {
           from: path.join(cumulusDbDir, 'dist/migrations-bootstrap'),
-          to: 'migrations-bootstrap',
-          globOptions: {
-            ignore: ['**/*.d.ts']
-          }
+          to: 'migrations-bootstrap'
         },
         {
           from: path.join(cumulusDbDir, 'dist/lib'),
-          to: 'lib',
-          globOptions: {
-            ignore: ['**/*.d.ts']
-          }
+          to: 'lib'
         },
       ],
     }),

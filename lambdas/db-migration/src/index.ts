@@ -1,5 +1,6 @@
 import path from 'path';
 import { getKnexClient } from '@cumulus/db';
+import { inTestMode } from '@cumulus/common/test-utils';
 
 export type Command = 'latest' | 'rollback';
 
@@ -15,10 +16,13 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
     knex = await getKnexClient({ env });
 
     const command = event.command ?? 'latest';
-    const useBootstrapRequested = process.env.USE_BOOTSTRAP?.toLowerCase() === 'true';
+    const useBootstrapRequested = env.USE_BOOTSTRAP?.toLowerCase() === 'true';
 
-    const bootstrapDir = path.join(__dirname, 'migrations-bootstrap');
-    const standardDir = path.join(__dirname, 'migrations');
+    const cumulusDbDir = inTestMode()
+      ? path.join(path.dirname(require.resolve('@cumulus/db/package.json')), 'dist')
+      : __dirname;
+    const bootstrapDir = path.join(cumulusDbDir, 'migrations-bootstrap');
+    const standardDir = path.join(cumulusDbDir, 'migrations');
 
     switch (command) {
       case 'latest': {
@@ -28,7 +32,10 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
           ? bootstrapDir
           : standardDir;
 
-        await knex.migrate.latest({ directory: selectedDir });
+        await knex.migrate.latest({
+          directory: selectedDir,
+          loadExtensions: ['.js'],
+        });
         break;
       }
       case 'rollback': {
@@ -37,7 +44,10 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
           ? bootstrapDir
           : standardDir;
 
-        await knex.migrate.rollback({ directory: selectedDir });
+        await knex.migrate.rollback({
+          directory: selectedDir,
+          loadExtensions: ['.js'],
+        });
         break;
       }
       default:
