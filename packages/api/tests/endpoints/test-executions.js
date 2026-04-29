@@ -253,7 +253,8 @@ test.beforeEach(async (t) => {
   const workflowExecution = await executionPgModel.get(knex, {
     workflow_name: 'fakeWorkflow',
     arn: 'arn2',
-  });
+  },
+  ['cumulus_id', 'created_at']);
   await upsertGranuleWithExecutionJoinRecord({
     knexTransaction: knex,
     granule: t.context.fakePGGranules[0],
@@ -263,7 +264,8 @@ test.beforeEach(async (t) => {
 
   const workflow2Execution = await executionPgModel.get(knex, {
     workflow_name: 'workflow2',
-  });
+  },
+  ['cumulus_id', 'created_at']);
   await upsertGranuleWithExecutionJoinRecord({
     knexTransaction: knex,
     granule: t.context.fakePGGranules[0],
@@ -273,7 +275,8 @@ test.beforeEach(async (t) => {
   const workflowRunningExecution = await executionPgModel.get(knex, {
     workflow_name: 'fakeWorkflow',
     status: 'running',
-  });
+  },
+  ['cumulus_id', 'created_at']);
   await upsertGranuleWithExecutionJoinRecord({
     knexTransaction: knex,
     granule: t.context.fakePGGranules[1],

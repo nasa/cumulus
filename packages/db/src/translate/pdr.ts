@@ -31,7 +31,7 @@ export const translateApiPdrToPostgresPdr = async (
 ): Promise<PostgresPdr> => {
   const { name, version } = deconstructCollectionId(record.collectionId);
   const execution = record.execution
-    ? await executionPgModel.get(knex, { url: record.execution })
+    ? await executionPgModel.get(knex, { url: record.execution }, ['cumulus_id', 'created_at'])
     : undefined;
 
   const pdrRecord: PostgresPdr = {

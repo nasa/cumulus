@@ -177,7 +177,8 @@ export const translateApiExecutionToPostgresExecutionWithoutNilsRemoved = async 
     try {
       parent = await executionPgModel.get(
         knex,
-        { arn: apiRecord.parentArn }
+        { arn: apiRecord.parentArn },
+        ['cumulus_id', 'created_at']
       );
 
       if (parent !== undefined) {

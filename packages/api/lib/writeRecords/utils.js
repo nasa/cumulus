@@ -23,6 +23,7 @@ const {
 } = require('@cumulus/message/Providers');
 
 /**
+* @typedef {import('knex').Knex} Knex
 * @typedef {import('@cumulus/db').PostgresCollectionRecord} PostgresCollectionRecord
 **/
 
@@ -86,7 +87,8 @@ const getParentExecution = async (
       knex,
       {
         arn: parentExecutionArn,
-      }
+      },
+      ['cumulus_id', 'created_at']
     );
   } catch (error) {
     if (isFailedLookupError(error)) {
@@ -195,7 +197,8 @@ const getExecution = async (
     }
     return await executionPgModel.get(
       knex,
-      { url: executionUrl }
+      { url: executionUrl },
+      ['cumulus_id', 'created_at']
     );
   } catch (error) {
     if (isFailedLookupError(error)) {

@@ -68,15 +68,23 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
    * @param {Partial<RecordType>} params - An object or any portion of an object of type RecordType
-   * @returns {Promise<RecordType>} The returned record
+   * @param {K[]} [returningFields] - Optional array of specific fields to return
+   * @returns {Promise<RecordType | Pick<RecordType, K>>} The returned record (full or partial)
    */
-  async get(
+  async get<K extends keyof RecordType>(
     knexOrTransaction: Knex | Knex.Transaction,
-    params: Partial<RecordType>
-  ): Promise<RecordType> {
-    const record: RecordType = await knexOrTransaction(this.tableName)
-      .where(params)
-      .first();
+    params: Partial<RecordType>,
+    returningFields?: K[]
+  ): Promise<RecordType | Pick<RecordType, K>> {
+    const query = knexOrTransaction(this.tableName).where(params);
+
+    if (returningFields && returningFields.length > 0) {
+      query.select(returningFields as string[]);
+    } else {
+      query.select('*');
+    }
+
+    const record = await query.first();
 
     if (!isRecordDefined(record)) {
       throw new RecordDoesNotExist(
