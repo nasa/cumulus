@@ -19,6 +19,29 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+resource "aws_iam_policy" "secrets_access_policy" {
+  name        = "${var.prefix}-ecs-secrets-access-policy"
+  description = "Allow ECS task execution role to read Secrets Manager secrets"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "secretsmanager:GetSecretValue"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "attach_secrets_policy" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = aws_iam_policy.secrets_access_policy.arn
+}
+
 resource "aws_iam_role" "fargate_task_role" {
   name = "${var.prefix}-fargate-task-role"
 
@@ -31,7 +54,7 @@ resource "aws_iam_role" "fargate_task_role" {
           Service = "ecs-tasks.amazonaws.com"
         },
         Action = "sts:AssumeRole"
-      }
+      },
     ]
   })
 
@@ -99,6 +122,27 @@ resource "aws_iam_policy" "rds_access_policy" {
   })
 }
 
+resource "aws_iam_policy" "ssm_access_policy" {
+  name        = "${var.prefix}-fargate-ssm-access-policy"
+  description = "IAM policy for Fargate task to access SSM"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+            "Effect": "Allow",
+            "Action": [
+                "ssmmessages:CreateControlChannel",
+                "ssmmessages:CreateDataChannel",
+                "ssmmessages:OpenControlChannel",
+                "ssmmessages:OpenDataChannel"
+            ],
+            "Resource": "*"
+        }
+    ]
+  })
+}
+
 resource "aws_iam_role_policy_attachment" "attach_s3_policy" {
   role       = aws_iam_role.fargate_task_role.name
   policy_arn = aws_iam_policy.s3_access_policy.arn
@@ -107,6 +151,11 @@ resource "aws_iam_role_policy_attachment" "attach_s3_policy" {
 resource "aws_iam_role_policy_attachment" "attach_glue_policy" {
   role       = aws_iam_role.fargate_task_role.name
   policy_arn = aws_iam_policy.glue_access_policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "attach_ssm_policy" {
+  role       = aws_iam_role.fargate_task_role.name
+  policy_arn = aws_iam_policy.ssm_access_policy.arn
 }
 
 resource "aws_iam_role" "ecs_infrastructure_role" {
