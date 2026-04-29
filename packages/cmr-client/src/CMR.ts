@@ -192,6 +192,11 @@ export class CMR {
    * @returns {Promise.<void>} refresh promise
    */
   private async refreshLaunchpadToken(): Promise<void> {
+    if (!this.passphrase || !this.api || !this.certificate) {
+      throw new Error(
+        'Cannot refresh Launchpad token: passphrase, api, and certificate must all be set on the CMR client'
+      );
+    }
     this.token = await getValidLaunchpadToken({
       passphrase: this.passphrase,
       api: this.api,
