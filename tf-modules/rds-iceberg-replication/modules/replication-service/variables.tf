@@ -36,14 +36,8 @@ variable "rds_port" {
   default     = "5432"
 }
 
-variable "db_admin_username" {
-  description = "Username for RDS database administrator authentication"
-  type        = string
-  default     = "postgres"
-}
-
-variable "db_admin_password" {
-  description = "Password for RDS database administrator authentication"
+variable "admin_db_login_secret_arn" {
+  description = "Arn for AWS Secrets Manager secret for database administrator credentials"
   type        = string
 }
 
@@ -176,4 +170,10 @@ variable "ecs_cluster" {
     name = string
     id   = string
   })
+}
+
+variable "compaction_interval_sec" {
+  description = "The period in seconds between compactions"
+  type = string
+  default = "30"
 }

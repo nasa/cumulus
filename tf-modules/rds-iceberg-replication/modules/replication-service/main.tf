@@ -24,7 +24,7 @@ resource "aws_ebs_volume" "kafka_data" {
   tags              = merge(var.tags, { Name = "${local.full_name}-kafka-data" })
 
   lifecycle {
-    prevent_destroy = true  # Safety net — don't accidentally nuke the Kafka data
+    prevent_destroy = true # Safety net — don't accidentally nuke the Kafka data
   }
 }
 
@@ -38,9 +38,10 @@ resource "aws_ecs_service" "kafka-replication" {
   force_new_deployment               = var.force_new_deployment
   launch_type                        = "FARGATE"
   depends_on                         = [var.ecs_infrastructure_role]
+  enable_execute_command = true
 
   network_configuration {
-    subnets = [var.subnet] # Pin to one subnet/AZ for EBS consistency
+    subnets          = [var.subnet] # Pin to one subnet/AZ for EBS consistency
     security_groups  = [var.rds_security_group, var.task_security_group_id]
     assign_public_ip = false # Fargate tasks in private subnets usually don't need public IPs
   }
@@ -63,97 +64,100 @@ resource "aws_ecs_task_definition" "default" {
   network_mode             = "awsvpc"
   cpu                      = var.cpu
   runtime_platform {
-    cpu_architecture       = var.cpu_architecture
+    cpu_architecture = var.cpu_architecture
   }
-  memory                   = var.memory
-  execution_role_arn       = var.ecs_task_execution_role.arn
-  task_role_arn            = var.fargate_task_role.arn
+  memory             = var.memory
+  execution_role_arn = var.ecs_task_execution_role.arn
+  task_role_arn      = var.fargate_task_role.arn
 
   volume {
-    name = "kafka-data"
+    name                = "kafka-data"
     configure_at_launch = true # Required for Fargate
   }
 
-  container_definitions    = jsonencode([
+  container_definitions = jsonencode([
     {
-      name              = "${var.prefix}-kafka"
-      essential         = true
-      mountPoints       = [{
-        sourceVolume    = "kafka-data"
-        containerPath   = "/kafka/data"
-        readOnly        = false
+      name      = "${var.prefix}-kafka"
+      essential = true
+      mountPoints = [{
+        sourceVolume  = "kafka-data"
+        containerPath = "/kafka/data"
+        readOnly      = false
       }]
-      environment       = [
-        {name = "CLUSTER_ID", value = "kafka"},
-        {name = "NODE_ROLE", value = "combined"},
-        {name = "KAFKA_LISTENERS", value = "INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:9093,CONTROLLER://0.0.0.0:9094"},
-        {name = "KAFKA_ADVERTISED_LISTENERS", value = "INTERNAL://localhost:9092,EXTERNAL://localhost:9093"},
-        {name = "KAFKA_LISTENER_SECURITY_PROTOCOL_MAP", value = "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT"},
-        {name = "KAFKA_INTER_BROKER_LISTENER_NAME", value = "INTERNAL"}
+      environment = [
+        { name = "CLUSTER_ID", value = "kafka" },
+        { name = "NODE_ROLE", value = "combined" },
+        { name = "KAFKA_LISTENERS", value = "INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:9093,CONTROLLER://0.0.0.0:9094" },
+        { name = "KAFKA_ADVERTISED_LISTENERS", value = "INTERNAL://localhost:9092,EXTERNAL://localhost:9093" },
+        { name = "KAFKA_LISTENER_SECURITY_PROTOCOL_MAP", value = "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT" },
+        { name = "KAFKA_INTER_BROKER_LISTENER_NAME", value = "INTERNAL" }
       ]
-      image             = var.kafka_image
-      logConfiguration  = {
+      image = var.kafka_image
+      logConfiguration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group  = aws_cloudwatch_log_group.kafka-logs.name
-          awslogs-region = var.region
+          awslogs-group         = aws_cloudwatch_log_group.kafka-logs.name
+          awslogs-region        = var.region
           awslogs-stream-prefix = "${var.prefix}-${var.slot_name}-kafka"
         }
       }
     },
     {
-      name              = "${var.prefix}-kafka-connect"
-      essential         = true
-      mountPoints       = [{
-        sourceVolume    = "kafka-data"
-        containerPath   = "/kafka/data"
-        readOnly        = false
+      name      = "${var.prefix}-kafka-connect"
+      essential = true
+      mountPoints = [{
+        sourceVolume  = "kafka-data"
+        containerPath = "/kafka/data"
+        readOnly      = false
       }]
-      environment       = [
-        {name = "GROUP_ID", value = "1"},
-        {name = "CONFIG_STORAGE_TOPIC", value = "connect_configs"},
-        {name = "OFFSET_STORAGE_TOPIC", value = "connect_offsets"},
-        {name = "STATUS_STORAGE_TOPIC", value = "connect_statuses"},
-        {name = "BOOTSTRAP_SERVERS", value = "localhost:9092"},
-        {name = "RDS_ENDPOINT", value = var.rds_endpoint}
+      environment = [
+        { name = "GROUP_ID", value = "1" },
+        { name = "CONFIG_STORAGE_TOPIC", value = "connect_configs" },
+        { name = "OFFSET_STORAGE_TOPIC", value = "connect_offsets" },
+        { name = "STATUS_STORAGE_TOPIC", value = "connect_statuses" },
+        { name = "BOOTSTRAP_SERVERS", value = "localhost:9092" },
+        { name = "RDS_ENDPOINT", value = var.rds_endpoint }
       ]
-      image             = var.connect_image
-      logConfiguration  = {
+      image = var.connect_image
+      logConfiguration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group  = aws_cloudwatch_log_group.kafka-connect-logs.name
-          awslogs-region = var.region
+          awslogs-group         = aws_cloudwatch_log_group.kafka-connect-logs.name
+          awslogs-region        = var.region
           awslogs-stream-prefix = "${var.prefix}-${var.slot_name}-kafka-connect"
         }
       }
     },
     {
-      name              = "${var.prefix}-bootstrap"
-      essential         = true
-      mountPoints       = [{
-        sourceVolume    = "kafka-data"
-        containerPath   = "/kafka/data"
-        readOnly        = false
+      name      = "${var.prefix}-bootstrap"
+      essential = true
+      mountPoints = [{
+        sourceVolume  = "kafka-data"
+        containerPath = "/kafka/data"
+        readOnly      = false
       }]
-      environment       = [
-        {name = "PG_HOST", value = var.rds_endpoint},
-        {name = "PG_PORT", value = var.rds_port},
-        {name = "PG_DB", value = var.pg_db},
-        {name = "PG_USER", value = var.db_admin_username},
-        {name = "PG_PASSWORD", value = var.db_admin_password},
-        {name = "TABLES", value = var.table_include_list},
-        {name = "COLUMN_EXCLUDE_LIST", value = var.column_exclude_list},
-        {name = "AWS_DEFAULT_REGION", value = var.region},
-        {name = "ICEBERG_NAMESPACE", value = var.iceberg_namespace},
-        {name = "ICEBERG_S3_BUCKET", value = var.iceberg_s3_bucket},
-        {name = "SLOT_NAME", value = var.slot_name}
+      environment = [
+        { name = "PG_HOST", value = var.rds_endpoint },
+        { name = "PG_PORT", value = var.rds_port },
+        { name = "PG_DB", value = var.pg_db },
+        { name = "PG_SCHEMA", value = var.pg_schema },
+        { name = "TABLES", value = var.table_include_list },
+        { name = "COLUMN_EXCLUDE_LIST", value = var.column_exclude_list },
+        { name = "AWS_DEFAULT_REGION", value = var.region },
+        { name = "ICEBERG_NAMESPACE", value = var.iceberg_namespace },
+        { name = "ICEBERG_S3_BUCKET", value = var.iceberg_s3_bucket },
+        { name = "SLOT_NAME", value = var.slot_name },
+        { name = "COMPACTION_INTERVAL_SEC", value = var.compaction_interval_sec }
       ]
-      image             = var.bootstrap_image
-      logConfiguration  = {
+      secrets = [
+        { name = "PG_ADMIN_LOGIN_CREDS", valueFrom = var.admin_db_login_secret_arn }
+      ]
+      image = var.bootstrap_image
+      logConfiguration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group  = aws_cloudwatch_log_group.bootstrap-logs.name
-          awslogs-region = var.region
+          awslogs-group         = aws_cloudwatch_log_group.bootstrap-logs.name
+          awslogs-region        = var.region
           awslogs-stream-prefix = "${var.prefix}-${var.slot_name}-bootstrap"
         }
       }

@@ -20,15 +20,9 @@ variable "rds_port" {
   default     = "5432"
 }
 
-variable "db_admin_username" {
-  description = "Username for RDS database administrator authentication"
+variable "admin_db_login_secret_arn" {
+  description = "Arn for AWS Secrets Manager secret for database administrator credentials"
   type        = string
-  default     = "postgres"
-}
-
-variable "db_admin_password" {
-  description = "Password for RDS database administrator authentication"
-  type = string
 }
 
 variable "region" {
@@ -64,20 +58,55 @@ variable "force_new_deployment" {
   default = false
 }
 
-variable "cpu" {
-  description = "The number of CPU units the Amazon ECS container agent will reserve for the task"
-  type    = number
-  default = 4096 # 4 CPUs
-}
-
 variable "cpu_architecture" {
   description = "The architecture of the cpu platform. Valid values are X86_65 and ARM64"
   type        = string
   default     = "ARM64"
 }
 
-variable "memory" {
-  description = "The amount of memory (in MB) that the ECS container agent reserves for a task."
+variable "small_tables_cpu" {
+  description = "The number of CPU units the Amazon ECS container agent will reserve for the small_tables task"
+  type    = number
+  default = 4096 # 4 CPUs
+}
+
+variable "small_tables_memory" {
+  description = "The amount of memory (in MB) that the ECS container agent reserves for the small_tables task."
+  type        = number
+  default     = 8192 # 8GB
+}
+
+variable "granules_table_cpu" {
+  description = "The number of CPU units the Amazon ECS container agent will reserve for the granules table task"
+  type    = number
+  default = 4096 # 4 CPUs
+}
+variable "granules_table_memory" {
+  description = "The amount of memory (in MB) that the ECS container agent reserves for the granules table task."
+  type        = number
+  default     = 8192 # 8GB
+}
+
+variable "executions_table_cpu" {
+  description = "The number of CPU units the Amazon ECS container agent will reserve for the executions table task"
+  type    = number
+  default = 4096 # 4 CPUs
+}
+
+variable "executions_table_memory" {
+  description = "The amount of memory (in MB) that the ECS container agent reserves for the executions table task."
+  type        = number
+  default     = 16384 # 16GB
+}
+
+variable "files_table_cpu" {
+  description = "The number of CPU units the Amazon ECS container agent will reserve for the files table task"
+  type    = number
+  default = 4096 # 4 CPUs
+}
+
+variable "files_table_memory" {
+  description = "The amount of memory (in MB) that the ECS container agent reserves for the files table task."
   type        = number
   default     = 16384 # 16GB
 }
@@ -122,4 +151,10 @@ variable "pg_schema" {
   description = "The name of the schema in the postgres database that contains the tables"
   type = string
   default = "public"
+}
+
+variable "compaction_interval_sec" {
+  description = "The period in seconds between compactions"
+  type = string
+  default = "30"
 }
