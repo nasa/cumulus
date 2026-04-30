@@ -93,6 +93,7 @@ class PVLScalar extends PVLValue {
 class PVLNumeric extends PVLScalar {
   constructor(value, units) {
     super(value);
+    this.rawValue = this.value;
     this.value = Number(this.value);
     if (isString(units)) {
       this.units = units.toUpperCase();
