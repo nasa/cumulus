@@ -1,4 +1,5 @@
 import { Knex } from 'knex';
+import { TIMESTAMP_PRECISION } from '../lib/migration';
 
 export const up = async (knex: Knex): Promise<void> => {
   await knex.schema.createTable('reconciliation_reports', (table) => {
@@ -11,7 +12,8 @@ export const up = async (knex: Knex): Promise<void> => {
     table.text('location');
     table.jsonb('error');
 
-    table.timestamps(false, true);
+    table.timestamp('created_at', { useTz: true, precision: TIMESTAMP_PRECISION }).defaultTo(knex.fn.now(TIMESTAMP_PRECISION));
+    table.timestamp('updated_at', { useTz: true, precision: TIMESTAMP_PRECISION }).defaultTo(knex.fn.now(TIMESTAMP_PRECISION));
 
     table.unique(['name']);
 
@@ -42,6 +44,7 @@ export const up = async (knex: Knex): Promise<void> => {
   `);
 
   await knex.raw(`
+    COMMENT ON TABLE reconciliation_reports IS 'Table to store reconciliation reports and track their generation status';
     COMMENT ON COLUMN reconciliation_reports.name IS 'Reconciliation Report name';
     COMMENT ON COLUMN reconciliation_reports.type IS 'Type of Reconciliation Report';
     COMMENT ON COLUMN reconciliation_reports.status IS 'Status of Reconciliation Report';

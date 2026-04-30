@@ -1,8 +1,14 @@
 import { Knex } from 'knex';
+import { getPartitionCount, TIMESTAMP_PRECISION } from '../lib/migration';
 
-const PARTITION_COUNT = 8;
+const DEFAULT_PARTITION_COUNT = 8;
+const MAX_PARTITION_COUNT = 128;
 
 export const up = async (knex: Knex): Promise<void> => {
+  const PARTITION_COUNT: number = getPartitionCount(
+    'GRANULES_PARTITION_COUNT', DEFAULT_PARTITION_COUNT, MAX_PARTITION_COUNT
+  );
+
   // Parent partitioned table
   await knex.raw(`
     CREATE TABLE granules (
@@ -10,8 +16,8 @@ export const up = async (knex: Knex): Promise<void> => {
       granule_id TEXT NOT NULL,
       status TEXT NOT NULL,
       collection_cumulus_id INTEGER NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
-      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      created_at TIMESTAMPTZ(${TIMESTAMP_PRECISION}) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      updated_at TIMESTAMPTZ(${TIMESTAMP_PRECISION}) DEFAULT CURRENT_TIMESTAMP NOT NULL,
       published BOOLEAN,
       duration REAL,
       time_to_archive REAL,
@@ -28,15 +34,16 @@ export const up = async (knex: Knex): Promise<void> => {
       processing_start_date_time TIMESTAMPTZ,
       production_date_time TIMESTAMPTZ,
       query_fields JSONB,
-      "timestamp" TIMESTAMPTZ,
+      "timestamp" TIMESTAMPTZ(${TIMESTAMP_PRECISION}),
       producer_granule_id TEXT NOT NULL,
       archived BOOLEAN DEFAULT FALSE NOT NULL,
 
-      CONSTRAINT granules_pkey PRIMARY KEY (cumulus_id),
+      CONSTRAINT granules_pkey PRIMARY KEY (cumulus_id, collection_cumulus_id),
 
-      CONSTRAINT granules_granule_id_unique UNIQUE (granule_id, cumulus_id)
+      CONSTRAINT granules_granule_id_unique
+        UNIQUE (granule_id, collection_cumulus_id)
     )
-    PARTITION BY HASH (cumulus_id);
+    PARTITION BY HASH (collection_cumulus_id);
   `);
 
   // Create partitions
@@ -59,9 +66,6 @@ export const up = async (knex: Knex): Promise<void> => {
 
     CREATE INDEX granules_collection_updated_idx
       ON granules (collection_cumulus_id, updated_at);
-
-    CREATE INDEX granules_granule_id_index
-      ON granules (granule_id);
 
     CREATE INDEX granules_producer_granule_id_index
       ON granules (producer_granule_id);
@@ -107,6 +111,7 @@ export const up = async (knex: Knex): Promise<void> => {
 
   // Comments
   await knex.raw(`
+    COMMENT ON TABLE granules IS 'Table to store granules, the smallest independently managed data units associated with a collection';
     COMMENT ON COLUMN granules.cumulus_id IS 'Internal Cumulus ID for a granule';
     COMMENT ON COLUMN granules.granule_id IS 'Granule ID';
     COMMENT ON COLUMN granules.status IS 'Ingest status of the granule';

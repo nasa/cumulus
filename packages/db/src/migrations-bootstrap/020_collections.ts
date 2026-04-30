@@ -1,4 +1,5 @@
 import { Knex } from 'knex';
+import { TIMESTAMP_PRECISION } from '../lib/migration';
 
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('collections', (table) => {
@@ -24,7 +25,8 @@ export async function up(knex: Knex): Promise<void> {
     table.jsonb('meta');
     table.jsonb('tags');
 
-    table.timestamps(false, true);
+    table.timestamp('created_at', { useTz: true, precision: TIMESTAMP_PRECISION }).defaultTo(knex.fn.now(TIMESTAMP_PRECISION));
+    table.timestamp('updated_at', { useTz: true, precision: TIMESTAMP_PRECISION }).defaultTo(knex.fn.now(TIMESTAMP_PRECISION));
 
     table.text('cmr_provider').notNullable();
 
@@ -46,6 +48,7 @@ export async function up(knex: Knex): Promise<void> {
   `);
 
   await knex.raw(`
+    COMMENT ON TABLE collections IS 'Table to store Cumulus collections and their configuration for ingest and processing';
     COMMENT ON COLUMN collections.name IS 'Collection short_name registered with the CMR';
     COMMENT ON COLUMN collections.version IS 'The version registered with the CMR';
     COMMENT ON COLUMN collections.sample_file_name IS 'Example filename for this collection';

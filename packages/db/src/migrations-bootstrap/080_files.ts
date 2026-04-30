@@ -1,15 +1,22 @@
 import { Knex } from 'knex';
+import { getPartitionCount, TIMESTAMP_PRECISION } from '../lib/migration';
 
-const PARTITION_COUNT = 8;
+const DEFAULT_PARTITION_COUNT = 8;
+const MAX_PARTITION_COUNT = 128;
 
 export const up = async (knex: Knex): Promise<void> => {
+  const PARTITION_COUNT: number = getPartitionCount(
+    'FILES_PARTITION_COUNT', DEFAULT_PARTITION_COUNT, MAX_PARTITION_COUNT
+  );
+
   // Parent partitioned table
   await knex.raw(`
     CREATE TABLE files (
       cumulus_id BIGSERIAL,
       granule_cumulus_id BIGINT NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
-      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      collection_cumulus_id INTEGER NOT NULL,
+      created_at TIMESTAMPTZ(${TIMESTAMP_PRECISION}) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+      updated_at TIMESTAMPTZ(${TIMESTAMP_PRECISION}) DEFAULT CURRENT_TIMESTAMP NOT NULL,
 
       file_size BIGINT,
       bucket TEXT NOT NULL,
@@ -21,11 +28,11 @@ export const up = async (knex: Knex): Promise<void> => {
       source TEXT,
       type TEXT,
 
-      CONSTRAINT files_pkey PRIMARY KEY (cumulus_id),
+      CONSTRAINT files_pkey PRIMARY KEY (cumulus_id, granule_cumulus_id),
 
-      CONSTRAINT files_bucket_key_unique UNIQUE (bucket, key, cumulus_id)
+      CONSTRAINT files_bucket_key_unique UNIQUE (bucket, key, granule_cumulus_id)
     )
-    PARTITION BY HASH (cumulus_id);
+    PARTITION BY HASH (granule_cumulus_id);
   `);
 
   // Partitions
@@ -47,17 +54,19 @@ export const up = async (knex: Knex): Promise<void> => {
       ON files (updated_at);
   `);
 
-  // Foreign key (must be added after partition creation)
+  // Foreign key
   await knex.raw(`
     ALTER TABLE files
     ADD CONSTRAINT files_granule_cumulus_id_foreign
-    FOREIGN KEY (granule_cumulus_id)
-    REFERENCES granules(cumulus_id)
-    ON DELETE CASCADE;
+    FOREIGN KEY (granule_cumulus_id, collection_cumulus_id)
+    REFERENCES granules(cumulus_id, collection_cumulus_id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE;
   `);
 
   // Comments
   await knex.raw(`
+    COMMENT ON TABLE files IS 'Table to store files associated with granules, including storage location and metadata';
     COMMENT ON COLUMN files.cumulus_id IS 'Internal Cumulus ID for a file';
     COMMENT ON COLUMN files.file_size IS 'Size of file (bytes)';
     COMMENT ON COLUMN files.bucket IS 'AWS Bucket file is archived in';

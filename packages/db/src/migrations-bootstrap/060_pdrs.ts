@@ -1,4 +1,5 @@
 import { Knex } from 'knex';
+import { TIMESTAMP_PRECISION } from '../lib/migration';
 
 export const up = async (knex: Knex): Promise<void> => {
   await knex.schema.createTable('pdrs', (table) => {
@@ -14,9 +15,14 @@ export const up = async (knex: Knex): Promise<void> => {
       .inTable('providers')
       .notNullable();
 
-    table.bigInteger('execution_cumulus_id')
-      .references('cumulus_id')
-      .inTable('executions');
+    table.bigInteger('execution_cumulus_id');
+    table.timestamp('execution_created_at', { useTz: true, precision: TIMESTAMP_PRECISION });
+
+    table.foreign(['execution_cumulus_id', 'execution_created_at'])
+      .references(['cumulus_id', 'created_at'])
+      .inTable('executions')
+      .onDelete('SET NULL')
+      .onUpdate('CASCADE');
 
     table.text('status').notNullable();
     table.text('name').notNullable();
@@ -32,9 +38,10 @@ export const up = async (knex: Knex): Promise<void> => {
 
     table.float('duration');
 
-    table.timestamp('timestamp', { useTz: true });
+    table.timestamp('timestamp', { useTz: true, precision: TIMESTAMP_PRECISION });
 
-    table.timestamps(false, true);
+    table.timestamp('created_at', { useTz: true, precision: TIMESTAMP_PRECISION }).defaultTo(knex.fn.now(TIMESTAMP_PRECISION));
+    table.timestamp('updated_at', { useTz: true, precision: TIMESTAMP_PRECISION }).defaultTo(knex.fn.now(TIMESTAMP_PRECISION));
 
     table.unique(['name']);
 
@@ -72,6 +79,7 @@ export const up = async (knex: Knex): Promise<void> => {
   `);
 
   await knex.raw(`
+    COMMENT ON TABLE pdrs IS 'Table to track PDRs and their processing status';
     COMMENT ON COLUMN pdrs.cumulus_id IS 'Internal Cumulus ID for a PDR';
     COMMENT ON COLUMN pdrs.status IS 'Status (running, failed, completed) of the PDR';
     COMMENT ON COLUMN pdrs.name IS 'PDR name';
