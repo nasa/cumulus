@@ -188,7 +188,7 @@ abstract class BaseSearch {
    */
   protected _metaTemplate(): Meta {
     return {
-      name: 'cumulus-api',
+      name: process.env.CUMULUS_API_NAME || 'cumulus-api',
       stack: process.env.stackName,
       table: this.tableName,
     };

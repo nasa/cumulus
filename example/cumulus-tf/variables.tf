@@ -323,6 +323,12 @@ variable "iceberg_namespace" {
   default     = ""
 }
 
+variable "iceberg_health_check_grace_period_seconds" {
+  description = "Seconds to ignore failing load balancer health checks on newly instantiated ECS tasks"
+  type        = number
+  default     = 180
+}
+
 variable "archive_api_users" {
   description = "Earthdata (URS) usernames that should be allowed to access the archive API"
   type        = list(string)

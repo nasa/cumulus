@@ -66,11 +66,6 @@ variable "ecs_cluster_instance_subnet_ids" {
   type        = list(string)
 }
 
-variable "rds_security_group_id" {
-  description = "ID of the RDS security group"
-  type        = string
-}
-
 variable "iceberg_s3_bucket" {
   description = "Name of the S3 bucket the Iceberg API task needs read access to"
   type        = string
@@ -107,6 +102,12 @@ variable "api_service_autoscaling_target_cpu" {
   description = "Target CPU utilization for API service autoscaling"
   type        = number
   default     = 70
+}
+
+variable "iceberg_health_check_grace_period_seconds" {
+  description = "Seconds to ignore failing load balancer health checks on newly instantiated ECS tasks"
+  type        = number
+  default     = 180
 }
 
 variable "cloudwatch_log_retention_periods" {
