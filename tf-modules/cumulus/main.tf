@@ -21,7 +21,7 @@ locals {
     for rule in var.aws_s3_system_bucket_lifecycle_rules : merge(rule, {
       prefix = rule.prepend_prefix ? "${var.prefix}${rule.prefix}" : rule.prefix
     })
-  ]  
+  ]
 }
 
 resource "aws_s3_bucket_object" "buckets_json" {
