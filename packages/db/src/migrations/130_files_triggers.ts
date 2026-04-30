@@ -1,8 +1,11 @@
 import { Knex } from 'knex';
 
+const FUNCTION_NAME = 'files_enforce_global_uniqueness';
+const TRIGGER_NAME = 'files_enforce_unique_bucket_key_trigger';
+
 export const up = async (knex: Knex): Promise<void> => {
   await knex.raw(`
-    CREATE OR REPLACE FUNCTION files_enforce_global_uniqueness()
+    CREATE OR REPLACE FUNCTION ${FUNCTION_NAME}()
     RETURNS trigger AS $$
     DECLARE
       rows smallint;
@@ -35,17 +38,17 @@ export const up = async (knex: Knex): Promise<void> => {
   `);
 
   await knex.raw(`
-    CREATE TRIGGER files_enforce_unique_bucket_key_trigger
+    CREATE TRIGGER ${TRIGGER_NAME}
     BEFORE INSERT OR UPDATE OF bucket, key OR DELETE
     ON files
     FOR EACH ROW
-    EXECUTE FUNCTION files_enforce_global_uniqueness();
+    EXECUTE FUNCTION ${FUNCTION_NAME}();
   `);
 };
 
 export const down = async (knex: Knex): Promise<void> => {
   await knex.raw(`
-    DROP TRIGGER IF EXISTS files_enforce_unique_bucket_key_trigger ON files;
-    DROP FUNCTION IF EXISTS files_enforce_global_uniqueness();
+    DROP TRIGGER IF EXISTS ${TRIGGER_NAME} ON files;
+    DROP FUNCTION IF EXISTS ${FUNCTION_NAME}();
   `);
 };

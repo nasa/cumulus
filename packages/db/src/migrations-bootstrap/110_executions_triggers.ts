@@ -1,8 +1,11 @@
 import { Knex } from 'knex';
 
+const FUNCTION_NAME = 'executions_enforce_global_uniqueness';
+const TRIGGER_NAME = 'executions_enforce_unique_arn_url_trigger';
+
 export const up = async (knex: Knex): Promise<void> => {
   await knex.raw(`
-    CREATE OR REPLACE FUNCTION executions_enforce_global_uniqueness()
+    CREATE OR REPLACE FUNCTION ${FUNCTION_NAME}()
     RETURNS trigger AS $$
     DECLARE
       rows smallint;
@@ -34,17 +37,17 @@ export const up = async (knex: Knex): Promise<void> => {
     `);
 
   await knex.raw(`
-    CREATE TRIGGER executions_enforce_unique_arn_url_trigger
+    CREATE TRIGGER ${TRIGGER_NAME}
     BEFORE INSERT OR UPDATE OF arn, url OR DELETE
     ON executions
     FOR EACH ROW
-    EXECUTE FUNCTION executions_enforce_global_uniqueness();
+    EXECUTE FUNCTION ${FUNCTION_NAME}();
   `);
 };
 
 export const down = async (knex: Knex): Promise<void> => {
   await knex.raw(`
-    DROP TRIGGER IF EXISTS executions_enforce_unique_arn_url_trigger ON executions;
-    DROP FUNCTION IF EXISTS executions_enforce_global_uniqueness();
+    DROP TRIGGER IF EXISTS ${TRIGGER_NAME} ON executions;
+    DROP FUNCTION IF EXISTS ${FUNCTION_NAME}();
   `);
 };

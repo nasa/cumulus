@@ -78,9 +78,16 @@ test.serial('handler rolls back migrations correctly', async (t) => {
 
   t.context.testKnex = await getKnexClient({ env: testEnv });
 
-  // After full rollback, the migrations table should be empty (or core tables gone)
-  const hasExecutions = await t.context.testKnex.schema.hasTable('executions');
-  t.false(hasExecutions, 'The executions table should be removed after rollback');
+  const tables = ['executions', 'granules', 'collections'];
+
+  for (const table of tables) {
+    // eslint-disable-next-line no-await-in-loop
+    const exists = await t.context.testKnex.schema.hasTable(table);
+    t.false(exists, `${table} should be removed after rollback`);
+  }
+
+  const migrations = await t.context.testKnex('knex_migrations');
+  t.is(migrations.length, 0, 'No migrations should remain after rollback');
 });
 
 test.serial('handler rolls back migrations correctly when USE_BOOTSTRAP is "true"', async (t) => {
@@ -95,9 +102,15 @@ test.serial('handler rolls back migrations correctly when USE_BOOTSTRAP is "true
 
   t.context.testKnex = await getKnexClient({ env: bootstrapEnv });
 
-  // After full rollback, the migrations table should be empty (or core tables gone)
-  const hasExecutions = await t.context.testKnex.schema.hasTable('executions');
-  t.false(hasExecutions, 'The executions table should be removed after rollback');
+  const tables = ['executions', 'granules', 'collections'];
+  for (const table of tables) {
+    // eslint-disable-next-line no-await-in-loop
+    const exists = await t.context.testKnex.schema.hasTable(table);
+    t.false(exists, `${table} should be removed after rollback`);
+  }
+
+  const migrations = await t.context.testKnex('knex_migrations');
+  t.is(migrations.length, 0, 'No migrations should remain after rollback');
 });
 
 test.serial('handler throws an error when an invalid command is provided', async (t) => {
