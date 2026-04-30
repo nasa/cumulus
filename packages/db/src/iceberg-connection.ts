@@ -162,19 +162,6 @@ async function getConnection(): Promise<PooledDuckDbConnection> {
 }
 
 /**
- * Re-applies all session-level configuration to an existing pooled connection.
- * Call this when a connection has lost its catalog state (e.g. "Table does not exist"
- * Catalog errors after the server has been idle for an extended period).
- *
- * @param conn
- */
-export async function reconfigureDuckDbConnection(conn: DuckDBConnection): Promise<void> {
-  log.info('Reconfiguring DuckDB connection due to lost catalog state...');
-  await configureConnection(conn);
-  log.info('DuckDB connection reconfigured successfully.');
-}
-
-/**
  * Pre-populate connection-level metadata and file/cache state for known views.
  *
  * @param pooledConn
@@ -186,7 +173,7 @@ async function populateConnectionCache(pooledConn: PooledDuckDbConnection): Prom
       // eslint-disable-next-line no-await-in-loop
       await conn.run(`SELECT COUNT(*) FROM ${quoteIdent(tableName)};`);
     } catch (error) {
-      log.debug(`Cache warmup skipped for table ${tableName}.`);
+      log.warn(`Cache warmup skipped for table ${tableName}.`);
     }
   }
 }
@@ -197,16 +184,20 @@ async function populateConnectionCache(pooledConn: PooledDuckDbConnection): Prom
 function startPoolCacheWarmup(): void {
   if (!ENABLE_CACHE_WARMUP) {
     log.info('DuckDB cache warmup disabled by DUCKDB_ENABLE_CACHE_WARMUP.');
+    isPoolCacheWarmupComplete = true;
     return;
   }
 
   if (poolCacheWarmupPromise) return;
 
   poolCacheWarmupPromise = (async () => {
-    log.info('Starting background cache warmup for pooled DuckDB connections...');
-    await Promise.all(connectionPool.map((conn) => populateConnectionCache(conn)));
-    isPoolCacheWarmupComplete = true;
-    log.info('Background cache warmup for pooled connections complete.');
+    try {
+      log.info('Starting background cache warmup for pooled DuckDB connections...');
+      await Promise.all(connectionPool.map((conn) => populateConnectionCache(conn)));
+      log.info('Background cache warmup for pooled connections complete.');
+    } finally {
+      isPoolCacheWarmupComplete = true;
+    }
   })().catch((error) => {
     log.warn('Background cache warmup encountered an error. Continuing without blocking startup.', error);
   });
@@ -311,6 +302,11 @@ export async function releaseDuckDbConnection(conn: PooledDuckDbConnection): Pro
     connectionPool.push(conn);
   } else {
     log.debug('Pool full, discarding connection reference.');
+    try {
+      conn.connection.closeSync();
+    } catch (error) {
+      log.warn('Error closing discarded DuckDB connection', error);
+    }
   }
 }
 
@@ -346,7 +342,7 @@ export async function clearDuckDbPool(createdBefore: number): Promise<void> {
               pooledConn.connection.closeSync();
               removedCount += 1;
             } catch (error) {
-              log.debug('Error closing pooled DuckDB connection', error);
+              log.warn('Error closing pooled DuckDB connection', error);
             }
           }
         }
@@ -385,10 +381,10 @@ export async function clearDuckDbPool(createdBefore: number): Promise<void> {
  * Check if DuckDB is initialized and ready without acquiring a connection.
  * Used for lightweight health checks to avoid pool contention.
  *
- * @returns true when instance is initialized and pool warmup is complete
+ * @returns true when the DuckDB instance is initialized and pool warmup is complete
  */
 export function isDuckDbReady(): boolean {
-  return instance !== undefined && connectionPool.length > 0 && isPoolCacheWarmupComplete;
+  return instance !== undefined && isPoolCacheWarmupComplete;
 }
 
 /**
