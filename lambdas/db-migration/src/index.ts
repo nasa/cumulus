@@ -26,7 +26,7 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
 
     switch (command) {
       case 'latest': {
-        // LATEST: Only use bootstrap if requested AND the database is empty
+        // Only use bootstrap if requested AND the database is empty
         const hasCollections = await knex.schema.hasTable('collections');
         const selectedDir = (useBootstrapRequested && !hasCollections)
           ? bootstrapDir
@@ -39,13 +39,9 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
         break;
       }
       case 'rollback': {
-        // ROLLBACK: Strictly follow the environment variable toggle
-        const selectedDir = useBootstrapRequested
-          ? bootstrapDir
-          : standardDir;
-
+        // Use standard migration directory which has all patches
         await knex.migrate.rollback({
-          directory: selectedDir,
+          directory: standardDir,
           loadExtensions: ['.js'],
         });
         break;

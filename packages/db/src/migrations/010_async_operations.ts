@@ -1,7 +1,7 @@
 import { Knex } from 'knex';
 import { TIMESTAMP_PRECISION } from '../lib/migration';
 
-export async function up(knex: Knex): Promise<void> {
+export const up = async (knex: Knex): Promise<void> => {
   await knex.schema.createTable('async_operations', (table) => {
     table.increments('cumulus_id').primary();
 
@@ -67,7 +67,7 @@ export async function up(knex: Knex): Promise<void> {
     COMMENT ON COLUMN async_operations.status IS 'async operation status';
     COMMENT ON COLUMN async_operations.task_arn IS 'async operation ECS task ARN';
   `);
-}
+};
 
 export const down = async (knex: Knex): Promise<void> => {
   await knex.schema.dropTableIfExists('async_operations');

@@ -48,8 +48,8 @@ for standard updates where data must be preserved and the schema evolved over ti
 - Bootstrap Mode (migrations-bootstrap/):
 This directory contains the full declarations required to build a clean database from scratch. Instead
 of a long history of patches, the bootstrap process uses optimized scripts to define the entire schema
-(tables, constraints, and initial partitions) in one pass. This is significantly faster for fresh
-deployments and ensures a consistent, modern baseline.
+(tables, constraints, and initial partitions) in one pass. This is for fresh deployments and ensures
+a consistent, modern baseline.
 
 **Note**: A database created using the Bootstrap process is fully compatible with the migration history;
 it can be updated with Standard Migrations later as new patches are released.
@@ -62,10 +62,16 @@ it can be updated with Standard Migrations later as new patches are released.
 
 This will create a new migration file under migrations.
 
-**Important**: Since the Standard Migrations use an incremental patch-based model and the Bootstrap
-Directory uses a declarative "clean slate" model, any changes made to the schema via a new migration
-file must also be manually reflected in the corresponding files under migrations-bootstrap. This
-ensures that fresh deployments using the bootstrap process remain consistent with the latest schema version.
+**Important: Schema Synchronization**
+Because `Standard Migrations` uses patches and the `Bootstrap Mode` uses a "clean slate" model,
+you must keep them in sync:
+- Update Both: Any schema change added to a migration patch must be manually added to the bootstrap
+  declarations to keep fresh deployments current.
+- Matching Filenames: Every file in migrations-bootstrap/ must also exist in migrations/ to prevent
+  Knex "corrupt directory" errors.
+- Content: The bootstrap version contains the full logic, while the version in the standard folder
+  can be a no-op script (e.g., xxx_seed_migration_history.ts) to satisfy Knex validation.
+
 
 ## About Cumulus
 

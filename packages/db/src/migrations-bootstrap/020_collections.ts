@@ -1,7 +1,7 @@
 import { Knex } from 'knex';
 import { TIMESTAMP_PRECISION } from '../lib/migration';
 
-export async function up(knex: Knex): Promise<void> {
+export const up = async (knex: Knex): Promise<void> => {
   await knex.schema.createTable('collections', (table) => {
     table.increments('cumulus_id').primary();
 
@@ -64,7 +64,7 @@ export async function up(knex: Knex): Promise<void> {
     COMMENT ON COLUMN collections.tags IS 'JSON encoded array of collection tags';
     COMMENT ON COLUMN collections.cmr_provider IS 'CMR Provider for this collection';
   `);
-}
+};
 
 export const down = async (knex: Knex): Promise<void> => {
   await knex.schema.dropTableIfExists('collections');
