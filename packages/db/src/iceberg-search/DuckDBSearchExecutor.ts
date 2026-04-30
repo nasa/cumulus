@@ -105,7 +105,7 @@ export async function executeDuckDBSearch(params: {
       if (isCatalogError(error)) {
         log.warn('Catalog error detected; closing stale connection and clearing pool, then retrying query once.', error);
         pooledConnection.connection.closeSync();
-        clearDuckDbPool(queryStartTime);
+        await clearDuckDbPool(queryStartTime);
         pooledConnection = await acquireDuckDbConnection();
 
         await runNativeQueries(pooledConnection.connection);

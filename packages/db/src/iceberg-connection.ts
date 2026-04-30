@@ -13,6 +13,7 @@ export interface PooledDuckDbConnection {
 
 let poolCacheWarmupPromise: Promise<void> | undefined;
 let isPoolCacheWarmupComplete = false;
+let clearPoolPromise: Promise<void> | undefined;
 
 const connectionPool: PooledDuckDbConnection[] = [];
 const MAX_POOL_SIZE = Number(process.env.DUCKDB_MAX_POOL) || 3;
@@ -321,29 +322,63 @@ export async function releaseDuckDbConnection(conn: PooledDuckDbConnection): Pro
  * @param createdBefore - Timestamp in milliseconds. Only connections created
  * REFRESH_INTERVAL_MS before this time are closed.
  */
-export function clearDuckDbPool(createdBefore: number): void {
-  const keepingConnections: PooledDuckDbConnection[] = [];
-  const staleThreshold = createdBefore - REFRESH_INTERVAL_MS;
-
-  while (connectionPool.length > 0) {
-    const pooledConn = connectionPool.pop();
-    if (pooledConn) {
-      if (pooledConn.creationTime >= staleThreshold) {
-        // Keep newly created connection
-        keepingConnections.push(pooledConn);
-      } else {
-        // Destroy old connection
-        try {
-          pooledConn.connection.closeSync();
-        } catch (error) {
-          log.debug('Error closing pooled DuckDB connection', error);
-        }
-      }
-    }
+export async function clearDuckDbPool(createdBefore: number): Promise<void> {
+  if (clearPoolPromise) {
+    return clearPoolPromise;
   }
 
-  // Return preserved connections to pool
-  connectionPool.push(...keepingConnections);
+  clearPoolPromise = (async () => {
+    try {
+      const startTime = Date.now();
+      const keepingConnections: PooledDuckDbConnection[] = [];
+      const staleThreshold = createdBefore - REFRESH_INTERVAL_MS;
+      let removedCount = 1; // Start at 1 to account for the connection that triggered the clear
+
+      while (connectionPool.length > 0) {
+        const pooledConn = connectionPool.pop();
+        if (pooledConn) {
+          if (pooledConn.creationTime >= staleThreshold) {
+            // Keep newly created connection
+            keepingConnections.push(pooledConn);
+          } else {
+            // Destroy old connection
+            try {
+              pooledConn.connection.closeSync();
+              removedCount += 1;
+            } catch (error) {
+              log.debug('Error closing pooled DuckDB connection', error);
+            }
+          }
+        }
+      }
+
+      // Return preserved connections to pool
+      connectionPool.push(...keepingConnections);
+
+      // Immediately replace cleared connections to maintain pool size
+      const warmupPromises: Promise<void>[] = [];
+      for (let i = 0; i < removedCount; i += 1) {
+        // eslint-disable-next-line no-await-in-loop
+        const newConn = await getConnection();
+        if (ENABLE_CACHE_WARMUP) {
+          warmupPromises.push(
+            populateConnectionCache(newConn).catch((error: unknown) => {
+              log.warn('Background cache warmup for connection failed.', error);
+            })
+          );
+        }
+        connectionPool.push(newConn);
+      }
+      await Promise.all(warmupPromises);
+      if (removedCount > 0) {
+        log.info(`Cleared and replaced ${removedCount} stale DuckDB connections in ${Date.now() - startTime}ms.`);
+      }
+    } finally {
+      clearPoolPromise = undefined;
+    }
+  })();
+
+  return clearPoolPromise;
 }
 
 /**
@@ -366,5 +401,6 @@ export async function destroyDuckDb(): Promise<void> {
   initPromise = undefined;
   dbVersionCache = undefined;
   poolCacheWarmupPromise = undefined;
+  clearPoolPromise = undefined;
   isPoolCacheWarmupComplete = false;
 }
