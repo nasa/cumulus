@@ -216,7 +216,7 @@ module "cumulus" {
   # For message consumer lambdas in order to disable rule/message mismatches
   allow_provider_mismatch_on_rule_filter = var.allow_provider_mismatch_on_rule_filter
 
-  aws_s3_bucket_lifecycle_rules = var.aws_s3_bucket_lifecycle_rules
+  aws_s3_system_bucket_lifecycle_rules = var.aws_s3_system_bucket_lifecycle_rules
 }
 
 resource "aws_security_group" "no_ingress_all_egress" {

@@ -135,39 +135,43 @@ You have now set a policy that transitions any version of an object in the bucke
 
 ## Configuring S3 Lifecycle Rules via Terraform
 
-Cumulus supports configuring S3 lifecycle expiration rules for the system bucket directly through Terraform using the `aws_s3_bucket_lifecycle_rules` variable. This replaces any previously hardcoded lifecycle rule configuration with a flexible, user-defined list of rules that are applied dynamically at deploy time.
+Cumulus supports configuring S3 lifecycle expiration rules for the system bucket directly through Terraform using the `aws_s3_system_bucket_lifecycle_rules` variable. This replaces any previously hardcoded lifecycle rule configuration with a flexible, user-defined list of rules that are applied dynamically at deploy time.
 
 ### How to Configure Rules
 
-You define your rules in your `cumulus-tf/terraform.tfvars` file. You will add an `aws_s3_bucket_lifecycle_rules` block, which is just a list of the rules you want to apply.
+You can define your rules in the cumulus module by adding an `aws_s3_system_bucket_lifecycle_rules` block, which is just a list of the rules you want to apply.
 
 Each rule in the list needs four simple pieces of information:
 
-* `id`: `string`, A unique identifier for the rule. Will be prefixed with your deployment `prefix` (e.g. `myprefix_my_rule`).
-* `prefix`: `string`, A unique identifier for the rule. Will be prefixed with your deployment `prefix` (e.g. `myprefix_my_rule`).
-* `days`: `number`, Number of days after object creation before the object expires and is deleted.
-* `status`: `string`, Whether the rule is active. Use `"Enabled"` or `"Disabled"`.
+* `id`: `string`, A unique identifier for the lifecycle rule. Will be prefixed with your deployment `prefix` (e.g. `myprefix_my_rule`).
+* `prefix`: `string`, A unique prefix for the lifecycle rule. Depending on the `prepend_prefix` setting, this value is either prepended with your deployment `prefix` (e.g., `myprefix_my_rule`) or used as provided.
+* `days`: `number`, Number of days after object creation before the object expires and is moved or deleted.
+* `prepend_prefix`: `bool`, Whether to prepend deployment `prefix` to the prefix rule.
+* `status`: `string`, Whether the rule is active. Use `"Enabled"` or `"Disabled"`
 
 **Example:**
 
 ```hcl
-aws_s3_bucket_lifecycle_rules = [
+aws_s3_system_bucket_lifecycle_rules = [
   {
     id     = "internal_file-staging_expiration_rule"
     prefix = "file-staging/"
     days   = 31
-    status = "Enabled"
+    prepend_prefix = false
+    status = "Disabled"
   },
   {
     id     = "internal_dead-letter-archive_expiration_rule"
     prefix = "/dead-letter-archive/"
     days   = 89
+    prepend_prefix = true
     status = "Enabled"
   },
   {
     id     = "internal_events_expiration_rule"
     prefix = "events/"
     days   = 90
+    prepend_prefix = false
     status = "Enabled"
   }
 ]
@@ -175,15 +179,15 @@ aws_s3_bucket_lifecycle_rules = [
 
 Given a deployment with `prefix = "myprefix"`, the above configuration produces three lifecycle rules on the system bucket:
 
-| Effective Rule ID | Effective Prefix | Expires After |
-|---|---|---|
-| `myprefix_internal_file-staging_expiration_rule` | `myprefixfile-staging/` | 31 days |
-| `myprefix_internal_dead-letter-archive_expiration_rule` | `myprefix/dead-letter-archive/` | 89 days |
-| `myprefix_internal_events_expiration_rule` | `myprefixevents/` | 90 days |
+| Effective Rule ID | Effective Prefix | Expires After | Effective Status
+|---|---|---|---|
+| `myprefix_internal_file-staging_expiration_rule` | `file-staging/` | 31 days | `Disabled` |
+| `myprefix_internal_dead-letter-archive_expiration_rule` | `myprefix/dead-letter-archive/` | 89 days | `Enabled` |
+| `myprefix_internal_events_expiration_rule` | `events/` | 90 days | `Enabled` |
 
 :::note
 
-If you do not set `aws_s3_bucket_lifecycle_rules` in your `terraform.tfvars`, the module uses the default rule, which expires objects under the `<prefix>/data/execution-status/` prefix after 1 day.
+If you do not set `aws_s3_system_bucket_lifecycle_rules` in your `terraform.tfvars`, the module uses the default rule.  This remains unchanged from previous releases, which expires objects under the `<prefix>/data/execution-status/` prefix after 1 day.
 
 :::
 

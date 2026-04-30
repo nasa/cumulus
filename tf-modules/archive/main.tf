@@ -19,4 +19,9 @@ locals {
     local.all_non_internal_buckets,
     var.system_bucket
   ]))
+  aws_s3_system_bucket_lifecycle_rules = [
+    for rule in var.aws_s3_system_bucket_lifecycle_rules : merge(rule, {
+      prefix = rule.prepend_prefix ? "${var.prefix}${rule.prefix}" : rule.prefix
+    })
+  ]
 }

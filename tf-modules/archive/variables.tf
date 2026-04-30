@@ -398,20 +398,31 @@ variable "dead_letter_recovery_memory" {
   description = "The amount of memory in MB to reserve for the dead letter recovery Async Operation Fargate Task"
 }
 
-variable "aws_s3_bucket_lifecycle_rules" {
+variable "aws_s3_system_bucket_lifecycle_rules" {
   type = list(object(
     {
-      id = string
-      prefix = string
-      days = number
+      id              = string
+      prefix          = string
+      days            = number
+      prepend_prefix  = bool
+      status          = optional(string, "Enabled")
     }
   ))
   default = [
     {
-      id = "expire_temporary_execution_status_files"
-      prefix = "/data/execution-status/"
-      days = 1
+      id              = "expire_temporary_execution_status_files"
+      prefix          = "/data/execution-status/"
+      days            = 1
+      prepend_prefix  = true
+      status          = "Enabled"
     }
   ]
-  description = "List of lifecycle rules to apply to s3 bucket"
+  validation {
+    condition = alltrue([
+      for rule in var.aws_s3_system_bucket_lifecycle_rules :
+      contains(["Enabled", "Disabled"], rule.status)
+    ])
+    error_message = "Lifecycle rule status must be either Enabled or Disabled."
+  }
+  description = "List of lifecycle rules to apply to s3 system bucket"
 }
