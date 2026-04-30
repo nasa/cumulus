@@ -17,7 +17,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CSD-102**
   - Refactored `aws_s3_bucket_lifecycle_configuration` to support user-defined rules via Terraform variables.
-  - Included configuration examples for `aws_s3_bucket_lifecycle_configuration` in the documentation.
+  - Included configuration examples for `aws_s3_bucket_lifecycle_configuration` in the [documentation](https://nasa.github.io/cumulus/docs/configuration/lifecycle-policies).
 
 ## [v21.3.3] 2026-04-10
 
