@@ -3,6 +3,7 @@ import { knex, Knex } from 'knex';
 import Logger from '@cumulus/logger';
 import { TableNames } from '../tables';
 import { PostgresFileRecord } from '../types/file';
+import { ICEBERG_FILES_TABLE } from './IcebergSchemas';
 
 const log = new Logger({ sender: '@cumulus/db/duckdbHelpers' });
 
@@ -86,7 +87,7 @@ export const getFilesByGranuleCumulusIds = async ({
   columns?: string | string[];
   knexBuilder?: Knex;
 }): Promise<PostgresFileRecord[]> => {
-  const knexQuery = knexBuilder('files_table')
+  const knexQuery = knexBuilder(ICEBERG_FILES_TABLE)
     .select(columns)
     .whereIn('granule_cumulus_id', granuleCumulusIds);
 
