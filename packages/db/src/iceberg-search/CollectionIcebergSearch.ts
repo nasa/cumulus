@@ -49,7 +49,7 @@ export class CollectionIcebergSearch extends CollectionSearch {
 
     log.debug(`fetchGranuleStatusAggregation statsQuery: ${statsQuery?.toSQL().sql}`);
     const { sql, bindings } = statsQuery.toSQL().toNative();
-    const reader = await dbConnection.connection.runAndReadAll(
+    const reader = await dbConnection.runAndReadAll(
       sql,
       prepareBindings(bindings)
     );

@@ -6,8 +6,7 @@ const log = new Logger({ sender: '@cumulus/db/iceberg-connection' });
 let instance: DuckDBInstance | undefined;
 let initPromise: Promise<void> | undefined;
 let dbVersionCache: string | undefined;
-export interface PooledDuckDbConnection {
-  connection: DuckDBConnection;
+export interface PooledDuckDbConnection extends DuckDBConnection {
   creationTime: number;
 }
 
@@ -158,16 +157,18 @@ async function configureConnection(conn: DuckDBConnection): Promise<void> {
 async function getConnection(): Promise<PooledDuckDbConnection> {
   const connection = await instance!.connect();
   await configureConnection(connection);
-  return { connection, creationTime: Date.now() };
+
+  const pooledConn = connection as PooledDuckDbConnection;
+  pooledConn.creationTime = Date.now();
+  return pooledConn;
 }
 
 /**
  * Pre-populate connection-level metadata and file/cache state for known views.
  *
- * @param pooledConn
+ * @param conn
  */
-async function populateConnectionCache(pooledConn: PooledDuckDbConnection): Promise<void> {
-  const conn = pooledConn.connection;
+async function populateConnectionCache(conn: PooledDuckDbConnection): Promise<void> {
   for (const tableName of tableNames) {
     try {
       // eslint-disable-next-line no-await-in-loop
@@ -303,7 +304,7 @@ export async function releaseDuckDbConnection(conn: PooledDuckDbConnection): Pro
   } else {
     log.debug('Pool full, discarding connection reference.');
     try {
-      conn.connection.closeSync();
+      conn.closeSync();
     } catch (error) {
       log.warn('Error closing discarded DuckDB connection', error);
     }
@@ -339,7 +340,7 @@ export async function clearDuckDbPool(createdBefore: number): Promise<void> {
           } else {
             // Destroy old connection
             try {
-              pooledConn.connection.closeSync();
+              pooledConn.closeSync();
               removedCount += 1;
             } catch (error) {
               log.warn('Error closing pooled DuckDB connection', error);
