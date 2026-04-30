@@ -46,6 +46,6 @@ export const up = async (knex: Knex): Promise<void> => {
 export const down = async (knex: Knex): Promise<void> => {
   await knex.raw(`
     DROP TRIGGER IF EXISTS files_enforce_unique_bucket_key_trigger ON files;
-    DROP FUNCTION IF EXISTS files_global_uniqueness();
+    DROP FUNCTION IF EXISTS files_enforce_global_uniqueness();
   `);
 };

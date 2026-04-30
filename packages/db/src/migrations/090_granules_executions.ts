@@ -30,6 +30,11 @@ export const up = async (knex: Knex): Promise<void> => {
 
   await knex.raw(`
     COMMENT ON TABLE granules_executions IS 'Join table mapping granules to executions for processing tracking';
+
+    COMMENT ON COLUMN granules_executions.granule_cumulus_id IS 'Identifier of the granule';
+    COMMENT ON COLUMN granules_executions.collection_cumulus_id IS 'Identifier of the collection the granule belongs to';
+    COMMENT ON COLUMN granules_executions.execution_cumulus_id IS 'Identifier of the execution';
+    COMMENT ON COLUMN granules_executions.execution_created_at IS 'Creation timestamp of the execution';
   `);
 };
 
