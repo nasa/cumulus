@@ -3,7 +3,7 @@
   "exclude-after-remap": false,
   "include": " *.js",
   "statements": 84.0,
-  "functions": 77.0,
+  "functions": 78.0,
   "branches": 69.0,
   "lines": 85.0
 }

@@ -3,8 +3,10 @@
 const test = require('ava');
 const nock = require('nock');
 const some = require('lodash/some');
+const sinon = require('sinon');
 
 const awsServices = require('@cumulus/aws-client/services');
+const launchpad = require('@cumulus/launchpad-auth');
 const { CMRInternalError } = require('@cumulus/errors');
 
 const { CMR } = require('../CMR');
@@ -275,4 +277,114 @@ test.serial('getToken throws if no username is provided when using Earthdata Log
     () => cmrObj.getToken(),
     { message: 'Username not specified for non-launchpad CMR client' }
   );
+});
+
+test.serial('refreshLaunchpadToken updates the CMR token with getValidLaunchpadToken', async (t) => {
+  const validToken = 'valid-launchpad-token';
+  const stub = sinon.stub(launchpad, 'getValidLaunchpadToken').resolves(validToken);
+  t.teardown(() => stub.restore());
+
+  const cmr = new CMR({
+    provider: 'CUMULUS',
+    clientId: 'clientId',
+    oauthProvider: 'launchpad',
+    token: 'invalid-token',
+    passphrase: 'passphrase',
+    api: 'api',
+    certificate: 'cert',
+  });
+
+  await cmr.checkRefreshLaunchpadToken();
+
+  t.is(cmr.token, validToken);
+  t.true(stub.calledOnce);
+  t.deepEqual(stub.firstCall.args[0], {
+    passphrase: 'passphrase',
+    api: 'api',
+    certificate: 'cert',
+  });
+});
+
+test.serial('refreshLaunchpadToken throws when passphrase, api, or certificate is missing', async (t) => {
+  const stub = sinon.stub(launchpad, 'getValidLaunchpadToken').resolves('failure');
+  t.teardown(() => stub.restore());
+
+  const cmr = new CMR({
+    provider: 'CUMULUS',
+    clientId: 'clientId',
+    oauthProvider: 'launchpad',
+    token: 'invalid-token',
+  });
+
+  await t.throwsAsync(
+    () => cmr.checkRefreshLaunchpadToken(),
+    { message: 'Cannot refresh Launchpad token: passphrase, api, and certificate must all be set' }
+  );
+
+  t.false(stub.called);
+  t.is(cmr.token, 'invalid-token');
+});
+
+test.serial('checkRefreshLaunchpadToken handles concurrent refresh calls correctly', async (t) => {
+  const validToken = 'valid-launchpad-token';
+  let resolveRefresh;
+  const refreshPromise = new Promise((resolve) => {
+    resolveRefresh = resolve;
+  });
+  const stub = sinon.stub(launchpad, 'getValidLaunchpadToken').returns(refreshPromise);
+  t.teardown(() => stub.restore());
+
+  const cmr = new CMR({
+    provider: 'CUMULUS',
+    clientId: 'clientId',
+    oauthProvider: 'launchpad',
+    token: 'invalid-token',
+    passphrase: 'passphrase',
+    api: 'api',
+    certificate: 'cert',
+  });
+
+  const call1 = cmr.checkRefreshLaunchpadToken();
+  const call2 = cmr.checkRefreshLaunchpadToken();
+  const call3 = cmr.checkRefreshLaunchpadToken();
+
+  t.true(stub.calledOnce);
+
+  resolveRefresh(validToken);
+  await Promise.all([call1, call2, call3]);
+
+  t.is(cmr.token, validToken);
+  t.true(stub.calledOnce);
+  stub.resetHistory();
+  stub.resolves('second-valid-token');
+  await cmr.checkRefreshLaunchpadToken();
+  t.true(stub.calledOnce);
+  t.is(cmr.token, 'second-valid-token');
+});
+
+test.serial('resetInstance properly reverts the CMR singleton to undefined', (t) => {
+  const firstCMR = new CMR({
+    provider: 'CUMULUS',
+    clientId: 'clientId',
+    oauthProvider: 'launchpad',
+  });
+
+  const secondCMR = new CMR({
+    provider: 'CMR',
+    clientId: 'clientId2',
+    oauthProvider: 'earthdata',
+  });
+
+  t.is(secondCMR, firstCMR);
+
+  CMR.resetInstance();
+
+  const thirdCMR = new CMR({
+    provider: 'fake-provider',
+    clientId: 'clientId3',
+    oauthProvider: 'launchpad',
+  });
+
+  t.not(firstCMR, thirdCMR);
+  t.not(secondCMR, thirdCMR);
 });
