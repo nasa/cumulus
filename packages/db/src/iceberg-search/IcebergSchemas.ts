@@ -94,7 +94,7 @@ export const executionsIcebergSql = (tableName: string = 'executions') => `
         CHECK (status IN ('running', 'completed', 'failed', 'unknown'))
 );`;
 
-export const filesIcebergSql = (tableName: string = 'files') => `
+export const filesIcebergSql = (tableName: string = 'files_table') => `
   CREATE TABLE IF NOT EXISTS ${tableName} (
     cumulus_id BIGINT PRIMARY KEY,
     granule_cumulus_id BIGINT NOT NULL,

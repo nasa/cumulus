@@ -86,7 +86,7 @@ export const getFilesByGranuleCumulusIds = async ({
   columns?: string | string[];
   knexBuilder?: Knex;
 }): Promise<PostgresFileRecord[]> => {
-  const knexQuery = knexBuilder(TableNames.files)
+  const knexQuery = knexBuilder('files_table')
     .select(columns)
     .whereIn('granule_cumulus_id', granuleCumulusIds);
 

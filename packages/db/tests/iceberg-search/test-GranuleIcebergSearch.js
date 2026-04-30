@@ -281,7 +281,7 @@ test.before(async (t) => {
   await stageAndLoadDuckDBTableFromData(
     connection,
     t.context.knexBuilder,
-    'files',
+    'files_table',
     filesIcebergSql,
     t.context.files,
     `${duckdbS3Prefix}files.parquet`
