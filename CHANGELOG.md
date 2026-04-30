@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4709**
+  - Fix stale connections problem in iceberg API
 - **CUMULUS-4710**
   - Implement list of stats route in iceberg search api
   - Add warming up of duckdb connections
