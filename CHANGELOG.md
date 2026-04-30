@@ -69,6 +69,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - enqueueWorkflowMessage (used in queue-workflow task) uses collection cmr_provider to fill provider in cmr section of message template meta
   - enqueueParsePdrMessage (used in queue-pdrs task) uses collection cmr_provider to fill provider in cmr section of message template meta
   - enqueueGranuleIngestMessage (used in queue-granules task) uses collection cmr_provider to fill provider in cmr section of message template meta
+- **CUMULUS-4567**
+  - Add SQL and TypeScript migration files to alter the executions_cumulus_id sequence type.
 
 ### Fixed
 
