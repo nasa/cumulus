@@ -316,9 +316,10 @@ test.serial('refreshLaunchpadToken throws when passphrase, api, or certificate i
     token: 'invalid-token',
   });
 
+  const message = 'Cannot refresh Launchpad token: passphrase, api, and certificate must all be set on the CMR client';
   await t.throwsAsync(
     () => cmr.checkRefreshLaunchpadToken(),
-    { message: 'Cannot refresh Launchpad token: passphrase, api, and certificate must all be set' }
+    { message }
   );
 
   t.false(stub.called);
