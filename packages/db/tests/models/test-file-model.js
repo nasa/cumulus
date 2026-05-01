@@ -54,6 +54,10 @@ test.before(async (t) => {
   t.context.granuleCumulusId = pgGranule.cumulus_id;
   t.context.collectionCumulusId = pgGranule.collection_cumulus_id;
   t.context.filePgModel = new FilePgModel();
+
+  const pgGranule2 = await createFakeGranule(t.context.knex);
+  t.context.granuleCumulusId2 = pgGranule2.cumulus_id;
+  t.context.collectionCumulusId2 = pgGranule2.collection_cumulus_id;
 });
 
 test.after.always(async (t) => {
@@ -101,6 +105,40 @@ test('FilePgModel.upsert() overwrites a file record', async (t) => {
 
   const updatedFile = {
     ...file,
+    checksum_value: cryptoRandomString({ length: 3 }),
+  };
+  await filePgModel.upsert(knex, updatedFile);
+
+  t.like(
+    await filePgModel.get(knex, {
+      bucket: file.bucket,
+      key: file.key,
+    }),
+    updatedFile
+  );
+});
+
+test('FilePgModel.upsert() overwrites a file record from different granule and collection', async (t) => {
+  const {
+    knex,
+    collectionCumulusId,
+    collectionCumulusId2,
+    filePgModel,
+    granuleCumulusId,
+    granuleCumulusId2,
+  } = t.context;
+
+  const file = fakeFileRecordFactory({
+    granule_cumulus_id: granuleCumulusId,
+    collection_cumulus_id: collectionCumulusId,
+    checksum_value: cryptoRandomString({ length: 3 }),
+  });
+  await filePgModel.create(knex, file);
+
+  const updatedFile = {
+    ...file,
+    granule_cumulus_id: granuleCumulusId2,
+    collection_cumulus_id: collectionCumulusId2,
     checksum_value: cryptoRandomString({ length: 3 }),
   };
   await filePgModel.upsert(knex, updatedFile);

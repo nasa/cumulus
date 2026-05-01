@@ -38,7 +38,6 @@ class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
               .where({
                 bucket: file.bucket,
                 key: file.key,
-                collection_cumulus_id: file.collection_cumulus_id,
               })
               .update(file)
               .returning('*');
