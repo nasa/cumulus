@@ -92,6 +92,7 @@ export const getFilesByGranuleCumulusIds = async ({
     .whereIn('granule_cumulus_id', granuleCumulusIds);
 
   const { sql, bindings } = knexQuery.toSQL().toNative();
+  log.debug(`getFilesByGranuleCumulusIds query: ${sql}`);
 
   // Execute using DuckDB connection
   const reader = await connection.runAndReadAll(

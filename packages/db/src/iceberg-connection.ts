@@ -21,6 +21,7 @@ const tableNames = [
   'granules',
   'collections',
   'executions',
+  'files_table',
   'pdrs',
   'providers',
   'rules',
