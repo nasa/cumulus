@@ -70,14 +70,12 @@ resource "aws_ecs_service" "iceberg_api" {
   cluster                           = var.ecs_cluster_arn
   task_definition                   = aws_ecs_task_definition.iceberg_api.arn
   desired_count                     = var.api_service_autoscaling_min_capacity
-  health_check_grace_period_seconds = 180
+  health_check_grace_period_seconds = var.iceberg_health_check_grace_period_seconds
   launch_type                       = "FARGATE"
 
   network_configuration {
     subnets = var.ecs_cluster_instance_subnet_ids
-
-    # Include RDS security group to allow database access
-    security_groups  = [aws_security_group.iceberg_ecs_task_sg.id, var.rds_security_group_id]
+    security_groups  = [aws_security_group.iceberg_ecs_task_sg.id]
     assign_public_ip = false
   }
 
@@ -93,6 +91,11 @@ resource "aws_ecs_service" "iceberg_api" {
   # Allow autoscaling to manage desired_count
   lifecycle {
     ignore_changes = [desired_count]
+  }
+
+  force_new_deployment = true
+  triggers = {
+    redeployment = sha256(jsonencode(aws_ecs_task_definition.iceberg_api))
   }
 }
 
@@ -113,11 +116,12 @@ resource "aws_lb_target_group" "iceberg_api" {
   deregistration_delay = 120
 
   health_check {
-    path                = "/version"
-    matcher             = "200-399" # Accept any success or redirect code
-    interval            = 20
+    path                = "/health"
+    matcher             = "200"
+    interval            = 30
     timeout             = 10
-    unhealthy_threshold = 6
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
   }
 
   lifecycle {

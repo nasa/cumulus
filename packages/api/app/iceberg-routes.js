@@ -6,6 +6,7 @@ const Logger = require('@cumulus/logger');
 const { defaultErrorHandler } = require('./middleware');
 const stats = require('../endpoints/iceberg-stats');
 const version = require('../endpoints/version');
+const health = require('../endpoints/iceberg-health');
 
 const log = new Logger('@cumulus/api/iceberg-routes');
 
@@ -65,6 +66,9 @@ router.use('/reconciliation-reports', ensureAuthorized, reconciliationReportsIce
 
 // stats endpoint (includes GET /stats and GET /stats/aggregate/:type?)
 router.use('/stats', ensureAuthorized, stats);
+
+// health endpoint
+router.use('/health', health);
 
 // version endpoint
 // this endpoint is not behind authentication

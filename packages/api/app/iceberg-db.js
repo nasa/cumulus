@@ -16,7 +16,7 @@ const log = new Logger({ sender: '@cumulus/api/iceberg-db' });
  * @returns {Promise<void>}
  */
 const initializeDuckDbClient = async () => {
-  log.info(`Initializing Iceberg API DuckDB client for ECS server mode with pool size: ${process.env.DUCKDB_MAX_POOL}`);
+  log.info('Initializing Iceberg API DuckDB client...');
   await initializeDuckDb();
   log.info('Iceberg API DuckDB client initialized successfully');
 };
