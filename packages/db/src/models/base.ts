@@ -79,7 +79,7 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     const query = knexOrTransaction(this.tableName).where(params);
 
     if (returningFields && returningFields.length > 0) {
-      query.select(returningFields as string[]);
+      query.select(returningFields);
     } else {
       query.select('*');
     }
@@ -219,10 +219,10 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     returningFields: K[]
   ): Promise<Array<Pick<RecordType, K>>> {
     const records = await knexOrTransaction(this.tableName)
-      .select(returningFields as string[])
-      .whereIn(columnNames as string[], values);
+      .select(returningFields)
+      .whereIn(columnNames, values);
 
-    return records as Array<Pick<RecordType, K>>;
+    return records;
   }
 
   /**

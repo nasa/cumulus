@@ -37,7 +37,9 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
       : execution;
 
     try {
-      // Try to insert new execution (trigger enforces global uniqueness)
+      // Attempt to insert the execution.
+      // Global uniqueness is enforced at the database level via a trigger
+      // (refer to migrations/110_executions_triggers.ts).
       return await knexOrTrx.transaction(async (trx) =>
         await trx(this.tableName)
           .insert(execution)
