@@ -151,3 +151,9 @@ variable "admin_db_login_secret_arn" {
   description = "Arn for AWS Secrets Manager secret for database administrator credentials"
   type        = string
 }
+
+variable "compaction_interval_sec" {
+  description = "The period in seconds between compactions"
+  type = string
+  default = "30"
+}
