@@ -48,5 +48,6 @@ module "rds_iceberg_replication" {
   pg_db                     = var.pg_db
   iceberg_namespace         = var.iceberg_namespace
   iceberg_s3_bucket         = var.iceberg_s3_bucket
+  compaction_interval_sec   = var.compaction_interval_sec
   tags                      = merge(var.tags, { Deployment = var.prefix })
 }
