@@ -152,3 +152,50 @@ test.serial('handler can apply standard patches to a database previously created
   const migrations = await t.context.testKnex('knex_migrations').select('*');
   t.truthy(migrations.length > 0, 'The migrations table should contain entries from the patch-based files');
 });
+
+test.serial('handler creates correct granules and files partitions based on env', async (t) => {
+  const { testEnv } = t.context;
+
+  // Save original env variables to restore later
+  const originalGranules = process.env.GRANULES_PARTITION_COUNT;
+  const originalFiles = process.env.FILES_PARTITION_COUNT;
+
+  // Set environment variables for this test
+  process.env.GRANULES_PARTITION_COUNT = '16';
+  process.env.FILES_PARTITION_COUNT = '32';
+
+  try {
+    await handler({ command: 'latest', env: testEnv });
+
+    t.context.testKnex = await getKnexClient({ env: testEnv });
+
+    const granulePartitions = await t.context.testKnex
+      .select('pg_class.relname as partition_name')
+      .from('pg_class')
+      .join('pg_inherits', 'pg_class.oid', 'pg_inherits.inhrelid')
+      .join('pg_class as parent', 'pg_inherits.inhparent', 'parent.oid')
+      .where('parent.relname', 'granules');
+
+    t.is(
+      granulePartitions.length,
+      Number(process.env.GRANULES_PARTITION_COUNT),
+      `Should have ${process.env.GRANULES_PARTITION_COUNT} granule partitions`
+    );
+
+    const filePartitions = await t.context.testKnex
+      .select('pg_class.relname as partition_name')
+      .from('pg_class')
+      .join('pg_inherits', 'pg_class.oid', 'pg_inherits.inhrelid')
+      .join('pg_class as parent', 'pg_inherits.inhparent', 'parent.oid')
+      .where('parent.relname', 'files');
+
+    t.is(
+      filePartitions.length,
+      Number(process.env.FILES_PARTITION_COUNT),
+      `Should have ${process.env.FILES_PARTITION_COUNT} file partitions`
+    );
+  } finally {
+    process.env.GRANULES_PARTITION_COUNT = originalGranules;
+    process.env.FILES_PARTITION_COUNT = originalFiles;
+  }
+});
