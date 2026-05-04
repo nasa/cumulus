@@ -204,6 +204,10 @@ describe('The ChangeGranuleCollections workflow', () => {
     } catch (error) {
       console.log(`Error deleting s3 objects: ${error}`);
     }
+    await removePublishedGranule({
+      prefix: stackName,
+      granuleId,
+    });
     let cleanup = [];
     cleanup = cleanup.concat([
       deleteExecution({ prefix: stackName, executionArn: ingestExecutionArn }),
@@ -217,10 +221,6 @@ describe('The ChangeGranuleCollections workflow', () => {
         prefix: stackName,
         collectionName: targetCollection.name,
         collectionVersion: targetCollection.version,
-      }),
-      removePublishedGranule({
-        prefix: stackName,
-        granuleId,
       }),
     ]);
     await Promise.all(cleanup);
