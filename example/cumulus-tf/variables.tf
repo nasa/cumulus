@@ -582,12 +582,5 @@ variable "aws_s3_system_bucket_lifecycle_rules" {
       status          = "Enabled"
     }
   ]
-  validation {
-    condition = alltrue([
-      for rule in var.aws_s3_system_bucket_lifecycle_rules :
-      contains(["Enabled", "Disabled"], rule.status)
-    ])
-    error_message = "Lifecycle rule status must be either Enabled or Disabled."
-  }
   description = "List of lifecycle rules to apply to s3 system bucket"
 }
