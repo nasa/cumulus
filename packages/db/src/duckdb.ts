@@ -6,6 +6,7 @@
 
 export {
   initializeDuckDb,
+  isDuckDbReady,
   acquireDuckDbConnection,
   releaseDuckDbConnection,
   destroyDuckDb,

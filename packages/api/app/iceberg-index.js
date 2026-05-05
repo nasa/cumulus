@@ -106,6 +106,7 @@ app.use((err, _req, res, _next) => {
 // Initialize and start server
 const startServer = async () => {
   await initEnvVars;
+  process.env.CUMULUS_API_NAME ??= 'cumulus-iceberg-api';
   const dynamoTableNames = JSON.parse(getRequiredEnvVar('dynamoTableNameString'));
   Object.keys(dynamoTableNames).forEach((tableEnvVarName) => {
     process.env[tableEnvVarName] = dynamoTableNames[tableEnvVarName];

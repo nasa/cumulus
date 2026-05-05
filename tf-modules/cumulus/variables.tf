@@ -732,6 +732,12 @@ variable "api_service_autoscaling_target_cpu" {
   default     = 70
 }
 
+variable "iceberg_health_check_grace_period_seconds" {
+  description = "Seconds to ignore failing load balancer health checks on newly instantiated ECS tasks"
+  type        = number
+  default     = 180
+}
+
 variable "iceberg_s3_bucket" {
   description = "Name of the S3 bucket the Iceberg API task needs read access to"
   type        = string

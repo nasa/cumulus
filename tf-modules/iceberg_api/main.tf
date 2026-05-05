@@ -1,9 +1,11 @@
 locals {
-  api_env_variables  = {
-        "OAUTH_PROVIDER"      = var.oauth_provider
-        "api_config_secret_id" = var.api_config_secret_arn
-        "AWS_ACCOUNT_ID"      = var.aws_account_id
-        "ICEBERG_NAMESPACE" = var.iceberg_namespace
+  api_env_variables = {
+    "OAUTH_PROVIDER"       = var.oauth_provider
+    "api_config_secret_id" = var.api_config_secret_arn
+    "AWS_ACCOUNT_ID"       = var.aws_account_id
+    "ICEBERG_NAMESPACE"    = var.iceberg_namespace
+    "ECS_TASK_MEMORY"      = tostring(var.iceberg_api_memory)
+    "ECS_TASK_CPU"         = tostring(var.iceberg_api_cpu)
   }
 }
 
@@ -12,7 +14,7 @@ data "aws_ecr_repository" "cumulus_iceberg_api" {
 }
 
 data "aws_ssm_parameter" "private_ca" {
-  name  = "ngap_private_ca_arn"
+  name = "ngap_private_ca_arn"
 }
 
 resource "aws_cloudwatch_log_group" "iceberg_api" {
@@ -46,7 +48,7 @@ resource "aws_ecs_task_definition" "iceberg_api" {
         }
       ]
       environment = [
-        for k, v in merge(local.api_env_variables, {"auth_mode"="public"}) : {
+        for k, v in merge(local.api_env_variables, { "auth_mode" = "public" }) : {
           name  = k
           value = tostring(v)
         }
@@ -64,18 +66,16 @@ resource "aws_ecs_task_definition" "iceberg_api" {
 }
 
 resource "aws_ecs_service" "iceberg_api" {
-  name            = "${var.prefix}-IcebergApiService"
-  cluster         = var.ecs_cluster_arn
-  task_definition = aws_ecs_task_definition.iceberg_api.arn
-  desired_count   = var.api_service_autoscaling_min_capacity
-  health_check_grace_period_seconds = 180
-  launch_type     = "FARGATE"
+  name                              = "${var.prefix}-IcebergApiService"
+  cluster                           = var.ecs_cluster_arn
+  task_definition                   = aws_ecs_task_definition.iceberg_api.arn
+  desired_count                     = var.api_service_autoscaling_min_capacity
+  health_check_grace_period_seconds = var.iceberg_health_check_grace_period_seconds
+  launch_type                       = "FARGATE"
 
   network_configuration {
-    subnets          = var.ecs_cluster_instance_subnet_ids
-
-    # Include RDS security group to allow database access
-    security_groups  = [aws_security_group.iceberg_ecs_task_sg.id, var.rds_security_group_id]
+    subnets = var.ecs_cluster_instance_subnet_ids
+    security_groups  = [aws_security_group.iceberg_ecs_task_sg.id]
     assign_public_ip = false
   }
 
@@ -92,10 +92,15 @@ resource "aws_ecs_service" "iceberg_api" {
   lifecycle {
     ignore_changes = [desired_count]
   }
+
+  force_new_deployment = true
+  triggers = {
+    redeployment = sha256(jsonencode(aws_ecs_task_definition.iceberg_api))
+  }
 }
 
 resource "aws_lb" "iceberg_api" {
-  name               = "${var.prefix}-iceberg-api-alb"
+  name               = "${var.prefix}-iceberg-api"
   internal           = true
   load_balancer_type = "application"
   security_groups    = [aws_security_group.iceberg_alb_sg.id]
@@ -103,19 +108,20 @@ resource "aws_lb" "iceberg_api" {
 }
 
 resource "aws_lb_target_group" "iceberg_api" {
-  name_prefix = substr("${var.prefix}-", 0, 6)
-  port        = 5001
-  protocol    = "HTTP"
-  vpc_id      = var.vpc_id
-  target_type = "ip"
+  name_prefix          = substr("${var.prefix}-", 0, 6)
+  port                 = 5001
+  protocol             = "HTTP"
+  vpc_id               = var.vpc_id
+  target_type          = "ip"
   deregistration_delay = 120
 
   health_check {
-    path                = "/version"
-    matcher = "200-399" # Accept any success or redirect code
-    interval            = 20
+    path                = "/health"
+    matcher             = "200"
+    interval            = 30
     timeout             = 10
-    unhealthy_threshold = 6
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
   }
 
   lifecycle {
@@ -124,7 +130,7 @@ resource "aws_lb_target_group" "iceberg_api" {
 }
 
 resource "aws_acm_certificate" "iceberg_lb_cert" {
-  domain_name       = "${var.prefix}.cumulus.earthdatacloud.nasa.gov"
+  domain_name               = "${var.prefix}.cumulus.earthdatacloud.nasa.gov"
   certificate_authority_arn = data.aws_ssm_parameter.private_ca.value
 
   lifecycle {

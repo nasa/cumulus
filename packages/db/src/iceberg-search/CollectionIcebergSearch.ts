@@ -1,13 +1,12 @@
 import { Knex } from 'knex';
 import pick from 'lodash/pick';
-import { DuckDBConnection } from '@duckdb/node-api';
 import Logger from '@cumulus/logger';
+import { PooledDuckDbConnection } from '../iceberg-connection';
 
 import { CollectionSearch, Statuses, StatsRecords, CollectionRecordApi } from '../search/CollectionSearch';
 import { TableNames } from '../tables';
 import { translatePostgresCollectionToApiCollection } from '../translate/collections';
 import { PostgresCollectionRecord } from '../types/collection';
-import { QueryEvent } from '../types/search';
 import { prepareBindings } from './duckdbHelpers';
 import { GranuleIcebergSearch } from './GranuleIcebergSearch';
 import { executeDuckDBSearch } from './DuckDBSearchExecutor';
@@ -18,24 +17,18 @@ const log = new Logger({ sender: '@cumulus/db/CollectionIcebergSearch' });
  * Class to build and execute DuckDB search query for collections
  */
 export class CollectionIcebergSearch extends CollectionSearch {
-  private readonly dbConnection: DuckDBConnection | undefined;
-
-  constructor(event: QueryEvent, dbConnection?: DuckDBConnection) {
-    super(event);
-    this.dbConnection = dbConnection;
-  }
-
   /**
    * Executes stats query to get granules' status aggregation
    *
    * @param collectionCumulusIds - array of cumulusIds of the collections
    * @param knexClient - knex for the stats query
+   * @param dbConnection
    * @returns the collection's granules status' aggregation
    */
   private async fetchGranuleStatusAggregation(
     collectionCumulusIds: number[],
     knexClient: Knex,
-    dbConnection: DuckDBConnection
+    dbConnection: PooledDuckDbConnection
   ): Promise<StatsRecords> {
     const granulesTable = TableNames.granules;
     let statsQuery = knexClient(granulesTable);
@@ -84,12 +77,13 @@ export class CollectionIcebergSearch extends CollectionSearch {
    *
    * @param pgRecords - postgres Collection records returned from query
    * @param knexClient - knex for the stats query if incldueStats is true
+   * @param dbConnection
    * @returns translated api records
    */
   private async translateRecords(
     pgRecords: PostgresCollectionRecord[],
     knexClient: Knex,
-    dbConnection: DuckDBConnection
+    dbConnection: PooledDuckDbConnection
   ): Promise<Partial<CollectionRecordApi>[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
 
@@ -123,14 +117,11 @@ export class CollectionIcebergSearch extends CollectionSearch {
 
   /**
    * Build and execute search query.
-   * Uses the connection supplied at construction time (e.g. in tests), or
-   * borrows one from the pool and releases it when done.
    *
    * @returns search result
    */
   async query() {
     return executeDuckDBSearch({
-      injectedConnection: this.dbConnection,
       dbQueryParameters: this.dbQueryParameters,
       getMetaTemplate: this._metaTemplate.bind(this),
       makeTranslateRecords: (conn) => (records, knexClient) =>

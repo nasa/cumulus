@@ -1,9 +1,9 @@
 import { Knex } from 'knex';
 import pick from 'lodash/pick';
-import { DuckDBConnection } from '@duckdb/node-api';
 
 import { ApiGranuleRecord } from '@cumulus/types/api/granules';
 import Logger from '@cumulus/logger';
+import { PooledDuckDbConnection } from '../iceberg-connection';
 
 import {
   getExecutionInfoByGranuleCumulusIds,
@@ -21,11 +21,8 @@ const log = new Logger({ sender: '@cumulus/db/GranuleIcebergSearch' });
  * Class to build and execute DuckDB search query for granules
  */
 export class GranuleIcebergSearch extends GranuleSearch {
-  private readonly dbConnection: DuckDBConnection | undefined;
-
-  constructor(event: QueryEvent, dbConnection?: DuckDBConnection) {
+  constructor(event: QueryEvent) {
     super(event, false); // disables estimateTableRowCount
-    this.dbConnection = dbConnection;
   }
 
   /**
@@ -33,12 +30,13 @@ export class GranuleIcebergSearch extends GranuleSearch {
    *
    * @param pgRecords - postgres records returned from query
    * @param knexClient - DB client
+   * @param dbConnection
    * @returns translated api records
    */
   private async translateRecords(
     pgRecords: GranuleRecord[],
     knexClient: Knex,
-    dbConnection: DuckDBConnection
+    dbConnection: PooledDuckDbConnection
   ): Promise<Partial<ApiGranuleRecord>[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
 
@@ -101,14 +99,11 @@ export class GranuleIcebergSearch extends GranuleSearch {
 
   /**
    * Build and execute search query.
-   * Uses the connection supplied at construction time (e.g. in tests), or
-   * borrows one from the pool and releases it when done.
    *
    * @returns search result
    */
   async query() {
     return executeDuckDBSearch({
-      injectedConnection: this.dbConnection,
       dbQueryParameters: this.dbQueryParameters,
       getMetaTemplate: this._metaTemplate.bind(this),
       makeTranslateRecords: (conn) => (records, knexClient) =>
