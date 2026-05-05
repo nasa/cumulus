@@ -5,13 +5,11 @@ export const TIMESTAMP_PRECISION = 3;
  *
  * @param envVarName - The name of the process.env key to check
  * @param defaultCount - The fallback value if the env var is missing
- * @param maxCount - The maximum allowed partition count
  * @returns
  */
 export const getPartitionCount = (
   envVarName: string,
-  defaultCount: number,
-  maxCount: number
+  defaultCount: number
 ): number => {
   const raw = process.env[envVarName];
   const value = raw ? Number(raw) : defaultCount;
@@ -19,12 +17,6 @@ export const getPartitionCount = (
   if (!Number.isInteger(value) || value <= 0) {
     throw new Error(
       `Invalid ${envVarName}: "${raw}". Must be a positive integer.`
-    );
-  }
-
-  if (value > maxCount) {
-    throw new Error(
-      `${envVarName} (${value}) exceeds max allowed (${maxCount})`
     );
   }
 

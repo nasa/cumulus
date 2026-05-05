@@ -1,7 +1,8 @@
 import { Knex } from 'knex';
 import { TIMESTAMP_PRECISION } from '../lib/migration';
 
-const BASE_YEAR = Number(process.env.EXECUTIONS_PARTITION_BASE_YEAR ?? 2026);
+const currentYear = new Date().getFullYear();
+const BASE_YEAR = Number(process.env.EXECUTIONS_PARTITION_BASE_YEAR ?? currentYear);
 const TOTAL_YEARS = Number(process.env.EXECUTIONS_PARTITION_TOTAL_YEARS ?? 2);
 
 export const up = async (knex: Knex): Promise<void> => {

@@ -2,11 +2,10 @@ import { Knex } from 'knex';
 import { getPartitionCount, TIMESTAMP_PRECISION } from '../lib/migration';
 
 const DEFAULT_PARTITION_COUNT = 8;
-const MAX_PARTITION_COUNT = 128;
 
 export const up = async (knex: Knex): Promise<void> => {
   const PARTITION_COUNT: number = getPartitionCount(
-    'FILES_PARTITION_COUNT', DEFAULT_PARTITION_COUNT, MAX_PARTITION_COUNT
+    'FILES_PARTITION_COUNT', DEFAULT_PARTITION_COUNT
   );
 
   // Parent partitioned table
