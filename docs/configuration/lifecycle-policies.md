@@ -160,7 +160,7 @@ aws_s3_system_bucket_lifecycle_rules = [
     prefix = "file-staging/"
     days   = 30
     prepend_prefix = false
-    status = "Disabled"
+    status = "Enabled"
   },
   {
     id     = "internal_dead-letter-archive_expiration_rule"
@@ -177,6 +177,8 @@ aws_s3_system_bucket_lifecycle_rules = [
   }
 ]
 ```
+
+For the `internal_dead-letter-archive_expiration_rule` in the example above, the rule will be enabled for objects in the `system_bucket/<prefix>/dead-letter-archive` and for the `internal_file-staging_expiration_rule`, it will apply to objects in the system_bucket/file-staging/ s3 file paths.
 
 **Effective Configuration Mapping:**
 Given a deployment with `prefix = "myprefix"`, the above configuration produces three lifecycle rules on the system bucket:
