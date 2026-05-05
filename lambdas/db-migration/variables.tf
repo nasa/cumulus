@@ -39,7 +39,6 @@ variable "vpc_id" {
 
 variable "db_partition_config" {
   type = object({
-    executions_base_year   = number
     executions_total_years = number
     granules_count         = number
     files_count            = number

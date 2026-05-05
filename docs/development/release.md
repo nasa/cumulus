@@ -221,7 +221,7 @@ docker run --rm -v ~/output:/output  schemaspy/schemaspy:latest -t pgsql -host h
 ```
 
 With "-v "(host output directory):/output" set to the local work/scratch directory you intend to use.
-The "-I" flag excludes partition tables from the output.
+The "-I" flag applies a regular expression to exclude partition tables from the generated output.
 
 Replace (project)/docs/assets/db_schema/relationships.real.large.png with the generated file from the schemapy output at `./diagrams/summary/relationships.real.large.png`, and commit the change.
 

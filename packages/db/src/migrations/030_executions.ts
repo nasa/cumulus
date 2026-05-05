@@ -1,8 +1,6 @@
 import { Knex } from 'knex';
 import { TIMESTAMP_PRECISION } from '../lib/migration';
 
-const currentYear = new Date().getFullYear();
-const BASE_YEAR = Number(process.env.EXECUTIONS_PARTITION_BASE_YEAR ?? currentYear);
 const TOTAL_YEARS = Number(process.env.EXECUTIONS_PARTITION_TOTAL_YEARS ?? 2);
 
 export const up = async (knex: Knex): Promise<void> => {
@@ -53,10 +51,12 @@ export const up = async (knex: Knex): Promise<void> => {
     DEFAULT;
   `);
 
+  const currentYear = new Date().getFullYear();
+
   // QUARTERLY PARTITIONS
   const partitionQueries: string[] = [];
   for (let yearOffset = 0; yearOffset < TOTAL_YEARS; yearOffset += 1) {
-    const y = BASE_YEAR + yearOffset;
+    const y = currentYear + yearOffset;
 
     const quarters = [
       { name: 'q1', from: `${y}-01-01`, to: `${y}-04-01` },
