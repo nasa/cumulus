@@ -16,12 +16,13 @@
     "clean": "git clean -d -x -e node_modules -f"
   },
   "devDependencies": {
-    "@docusaurus/core": "^2.3.0",
-    "@docusaurus/preset-classic": "^2.3.0",
-    "react": "^17.0.2"
+    "@docusaurus/core": "^3.10.0",
+    "@docusaurus/preset-classic": "^3.10.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
   },
   "overrides": {
-    "webpack": "5.105.4"
+    "webpackbar": "^7.0.0"
   },
   "private": true
 }
