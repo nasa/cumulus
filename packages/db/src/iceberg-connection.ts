@@ -12,11 +12,15 @@ export interface PooledDuckDbConnection extends DuckDBConnection {
 
 let poolCacheWarmupPromise: Promise<void> | undefined;
 let isPoolCacheWarmupComplete = false;
-let clearPoolPromise: Promise<void> | undefined;
+let backgroundRefreshInterval: NodeJS.Timeout | undefined;
+let refreshPoolPromise: Promise<void> | undefined;
 
 const connectionPool: PooledDuckDbConnection[] = [];
 const MAX_POOL_SIZE = Number(process.env.DUCKDB_MAX_POOL) || 3;
 const ENABLE_CACHE_WARMUP = process.env.DUCKDB_ENABLE_CACHE_WARMUP !== 'false';
+const STALE_CONNECTION_THRESHOLD_MS = 5 * 60 * 60 * 1000; // 5 hours
+const BACKGROUND_CHECK_INTERVAL_MS =
+  Number(process.env.DUCKDB_POOL_CHECK_INTERVAL) || 10 * 60 * 1000; // 10 minutes
 const tableNames = [
   'granules',
   'collections',
@@ -181,6 +185,19 @@ async function populateConnectionCache(conn: PooledDuckDbConnection): Promise<vo
 }
 
 /**
+ * Creates and returns a new DuckDB connection that has cache warmup initiated.
+ */
+export async function replaceDuckDbConnection(): Promise<PooledDuckDbConnection> {
+  const newConn = await getConnection();
+  if (ENABLE_CACHE_WARMUP) {
+    populateConnectionCache(newConn).catch((error: unknown) => {
+      log.warn('Background cache warmup for connection failed.', error);
+    });
+  }
+  return newConn;
+}
+
+/**
  * Start one-time background cache population for currently pooled connections.
  */
 function startPoolCacheWarmup(): void {
@@ -222,6 +239,77 @@ function startConnectionCacheWarmup(conn: PooledDuckDbConnection): void {
 }
 
 /**
+ * Core logic for checking stale connections and replenishing the pool.
+ */
+async function performConnectionRefresh(): Promise<void> {
+  const startTime = Date.now();
+  let removedCount = 0;
+
+  log.info('Starting background check for stale DuckDB connections...');
+  const staleThreshold = startTime - STALE_CONNECTION_THRESHOLD_MS;
+  for (let i = connectionPool.length - 1; i >= 0; i -= 1) {
+    const pooledConn = connectionPool[i];
+    if (pooledConn.creationTime < staleThreshold) {
+      connectionPool.splice(i, 1);
+      try {
+        pooledConn.closeSync();
+        removedCount += 1;
+      } catch (error) {
+        log.warn('Error closing stale DuckDB connection', error);
+      }
+    }
+  }
+
+  const warmupPromises: Promise<void>[] = [];
+  for (let i = 0; i < removedCount; i += 1) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      const newConn = await getConnection();
+      if (ENABLE_CACHE_WARMUP) {
+        warmupPromises.push(
+          populateConnectionCache(newConn).catch((error: unknown) => {
+            log.warn('Background cache warmup for connection failed.', error);
+          })
+        );
+      }
+      connectionPool.push(newConn);
+    } catch (e) {
+      log.error('Failed to create replacement DuckDB connection', e);
+    }
+  }
+  await Promise.all(warmupPromises);
+  log.info(
+    'Background check for stale DuckDB connections complete. '
+    + `${removedCount} stale DuckDB connections replaced in ${Date.now() - startTime}ms.`
+  );
+}
+
+/**
+ * Refresh any connections older than the threshold.
+ */
+async function refreshStaleConnections(): Promise<void> {
+  if (refreshPoolPromise) {
+    await refreshPoolPromise;
+    return;
+  }
+
+  refreshPoolPromise = performConnectionRefresh().finally(() => {
+    refreshPoolPromise = undefined;
+  });
+  await refreshPoolPromise;
+}
+
+/**
+ * Start the background job to periodically refresh stale connections.
+ */
+function startBackgroundConnectionRefresh(): void {
+  if (backgroundRefreshInterval) return;
+  backgroundRefreshInterval = setInterval(() => {
+    refreshStaleConnections().catch((e) => log.error('Error during connection refresh', e));
+  }, BACKGROUND_CHECK_INTERVAL_MS);
+}
+
+/**
  * Initialize the DuckDB Instance and load required extensions.
  */
 export async function initializeDuckDb(): Promise<void> {
@@ -244,6 +332,7 @@ export async function initializeDuckDb(): Promise<void> {
       }
 
       startPoolCacheWarmup();
+      startBackgroundConnectionRefresh();
 
       log.info(`DuckDB initialized with a pool of ${connectionPool.length}/${MAX_POOL_SIZE} connections.`);
     } catch (error) {
@@ -313,73 +402,6 @@ export async function releaseDuckDbConnection(conn: PooledDuckDbConnection): Pro
 }
 
 /**
- * Clear and close connections in the pool that were created older than
- * REFRESH_INTERVAL_MS before the given timestamp.
- * Useful when connections become stale and need to be selectively flushed.
- *
- * @param createdBefore - Timestamp in milliseconds. Only connections created
- * REFRESH_INTERVAL_MS before this time are closed.
- */
-export async function clearDuckDbPool(createdBefore: number): Promise<void> {
-  if (clearPoolPromise) {
-    return clearPoolPromise;
-  }
-
-  clearPoolPromise = (async () => {
-    try {
-      const startTime = Date.now();
-      const keepingConnections: PooledDuckDbConnection[] = [];
-      const staleThreshold = createdBefore - REFRESH_INTERVAL_MS;
-      let removedCount = 1; // Start at 1 to account for the connection that triggered the clear
-
-      while (connectionPool.length > 0) {
-        const pooledConn = connectionPool.pop();
-        if (pooledConn) {
-          if (pooledConn.creationTime >= staleThreshold) {
-            // Keep newly created connection
-            keepingConnections.push(pooledConn);
-          } else {
-            // Destroy old connection
-            try {
-              pooledConn.closeSync();
-              removedCount += 1;
-            } catch (error) {
-              log.warn('Error closing pooled DuckDB connection', error);
-            }
-          }
-        }
-      }
-
-      // Return preserved connections to pool
-      connectionPool.push(...keepingConnections);
-
-      // Immediately replace cleared connections to maintain pool size
-      const warmupPromises: Promise<void>[] = [];
-      for (let i = 0; i < removedCount; i += 1) {
-        // eslint-disable-next-line no-await-in-loop
-        const newConn = await getConnection();
-        if (ENABLE_CACHE_WARMUP) {
-          warmupPromises.push(
-            populateConnectionCache(newConn).catch((error: unknown) => {
-              log.warn('Background cache warmup for connection failed.', error);
-            })
-          );
-        }
-        connectionPool.push(newConn);
-      }
-      await Promise.all(warmupPromises);
-      if (removedCount > 0) {
-        log.info(`Cleared and replaced ${removedCount} stale DuckDB connections in ${Date.now() - startTime}ms.`);
-      }
-    } finally {
-      clearPoolPromise = undefined;
-    }
-  })();
-
-  return clearPoolPromise;
-}
-
-/**
  * Check if DuckDB is initialized and ready without acquiring a connection.
  * Used for lightweight health checks to avoid pool contention.
  *
@@ -394,11 +416,14 @@ export function isDuckDbReady(): boolean {
  */
 export async function destroyDuckDb(): Promise<void> {
   log.info('Shutting down DuckDB...');
+  if (backgroundRefreshInterval) {
+    clearInterval(backgroundRefreshInterval);
+    backgroundRefreshInterval = undefined;
+  }
   connectionPool.length = 0;
   instance = undefined;
   initPromise = undefined;
   dbVersionCache = undefined;
   poolCacheWarmupPromise = undefined;
-  clearPoolPromise = undefined;
   isPoolCacheWarmupComplete = false;
 }

@@ -1,6 +1,7 @@
 'use strict';
 
 const isFunction = require('lodash/isFunction');
+const noop = require('lodash/noop');
 const test = require('ava');
 const sinon = require('sinon');
 // noCallThru prevents proxyquire from loading the real @duckdb/node-api binary,
@@ -16,6 +17,7 @@ const makeFakeConnection = () => {
   let glueAttached = false;
 
   return {
+    closeSync: noop,
     run: sinon.stub().callsFake((sql) => {
       if (/duckdb_databases\(\)/i.test(sql)) {
         return {
@@ -297,4 +299,38 @@ test.serial('initializeDuckDb throws if ICEBERG_NAMESPACE is missing', async (t)
     () => initializeDuckDb(),
     { message: /ICEBERG_NAMESPACE environment variable is required/ }
   );
+});
+
+// ---------------------------------------------------------------------------
+// 7. Background connection refresh
+// ---------------------------------------------------------------------------
+
+test.serial('background connection refresh replaces stale connections', async (t) => {
+  const clock = sinon.useFakeTimers({
+    now: Date.now(),
+    shouldAdvanceTime: true,
+  });
+  t.teardown(() => clock.restore());
+
+  const fakeInst = makeFakeInstance();
+  const { duckdbModule } = makeDuckDBStub(fakeInst);
+  const icebergModule = loadIcebergModule(duckdbModule);
+
+  await icebergModule.initializeDuckDb();
+
+  const maxPool = Number(process.env.DUCKDB_MAX_POOL) || 3;
+  t.is(fakeInst.connect.callCount, maxPool, 'Initial connections created');
+
+  // Advance time past the 5-hour threshold and wait for setInterval callbacks
+  // 6 hours in milliseconds
+  await clock.tickAsync(6 * 60 * 60 * 1000);
+
+  // Stale connections should be removed and replaced by new connections
+  t.is(
+    fakeInst.connect.callCount,
+    maxPool * 2,
+    'New connections should be created to replace stale ones'
+  );
+
+  await icebergModule.destroyDuckDb();
 });
