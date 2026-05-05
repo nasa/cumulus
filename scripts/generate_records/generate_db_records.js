@@ -39,6 +39,8 @@ const {
  */
 
 process.env.DISABLE_PG_SSL = 'true';
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+process.env.PGSSLMODE = 'require';
 
 /**
  * upload a batch of granules and executions
