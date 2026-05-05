@@ -8,7 +8,7 @@ This can be installed with npm install in this directory (or will be installed a
 generate_db_records.js and generate_db_executions.js are tested to run with both node v20/v22
 
 ## Database Connection Environment Variables
-The following environment variables must be set in order for the script to connect to the database:
+The following environment variables must be set in order for the script to connect to the database. For example:
 ```sh
 PG_HOST=localhost \
 PG_PORT=9202 \
@@ -16,6 +16,14 @@ PG_USER=dbuser \
 PG_PASSWORD=password \
 PG_DATABASE=prefix_db \
 node ./generate_db_records.js command_arguments
+```
+
+If you encounter the error `knex failed on attempted connection error: no pg_hba.conf entry for host`, you may need to enable SSL for the database connection.
+Set the following environment variables to force the client to use SSL/TLS and skip certificate validation:
+
+```sh
+NODE_TLS_REJECT_UNAUTHORIZED=0 \
+PGSSLMODE=require \
 ```
 
 Set KNEX_DEBUG=true to enable debug logging and help diagnose connection issues.
