@@ -217,10 +217,11 @@ Commit and push these changes, if any.
 Check the release updates for DB schema migrations.   If there are any, run the following generation using [schemaspy](https://schemaspy.org/) via the latest published container:
 
 ```sh
-docker run --rm -v ~/output:/output  schemaspy/schemaspy:latest -t pgsql -host host.docker.internal -port 5432 -u postgres -p password -s public -db postgres
+docker run --rm -v ~/output:/output  schemaspy/schemaspy:latest -t pgsql -host host.docker.internal -port 5432 -u postgres -p password -s public -db dbname -I ".*_p[0-9]+$|.*_[0-9]{4}_q[1-4]$|.*_default$"
 ```
 
 With "-v "(host output directory):/output" set to the local work/scratch directory you intend to use.
+The "-I" flag excludes partition tables from the output.
 
 Replace (project)/docs/assets/db_schema/relationships.real.large.png with the generated file from the schemapy output at `./diagrams/summary/relationships.real.large.png`, and commit the change.
 
