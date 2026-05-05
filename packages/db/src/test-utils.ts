@@ -136,8 +136,8 @@ export const fakeGranuleRecordFactory = (
 export const fakeFileRecordFactory = (
   params: Partial<PostgresFile>
 ): Partial<PostgresFile> => ({
-  bucket: cryptoRandomString({ length: 3 }),
-  key: cryptoRandomString({ length: 3 }),
+  bucket: cryptoRandomString({ length: 5 }),
+  key: cryptoRandomString({ length: 10 }),
   created_at: new Date(),
   updated_at: new Date(),
   ...params,
@@ -151,7 +151,7 @@ export const fakeAsyncOperationRecordFactory = (
   operation_type: 'Reconciliation Report',
   status: 'RUNNING',
   output: { test: 'output' },
-  task_arn: cryptoRandomString({ length: 3 }),
+  task_arn: cryptoRandomString({ length: 5 }),
   created_at: new Date(),
   updated_at: new Date(),
   ...params,
