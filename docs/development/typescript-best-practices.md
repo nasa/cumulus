@@ -41,4 +41,4 @@ report, run `nyc report --reporter html` and open the `index.html` file in the c
 
 ## Code Documentation
 
-It is expected that whenever possible the code functionality should be documented via a README that includes critical usage and development information such as inputs, outputs, internal and external dependencies, use cases, and critical development information. In addition, the README markdown file should utilize the proper template and conform with [markdown quality standards](docs/development/quality-and-coverage.md).
+It is expected that whenever possible the code functionality should be documented via a README that includes critical usage and development information such as inputs, outputs, internal and external dependencies, use cases, and critical development information. In addition, the README markdown file should utilize the proper template and conform with [markdown quality standards](./quality-and-coverage.md).
