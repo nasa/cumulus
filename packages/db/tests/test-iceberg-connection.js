@@ -7,6 +7,7 @@ const sinon = require('sinon');
 // noCallThru prevents proxyquire from loading the real @duckdb/node-api binary,
 // which requires native addons not available in the test environment.
 const proxyquire = require('proxyquire').noCallThru();
+const loadedIcebergModules = [];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -60,10 +61,14 @@ const makeDuckDBStub = (instanceOverride) => {
  * Load a fresh, isolated copy of iceberg-connection with the supplied DuckDB stub.
  * Each call produces independent module-level state (instance, pool, flags).
  */
-const loadIcebergModule = (duckdbModule) =>
-  proxyquire('../dist/iceberg-connection', {
+const loadIcebergModule = (duckdbModule) => {
+  const icebergModule = proxyquire('../dist/iceberg-connection', {
     '@duckdb/node-api': duckdbModule,
   });
+
+  loadedIcebergModules.push(icebergModule);
+  return icebergModule;
+};
 
 // ---------------------------------------------------------------------------
 // Shared env setup – use development mode so getConnection skips
@@ -81,6 +86,16 @@ test.after(() => {
   delete process.env.AWS_ACCOUNT_ID;
   delete process.env.ICEBERG_NAMESPACE;
   delete process.env.AWS_REGION;
+});
+
+test.afterEach.always(async () => {
+  while (loadedIcebergModules.length > 0) {
+    const icebergModule = loadedIcebergModules.pop();
+    if (icebergModule?.destroyDuckDb) {
+      // eslint-disable-next-line no-await-in-loop
+      await icebergModule.destroyDuckDb();
+    }
+  }
 });
 
 // ---------------------------------------------------------------------------
@@ -152,7 +167,6 @@ test.serial('releaseDuckDbConnection discards connections when pool is at MAX_PO
     initializeDuckDb,
     acquireDuckDbConnection,
     releaseDuckDbConnection,
-    destroyDuckDb,
   } = loadIcebergModule(duckdbModule);
 
   await initializeDuckDb();
@@ -184,8 +198,6 @@ test.serial('releaseDuckDbConnection discards connections when pool is at MAX_PO
     connectCallsBefore,
     'no new connection should be created – pool was already full before the extra release'
   );
-
-  await destroyDuckDb();
 });
 
 // ---------------------------------------------------------------------------
@@ -213,15 +225,13 @@ test.serial('failed initializeDuckDb resets instance so a subsequent call retrie
 
   // First stub: always fails
   const failingModule = { DuckDBInstance: { create: failStub } };
-  const { initializeDuckDb: initFailing, destroyDuckDb } = loadIcebergModule(failingModule);
+  const { initializeDuckDb: initFailing } = loadIcebergModule(failingModule);
 
   await t.throwsAsync(
     () => initFailing(),
     { message: initError.message },
     'initializeDuckDb should propagate the underlying error'
   );
-
-  await destroyDuckDb();
 });
 
 test.serial('after init failure, a second initializeDuckDb attempt calls DuckDBInstance.create again', async (t) => {
@@ -331,6 +341,4 @@ test.serial('background connection refresh replaces stale connections', async (t
     maxPool * 2,
     'New connections should be created to replace stale ones'
   );
-
-  await icebergModule.destroyDuckDb();
 });

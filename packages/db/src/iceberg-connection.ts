@@ -243,17 +243,18 @@ function startConnectionCacheWarmup(conn: PooledDuckDbConnection): void {
  */
 async function performConnectionRefresh(): Promise<void> {
   const startTime = Date.now();
-  let removedCount = 0;
+  let staleRemovedCount = 0;
+  let replacementSuccessCount = 0;
 
-  log.info('Starting background check for stale DuckDB connections...');
+  log.debug('Starting background check for stale DuckDB connections...');
   const staleThreshold = startTime - STALE_CONNECTION_THRESHOLD_MS;
   for (let i = connectionPool.length - 1; i >= 0; i -= 1) {
     const pooledConn = connectionPool[i];
     if (pooledConn.creationTime < staleThreshold) {
       connectionPool.splice(i, 1);
+      staleRemovedCount += 1;
       try {
         pooledConn.closeSync();
-        removedCount += 1;
       } catch (error) {
         log.warn('Error closing stale DuckDB connection', error);
       }
@@ -261,7 +262,7 @@ async function performConnectionRefresh(): Promise<void> {
   }
 
   const warmupPromises: Promise<void>[] = [];
-  for (let i = 0; i < removedCount; i += 1) {
+  for (let i = 0; i < staleRemovedCount; i += 1) {
     try {
       // eslint-disable-next-line no-await-in-loop
       const newConn = await getConnection();
@@ -273,6 +274,7 @@ async function performConnectionRefresh(): Promise<void> {
         );
       }
       connectionPool.push(newConn);
+      replacementSuccessCount += 1;
     } catch (e) {
       log.error('Failed to create replacement DuckDB connection', e);
     }
@@ -280,7 +282,8 @@ async function performConnectionRefresh(): Promise<void> {
   await Promise.all(warmupPromises);
   log.info(
     'Background check for stale DuckDB connections complete. '
-    + `${removedCount} stale DuckDB connections replaced in ${Date.now() - startTime}ms.`
+    + `${staleRemovedCount} stale removed, ${replacementSuccessCount} replaced, `
+    + `in ${Date.now() - startTime}ms.`
   );
 }
 
