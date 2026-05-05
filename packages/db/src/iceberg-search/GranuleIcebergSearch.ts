@@ -48,7 +48,7 @@ export class GranuleIcebergSearch extends GranuleSearch {
     if (includeFullRecord) {
       //get files
       const files = await getFilesByGranuleCumulusIds({
-        connection: dbConnection.connection,
+        connection: dbConnection,
         granuleCumulusIds: cumulusIds,
         knexBuilder: knexClient,
       });
@@ -61,7 +61,7 @@ export class GranuleIcebergSearch extends GranuleSearch {
 
       //get Executions
       const executions = await getExecutionInfoByGranuleCumulusIds({
-        connection: dbConnection.connection,
+        connection: dbConnection,
         granuleCumulusIds: cumulusIds,
         knexBuilder: knexClient,
       });

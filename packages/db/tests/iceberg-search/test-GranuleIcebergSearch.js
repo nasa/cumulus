@@ -23,6 +23,7 @@ const {
   granulesExecutionsIcebergSql,
   providersIcebergSql,
   pdrsIcebergSql,
+  ICEBERG_FILES_TABLE,
 } = require('../../dist/iceberg-search/IcebergSchemas');
 const {
   translatePostgresGranuleToApiGranuleWithoutDbQuery,
@@ -281,7 +282,7 @@ test.before(async (t) => {
   await stageAndLoadDuckDBTableFromData(
     connection,
     t.context.knexBuilder,
-    'files',
+    ICEBERG_FILES_TABLE,
     filesIcebergSql,
     t.context.files,
     `${duckdbS3Prefix}files.parquet`

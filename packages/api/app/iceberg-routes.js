@@ -18,7 +18,6 @@ if (process.env.FAKE_AUTH === 'true') {
   ensureAuthorized = token.ensureAuthorized;
 }
 
-// Import the limited routers for granules and executions
 const granulesIcebergRouter = require('../endpoints/iceberg-granules');
 const executionsIcebergRouter = require('../endpoints/iceberg-executions');
 const collectionsIcebergRouter = require('../endpoints/iceberg-collections');
