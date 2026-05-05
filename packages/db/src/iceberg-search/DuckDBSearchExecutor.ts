@@ -100,15 +100,15 @@ export async function executeDuckDBSearch(params: {
     };
 
     try {
-      await runNativeQueries(pooledConnection.connection);
+      await runNativeQueries(pooledConnection);
     } catch (error) {
       if (isCatalogError(error)) {
         log.warn('Catalog error detected; closing stale connection and clearing pool, then retrying query once.', error);
-        pooledConnection.connection.closeSync();
+        pooledConnection.closeSync();
         await clearDuckDbPool(queryStartTime);
         pooledConnection = await acquireDuckDbConnection();
 
-        await runNativeQueries(pooledConnection.connection);
+        await runNativeQueries(pooledConnection);
       } else {
         throw error;
       }
