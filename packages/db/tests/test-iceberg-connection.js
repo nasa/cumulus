@@ -1,11 +1,13 @@
 'use strict';
 
 const isFunction = require('lodash/isFunction');
+const noop = require('lodash/noop');
 const test = require('ava');
 const sinon = require('sinon');
 // noCallThru prevents proxyquire from loading the real @duckdb/node-api binary,
 // which requires native addons not available in the test environment.
 const proxyquire = require('proxyquire').noCallThru();
+const loadedIcebergModules = [];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -16,6 +18,7 @@ const makeFakeConnection = () => {
   let glueAttached = false;
 
   return {
+    closeSync: noop,
     run: sinon.stub().callsFake((sql) => {
       if (/duckdb_databases\(\)/i.test(sql)) {
         return {
@@ -58,10 +61,14 @@ const makeDuckDBStub = (instanceOverride) => {
  * Load a fresh, isolated copy of iceberg-connection with the supplied DuckDB stub.
  * Each call produces independent module-level state (instance, pool, flags).
  */
-const loadIcebergModule = (duckdbModule) =>
-  proxyquire('../dist/iceberg-connection', {
+const loadIcebergModule = (duckdbModule) => {
+  const icebergModule = proxyquire('../dist/iceberg-connection', {
     '@duckdb/node-api': duckdbModule,
   });
+
+  loadedIcebergModules.push(icebergModule);
+  return icebergModule;
+};
 
 // ---------------------------------------------------------------------------
 // Shared env setup – use development mode so getConnection skips
@@ -79,6 +86,16 @@ test.after(() => {
   delete process.env.AWS_ACCOUNT_ID;
   delete process.env.ICEBERG_NAMESPACE;
   delete process.env.AWS_REGION;
+});
+
+test.afterEach.always(async () => {
+  while (loadedIcebergModules.length > 0) {
+    const icebergModule = loadedIcebergModules.pop();
+    if (icebergModule?.destroyDuckDb) {
+      // eslint-disable-next-line no-await-in-loop
+      await icebergModule.destroyDuckDb();
+    }
+  }
 });
 
 // ---------------------------------------------------------------------------
@@ -150,7 +167,6 @@ test.serial('releaseDuckDbConnection discards connections when pool is at MAX_PO
     initializeDuckDb,
     acquireDuckDbConnection,
     releaseDuckDbConnection,
-    destroyDuckDb,
   } = loadIcebergModule(duckdbModule);
 
   await initializeDuckDb();
@@ -182,8 +198,6 @@ test.serial('releaseDuckDbConnection discards connections when pool is at MAX_PO
     connectCallsBefore,
     'no new connection should be created – pool was already full before the extra release'
   );
-
-  await destroyDuckDb();
 });
 
 // ---------------------------------------------------------------------------
@@ -211,15 +225,13 @@ test.serial('failed initializeDuckDb resets instance so a subsequent call retrie
 
   // First stub: always fails
   const failingModule = { DuckDBInstance: { create: failStub } };
-  const { initializeDuckDb: initFailing, destroyDuckDb } = loadIcebergModule(failingModule);
+  const { initializeDuckDb: initFailing } = loadIcebergModule(failingModule);
 
   await t.throwsAsync(
     () => initFailing(),
     { message: initError.message },
     'initializeDuckDb should propagate the underlying error'
   );
-
-  await destroyDuckDb();
 });
 
 test.serial('after init failure, a second initializeDuckDb attempt calls DuckDBInstance.create again', async (t) => {
@@ -296,5 +308,37 @@ test.serial('initializeDuckDb throws if ICEBERG_NAMESPACE is missing', async (t)
   await t.throwsAsync(
     () => initializeDuckDb(),
     { message: /ICEBERG_NAMESPACE environment variable is required/ }
+  );
+});
+
+// ---------------------------------------------------------------------------
+// 7. Background connection refresh
+// ---------------------------------------------------------------------------
+
+test.serial('background connection refresh replaces stale connections', async (t) => {
+  const clock = sinon.useFakeTimers({
+    now: Date.now(),
+    shouldAdvanceTime: true,
+  });
+  t.teardown(() => clock.restore());
+
+  const fakeInst = makeFakeInstance();
+  const { duckdbModule } = makeDuckDBStub(fakeInst);
+  const icebergModule = loadIcebergModule(duckdbModule);
+
+  await icebergModule.initializeDuckDb();
+
+  const maxPool = Number(process.env.DUCKDB_MAX_POOL) || 3;
+  t.is(fakeInst.connect.callCount, maxPool, 'Initial connections created');
+
+  // Advance time past the 5-hour threshold and wait for setInterval callbacks
+  // 6 hours in milliseconds
+  await clock.tickAsync(6 * 60 * 60 * 1000);
+
+  // Stale connections should be removed and replaced by new connections
+  t.is(
+    fakeInst.connect.callCount,
+    maxPool * 2,
+    'New connections should be created to replace stale ones'
   );
 });
