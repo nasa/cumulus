@@ -3,6 +3,7 @@
 const orderBy = require('lodash/orderBy');
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const { randomInt } = require('crypto');
 const sinon = require('sinon');
 const omit = require('lodash/omit');
 const range = require('lodash/range');
@@ -368,10 +369,11 @@ test.serial('getGranuleFromQueryResultOrLookup() returns cumulus ID from databas
 test.serial('writeFilesViaTransaction() throws error if any writes fail', async (t) => {
   const { knex } = t.context;
 
-  const fileRecords = [
-    fakeFileRecordFactory(),
-    fakeFileRecordFactory(),
-  ];
+  const fileRecords = range(2).map(() =>
+    fakeFileRecordFactory({
+      granule_cumulus_id: randomInt(10),
+      collection_cumulus_id: randomInt(10),
+    }));
 
   const fakeFilePgModel = {
     upsert: sinon.stub()
