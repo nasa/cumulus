@@ -562,3 +562,25 @@ variable "workflow_configurations" {
     }
   }
 }
+
+variable "aws_s3_system_bucket_lifecycle_rules" {
+  type = list(object(
+    {
+      id              = string
+      prefix          = string
+      days            = number
+      prepend_prefix  = bool
+      status          = optional(string, "Enabled")
+    }
+  ))
+  default = [
+    {
+      id              = "expire_temporary_execution_status_files"
+      prefix          = "/data/execution-status/"
+      days            = 1
+      prepend_prefix  = true
+      status          = "Enabled"
+    }
+  ]
+  description = "List of lifecycle rules to apply to s3 system bucket"
+}
