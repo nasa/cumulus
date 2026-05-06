@@ -33,11 +33,17 @@ lp-opex-sit:
   apiUsername: jasmine
   pdrNodeNameProviderBucket: cumulus-sit-pdr-node-name-provider
 
+atisdale:
+  bucket: atisdale-internal
+
 awisdom:
   bucket: awisdom-internal
 
 cbanh-tf:
   bucket: cbanh-cumulus-tf-internal
+
+ccollins-tf:
+  bucket: ccollins-internal
 
 cdd-tf:
   bucket: cdd-test-sandbox-internal
@@ -45,8 +51,14 @@ cdd-tf:
 ecarton:
   bucket: ecarton-internal
 
+eyen:
+  bucket: eyen-internal
+
 dms-opex-sbx:
   bucket: dms-opex-sbx-internal
+
+dnorris:
+  bucket: dnorris-internal
 
 jl-tf:
   bucket: jl-test-integration-internal
@@ -60,6 +72,9 @@ jn-tf:
 kk2-tf:
   bucket: kk2-tf-internal
 
+mikedorfman:
+  bucket: mikedorfman-internal
+
 mason-t-yates:
   bucket: mason-t-yates-internal
 
@@ -69,8 +84,14 @@ np:
 nnaga-tf:
   bucket: nnaga-internal
 
+reweeden:
+  bucket: reweeden-internal
+
 rs:
   bucket: rs-internal
 
 yliu10-tf:
   bucket: yliu10-sandbox-internal
+
+blokey:
+  bucket: blokey-internal

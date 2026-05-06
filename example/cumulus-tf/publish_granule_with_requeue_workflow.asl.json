@@ -90,8 +90,9 @@
       "End": true
     },
     "WorkflowFailed": {
-      "Cause": "Workflow failed",
-      "Type": "Fail"
+      "Type": "Fail",
+      "CausePath": "$.exception.Cause",
+      "ErrorPath": "$.exception.Error"
     }
   }
 }

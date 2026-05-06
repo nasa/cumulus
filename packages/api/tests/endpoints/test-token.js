@@ -15,6 +15,8 @@ const {
 const assertions = require('../../lib/assertions');
 const {
   createJwtToken,
+  verifyJwtToken,
+  getMaxSessionDuration,
 } = require('../../lib/token');
 const {
   fakeAccessTokenFactory,
@@ -111,13 +113,13 @@ test.serial('GET /token with an invalid code results in an authorization failure
 });
 
 test.serial('GET /token with a code but no state returns the access token', async (t) => {
+  const futureTime = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
   const getAccessTokenResponse = {
     username: 'my-username',
     accessToken: 'my-access-token',
     refreshToken: 'my-refresh-token',
-    expirationTime: 12345,
+    expirationTime: futureTime,
   };
-  const jwtToken = createJwtToken(getAccessTokenResponse);
 
   const stub = sinon.stub(
     EarthdataLoginClient.prototype,
@@ -131,7 +133,10 @@ test.serial('GET /token with a code but no state returns the access token', asyn
     .expect(200);
 
   t.is(response.status, 200);
-  t.is(response.body.message.token, jwtToken);
+  const decodedToken = verifyJwtToken(response.body.message.token);
+  t.is(decodedToken.username, getAccessTokenResponse.username);
+  t.is(decodedToken.accessToken, getAccessTokenResponse.accessToken);
+  t.is(decodedToken.exp, getAccessTokenResponse.expirationTime);
   stub.restore();
 });
 
@@ -159,7 +164,6 @@ test.serial('GET /token with a code and state results in a redirect to that stat
 
 test.serial('GET /token with a code and state results in a redirect containing the access token', async (t) => {
   const getAccessTokenResponse = fakeAccessTokenFactory();
-  const jwtToken = createJwtToken(getAccessTokenResponse);
 
   const stub = sinon.stub(
     EarthdataLoginClient.prototype,
@@ -178,7 +182,10 @@ test.serial('GET /token with a code and state results in a redirect containing t
 
   t.is(locationHeader.origin, 'http://www.example.com');
   t.is(locationHeader.pathname, '/state');
-  t.is(locationHeader.searchParams.get('token'), jwtToken);
+  const decodedToken = verifyJwtToken(locationHeader.searchParams.get('token'));
+  t.is(decodedToken.username, getAccessTokenResponse.username);
+  t.is(decodedToken.accessToken, getAccessTokenResponse.accessToken);
+  t.is(decodedToken.exp, getAccessTokenResponse.expirationTime);
   stub.restore();
 });
 
@@ -253,12 +260,7 @@ test.serial('GET /refresh with an unauthorized user results in an authorization 
   assertions.isUnauthorizedUserResponse(t, response);
 });
 
-test.serial('GET /refresh returns 400 if refresh token request fails', async (t) => {
-  const stub = sinon.stub(
-    EarthdataLoginClient.prototype,
-    'refreshAccessToken'
-  ).callsFake(() => Promise.reject(new Error('Refresh token request failed')));
-
+test.serial('GET /refresh returns 400 if refresh token update fails', async (t) => {
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
 
@@ -266,6 +268,10 @@ test.serial('GET /refresh returns 400 if refresh token request fails', async (t)
   await accessTokenModel.create(initialTokenRecord);
 
   const requestJwtToken = createJwtToken(initialTokenRecord);
+
+  // Stub the update method to simulate a database failure
+  const stub = sinon.stub(AccessToken.prototype, 'update')
+    .callsFake(() => Promise.reject(new Error('Database update failed')));
 
   const response = await request(app)
     .post('/refresh')
@@ -277,7 +283,7 @@ test.serial('GET /refresh returns 400 if refresh token request fails', async (t)
   stub.restore();
 });
 
-test.serial('GET /refresh with a valid token returns a refreshed token', async (t) => {
+test.serial('GET /refresh extends token expiration time', async (t) => {
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
 
@@ -285,14 +291,7 @@ test.serial('GET /refresh with a valid token returns a refreshed token', async (
   await accessTokenModel.create(initialTokenRecord);
 
   const requestJwtToken = createJwtToken(initialTokenRecord);
-
-  const refreshedTokenRecord = fakeAccessTokenFactory();
-  const refreshedJwtToken = createJwtToken(refreshedTokenRecord);
-
-  const stub = sinon.stub(
-    EarthdataLoginClient.prototype,
-    'refreshAccessToken'
-  ).callsFake(() => Promise.resolve(refreshedTokenRecord));
+  const decodedOriginalToken = verifyJwtToken(requestJwtToken);
 
   const response = await request(app)
     .post('/refresh')
@@ -302,15 +301,86 @@ test.serial('GET /refresh with a valid token returns a refreshed token', async (
 
   t.is(response.status, 200);
 
-  t.is(response.body.token, refreshedJwtToken);
+  const decodedRefreshedToken = verifyJwtToken(response.body.token);
+  // exp should be extended (larger than original)
+  t.true(decodedRefreshedToken.exp > decodedOriginalToken.exp, 'Expiration time should be extended');
+  // username should remain the same
+  t.is(decodedRefreshedToken.username, username);
+});
 
-  t.false(await accessTokenModel.exists({
+test.serial('GET /refresh with a valid token returns a refreshed token', async (t) => {
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
+
+  const initialTokenRecord = fakeAccessTokenFactory({ username });
+  await accessTokenModel.create(initialTokenRecord);
+
+  const requestJwtToken = createJwtToken(initialTokenRecord);
+  const decodedOriginalToken = verifyJwtToken(requestJwtToken);
+
+  const response = await request(app)
+    .post('/refresh')
+    .set('Accept', 'application/json')
+    .send({ token: requestJwtToken })
+    .expect(200);
+
+  t.is(response.status, 200);
+
+  const decodedToken = verifyJwtToken(response.body.token);
+  // Username and access token should remain the same since we're just extending expiration
+  t.is(decodedToken.username, initialTokenRecord.username);
+  t.is(decodedToken.accessToken, initialTokenRecord.accessToken);
+  // Expiration should be extended
+  t.true(decodedToken.exp > decodedOriginalToken.exp);
+
+  // The original token record should still exist with updated expiration
+  t.true(await accessTokenModel.exists({
     accessToken: initialTokenRecord.accessToken,
   }));
-  t.true(await accessTokenModel.exists({
-    accessToken: refreshedTokenRecord.accessToken,
-  }));
-  stub.restore();
+});
+
+test.serial('GET /refresh preserves the original iat from the token', async (t) => {
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
+
+  const initialTokenRecord = fakeAccessTokenFactory({ username });
+  await accessTokenModel.create(initialTokenRecord);
+
+  const requestJwtToken = createJwtToken(initialTokenRecord);
+  const decodedOriginalToken = verifyJwtToken(requestJwtToken);
+  const originalIat = decodedOriginalToken.iat;
+
+  const response = await request(app)
+    .post('/refresh')
+    .set('Accept', 'application/json')
+    .send({ token: requestJwtToken })
+    .expect(200);
+
+  t.is(response.status, 200);
+
+  const decodedRefreshedToken = verifyJwtToken(response.body.token);
+  t.is(decodedRefreshedToken.iat, originalIat, 'iat should be preserved when refreshing token');
+  t.not(decodedRefreshedToken.exp, decodedOriginalToken.exp, 'exp should be extended when refreshing token');
+});
+
+test.serial('createJwtToken accepts and uses the iat parameter', (t) => {
+  const username = randomString();
+  const accessToken = randomString();
+  const expirationTime = Math.floor(Date.now() / 1000) + 3600;
+  const customIat = Math.floor(Date.now() / 1000) - 1000; // 1000 seconds ago
+
+  const jwtToken = createJwtToken({
+    accessToken,
+    expirationTime,
+    username,
+    iat: customIat,
+  });
+
+  const decodedToken = verifyJwtToken(jwtToken);
+  t.is(decodedToken.iat, customIat, 'iat should be set to the custom value');
+  t.is(decodedToken.accessToken, accessToken);
+  t.is(decodedToken.username, username);
+  t.is(decodedToken.exp, expirationTime);
 });
 
 test.serial('DELETE /tokenDelete without a token returns a 404 response', async (t) => {
@@ -359,4 +429,71 @@ test.serial('DELETE /tokenDelete with a valid token results in a successful dele
   t.false(await accessTokenModel.exists({ accessToken: accessTokenRecord.accessToken }));
   t.is(response.status, 200);
   t.is(response.body.message, 'Token record was deleted');
+});
+
+test.serial('getMaxSessionDuration returns default value when MAX_SESSION_DURATION is not set', (t) => {
+  delete process.env.MAX_SESSION_DURATION;
+  const maxDuration = getMaxSessionDuration();
+  t.is(maxDuration, 12 * 60 * 60, 'Default should be 12 hours');
+});
+
+test.serial('getMaxSessionDuration returns custom value when MAX_SESSION_DURATION is set', (t) => {
+  process.env.MAX_SESSION_DURATION = '86400'; // 1 day
+  const maxDuration = getMaxSessionDuration();
+  t.is(maxDuration, 86400, 'Should return custom value');
+  delete process.env.MAX_SESSION_DURATION;
+});
+
+test.serial('GET /refresh with an expired session returns 401', async (t) => {
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
+
+  // Set a short max session duration
+  process.env.MAX_SESSION_DURATION = '3600'; // 1 hour
+
+  const initialTokenRecord = fakeAccessTokenFactory({ username });
+  await accessTokenModel.create(initialTokenRecord);
+
+  // Create a token with an iat that is 2 hours ago (exceeds max session duration)
+  const oldIat = Math.floor(Date.now() / 1000) - 7200; // 2 hours ago
+  const jwtToken = createJwtToken({
+    ...initialTokenRecord,
+    iat: oldIat,
+  });
+
+  const response = await request(app)
+    .post('/refresh')
+    .set('Accept', 'application/json')
+    .send({ token: jwtToken })
+    .expect(401);
+
+  t.is(response.body.message, 'Session has exceeded maximum duration');
+  delete process.env.MAX_SESSION_DURATION;
+});
+
+test.serial('GET /refresh with a valid session succeeds', async (t) => {
+  const username = randomString();
+  await setAuthorizedOAuthUsers([username]);
+
+  // Set a short max session duration
+  process.env.MAX_SESSION_DURATION = '43200'; // 12 hours
+
+  const initialTokenRecord = fakeAccessTokenFactory({ username });
+  await accessTokenModel.create(initialTokenRecord);
+
+  // Create a token with an iat that is 1 hour ago (within max session duration)
+  const recentIat = Math.floor(Date.now() / 1000) - 3600; // 1 hour ago
+  const jwtToken = createJwtToken({
+    ...initialTokenRecord,
+    iat: recentIat,
+  });
+
+  const response = await request(app)
+    .post('/refresh')
+    .set('Accept', 'application/json')
+    .send({ token: jwtToken })
+    .expect(200);
+
+  t.is(response.status, 200);
+  delete process.env.MAX_SESSION_DURATION;
 });

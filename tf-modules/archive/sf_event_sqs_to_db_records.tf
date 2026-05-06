@@ -21,7 +21,7 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
   }
 
   statement {
-    actions   = [
+    actions = [
       "s3:GetObject",
       "s3:PutObject"
     ]
@@ -29,7 +29,7 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
   }
 
   statement {
-    actions   = [
+    actions = [
       "s3:ListBucket"
     ]
     resources = ["arn:aws:s3:::${var.system_bucket}"]
@@ -58,14 +58,14 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
     actions = [
       "s3:ListBucket*"
     ]
-    resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}"]
+    resources = [for b in local.allowed_buckets : "arn:aws:s3:::${b}"]
   }
 
   statement {
     actions = [
       "s3:GetObject*",
     ]
-    resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}/*"]
+    resources = [for b in local.allowed_buckets : "arn:aws:s3:::${b}/*"]
   }
 
   statement {
@@ -107,7 +107,7 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
   }
 
   statement {
-    actions   = ["sns:Publish"]
+    actions = ["sns:Publish"]
     resources = [
       aws_sns_topic.report_executions_topic.arn,
       aws_sns_topic.report_granules_topic.arn,
@@ -152,8 +152,8 @@ resource "aws_sqs_queue_policy" "sf_event_sqs_to_db_records_input_queue_policy" 
 }
 
 resource "aws_lambda_event_source_mapping" "sf_event_sqs_to_db_records_mapping" {
-  event_source_arn = aws_sqs_queue.sf_event_sqs_to_db_records_input_queue.arn
-  function_name    = aws_lambda_function.sf_event_sqs_to_db_records.arn
+  event_source_arn        = aws_sqs_queue.sf_event_sqs_to_db_records_input_queue.arn
+  function_name           = aws_lambda_function.sf_event_sqs_to_db_records.arn
   function_response_types = ["ReportBatchItemFailures"]
 }
 
@@ -198,7 +198,7 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
   dynamic "vpc_config" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
-      subnet_ids = var.lambda_subnet_ids
+      subnet_ids         = var.lambda_subnet_ids
       security_group_ids = concat(local.lambda_security_group_ids, [var.rds_security_group])
     }
   }

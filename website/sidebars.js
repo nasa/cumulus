@@ -204,6 +204,7 @@ const sidebars = {
         'development/release',
         'development/typescript-best-practices',
         'development/python-best-practices',
+        'development/terraform-best-practices',
       ],
     },
     {
@@ -284,6 +285,7 @@ const sidebars = {
             'data-cookbooks/choice-states',
             'data-cookbooks/browse-generation',
             'data-cookbooks/tracking-files',
+            'data-cookbooks/rolling-archive',
             'data-cookbooks/run-tasks-in-lambda-or-docker',
             'data-cookbooks/throttling-queued-executions',
             'data-cookbooks/queue-post-to-cmr',

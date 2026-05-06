@@ -25,7 +25,10 @@ module.exports = {
     new CopyPlugin({
       patterns: [
         {
-          from: './node_modules/@cumulus/db/dist/migrations',
+          from: path.join(
+            path.dirname(require.resolve('@cumulus/db/package.json')),
+            'dist/migrations'
+          ),
           to: 'migrations'
         },
       ],

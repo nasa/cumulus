@@ -7,7 +7,7 @@ const { getCollection } = require('@cumulus/api-client/collections');
 const SQS = require('@cumulus/aws-client/SQS');
 const { getProvider } = require('@cumulus/api-client/providers');
 const { buildQueueMessageFromTemplate } = require('@cumulus/message/Build');
-
+const { joinCollectionProviderToTemplateCmrMeta } = require('@cumulus/ingest/queue');
 const Logger = require('@cumulus/logger');
 const logger = new Logger({ sender: '@cumulus/api/lambdas/sf-scheduler' });
 
@@ -54,6 +54,12 @@ async function handleScheduleEvent(event) {
   };
 
   const eventCustomMeta = get(event, 'meta', {});
+  let cmrMeta = {};
+  if (collection) {
+    cmrMeta = joinCollectionProviderToTemplateCmrMeta(
+      messageTemplate, collection
+    );
+  }
 
   const message = buildQueueMessageFromTemplate({
     messageTemplate,
@@ -63,12 +69,12 @@ async function handleScheduleEvent(event) {
       ...eventCustomMeta,
       collection,
       provider,
+      cmr: cmrMeta,
     },
     payload: get(event, 'payload', {}),
     workflow,
     executionNamePrefix: event.executionNamePrefix,
   });
-
   logger.info(`Sending message ${JSON.stringify(message)} to queue ${queueUrl}`);
 
   return SQS.sendSQSMessage(queueUrl, message);

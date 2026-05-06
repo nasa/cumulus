@@ -1,0 +1,30 @@
+{
+  "title": "CnmResponseOutput",
+  "description": "Describes the output produced by the cnm-response task",
+  "type": "object",
+  "required": [
+    "cnm",
+    "granules"
+  ],
+  "properties": {
+    "cnm": {
+      "type": "object",
+      "description": "The output CNM-R generated in response to the input CNM-S."
+    },
+    "granules": {
+      "type": "array",
+      "description": "Array of all granules",
+      "items": {
+        "type": "object",
+        "required": ["granuleId", "files"],
+        "properties": {
+          "granuleId": {
+            "type": "string"
+          },
+          "files": "{{files}}"
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

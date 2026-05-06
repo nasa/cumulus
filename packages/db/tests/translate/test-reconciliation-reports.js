@@ -18,6 +18,12 @@ test('translatePostgresReconReportToApiReconReport translates a Postgres Reconci
     updated_at: updatedTime,
   };
 
+  const duckDbReconReport = {
+    ...pgReconReport,
+    created_at: pgReconReport.created_at.toISOString(),
+    updated_at: pgReconReport.updated_at.toISOString(),
+  };
+
   const expectedApiReconReport = {
     ...pick(pgReconReport, ['name', 'type', 'status', 'location']),
     // no error b/c null or undefined should be removed
@@ -26,8 +32,10 @@ test('translatePostgresReconReportToApiReconReport translates a Postgres Reconci
   };
 
   const translatedReport = translatePostgresReconReportToApiReconReport(pgReconReport);
+  t.deepEqual(translatedReport, expectedApiReconReport);
 
-  t.deepEqual(expectedApiReconReport, translatedReport);
+  const duckDbTranslatedReport = translatePostgresReconReportToApiReconReport(duckDbReconReport);
+  t.deepEqual(duckDbTranslatedReport, expectedApiReconReport);
 });
 
 test('translatePostgresReconReportToApiReconReport translates Postgres Reconciliation Report with an error to an API Reconciliation Report', (t) => {
@@ -47,6 +55,13 @@ test('translatePostgresReconReportToApiReconReport translates Postgres Reconcili
     updated_at: updatedTime,
   };
 
+  const duckDbReconReport = {
+    ...pgReconReport,
+    created_at: pgReconReport.created_at.toISOString(),
+    updated_at: pgReconReport.updated_at.toISOString(),
+    error: JSON.stringify(pgReconReport.error),
+  };
+
   const expectedApiReconReport = {
     ...pick(pgReconReport, ['name', 'type', 'status', 'location', 'error']),
     createdAt: createdTime.getTime(),
@@ -54,6 +69,8 @@ test('translatePostgresReconReportToApiReconReport translates Postgres Reconcili
   };
 
   const translatedReport = translatePostgresReconReportToApiReconReport(pgReconReport);
+  t.deepEqual(translatedReport, expectedApiReconReport);
 
-  t.deepEqual(expectedApiReconReport, translatedReport);
+  const duckDbTranslatedReport = translatePostgresReconReportToApiReconReport(duckDbReconReport);
+  t.deepEqual(duckDbTranslatedReport, expectedApiReconReport);
 });

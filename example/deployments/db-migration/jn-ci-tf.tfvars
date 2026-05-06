@@ -1,1 +1,1 @@
-prefix="jn-ci-tf"
+prefix = "jn-ci-tf"

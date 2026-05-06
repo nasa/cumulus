@@ -17,5 +17,5 @@ then
     grep '✘' ./test_output.txt
     exit $RESULT
 fi
-npm run coverage:no-api -- --noRerun
+npm run coverage:no-api -- --no_rerun
 exit $RESULT

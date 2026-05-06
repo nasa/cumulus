@@ -1,0 +1,18 @@
+{
+  "collection": {
+    "name": "L2_HR_PIXC",
+    "version": "099"
+  },
+  "name": "L2_HR_PIXC_DUPLICATE_kinesisRule",
+  "provider": "PODAAC_SWOT",
+  "meta": {
+    "cnmResponseStream": "{{cnmResponseStream}}",
+    "cnmResponseMethod": "kinesis"
+  },
+  "rule": {
+    "type": "kinesis",
+    "value": "arn:aws:kinesis:{{AWS_REGION}}:{{AWS_ACCOUNT_ID}}:stream/{{streamName}}"
+  },
+  "state": "ENABLED",
+  "workflow": "CNMExampleWorkflow"
+}

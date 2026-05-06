@@ -402,7 +402,7 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host, postfi
     })
   );
 
-  return completeProviders.length;
+  return completeProviders;
 }
 
 /**

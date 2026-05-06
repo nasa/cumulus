@@ -1,5 +1,5 @@
-prefix            = "jl-tf"
-system_bucket     = "jl-test-integration-internal"
+prefix        = "jl-tf"
+system_bucket = "jl-test-integration-internal"
 buckets = {
   glacier = {
     name = "jl-test-integration-orca-glacier"
@@ -26,7 +26,7 @@ buckets = {
     type = "public"
   }
 }
-oauth_provider   = "launchpad"
+oauth_provider = "launchpad"
 
 saml_entity_id                  = "https://cumulus-sandbox.earthdata.nasa.gov/jl-tf"
 saml_assertion_consumer_service = "https://dz5bdrhmhd.execute-api.us-east-1.amazonaws.com:8000/dev/saml/auth"
@@ -35,9 +35,9 @@ saml_launchpad_metadata_url     = "https://auth.launchpad-sbx.nasa.gov/unauth/me
 
 archive_api_port = 8000
 
-key_name      = "jl"
+key_name = "jl"
 
 orca_default_bucket = "jl-test-integration-orca-glacier"
 
-tea_distribution_url = "https://jwhwz6qg4j.execute-api.us-east-1.amazonaws.com:7000/DEV/"
+tea_distribution_url     = "https://jwhwz6qg4j.execute-api.us-east-1.amazonaws.com:7000/DEV/"
 cumulus_distribution_url = "https://yj85g9dak9.execute-api.us-east-1.amazonaws.com:9000/dev/"

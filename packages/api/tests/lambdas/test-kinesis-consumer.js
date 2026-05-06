@@ -172,7 +172,7 @@ test.serial('An SNS fallback retry, should throw an error if message does not in
     { message: 'validation failed' }
   );
 
-  t.is(error.errors[0].message, 'should have required property \'collection\'');
+  t.is(error.errors[0].message, 'must have required property \'collection\'');
 });
 
 test.serial('A kinesis message, should publish the invalid records to fallbackSNS if the message collection has wrong data type', async (t) => {
@@ -200,8 +200,8 @@ test.serial('An SNS Fallback retry, should throw an error if message collection 
     { message: 'validation failed' }
   );
 
-  t.is(error.errors[0].dataPath, '.collection');
-  t.is(error.errors[0].message, 'should be string');
+  t.is(error.errors[0].instancePath, '/collection');
+  t.is(error.errors[0].message, 'must be string');
 });
 
 test.serial('A kinesis message, should publish the invalid record to fallbackSNS if message is invalid json', async (t) => {

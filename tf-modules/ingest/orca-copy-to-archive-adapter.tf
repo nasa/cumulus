@@ -13,10 +13,10 @@ resource "aws_lambda_function" "orca_copy_to_archive_adapter_task" {
 
   environment {
     variables = {
-      stackName                   = var.prefix
-      CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
-      orca_lambda_copy_to_archive_arn    = var.orca_lambda_copy_to_archive_arn
-      orca_sfn_recovery_workflow_arn     = var.orca_sfn_recovery_workflow_arn
+      stackName                       = var.prefix
+      CUMULUS_MESSAGE_ADAPTER_DIR     = "/opt/"
+      orca_lambda_copy_to_archive_arn = var.orca_lambda_copy_to_archive_arn
+      orca_sfn_recovery_workflow_arn  = var.orca_sfn_recovery_workflow_arn
     }
   }
 
@@ -34,7 +34,7 @@ resource "aws_lambda_function" "orca_copy_to_archive_adapter_task" {
 }
 
 resource "aws_cloudwatch_log_group" "orca_copy_to_archive_adapter_task" {
-  name = "/aws/lambda/${var.prefix}-OrcaCopyToArchiveAdapter"
+  name              = "/aws/lambda/${var.prefix}-OrcaCopyToArchiveAdapter"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "OrcaCopyToArchiveAdapter", var.default_log_retention_days)
-  tags = var.tags
+  tags              = var.tags
 }

@@ -5,7 +5,7 @@ resource "aws_kms_key" "provider_kms_key" {
 
 data "aws_iam_policy_document" "provider_secrets_encryption" {
   statement {
-    actions   = [
+    actions = [
       "kms:Encrypt",
       "kms:Decrypt"
     ]

@@ -75,6 +75,16 @@ test('translatePostgresExecutionToApiExecution translates a Postgres execution t
     workflow_name: 'TestWorkflow',
   };
 
+  const duckDbExecutionRecord = {
+    ...executionRecord,
+    created_at: executionRecord.created_at.toISOString(),
+    updated_at: executionRecord.updated_at.toISOString(),
+    timestamp: executionRecord.timestamp.toISOString(),
+    error: JSON.stringify(executionRecord.error),
+    final_payload: JSON.stringify(executionRecord.final_payload),
+    original_payload: JSON.stringify(executionRecord.original_payload),
+  };
+
   const expectedApiExecution = {
     arn: executionRecord.arn,
     asyncOperationId: 'asyncOperationCumulusId',
@@ -95,7 +105,7 @@ test('translatePostgresExecutionToApiExecution translates a Postgres execution t
     updatedAt: executionRecord.updated_at.getTime(),
   };
 
-  const result = await translatePostgresExecutionToApiExecution(
+  const translation = await translatePostgresExecutionToApiExecution(
     executionRecord,
     {},
     fakeCollectionPgModel,
@@ -104,7 +114,20 @@ test('translatePostgresExecutionToApiExecution translates a Postgres execution t
   );
 
   t.deepEqual(
-    result,
+    translation,
+    expectedApiExecution
+  );
+
+  const duckDbTranslation = await translatePostgresExecutionToApiExecution(
+    duckDbExecutionRecord,
+    {},
+    fakeCollectionPgModel,
+    fakeAsyncOperationPgModel,
+    fakeExecutionPgModel
+  );
+
+  t.deepEqual(
+    duckDbTranslation,
     expectedApiExecution
   );
 });

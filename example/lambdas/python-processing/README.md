@@ -11,10 +11,10 @@ This task is intended to be simple - the processing activity takes the input of 
 To develop against this task, you should be using Python > 3.12 and managed by [uv](https://github.com/astral-sh/uv). See [package.json](package.json), [project.toml](pyproject.toml) for build setup, testing, and packaging. To install dependencies run the following command:
 
 ```sh
-npm run prepare
+npm run build
 ```
 
-### Build
+### Packaging
 
 To update the container for a PR, you can run the package.sh script which will build and push a Docker container to ECR:
 

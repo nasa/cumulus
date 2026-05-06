@@ -1,2 +1,2 @@
-prefix = "cumulus-source-tf"
-oauth_provider   = "launchpad"
+prefix         = "cumulus-source-tf"
+oauth_provider = "launchpad"

@@ -1,12 +1,12 @@
 resource "aws_cloudwatch_log_group" "async_operation" {
-  name = "${var.prefix}-AsyncOperationEcsLogs"
+  name              = "${var.prefix}-AsyncOperationEcsLogs"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "AsyncOperationEcsLogs", var.default_log_retention_days)
-  tags = var.tags
+  tags              = var.tags
 }
 resource "aws_cloudwatch_log_group" "dead_letter_recovery" {
-  name = "${var.prefix}-DeadLetterRecoveryEcsLogs"
+  name              = "${var.prefix}-DeadLetterRecoveryEcsLogs"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "DeadLetterRecoveryEcsLogs", var.default_log_retention_days)
-  tags = var.tags
+  tags              = var.tags
 }
 resource "aws_ecs_task_definition" "async_operation" {
   depends_on               = [aws_cloudwatch_log_group.async_operation]
@@ -48,7 +48,7 @@ EOS
 }
 
 resource "aws_ecs_task_definition" "dead_letter_recovery_operation" {
-  depends_on               = [aws_cloudwatch_log_group. dead_letter_recovery]
+  depends_on               = [aws_cloudwatch_log_group.dead_letter_recovery]
   family                   = "${var.prefix}-DeadLetterRecoveryTaskDefinition"
   tags                     = var.tags
   requires_compatibilities = ["FARGATE"]

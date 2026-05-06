@@ -5,7 +5,14 @@
 import pRetry from 'p-retry';
 import Logger from '@cumulus/logger';
 import { errorify } from '@cumulus/errors';
-import { PublishCommand, CreateTopicCommand } from '@aws-sdk/client-sns';
+import {
+  PublishCommand,
+  CreateTopicCommand,
+  DeleteTopicCommand,
+  DeleteTopicCommandOutput,
+  SubscribeCommand,
+  SubscribeCommandOutput,
+} from '@aws-sdk/client-sns';
 
 import { sns } from './services';
 
@@ -60,4 +67,34 @@ export const createSnsTopic = async (
   const createTopicCommand = new CreateTopicCommand(createTopicInput);
   const createTopicResponse = await sns().send(createTopicCommand);
   return { TopicArn: createTopicResponse.TopicArn };
+};
+
+/**
+ * Delete an SNS topic with a given ARN.
+ *
+ * @param snsTopicArn - ARN of the SNS topic
+ * @returns - Promise that resolves when the topic is deleted
+ */
+export const deleteSnsTopic = async (snsTopicArn: string): Promise<DeleteTopicCommandOutput> => {
+  const deleteTopicCommand = new DeleteTopicCommand({ TopicArn: snsTopicArn });
+  return await sns().send(deleteTopicCommand);
+};
+
+/**
+ * Subscribe an SQS queue to an SNS topic.
+ *
+ * @param snsTopicArn - ARN of the SNS topic
+ * @param sqsQueueArn - ARN of the SQS queue
+ * @returns - Promise that resolves with the subscription ARN
+ */
+export const subscribeSqsToSnsTopic = async (
+  snsTopicArn: string,
+  sqsQueueArn: string
+): Promise<SubscribeCommandOutput> => {
+  const subscribeCommand = new SubscribeCommand({
+    TopicArn: snsTopicArn,
+    Protocol: 'sqs',
+    Endpoint: sqsQueueArn,
+  });
+  return await sns().send(subscribeCommand);
 };

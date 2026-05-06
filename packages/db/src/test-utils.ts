@@ -53,9 +53,13 @@ export const destroyLocalTestDb = async ({
   knexAdmin: Knex,
   testDbName: string
 }) => {
-  knex.destroy();
-  await pRetry(async () => await deleteTestDatabase(knexAdmin, testDbName));
-  knexAdmin.destroy();
+  if (knex) {
+    await knex.destroy();
+  }
+  if (knexAdmin) {
+    await pRetry(async () => await deleteTestDatabase(knexAdmin, testDbName));
+    await knexAdmin.destroy();
+  }
 };
 
 export const fakeRuleRecordFactory = (
@@ -85,6 +89,7 @@ export const fakeCollectionRecordFactory = (
   meta: { foo: 'bar' },
   created_at: new Date(),
   updated_at: new Date(),
+  cmr_provider: 'provider',
   ...params,
 });
 
@@ -124,6 +129,7 @@ export const fakeGranuleRecordFactory = (
   producer_granule_id: cryptoRandomString({ length: 5 }),
   status: 'completed',
   created_at: new Date(),
+  updated_at: new Date(),
   ...params,
 });
 
@@ -132,6 +138,8 @@ export const fakeFileRecordFactory = (
 ): Omit<PostgresFile, 'granule_cumulus_id'> => ({
   bucket: cryptoRandomString({ length: 3 }),
   key: cryptoRandomString({ length: 3 }),
+  created_at: new Date(),
+  updated_at: new Date(),
   ...params,
 });
 
@@ -144,6 +152,8 @@ export const fakeAsyncOperationRecordFactory = (
   status: 'RUNNING',
   output: { test: 'output' },
   task_arn: cryptoRandomString({ length: 3 }),
+  created_at: new Date(),
+  updated_at: new Date(),
   ...params,
 });
 
@@ -153,6 +163,7 @@ export const fakePdrRecordFactory = (
   name: `pdr${cryptoRandomString({ length: 10 })}`,
   status: 'running',
   created_at: new Date(),
+  updated_at: new Date(),
   ...params,
 });
 

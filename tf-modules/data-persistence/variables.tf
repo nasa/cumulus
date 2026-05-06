@@ -33,11 +33,11 @@ variable "tags" {
 
 variable "rds_user_access_secret_arn" {
   description = "AWS Secrets Manager secret ARN containing a JSON string of DB credentials (containing at least host, password, port as keys)"
-  type = string
+  type        = string
 }
 
 variable "rds_security_group_id" {
-  type = string
+  type    = string
   default = ""
 }
 
@@ -48,18 +48,18 @@ variable "vpc_id" {
 
 variable "db_migration_lambda_timeout" {
   description = "Timeout in seconds for the database schema migration lambda.   Defaults to 900 seconds"
-  type = number
-  default = 900
+  type        = number
+  default     = 900
 }
 
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
-  type = map(number)
-  default = {}
+  type        = map(number)
+  default     = {}
 }
 
 variable "lambda_memory_sizes" {
   description = "Configurable map of memory sizes for lambdas"
-  type = map(number)
-  default = {}
+  type        = map(number)
+  default     = {}
 }

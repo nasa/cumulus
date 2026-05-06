@@ -12,6 +12,6 @@ variable "system_bucket" {
 # Optional
 
 variable "ecs_service_alarms" {
-  type = list(object({ name = string, arn = string }))
+  type    = list(object({ name = string, arn = string }))
   default = []
 }

@@ -27,7 +27,7 @@ resource "aws_lambda_function" "start_async_operation" {
   dynamic "vpc_config" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
-      subnet_ids = var.lambda_subnet_ids
+      subnet_ids         = var.lambda_subnet_ids
       security_group_ids = concat(local.lambda_security_group_ids, [var.rds_security_group])
     }
   }
@@ -73,11 +73,11 @@ data "aws_iam_policy_document" "start_async_operation" {
     resources = ["*"]
   }
 
-statement {
+  statement {
     actions = [
       "s3:PutObject*",
     ]
-    resources = [ "arn:aws:s3:::${var.system_bucket}/*"]
+    resources = ["arn:aws:s3:::${var.system_bucket}/*"]
   }
 
   statement {

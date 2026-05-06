@@ -1,7 +1,7 @@
 # Required
 
 variable "permissions_boundary_arn" {
-  type    = string
+  type = string
 }
 
 variable "prefix" {
@@ -18,12 +18,12 @@ variable "rds_security_group" {
 }
 
 variable "subnet_ids" {
-  type = list(string)
+  type    = list(string)
   default = null
 }
 
 variable "vpc_id" {
-  type = string
+  type    = string
   default = null
 }
 
@@ -42,18 +42,18 @@ variable "enable_point_in_time_tables" {
 
 variable "rds_user_password" {
   description = "Password to set for RDS db user"
-  type = string
-  default = ""
+  type        = string
+  default     = ""
 }
 variable "rds_connection_timing_configuration" {
   description = "Cumulus rds connection timeout retry timing object -- these values map to knex.js's internal use of  https://github.com/vincit/tarn.js/ for connection acquisition"
-  type = map(number)
+  type        = map(number)
   default = {
-      acquireTimeoutMillis: 90000
-      createRetryIntervalMillis: 30000,
-      createTimeoutMillis: 20000,
-      idleTimeoutMillis: 1000,
-      reapIntervalMillis: 1000,
+    acquireTimeoutMillis : 90000
+    createRetryIntervalMillis : 30000,
+    createTimeoutMillis : 20000,
+    idleTimeoutMillis : 1000,
+    reapIntervalMillis : 1000,
   }
 }
 
@@ -65,19 +65,19 @@ variable "tags" {
 
 variable "vpc_tag_name" {
   description = "Tag name to use for looking up VPC"
-  type = string
-  default = "Application VPC"
+  type        = string
+  default     = "Application VPC"
 }
 
 variable "subnets_tag_name" {
   description = "Tag name to use for looking up VPC subnets"
-  type = string
-  default = "Private application us-east-1a *"
+  type        = string
+  default     = "Private application us-east-1a *"
 }
 
 variable "lambda_memory_sizes" {
   description = "Configurable map of memory sizes for lambdas"
-  type = map(number)
+  type        = map(number)
   default = {
     ProvisionPostgresDatabase = 384 # data-persistence
   }
@@ -85,7 +85,7 @@ variable "lambda_memory_sizes" {
 
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
-  type = map(number)
+  type        = map(number)
   default = {
     ProvisionPostgresDatabase = 600 # data-persistence
   }

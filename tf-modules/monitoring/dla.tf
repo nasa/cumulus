@@ -1,12 +1,12 @@
 locals {
-  db_prefix           = replace("${var.prefix}", "-", "_")
-  glue_database_name  = "${local.db_prefix}_glue_database"
-  dla_glue_table_name = "${local.db_prefix}_dla_glue_table"
-  dla_glue_table_s3_location = "s3://${var.system_bucket}/${var.prefix}/dead-letter-archive/sqs"
-  athena_workgroup    = "${local.db_prefix}_athena_workgroup"
+  db_prefix                    = replace("${var.prefix}", "-", "_")
+  glue_database_name           = "${local.db_prefix}_glue_database"
+  dla_glue_table_name          = "${local.db_prefix}_dla_glue_table"
+  dla_glue_table_s3_location   = "s3://${var.system_bucket}/${var.prefix}/dead-letter-archive/sqs"
+  athena_workgroup             = "${local.db_prefix}_athena_workgroup"
   athena_query_output_location = "s3://${var.system_bucket}/${var.prefix}/athena/query_output/"
-  current_date        = formatdate("YYYY-MM-DD", timestamp())
-  athena_test_query_name = "${local.db_prefix}_athena_test_query"
+  current_date                 = formatdate("YYYY-MM-DD", timestamp())
+  athena_test_query_name       = "${local.db_prefix}_athena_test_query"
 }
 
 resource "aws_glue_catalog_database" "glue_database" {
@@ -118,8 +118,8 @@ resource "aws_athena_workgroup" "athena_workgroup" {
 }
 
 resource "aws_athena_named_query" "athena_test_query" {
-  name        = local.athena_test_query_name
-  workgroup   = aws_athena_workgroup.athena_workgroup.id
-  database    = local.glue_database_name
-  query       = "SELECT * FROM ${local.dla_glue_table_name} where eventdate = '${local.current_date}' limit 1;"
+  name      = local.athena_test_query_name
+  workgroup = aws_athena_workgroup.athena_workgroup.id
+  database  = local.glue_database_name
+  query     = "SELECT * FROM ${local.dla_glue_table_name} where eventdate = '${local.current_date}' limit 1;"
 }

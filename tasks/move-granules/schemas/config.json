@@ -65,9 +65,11 @@
           "title": "Optional Metadata for the Collection",
           "type": "object",
           "additionalProperties": true,
-          "granuleMetadataFileExtension": {
-            "description": "Set to the file extension for task to look for the granule metadata information. If none is specified, the granule CMR metadata or ISO metadata file is used",
-            "type": "string"
+          "properties": {
+            "granuleMetadataFileExtension": {
+              "description": "Set to the file extension for task to look for the granule metadata information. If none is specified, the granule CMR metadata or ISO metadata file is used",
+              "type": "string"
+            }
           }
         }
       }

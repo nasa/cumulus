@@ -1,24 +1,24 @@
 locals {
-  api_id                    = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
-  api_uri                   = var.api_url == null ? "https://${local.api_id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${var.api_gateway_stage}/" : var.api_url
-  api_redirect_uri          = "${local.api_uri}login"
+  api_id           = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
+  api_uri          = var.api_url == null ? "https://${local.api_id}.execute-api.${data.aws_region.current.name}.amazonaws.com/${var.api_gateway_stage}/" : var.api_url
+  api_redirect_uri = "${local.api_uri}login"
   api_env_variables = {
-      AccessTokensTable              = aws_dynamodb_table.access_tokens.id
-      BUCKETNAME_PREFIX              = var.bucketname_prefix
-      BUCKET_MAP_FILE                = var.bucket_map_file
-      CMR_ACL_BASED_CREDENTIALS      = var.cmr_acl_based_credentials
-      CMR_ENVIRONMENT                = var.cmr_environment
-      DISTRIBUTION_ENDPOINT          = local.api_uri
-      DISTRIBUTION_REDIRECT_ENDPOINT = local.api_redirect_uri
-      OAUTH_CLIENT_ID                = var.oauth_client_id
-      OAUTH_CLIENT_PASSWORD_SECRET_NAME = length(var.oauth_client_password) == 0 ? null : aws_secretsmanager_secret.api_oauth_client_password.name
-      OAUTH_HOST_URL                 = var.oauth_host_url
-      OAUTH_PROVIDER                 = var.oauth_provider
-      STS_CREDENTIALS_LAMBDA         = var.sts_credentials_lambda_function_arn
-      STS_POLICY_HELPER_LAMBDA       = var.sts_policy_helper_lambda_function_arn
-      cmr_provider                   = var.cmr_provider
-      stackName                      = var.prefix
-      system_bucket                  = var.system_bucket
+    AccessTokensTable                 = aws_dynamodb_table.access_tokens.id
+    BUCKETNAME_PREFIX                 = var.bucketname_prefix
+    BUCKET_MAP_FILE                   = var.bucket_map_file
+    CMR_ACL_BASED_CREDENTIALS         = var.cmr_acl_based_credentials
+    CMR_ENVIRONMENT                   = var.cmr_environment
+    DISTRIBUTION_ENDPOINT             = local.api_uri
+    DISTRIBUTION_REDIRECT_ENDPOINT    = local.api_redirect_uri
+    OAUTH_CLIENT_ID                   = var.oauth_client_id
+    OAUTH_CLIENT_PASSWORD_SECRET_NAME = length(var.oauth_client_password) == 0 ? null : aws_secretsmanager_secret.api_oauth_client_password.name
+    OAUTH_HOST_URL                    = var.oauth_host_url
+    OAUTH_PROVIDER                    = var.oauth_provider
+    STS_CREDENTIALS_LAMBDA            = var.sts_credentials_lambda_function_arn
+    STS_POLICY_HELPER_LAMBDA          = var.sts_policy_helper_lambda_function_arn
+    cmr_provider                      = var.cmr_provider
+    stackName                         = var.prefix
+    system_bucket                     = var.system_bucket
   }
 }
 
@@ -57,7 +57,7 @@ resource "aws_lambda_function" "api" {
   dynamic "vpc_config" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
-      subnet_ids = var.lambda_subnet_ids
+      subnet_ids         = var.lambda_subnet_ids
       security_group_ids = local.lambda_security_group_ids
     }
   }
@@ -70,19 +70,19 @@ data "aws_iam_policy_document" "private_api_policy_document" {
       type        = "*"
       identifiers = ["*"]
     }
-    actions = [ "*" ]
+    actions   = ["*"]
     resources = ["*"]
     condition {
       test     = "StringEquals"
       variable = "aws:SourceVpc"
-      values = [var.vpc_id]
+      values   = [var.vpc_id]
     }
   }
 }
 
 resource "aws_api_gateway_rest_api" "api" {
   count = var.deploy_to_ngap ? 1 : 0
-  name = "${var.prefix}-distribution"
+  name  = "${var.prefix}-distribution"
 
   lifecycle {
     ignore_changes = [policy]
@@ -99,7 +99,7 @@ resource "aws_api_gateway_rest_api" "api" {
 
 resource "aws_api_gateway_rest_api" "api_outside_ngap" {
   count = var.deploy_to_ngap ? 0 : 1
-  name = "${var.prefix}-distribution"
+  name  = "${var.prefix}-distribution"
 
   policy = data.aws_iam_policy_document.private_api_policy_document[0].json
 
@@ -115,7 +115,7 @@ resource "aws_lambda_permission" "api_endpoints_lambda_permission" {
 }
 
 resource "aws_api_gateway_resource" "proxy" {
-  rest_api_id = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id: aws_api_gateway_rest_api.api_outside_ngap[0].id
+  rest_api_id = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
   parent_id   = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].root_resource_id : aws_api_gateway_rest_api.api_outside_ngap[0].root_resource_id
   path_part   = "{proxy+}"
 }
@@ -161,12 +161,12 @@ resource "aws_api_gateway_deployment" "api" {
 
 # this overrides the distribution (TEA) module generated bucket map cache if any
 data "aws_lambda_invocation" "bucket_map_cache" {
-  function_name         = aws_lambda_function.api.function_name
-  input                 = jsonencode({
-    eventType           = "createBucketMapCache"
-    bucketList          = local.distribution_buckets,
-    s3Bucket            = var.system_bucket
-    s3Key               = local.distribution_bucket_map_key
-    replacementTrigger  = timestamp()
+  function_name = aws_lambda_function.api.function_name
+  input = jsonencode({
+    eventType          = "createBucketMapCache"
+    bucketList         = local.distribution_buckets,
+    s3Bucket           = var.system_bucket
+    s3Key              = local.distribution_bucket_map_key
+    replacementTrigger = timestamp()
   })
 }

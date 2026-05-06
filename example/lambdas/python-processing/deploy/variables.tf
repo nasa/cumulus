@@ -15,8 +15,8 @@ variable "cumulus_ecs_cluster_arn" {
 }
 
 variable "cumulus_test_ingest_image_version" {
-    description = "Docker image version to use for this service"
-    type        = string
+  description = "Docker image version to use for this service"
+  type        = string
 }
 
 variable "tags" {
@@ -26,11 +26,11 @@ variable "tags" {
 }
 
 variable "default_log_retention_days" {
-  type = number
+  type        = number
   description = "CloudWatch log retention in days"
 }
 
 variable "cloudwatch_log_retention_periods" {
-  type = map(number)
+  type        = map(number)
   description = "Retention periods for the respective Cloudwatch log group. These values will be used instead of default retention days"
 }

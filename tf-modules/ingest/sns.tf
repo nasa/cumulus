@@ -2,8 +2,8 @@
 
 resource "aws_sns_topic" "kinesis_fallback" {
   kms_master_key_id = "alias/aws/sns"
-  name = "${var.prefix}-kinesisFallback"
-  tags = var.tags
+  name              = "${var.prefix}-kinesisFallback"
+  tags              = var.tags
 }
 
 resource "aws_sns_topic_subscription" "kinesis_fallback" {

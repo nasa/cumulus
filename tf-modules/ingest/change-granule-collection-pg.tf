@@ -12,11 +12,11 @@ resource "aws_lambda_function" "change_granule_collection_pg_task" {
 
   environment {
     variables = {
-      CMR_ENVIRONMENT                   = var.cmr_environment
-      CMR_HOST                          = var.cmr_custom_host
-      CUMULUS_MESSAGE_ADAPTER_DIR       = "/opt/"
-      stackName                         = var.prefix
-      system_bucket                     = var.system_bucket
+      CMR_ENVIRONMENT             = var.cmr_environment
+      CMR_HOST                    = var.cmr_custom_host
+      CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
+      stackName                   = var.prefix
+      system_bucket               = var.system_bucket
     }
   }
 

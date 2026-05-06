@@ -875,6 +875,8 @@ function updateUMMGMetadataObject({
  * @param {string} params.granuleId - granule id
  * @param {boolean} [params.updateGranuleIdentifiers=false] - whether to update the granule UR/add
  * producerGranuleID to the CMR metadata object
+ * @param {boolean} [params.excludeDataGranule=false] - whether to add or update the DataGranule
+ * node in the granule's metadata
  * @param {any} [params.testOverrides] - overrides for testing
  * @returns {Promise<{ metadataObject: Object, etag: string | undefined}>} an object
  *    containing a `metadataObject` (the updated UMMG metadata object) and the
@@ -890,6 +892,7 @@ async function updateUMMGMetadata({
   producerGranuleId,
   granuleId,
   updateGranuleIdentifiers = false,
+  excludeDataGranule = false,
   testOverrides = {},
 }) {
   const {
@@ -913,6 +916,7 @@ async function updateUMMGMetadata({
       granuleUr: granuleId,
       producerGranuleId,
       metadataObject: updatedMetadataObject,
+      excludeDataGranule,
     });
   }
   const { ETag: etag } = await uploadUMMGJSONCMRFileMethod(
@@ -1133,8 +1137,10 @@ function updateEcho10XMLMetadataObjectUrls({
  * - Type of URLs to generate ('distribution' | 's3' | 'both')
  * @param {DistributionBucketMap} params.distributionBucketMap
  * - Maps buckets to distribution paths
- * @param {boolean} [params.updateGranuleIdentifiers]
+ * @param {boolean} [params.updateGranuleIdentifiers=false]
  * - If true, update the GranuleUR and ProducerGranuleId in metadata
+ * @param {boolean} [params.excludeDataGranule=false] - Whether to add or update the DataGranule
+ * node in the granule's metadata
  * @param {any} [params.testOverrides]
  * - Optional test overrides for internal functions
  * @returns {Promise<{ metadataObject: any, etag: string }>}
@@ -1151,6 +1157,7 @@ async function updateEcho10XMLMetadata({
   cmrGranuleUrlType = 'both',
   distributionBucketMap,
   updateGranuleIdentifiers = false,
+  excludeDataGranule = false,
   testOverrides = {},
 }) {
   const {
@@ -1186,6 +1193,7 @@ async function updateEcho10XMLMetadata({
       granuleUr: granuleId,
       producerGranuleId,
       xml: updatedMetadataObject,
+      excludeDataGranule,
     });
   }
   const xml = generateEcho10XMLStringMethod(updatedMetadataObject.Granule);
@@ -1205,8 +1213,10 @@ async function updateEcho10XMLMetadata({
  * @param {boolean} params.published - indicate if publish is needed
  * @param {{ [key: string]: string }} params.bucketTypes - map of bucket names to bucket types
  * @param {string} params.cmrGranuleUrlType - type of granule CMR url
- * @param {boolean} [params.updateGranuleIdentifiers]
+ * @param {boolean} [params.updateGranuleIdentifiers=false]
  * - If true, update the GranuleUR and ProducerGranuleId in metadata
+ * @param {boolean} [params.excludeDataGranule=false] - Whether to add or update the DataGranule
+ * node in the granule's metadata
  * @param {any} [params.testOverrides]
  * - Optional test overrides for internal functions
  * @param {DistributionBucketMap} params.distributionBucketMap - Object with bucket:tea-path
@@ -1224,6 +1234,7 @@ async function updateCMRMetadata({
   bucketTypes,
   cmrGranuleUrlType = 'both',
   updateGranuleIdentifiers = false,
+  excludeDataGranule = false,
   distributionBucketMap,
   testOverrides = {},
 }) {
@@ -1247,6 +1258,7 @@ async function updateCMRMetadata({
     granuleId,
     producerGranuleId: producerGranuleId || granuleId,
     updateGranuleIdentifiers,
+    excludeDataGranule,
   };
 
   let metadataObject;

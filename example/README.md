@@ -174,7 +174,7 @@ These steps should be performed in the `example` directory.
 Copy `.env.sample` to `.env`, filling in appropriate values for your deployment.
 
 Set the `DEPLOYMENT` environment variable to match the `prefix` that you
-configured in your `terraform.tfvars` files.
+configured in your `terraform.dtfvars` files.
 
 If you are deploying outside of NGAP, you may need to update `example/config.yml` to override custom settings for your deployment such as the default bucket, your Earth Data Login username for login tests, or the value of `pdrNodeNameProviderBucket`.
 

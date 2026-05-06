@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/website",
-  "version": "21.2.0",
+  "version": "21.3.1",
   "description": "The Cumulus website",
   "license": "Apache-2.0",
   "scripts": {
@@ -19,6 +19,9 @@
     "@docusaurus/core": "^2.3.0",
     "@docusaurus/preset-classic": "^2.3.0",
     "react": "^17.0.2"
+  },
+  "overrides": {
+    "webpack": "5.105.4"
   },
   "private": true
 }

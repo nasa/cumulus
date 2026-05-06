@@ -9,18 +9,18 @@ resource "aws_lambda_function" "bulk_operation" {
   memory_size      = lookup(var.lambda_memory_sizes, "bulkOperation", 512)
   environment {
     variables = {
-      acquireTimeoutMillis         = var.rds_connection_timing_configuration.acquireTimeoutMillis
-      createRetryIntervalMillis    = var.rds_connection_timing_configuration.createRetryIntervalMillis
-      createTimeoutMillis          = var.rds_connection_timing_configuration.createTimeoutMillis
-      granule_sns_topic_arn        = aws_sns_topic.report_granules_topic.arn
-      idleTimeoutMillis            = var.rds_connection_timing_configuration.idleTimeoutMillis
-      invoke                       = var.schedule_sf_function_arn
-      METRICS_ES_HOST              = var.metrics_es_host
-      METRICS_ES_PASS              = var.metrics_es_password
-      METRICS_ES_USER              = var.metrics_es_username
-      reapIntervalMillis           = var.rds_connection_timing_configuration.reapIntervalMillis
-      stackName                    = var.prefix
-      system_bucket                = var.system_bucket
+      acquireTimeoutMillis      = var.rds_connection_timing_configuration.acquireTimeoutMillis
+      createRetryIntervalMillis = var.rds_connection_timing_configuration.createRetryIntervalMillis
+      createTimeoutMillis       = var.rds_connection_timing_configuration.createTimeoutMillis
+      granule_sns_topic_arn     = aws_sns_topic.report_granules_topic.arn
+      idleTimeoutMillis         = var.rds_connection_timing_configuration.idleTimeoutMillis
+      invoke                    = var.schedule_sf_function_arn
+      METRICS_ES_HOST           = var.metrics_es_host
+      METRICS_ES_PASS           = var.metrics_es_password
+      METRICS_ES_USER           = var.metrics_es_username
+      reapIntervalMillis        = var.rds_connection_timing_configuration.reapIntervalMillis
+      stackName                 = var.prefix
+      system_bucket             = var.system_bucket
     }
   }
 

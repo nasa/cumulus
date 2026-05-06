@@ -5,7 +5,7 @@ const path = require('path');
 const test = require('ava');
 const { toCamel } = require('snake-camel');
 const cryptoRandomString = require('crypto-random-string');
-const uuidv4 = require('uuid/v4');
+const { v4: uuidv4 } = require('uuid');
 const proxyquire = require('proxyquire');
 const set = require('lodash/set');
 
@@ -112,6 +112,7 @@ const generateRDSCollectionRecord = (params) => ({
   sample_file_name: 'MOD09GQ.A2017025.h21v00.006.2017034065104.hdf',
   files: JSON.stringify([{ regex: '^.*\\.txt$', sampleFileName: 'file.txt', bucket: 'bucket' }]),
   created_at: new Date(),
+  cmr_provider: 'provider',
   updated_at: new Date(),
   ...params,
 });

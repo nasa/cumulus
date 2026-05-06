@@ -20,7 +20,7 @@ resource "aws_iam_role" "lambda_api_gateway" {
 
 data "aws_iam_policy_document" "lambda_api_gateway_policy" {
   statement {
-    actions   = ["ecs:RunTask"]
+    actions = ["ecs:RunTask"]
     resources = [
       aws_ecs_task_definition.async_operation.arn,
       aws_ecs_task_definition.dead_letter_recovery_operation.arn
@@ -90,7 +90,7 @@ data "aws_iam_policy_document" "lambda_api_gateway_policy" {
       "s3:PutBucket*",
       "s3:ListBucket*"
     ]
-    resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}"]
+    resources = [for b in local.allowed_buckets : "arn:aws:s3:::${b}"]
   }
 
   statement {
@@ -101,7 +101,7 @@ data "aws_iam_policy_document" "lambda_api_gateway_policy" {
       "s3:DeleteObject",
       "s3:DeleteObjectVersion"
     ]
-    resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}/*"]
+    resources = [for b in local.allowed_buckets : "arn:aws:s3:::${b}/*"]
   }
 
   statement {
@@ -208,16 +208,6 @@ resource "aws_iam_role_policy" "lambda_api_gateway" {
   policy = data.aws_iam_policy_document.lambda_api_gateway_policy.json
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_api_gateway_xray" {
-  role       = aws_iam_role.lambda_api_gateway.name
-  policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_api_gateway_application_signals" {
-  role       = aws_iam_role.lambda_api_gateway.name
-  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLambdaApplicationSignalsExecutionRolePolicy"
-}
-
 # ECS task execution role
 
 
@@ -242,7 +232,7 @@ data "aws_iam_policy_document" "ecs_task_role_policy" {
     resources = ["*"]
   }
 
-    statement {
+  statement {
     actions = [
       "s3:GetAccelerateConfiguration",
       "s3:GetBucket*",
@@ -270,7 +260,7 @@ data "aws_iam_policy_document" "ecs_task_role_policy" {
   }
 
   statement {
-    actions   = [
+    actions = [
       "dynamodb:DeleteItem",
       "dynamodb:GetItem",
       "dynamodb:PutItem",
@@ -321,6 +311,7 @@ data "aws_iam_policy_document" "ecs_task_role_policy" {
     resources = [
       aws_secretsmanager_secret.api_cmr_password.arn,
       aws_secretsmanager_secret.api_launchpad_passphrase.arn,
+      aws_secretsmanager_secret.api_config.arn,
       var.rds_user_access_secret_arn
     ]
   }

@@ -16,14 +16,14 @@ module "hello_world_service" {
   name   = "HelloWorld"
   tags   = local.tags
 
-  cluster_arn                           = module.cumulus.ecs_cluster_arn
-  desired_count                         = 1
-  image                                 = "${data.aws_ecr_repository.ecs_task_image.repository_url}:${var.ecs_task_image_version}"
+  cluster_arn   = module.cumulus.ecs_cluster_arn
+  desired_count = 1
+  image         = "${data.aws_ecr_repository.ecs_task_image.repository_url}:${var.ecs_task_image_version}"
 
-  cpu                = 400
-  memory_reservation = 700
-  default_log_retention_days                     = var.default_log_retention_days
-  cloudwatch_log_retention_periods               = var.cloudwatch_log_retention_periods
+  cpu                              = 400
+  memory_reservation               = 700
+  default_log_retention_days       = var.default_log_retention_days
+  cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
 
   environment = {
     AWS_DEFAULT_REGION = data.aws_region.current.name
@@ -52,7 +52,7 @@ module "ecs_hello_world_workflow" {
   state_machine_definition = templatefile(
     "${path.module}/ecs_hello_world_workflow.asl.json",
     {
-      ecs_task_hello_world_activity_id: aws_sfn_activity.ecs_task_hello_world.id
+      ecs_task_hello_world_activity_id : aws_sfn_activity.ecs_task_hello_world.id
     }
   )
 }

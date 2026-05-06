@@ -27,6 +27,18 @@ buckets = {
   dashboard = {
     name = "opex-nsidc-cumulus-dashboard"
     type = "dashboard"
+  },
+  opera-products = {
+    name = "opex-nsidc-cumulus-opera-products"
+    type = "protected"
+  },
+  opera-staging = {
+    name = "opex-nsidc-cumulus-opera-staging"
+    type = "workflow"
+  }
+  opex-e2e = {
+    name = "opex-e2e-test-bucket"
+    type = "workflow"
   }
 }
 system_bucket = "opex-nsidc-cumulus-internal"
@@ -34,6 +46,7 @@ api_reserved_concurrency = 14
 archive_api_users = [
     "acyu",
     "awisdom",
+    "bhazuka",
     "cbanh",
     "chuang14",
     "cdurbin",
@@ -49,6 +62,7 @@ archive_api_users = [
     "mobrien84",
     "nnageswa",
     "npauzenga",
+    "ppilone",
     "terrafirma13",
     "yliu10",
     "alexrad71",
@@ -65,6 +79,7 @@ archive_api_users = [
     "mdcampbell",
     "nathawat",
     "ppiatko",
+    "richard.l.clark",
     "sflynn",
     "tbmcknig",
     "viviant",
@@ -74,4 +89,9 @@ archive_api_users = [
 ]
 archive_api_url = "https://d3cuh567loctll.cloudfront.net/"
 cumulus_distribution_url = "https://djidssf1tx775.cloudfront.net/"
-enable_otel_tracing = true
+
+deploy_iceberg_api = true
+iceberg_s3_bucket = "cdd-test-iceberg"
+iceberg_namespace = "cdd_deploy"
+iceberg_api_memory = 16384
+iceberg_api_cpu = 4096

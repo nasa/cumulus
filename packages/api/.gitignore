@@ -2,3 +2,4 @@ src/**/*.d.ts
 src/**/*.js
 ts-lambdas/**/*.d.ts*
 ts-lambdas/**/*.js*
+**/.env.*

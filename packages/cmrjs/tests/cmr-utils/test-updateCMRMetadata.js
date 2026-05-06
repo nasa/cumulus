@@ -55,9 +55,14 @@ test.beforeEach(async (t) => {
       },
     }),
   ]);
+  // Mocking the date for ProductionDateTime value checks in tests as the function
+  // updateCMRMetadata sets this to the current time for UMMG Granules for adding or updating a
+  // DataGranule when excludeDataGranule is false.
+  t.context.clock = sinon.useFakeTimers(new Date('2024-01-01T00:00:00Z').getTime());
 });
 
 test.afterEach.always(async (t) => {
+  t.context.clock.restore();
   await recursivelyDeleteS3Bucket(t.context.cmrFileBucket);
 });
 
@@ -74,6 +79,7 @@ test('updates UMMG metadata with Granule Identifier update, when publish is set 
     cmrGranuleUrlType: 'both',
     distributionBucketMap: {},
     updateGranuleIdentifiers: true,
+    excludeDataGranule: false,
   });
   const actualObject = await getJsonS3Object(cmrFile.bucket, cmrFile.key);
   const expectedObject = {
@@ -85,6 +91,10 @@ test('updates UMMG metadata with Granule Identifier update, when publish is set 
           IdentifierType: 'ProducerGranuleId',
         },
       ],
+      DayNightFlag: 'Unspecified',
+      // Date mocked in tests, as noted above, so this is the expected value for ProductionDateTime
+      // despite actually being the time the task is ran (which is what is mocked, Date.now())
+      ProductionDateTime: new Date('2024-01-01T00:00:00Z').toISOString(),
     },
     RelatedUrls: [
       {
@@ -103,7 +113,7 @@ test('updates UMMG metadata with Granule Identifier update, when publish is set 
   });
 });
 
-test('does not updates UMMG metadata granule identifiers when updateGranuleIdentifiers is set to false', async (t) => {
+test('does not update UMMG metadata granule identifiers when updateGranuleIdentifiers is set to false', async (t) => {
   const cmrFile = t.context.cmrFileJson;
   const result = await updateCMRMetadata({
     granuleId: 'new-granule',
@@ -116,10 +126,53 @@ test('does not updates UMMG metadata granule identifiers when updateGranuleIdent
     cmrGranuleUrlType: 'both',
     distributionBucketMap: {},
     updateGranuleIdentifiers: false,
+    excludeDataGranule: false,
   });
   const actualObject = await getJsonS3Object(cmrFile.bucket, cmrFile.key);
   const expectedObject = {
     GranuleUR: 'original-id',
+    DataGranule: {
+      Identifiers: [],
+    },
+    RelatedUrls: [
+      {
+        URL: 'https://fake-dist-endpoint/s3credentials',
+        Description:
+          'api endpoint to retrieve temporary credentials valid for same-region direct s3 access',
+        Type: 'VIEW RELATED INFORMATION',
+      },
+    ],
+  };
+
+  t.deepEqual(actualObject, expectedObject);
+  t.deepEqual(result, {
+    ...cmrFile,
+    etag: result.etag,
+  });
+});
+
+test('does not update UMMG metadata DataGranule when excludeDataGranule is set to true and updateGranuleIdentifiers is set to true', async (t) => {
+  const cmrFile = t.context.cmrFileJson;
+  const result = await updateCMRMetadata({
+    granuleId: 'new-granule',
+    producerGranuleId: 'original-id',
+    cmrFile: t.context.cmrFileJson,
+    files: [],
+    distEndpoint: 'https://fake-dist-endpoint',
+    published: false,
+    bucketTypes: {},
+    cmrGranuleUrlType: 'both',
+    distributionBucketMap: {},
+    updateGranuleIdentifiers: true,
+    excludeDataGranule: true,
+  });
+  const actualObject = await getJsonS3Object(cmrFile.bucket, cmrFile.key);
+
+  // The GranuleUR is updated (since that is distinct from the DataGranule,
+  // and updateGranuleIdentifiers is true), but the DataGranule is not updated
+  // (since excludeDataGranule is true)
+  const expectedObject = {
+    GranuleUR: 'new-granule',
     DataGranule: {
       Identifiers: [],
     },
@@ -151,6 +204,7 @@ test('throws on invalid CMR file extension', async (t) => {
       bucketTypes: {},
       cmrGranuleUrlType: 'both',
       distributionBucketMap: {},
+      excludeDataGranule: false,
     }),
     { message: /Invalid CMR filetype/ }
   );
@@ -176,13 +230,45 @@ test('updates Echo10 metadata with UR update, when publish is set to false', asy
     cmrGranuleUrlType: 'both',
     distributionBucketMap: {},
     updateGranuleIdentifiers: true,
+    excludeDataGranule: false,
   });
 
   const actual = await getXMLMetadataAsString(`s3://${cmrFile.bucket}/${cmrFile.key}`).then(parseXmlString);
   t.deepEqual(actual, expected);
 });
 
-test('updateCMRMetadata does not updates ECHO10 metadata granule identifiers when updateGranuleIdentifiers is set to false', async (t) => {
+test('does not update Echo10 DataGranule metadata when excludeDataGranule is set to true', async (t) => {
+  const cmrFile = t.context.cmrFileXml;
+  const { cmrXmlFixture } = t.context;
+
+  const expected = await parseXmlString(cmrXmlFixture);
+  // The GranuleUR is updated (since that is distinct from the DataGranule,
+  // and updateGranuleIdentifiers is true), but the DataGranule is not updated
+  // (since excludeDataGranule is true)
+  expected.Granule.GranuleUR = 'updated-id';
+  expected.Granule.AssociatedBrowseImageUrls = '';
+
+  await updateCMRMetadata({
+    granuleId: 'updated-id',
+    producerGranuleId: 'original-id',
+    cmrFile,
+    files: [],
+    distEndpoint: 'https://example.com',
+    published: false,
+    bucketTypes: {},
+    cmrGranuleUrlType: 'both',
+    distributionBucketMap: {},
+    updateGranuleIdentifiers: true,
+    excludeDataGranule: true,
+  });
+
+  const actual = await getXMLMetadataAsString(`s3://${cmrFile.bucket}/${cmrFile.key}`).then(parseXmlString);
+  t.deepEqual(actual.Granule.GranuleUR, expected.Granule.GranuleUR);
+  t.deepEqual(actual.Granule.DataGranule, expected.Granule.DataGranule);
+  t.deepEqual(actual.Granule.AssociatedBrowseImageUrls, expected.Granule.AssociatedBrowseImageUrls);
+});
+
+test('updateCMRMetadata does not update ECHO10 metadata granule identifiers when updateGranuleIdentifiers is set to false', async (t) => {
   const cmrFile = t.context.cmrFileXml;
   const { cmrXmlFixture } = t.context;
 
@@ -200,6 +286,7 @@ test('updateCMRMetadata does not updates ECHO10 metadata granule identifiers whe
     cmrGranuleUrlType: 'both',
     distributionBucketMap: {},
     updateGranuleIdentifiers: false,
+    excludeDataGranule: false,
   });
 
   const actual = await getXMLMetadataAsString(`s3://${cmrFile.bucket}/${cmrFile.key}`).then(parseXmlString);
@@ -211,6 +298,7 @@ test('publishes UMMG metadata when publish is set to true', async (t) => {
   const result = await updateCMRMetadata({
     granuleId: 'new-granule',
     producerGranuleId: 'original-id',
+    excludeDataGranule: false,
     cmrFile: t.context.cmrFileJson,
     files: [],
     distEndpoint: 'https://fake-dist-endpoint',
@@ -240,6 +328,10 @@ test('publishes UMMG metadata when publish is set to true', async (t) => {
           IdentifierType: 'ProducerGranuleId',
         },
       ],
+      DayNightFlag: 'Unspecified',
+      // Date mocked in tests, as noted above, so this is the expected value for ProductionDateTime
+      // despite actually being the time the task is ran (which is what is mocked, Date.now())
+      ProductionDateTime: new Date('2024-01-01T00:00:00Z').toISOString(),
     },
     RelatedUrls: [
       {
@@ -278,6 +370,7 @@ test('publishes ECHO10 metadata when publish is set to true', async (t) => {
   const result = await updateCMRMetadata({
     granuleId: 'updated-id',
     producerGranuleId: 'original-id',
+    excludeDataGranule: false,
     cmrFile,
     files: [],
     distEndpoint: 'https://example.com',

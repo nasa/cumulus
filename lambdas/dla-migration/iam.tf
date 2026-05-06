@@ -49,7 +49,7 @@ data "aws_iam_policy_document" "dla_migration_policy" {
     actions = [
       "s3:ListBucket*",
     ]
-    resources = [ "arn:aws:s3:::${var.system_bucket}"]
+    resources = ["arn:aws:s3:::${var.system_bucket}"]
   }
 
   statement {
@@ -57,7 +57,7 @@ data "aws_iam_policy_document" "dla_migration_policy" {
       "s3:GetObject*",
       "s3:PutObject*",
     ]
-    resources = [ "arn:aws:s3:::${var.system_bucket}/*"]
+    resources = ["arn:aws:s3:::${var.system_bucket}/*"]
   }
 }
 

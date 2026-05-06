@@ -97,7 +97,6 @@ if (launchpadProtectedAuth()) {
   router.get('/saml/login', launchpadSaml.login);
   router.post('/saml/auth', launchpadSaml.auth);
   router.get('/token', launchpadSaml.samlToken);
-  // disabled for now
   router.post('/refresh', launchpadSaml.refreshEndpoint);
 } else {
   log.info('Using token authentication');

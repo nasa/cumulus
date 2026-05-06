@@ -1,0 +1,30 @@
+{
+    "StartAt": "GetCNM",
+    "States": {
+        "GetCNM": {
+            "Type": "Task",
+            "Resource": "${get_cnm_arn}",
+            "Parameters": {
+                "cma": {
+                    "event.$": "$",
+                    "task_config": {}
+                }
+            },
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "Next": "WorkflowFailed",
+                    "ResultPath": "$.exception"
+                }
+            ],
+            "End": true
+        },
+        "WorkflowFailed": {
+            "Type": "Fail",
+            "CausePath": "$.exception.Cause",
+            "ErrorPath": "$.exception.Error"
+        }
+    }
+}

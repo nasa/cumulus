@@ -15,8 +15,8 @@ variable "cumulus_ecs_cluster_arn" {
 }
 
 variable "cumulus_process_activity_version" {
-    description = "Docker image version to use for this service"
-    type        = string
+  description = "Docker image version to use for this service"
+  type        = string
 }
 
 variable "tags" {

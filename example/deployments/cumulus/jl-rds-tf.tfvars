@@ -1,5 +1,5 @@
-prefix            = "jl-rds-tf"
-system_bucket     = "jl-test-integration-internal"
+prefix        = "jl-rds-tf"
+system_bucket = "jl-test-integration-internal"
 buckets = {
   glacier = {
     name = "jl-test-integration-orca-glacier"
@@ -26,13 +26,13 @@ buckets = {
     type = "public"
   }
 }
-oauth_provider   = "earthdata"
+oauth_provider = "earthdata"
 
 archive_api_port = 8000
 
-key_name      = "jl"
+key_name = "jl"
 
 orca_default_bucket = "jl-test-integration-orca-glacier"
 
-tea_distribution_url = "https://2yzme66sf7.execute-api.us-east-1.amazonaws.com:7000/DEV/"
+tea_distribution_url     = "https://2yzme66sf7.execute-api.us-east-1.amazonaws.com:7000/DEV/"
 cumulus_distribution_url = "https://iprjmr5yuc.execute-api.us-east-1.amazonaws.com:9000/dev/"

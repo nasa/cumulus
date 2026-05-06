@@ -52,7 +52,7 @@ data "aws_iam_policy_document" "migration_helper_async_operation_policy" {
     actions = [
       "s3:GetBucket*",
     ]
-    resources = [ "arn:aws:s3:::${var.system_bucket}/*"]
+    resources = ["arn:aws:s3:::${var.system_bucket}/*"]
   }
 
   statement {
@@ -62,7 +62,7 @@ data "aws_iam_policy_document" "migration_helper_async_operation_policy" {
       "s3:PutObject*",
       "s3:ListMultipartUploadParts",
     ]
-    resources = [ "arn:aws:s3:::${var.system_bucket}/*"]
+    resources = ["arn:aws:s3:::${var.system_bucket}/*"]
   }
 
   statement {
