@@ -3,9 +3,9 @@ export interface PostgresGranuleUniqueColumns {
   granule_id: string,
 }
 export interface PostgresGranule extends PostgresGranuleUniqueColumns {
-  archived: boolean,
   collection_cumulus_id: number,
   producer_granule_id: string,
+  archived?: boolean,
   status?: GranuleStatus,
   cmr_link?: string | null,
   error?: object | null,

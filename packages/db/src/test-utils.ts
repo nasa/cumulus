@@ -2,6 +2,7 @@ import { Knex } from 'knex';
 import cryptoRandomString from 'crypto-random-string';
 import { v4 as uuidv4 } from 'uuid';
 import pRetry from 'p-retry';
+import isNil from 'lodash/isNil';
 
 import { getExecutionUrlFromArn } from '@cumulus/message/Executions';
 import { randomId } from '@cumulus/common/test-utils';
@@ -123,15 +124,22 @@ export const fakeProviderRecordFactory = (
 });
 
 export const fakeGranuleRecordFactory = (
-  params: Partial<PostgresGranule>
-): Partial<PostgresGranule> => ({
-  granule_id: cryptoRandomString({ length: 10 }),
-  producer_granule_id: cryptoRandomString({ length: 5 }),
-  status: 'completed',
-  created_at: new Date(),
-  updated_at: new Date(),
-  ...params,
-});
+  params: Partial<PostgresGranule> &
+  Pick<PostgresGranule, 'collection_cumulus_id'>
+): Partial<PostgresGranule> => {
+  if (isNil(params.collection_cumulus_id)) {
+    throw new Error('collection_cumulus_id is required');
+  }
+
+  return {
+    granule_id: cryptoRandomString({ length: 10 }),
+    producer_granule_id: cryptoRandomString({ length: 5 }),
+    status: 'completed',
+    created_at: new Date(),
+    updated_at: new Date(),
+    ...params,
+  };
+};
 
 export const fakeFileRecordFactory = (
   params: Partial<PostgresFile>
