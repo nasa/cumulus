@@ -148,8 +148,8 @@ test('parsing an aggregate name wrapped in quotes', (t) => {
 
 test('parsing Numeric value', (t) => {
   t.deepEqual(parseValue('12345'), new PVLNumeric('12345'));
-  t.deepEqual(parseValue('12345'), new PVLNumeric(12345));
   t.is(parseValue('12345').value, 12345);
+  t.is(parseValue('12345').rawValue, '12345');
 });
 
 test('parsing DateTime value', (t) => {

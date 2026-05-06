@@ -112,6 +112,7 @@ const generateRDSCollectionRecord = (params) => ({
   sample_file_name: 'MOD09GQ.A2017025.h21v00.006.2017034065104.hdf',
   files: JSON.stringify([{ regex: '^.*\\.txt$', sampleFileName: 'file.txt', bucket: 'bucket' }]),
   created_at: new Date(),
+  cmr_provider: 'provider',
   updated_at: new Date(),
   ...params,
 });

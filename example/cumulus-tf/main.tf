@@ -215,6 +215,18 @@ module "cumulus" {
 
   # For message consumer lambdas in order to disable rule/message mismatches
   allow_provider_mismatch_on_rule_filter = var.allow_provider_mismatch_on_rule_filter
+
+  # Iceberg API configuration
+  deploy_iceberg_api = var.deploy_iceberg_api
+  iceberg_api_cpu = var.iceberg_api_cpu
+  iceberg_api_memory = var.iceberg_api_memory
+  cumulus_iceberg_api_image_version = var.cumulus_iceberg_api_image_version
+  api_service_autoscaling_min_capacity = var.api_service_autoscaling_min_capacity
+  api_service_autoscaling_max_capacity = var.api_service_autoscaling_max_capacity
+  api_service_autoscaling_target_cpu = var.api_service_autoscaling_target_cpu
+  iceberg_s3_bucket = var.iceberg_s3_bucket
+  iceberg_namespace = var.iceberg_namespace
+  iceberg_health_check_grace_period_seconds = var.iceberg_health_check_grace_period_seconds
 }
 
 resource "aws_security_group" "no_ingress_all_egress" {

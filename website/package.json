@@ -20,5 +20,8 @@
     "@docusaurus/preset-classic": "^2.3.0",
     "react": "^17.0.2"
   },
+  "overrides": {
+    "webpack": "5.105.4"
+  },
   "private": true
 }

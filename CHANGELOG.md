@@ -6,8 +6,115 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-4815**
+  - Add support for file-related searches to go to the files_table in iceberg
+- **CUMULUS-4709**
+  - Fix stale connections problem in iceberg API
+- **CUMULUS-4710**
+  - Implement list of stats route in iceberg search api
+  - Add warming up of duckdb connections
+- **CUMULUS-4708**
+  - Implement list of executions route in iceberg search api
+- **CUMULUS-4707**
+  - Implement list of granules route in iceberg search api
+- **CUMULUS-4534**
+  - collection db model has added non-optional cmr_provider field
+  - update requires db-migration to add cmr_provider to collection model
+- **CUMULUS-4706**
+  - Define and serve the iceberg search api routes through the iceberg api server.
+- **CUMULUS-4606**
+  - Add terraform module and example deployment for RDS to Iceberg replication Fargate cluster
+    and associated service/task.
+- **CUMULUS-4558**
+  - Added provisioning ECS Fargate infrastructure for cumulus api using terraform.
+- **CUMULUS-4557**
+  - Make a containerized iceberg api that can be deployed to ECS.
 - **async-operations-update**
   - Update Async Operation container to new version 56, `cumuluss/async-operation:56`. Users should update their references to `async-operation` with the new version.
+
+### Changed
+
+- **CSD-104**
+  - `PVLNumeric` now stores the original string value as `rawValue` before converting to `Number()`, preserving precision for large numeric strings.
+  - Fixed `PDRParsingError` when a PDR contains an MD5 `FILE_CKSUM_VALUE` that is an unquoted all-decimal string (e.g. `73806951753129206387143405718909`). The PVL parser previously classified such values as numeric, causing precision loss via JavaScript's `Number()` conversion. The original string is now preserved via `PVLNumeric.rawValue` and used for MD5 checksum validation.
+  - MD5 checksum values are now validated as 32-character hex strings, providing a clearer error message for values that are not valid MD5 hashes.
+
+- **CUMULUS-4576** Upgrade Cumulus to use the latest version of TEA (3.0.0)
+  ** UPGRADE NOTE: When upgrading the TEA module version, use a two-phase apply to prevent rollback failures
+  caused by Terraform destroying old lambda S3 objects before the CloudFormation stack update completes.
+
+  #### Migration Notes
+
+  All core tasks that enqueue messages to launch workflows are updated to use collection defined cmrProvider. Any daac/consolidation tasks which perform the same function need to ensure they do the same.
+
+  Phase 1 — upload new S3 objects and update CF stack (keeps old S3 objects intact as rollback targets if the CF update fails):
+   ````
+   terraform apply \
+     -target=module.thin_egress_app.aws_s3_object.cloudformation_template \
+     -target=module.thin_egress_app.aws_s3_object.lambda_source \
+     -target=module.thin_egress_app.aws_s3_object.lambda_code_dependency_archive \
+     -target=module.thin_egress_app.aws_s3_bucket.lambda_source \
+     -target=module.thin_egress_app.aws_cloudformation_stack.thin_egress_app \
+     -var-file=env/sandbox.tfvars
+   ````
+  Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
+  ````
+  terraform apply -var-file=env/sandbox.tfvars
+  ````
+
+- **CUMULUS-4788**
+  - split replication service into multiple services, one for each replication table group
+- **CUMULUS-4534**
+  - collection translate functions pass cmr_provider/cmrProvider back and forth
+  - sf-scheduler lambda function uses collection cmr_provider to fill provider in cmr section of message template meta
+  - enqueueParsePdrMessage, enqueueGranuleIngestMessage, enqueueWorkflowMessage also use collection cmr_provider to fill provider in cmr section of message template meta
+  - enqueueWorkflowMessage (used in queue-workflow task) uses collection cmr_provider to fill provider in cmr section of message template meta
+  - enqueueParsePdrMessage (used in queue-pdrs task) uses collection cmr_provider to fill provider in cmr section of message template meta
+  - enqueueGranuleIngestMessage (used in queue-granules task) uses collection cmr_provider to fill provider in cmr section of message template meta
+- **CUMULUS-4567**
+  - Add SQL and TypeScript migration files to alter the executions_cumulus_id sequence type.
+
+### Fixed
+
+- **Security Vulnerabilities**
+  - Upgraded package `lodash` to version 4.18.1.
+  - Updated package overrides to address CVEs GHSA-43fc-jf86-j433 and GHSA-r5fr-rjxr-66jc.
+  - added a `webpack` override to `/website/package.json` due to docusaurus conflicts
+- **CSD-100**
+  - made changes to the `PrivateApiLambda` and `ApiEndpoints` lambdas to ensure the environment variables
+    are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported
+- **CUMULUS-4606**
+  - Added prefix to IAM resource names to prevent collisions from multiple deployments in sandbox environment
+
+## [v21.3.3] 2026-04-10
+
+- Upgraded package `lodash` to version 4.18.1.
+
+- **CUMULUS-4576** Upgrade Cumulus to use the latest version of TEA (3.0.0)
+  ** UPGRADE NOTE: When upgrading the TEA module version, use a two-phase apply to prevent rollback failures
+  caused by Terraform destroying old lambda S3 objects before the CloudFormation stack update completes.
+
+ Phase 1 — upload new S3 objects and update CF stack (keeps old S3 objects intact as rollback targets if the CF update fails):
+   ````terraform apply \
+     -target=module.thin_egress_app.aws_s3_object.cloudformation_template \
+     -target=module.thin_egress_app.aws_s3_object.lambda_source \
+     -target=module.thin_egress_app.aws_s3_object.lambda_code_dependency_archive \
+     -target=module.thin_egress_app.aws_s3_bucket.lambda_source \
+     -target=module.thin_egress_app.aws_cloudformation_stack.thin_egress_app \
+     -var-file=env/sandbox.tfvars
+   ````
+ Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
+````terraform apply -var-file=env/sandbox.tfvars````
+
+### Changed
+
+- **CSD-100**
+  - made changes to the `PrivateApiLambda` and `ApiEndpoints` lambdas to ensure the environment variables
+    are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported
+- **CUMULUS-4567**
+  - Add SQL and TypeScript migration files to alter the executions_cumulus_id sequence type.
 
 ## [v21.3.2] 2026-03-20
 
@@ -53,6 +160,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-4564**
   - Added private_api_lambda_arn as an output in the Cumulus terraform module
+
 - **CUMULUS-4473**
   - Updated Granules Bulk Operations API endpoints to support `granuleInventoryReportName` and
     `s3GranuleIdInputFile` in the payload. `batchSize` added as an optional parameter for
@@ -588,6 +696,17 @@ v21.0.0 documentation should be used for this release.
   - Moved `@cumulus/api/lib/utils.errorify` function to `@cumulus/errors` and updated it to remove circular reference
   - Used `errorify` instead of `JSON.stringify` for AWS errors
   - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
+
+## [v20.3.3] 2025-04-13 [BACKPORT]
+
+Please note changes in 20.3.3 may not yet be released in future versions, as this is a backport and patch release on the 20.3.x series of releases. Updates that are included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Fixed
+
+- Upgraded package `lodash` to version 4.18.1.
+- **CSD-100**
+  - made changes to the `PrivateApiLambda` and `ApiEndpoints` lambdas to ensure the environment variables
+    are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported
 
 ## [v20.3.2] 2025-12-04 [BACKPORT]
 
@@ -9623,14 +9742,16 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v21.3.2...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v21.3.3...HEAD
+[v21.3.3]: https://github.com/nasa/cumulus/compare/v21.3.2...v21.3.3
 [v21.3.2]: https://github.com/nasa/cumulus/compare/v21.3.1...v21.3.2
 [v21.3.1]: https://github.com/nasa/cumulus/compare/v21.3.0...v21.3.1
 [v21.3.0]: https://github.com/nasa/cumulus/compare/v21.2.1...v21.3.0
 [v21.2.1]: https://github.com/nasa/cumulus/compare/v21.2.0...v21.2.1
 [v21.2.0]: https://github.com/nasa/cumulus/compare/v21.0.1...v21.2.0
 [v21.0.1]: https://github.com/nasa/cumulus/compare/v21.0.0...v21.0.1
-[v21.0.0]: https://github.com/nasa/cumulus/compare/v20.3.2...v21.0.0
+[v21.0.0]: https://github.com/nasa/cumulus/compare/v20.3.3...v21.0.0
+[v20.3.3]: https://github.com/nasa/cumulus/compare/v20.3.2...v20.3.3
 [v20.3.2]: https://github.com/nasa/cumulus/compare/v20.3.1...v20.3.2
 [v20.3.1]: https://github.com/nasa/cumulus/compare/v20.3.0...v20.3.1
 [v20.3.0]: https://github.com/nasa/cumulus/compare/v20.2.3...v20.3.0

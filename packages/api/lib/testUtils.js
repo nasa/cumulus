@@ -253,6 +253,7 @@ function fakeAsyncOperationFactory(params = {}) {
  */
 function fakeCollectionFactory(options = {}) {
   return {
+    cmrProvider: 'provider',
     name: randomId('collectionName'),
     version: '0.0.0',
     duplicateHandling: 'replace',

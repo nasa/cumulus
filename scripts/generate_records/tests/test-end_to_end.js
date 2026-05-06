@@ -25,7 +25,7 @@ test.afterEach.always(async (t) => {
   await destroyLocalTestDb({
     knex: t.context.knex,
     knexAdmin: t.context.knexAdmin,
-    tesetDbName: t.context.testDbName,
+    testDbName: t.context.testDbName,
   });
 });
 
@@ -33,7 +33,7 @@ test.serial('generate_db_records.main() uploads the expected number of entries t
   t.timeout(100 * 1000);
   const argv = clone(process.argv);
   const env = clone(process.env);
-  process.env = localStackConnectionEnv;
+  process.env = Object.assign(process.env, localStackConnectionEnv);
   process.env.PG_DATABASE = t.context.testDbName;
   process.argv = process.argv.slice(0, 2).concat([
     '--concurrency=100',
@@ -64,7 +64,7 @@ test.serial('generate_db_records.main() uploads at least the expected number of 
   t.timeout(100 * 1000);
   const argv = clone(process.argv);
   const env = clone(process.env);
-  process.env = localStackConnectionEnv;
+  process.env = Object.assign(process.env, localStackConnectionEnv);
   process.env.PG_DATABASE = t.context.testDbName;
   process.argv = process.argv.slice(0, 2).concat([
     '--concurrency=200',
@@ -96,7 +96,7 @@ test.serial('generate_db_executions.main() uploads at least the expected number 
   t.timeout(100 * 1000);
   const argv = clone(process.argv);
   const env = clone(process.env);
-  process.env = localStackConnectionEnv;
+  process.env = Object.assign(process.env, localStackConnectionEnv);
   process.env.PG_DATABASE = t.context.testDbName;
   process.argv = process.argv.slice(0, 2).concat([
     '--concurrency=200',

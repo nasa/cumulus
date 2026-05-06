@@ -206,6 +206,7 @@ test.serial('The correct message is enqueued', async (t) => {
       queueExecutionLimits,
     },
     meta: {
+      cmr: {},
       workflow_name: event.config.workflow,
       ...event.config.childWorkflowMeta,
     },

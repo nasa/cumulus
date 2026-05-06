@@ -351,7 +351,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/4a/92/8e97cc640181f72eb
 
 [[package]]
 name = "granule-invalidator"
-version = "21.3.2"
+version = "21.3.3"
 source = { virtual = "." }
 dependencies = [
     { name = "cumulus-api" },

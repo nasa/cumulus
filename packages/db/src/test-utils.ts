@@ -53,9 +53,13 @@ export const destroyLocalTestDb = async ({
   knexAdmin: Knex,
   testDbName: string
 }) => {
-  knex.destroy();
-  await pRetry(async () => await deleteTestDatabase(knexAdmin, testDbName));
-  knexAdmin.destroy();
+  if (knex) {
+    await knex.destroy();
+  }
+  if (knexAdmin) {
+    await pRetry(async () => await deleteTestDatabase(knexAdmin, testDbName));
+    await knexAdmin.destroy();
+  }
 };
 
 export const fakeRuleRecordFactory = (
@@ -85,6 +89,7 @@ export const fakeCollectionRecordFactory = (
   meta: { foo: 'bar' },
   created_at: new Date(),
   updated_at: new Date(),
+  cmr_provider: 'provider',
   ...params,
 });
 
