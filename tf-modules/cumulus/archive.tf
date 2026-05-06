@@ -107,4 +107,6 @@ module "archive" {
   tags = var.tags
 
   report_sns_topic_subscriber_arns = var.report_sns_topic_subscriber_arns
+
+  aws_s3_system_bucket_lifecycle_rules = var.aws_s3_system_bucket_lifecycle_rules
 }

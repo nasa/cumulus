@@ -17,6 +17,11 @@ locals {
     state_machine_role_arn                          = module.ingest.step_role_arn
     sqs_message_remover_lambda_function_arn         = module.ingest.sqs_message_remover_lambda_function_arn
   }
+  aws_s3_system_bucket_lifecycle_rules = [
+    for rule in var.aws_s3_system_bucket_lifecycle_rules : merge(rule, {
+      prefix = rule.prepend_prefix ? "${var.prefix}${rule.prefix}" : rule.prefix
+    })
+  ]
 }
 
 resource "aws_s3_bucket_object" "buckets_json" {
