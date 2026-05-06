@@ -1,6 +1,6 @@
 import type { Knex } from 'knex';
 import { DuckDBInstance, DuckDBConnection } from '@duckdb/node-api';
-import { setDuckDbStateForTesting } from './iceberg-connection';
+import { setDuckDbStateForTesting, PooledDuckDbConnection } from './iceberg-connection';
 import {
   asyncOperationsIcebergSql,
   collectionsIcebergSql,
@@ -43,9 +43,10 @@ export async function setupDuckDBWithS3ForTesting(dbFilePath: string = ':memory:
     SET s3_url_style='path';
   `);
 
+  const pooledConnection = Object.assign(connection, { creationTime: Date.now() });
   setDuckDbStateForTesting({
     instance,
-    pooledConnections: [{ connection, creationTime: Date.now() }],
+    pooledConnections: [pooledConnection as PooledDuckDbConnection],
   });
 
   return { instance, connection };

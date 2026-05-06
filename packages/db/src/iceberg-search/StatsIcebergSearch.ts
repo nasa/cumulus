@@ -30,7 +30,7 @@ class StatsIcebergSearch extends StatsSearch {
     const { sql, bindings } = aggregateQuery.toSQL().toNative();
     const dbConnection = await acquireDuckDbConnection();
     try {
-      const reader = await dbConnection.connection.runAndReadAll(
+      const reader = await dbConnection.runAndReadAll(
         sql,
         prepareBindings([...bindings])
       );
@@ -51,7 +51,7 @@ class StatsIcebergSearch extends StatsSearch {
     const { sql, bindings } = searchQuery.toSQL().toNative();
     const dbConnection = await acquireDuckDbConnection();
     try {
-      const records = (await dbConnection.connection.runAndReadAll(
+      const records = (await dbConnection.runAndReadAll(
         sql,
         prepareBindings([...bindings])
       )).getRowObjectsJson() as any;
