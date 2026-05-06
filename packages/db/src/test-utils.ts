@@ -130,20 +130,15 @@ export const fakeProviderRecordFactory = (
 });
 
 export const fakeGranuleRecordFactory = (
-  params: Partial<PostgresGranule> &
-  Pick<PostgresGranule, 'collection_cumulus_id'>
-): Partial<PostgresGranule> => {
-  requireField(params.collection_cumulus_id, 'collection_cumulus_id');
-
-  return {
-    granule_id: cryptoRandomString({ length: 10 }),
-    producer_granule_id: cryptoRandomString({ length: 5 }),
-    status: 'completed',
-    created_at: new Date(),
-    updated_at: new Date(),
-    ...params,
-  };
-};
+  params: Partial<PostgresGranule>
+): Partial<PostgresGranule> => ({
+  granule_id: cryptoRandomString({ length: 5 }),
+  producer_granule_id: cryptoRandomString({ length: 5 }),
+  status: 'completed',
+  created_at: new Date(),
+  updated_at: new Date(),
+  ...params,
+});
 
 export const fakeFileRecordFactory = (
   params: Partial<PostgresFile> &
