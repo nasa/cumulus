@@ -63,6 +63,12 @@ export const destroyLocalTestDb = async ({
   }
 };
 
+const requireField = (value: unknown, name: string) => {
+  if (isNil(value)) {
+    throw new Error(`${name} is required`);
+  }
+};
+
 export const fakeRuleRecordFactory = (
   params: Partial<PostgresRule>
 ): PostgresRule => ({
@@ -127,9 +133,7 @@ export const fakeGranuleRecordFactory = (
   params: Partial<PostgresGranule> &
   Pick<PostgresGranule, 'collection_cumulus_id'>
 ): Partial<PostgresGranule> => {
-  if (isNil(params.collection_cumulus_id)) {
-    throw new Error('collection_cumulus_id is required');
-  }
+  requireField(params.collection_cumulus_id, 'collection_cumulus_id');
 
   return {
     granule_id: cryptoRandomString({ length: 10 }),
@@ -142,14 +146,20 @@ export const fakeGranuleRecordFactory = (
 };
 
 export const fakeFileRecordFactory = (
-  params: Partial<PostgresFile>
-): Partial<PostgresFile> => ({
-  bucket: cryptoRandomString({ length: 5 }),
-  key: cryptoRandomString({ length: 10 }),
-  created_at: new Date(),
-  updated_at: new Date(),
-  ...params,
-});
+  params: Partial<PostgresFile> &
+  Pick<PostgresFile, 'granule_cumulus_id' | 'collection_cumulus_id'>
+): Partial<PostgresFile> => {
+  requireField(params.granule_cumulus_id, 'granule_cumulus_id');
+  requireField(params.collection_cumulus_id, 'collection_cumulus_id');
+
+  return {
+    bucket: cryptoRandomString({ length: 5 }),
+    key: cryptoRandomString({ length: 10 }),
+    created_at: new Date(),
+    updated_at: new Date(),
+    ...params,
+  };
+};
 
 export const fakeAsyncOperationRecordFactory = (
   params: Partial<PostgresAsyncOperation>

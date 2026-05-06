@@ -12,7 +12,6 @@ const {
   CollectionPgModel,
   destroyLocalTestDb,
   ExecutionPgModel,
-  fakeFileRecordFactory,
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
@@ -73,6 +72,7 @@ const {
   createFakeJwtAuthToken,
   fakeAccessTokenFactory,
   fakeCollectionFactory,
+  fakeFileFactory,
   fakeGranuleFactoryV2,
   setAuthorizedOAuthUsers,
   fakeExecutionFactoryV2,
@@ -3552,7 +3552,7 @@ test.serial('ServeUtils.addGranules adds associated files to Postgres', async (t
     execution: executionPgRecord[0].url,
     published: false,
     files: [
-      fakeFileRecordFactory({
+      fakeFileFactory({
         fileName: `${newGranuleId}.hdf`,
         updated_at: new Date().toISOString(),
         bucket: `${newCollectionId}--bucket`,
