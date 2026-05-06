@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4829**
+  - Add background job to refresh stale DuckDB connections for iceberg API
 - **CUMULUS-4815**
   - Add support for file-related searches to go to the files_table in iceberg
 - **CUMULUS-4709**
