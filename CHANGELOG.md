@@ -14,6 +14,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **async-operations-update**
   - Updated Async Operation container to new version 57, `cumuluss/async-operation:57`. Users should update their references to `async-operation` with the new version.
 
+### Changed
+
+- **CSD-102**
+  - Refactored `aws_s3_bucket_lifecycle_configuration` to support user-defined rules via Terraform variables.
+  - Included configuration examples for `aws_s3_bucket_lifecycle_configuration` in the [documentation](https://nasa.github.io/cumulus/docs/configuration/lifecycle-policies).
+
 ## [v21.3.3] 2026-04-10
 
 - Upgraded package `lodash` to version 4.18.1.
