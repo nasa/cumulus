@@ -95,3 +95,4 @@ iceberg_s3_bucket = "cdd-test-iceberg"
 iceberg_namespace = "cdd_deploy"
 iceberg_api_memory = 16384
 iceberg_api_cpu = 4096
+iceberg_health_check_grace_period_seconds = 600
