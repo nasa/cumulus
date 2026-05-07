@@ -6,6 +6,7 @@ const cryptoRandomString = require('crypto-random-string');
 const omit = require('lodash/omit');
 const random = require('lodash/random');
 const range = require('lodash/range');
+const sinon = require('sinon');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -1035,14 +1036,18 @@ test.serial('GranuleIcebergSearch supports search which checks existence of erro
   t.is(response.results?.length, 50);
 });
 
-test.serial('GranuleIcebergSearch estimates the rowcount of the table by default', async (t) => {
+test.serial('GranuleIcebergSearch does not call getEstimatedRowcount', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 50,
   };
   const dbSearch = new GranuleIcebergSearch({ queryStringParameters }, connection);
+  const estimateSpy = sinon.spy(dbSearch, 'getEstimatedRowcount');
   const response = await dbSearch.query();
-  t.true(response.meta.count > 0, 'Expected response.meta.count to be greater than 0');
+
+  t.true(estimateSpy.notCalled);
+
+  t.is(response.meta.count, 100);
   t.is(response.results?.length, 50);
 });
 

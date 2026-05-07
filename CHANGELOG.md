@@ -100,6 +100,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported
 - **CUMULUS-4606**
   - Added prefix to IAM resource names to prevent collisions from multiple deployments in sandbox environment
+- **CUMULUS-4844**
+  - Fixed `@cumulus/db` `BaseSearch.shouldEstimateRowcount()` to compare against SQL generated
+    by `baseCountQuery()` instead of a hardcoded query string, ensuring accurate detection of table count queries.
 
 ## [v21.3.3] 2026-04-10
 
