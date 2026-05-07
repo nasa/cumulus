@@ -123,12 +123,22 @@ abstract class BaseSearch {
   /**
    * Determine if an estimated row count should be returned
    *
+   * @param knex - DB client
    * @param countSql - sql statement for count
    * @returns whether an estimated row count should be returned
    */
-  protected shouldEstimateRowcount(countSql: string): boolean {
-    const isBasicQuery = (countSql === `select count(* as count) from "${this.tableName}"`);
-    return this.dbQueryParameters.estimateTableRowCount === true && isBasicQuery;
+  protected shouldEstimateRowcount(
+    knex: Knex,
+    countSql: string
+  ): boolean {
+    const { countQuery } = this.buildBasicQuery(knex);
+
+    const basicQuerySql = countQuery?.toSQL().sql;
+
+    return (
+      this.dbQueryParameters.estimateTableRowCount === true
+      && countSql === basicQuerySql
+    );
   }
 
   /**
@@ -592,10 +602,10 @@ abstract class BaseSearch {
     const knex = testKnex ?? await getKnexClient();
     const { countQuery, searchQuery } = this.buildSearch(knex);
 
-    const shouldEstimateRowcount = countQuery
-      ? this.shouldEstimateRowcount(countQuery?.toSQL().sql)
+    const estimateRowcount = countQuery
+      ? this.shouldEstimateRowcount(knex, countQuery?.toSQL().sql)
       : false;
-    const getEstimate = shouldEstimateRowcount
+    const getEstimate = estimateRowcount
       ? this.getEstimatedRowcount({ knex })
       : undefined;
     const shouldReturnCountOnly = this.dbQueryParameters.countOnly === true;
@@ -608,7 +618,7 @@ abstract class BaseSearch {
       const meta = this._metaTemplate();
       meta.limit = this.dbQueryParameters.limit;
       meta.page = this.dbQueryParameters.page;
-      meta.count = shouldEstimateRowcount ? countResult : Number(countResult[0]?.count ?? 0);
+      meta.count = estimateRowcount ? countResult : Number(countResult[0]?.count ?? 0);
 
       const apiRecords = await this.translatePostgresRecordsToApiRecords(pgRecords, knex);
 
