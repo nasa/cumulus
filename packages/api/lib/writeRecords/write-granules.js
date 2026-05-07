@@ -2,6 +2,7 @@
 
 'use strict';
 
+const AggregateError = require('aggregate-error');
 const isArray = require('lodash/isArray');
 const isEmpty = require('lodash/isEmpty');
 const isNil = require('lodash/isNil');
@@ -631,37 +632,32 @@ const _writeGranule = async ({
  *
  * This function examines the results of parallel granule write operations and identifies any
  * that failed. If failures are found, it logs each failure with its corresponding granuleId
- * (correlated by index with the provided `granuleIds` array) and throws an Error whose message
- * lists every failed granuleId.
+ * and throws an Error whose message that lists every failed granuleId for tracking purposes.
  *
  * @param {Array<{status: 'fulfilled'|'rejected', value?: any, reason?: Error}>} results -
  *   Array of results from Promise.allSettled(), where each result has a 'status' property
  *   indicating 'fulfilled' or 'rejected'
  * @param {string} errorMessage - Error message to log when failed writing to the database
- * @param {string[]} [granuleIds=[]] - granuleIds positionally aligned with `results`
- * @returns {Array} - Returns an empty array if no rejected promises are detected
+ * @param {string[]} [granuleIds=[]] - granuleIds aligned with `results`
+ * @returns {Array} - Returns the original results array if no rejected promises are detected
  * @throws {Error} - Thrown when any result is rejected; message includes failed granuleIds
  */
 const _filterGranuleWriteFailures = (results, errorMessage, granuleIds = []) => {
-  const failures = results
+  const failedWrites = results
     .map((result, index) => ({ result, granuleId: granuleIds[index] }))
     .filter(({ result }) => result.status === 'rejected');
 
-  if (failures.length === 0) {
-    return [];
+  if (failedWrites.length > 0) {
+    const failedGranuleIds = failedWrites.map(({ granuleId }) => granuleId ?? '');
+    const allFailures = failedWrites.map(
+      ({ result }) => result.reason ?? new Error('Unknown failure')
+    );
+
+    log.error(`${errorMessage}. Failed granuleIds: [${failedGranuleIds.join(', ')}]`);
+    throw new AggregateError(allFailures);
   }
 
-  const failedGranuleIds = failures.map(({ granuleId }) => granuleId ?? '<unknown>');
-
-  log.error(`${errorMessage}. Failed granuleIds: [${failedGranuleIds.join(', ')}]`);
-  failures.forEach(({ granuleId, result }) => {
-    log.error(
-      `Granule write failed for granuleId=${granuleId ?? '<unknown>'}:`,
-      result.reason
-    );
-  });
-
-  throw new Error(`${errorMessage}. Failed granuleIds: [${failedGranuleIds.join(', ')}]`);
+  return failedWrites;
 };
 
 /**
