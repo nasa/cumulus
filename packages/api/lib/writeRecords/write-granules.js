@@ -2,7 +2,6 @@
 
 'use strict';
 
-const AggregateError = require('aggregate-error');
 const isArray = require('lodash/isArray');
 const isEmpty = require('lodash/isEmpty');
 const isNil = require('lodash/isNil');
@@ -631,26 +630,42 @@ const _writeGranule = async ({
  * Filters and handles failed granule write operations from an array of Promise.allSettled results.
  *
  * This function examines the results of parallel granule write operations and identifies any
- * that failed. If failures are found, it aggregates all error reasons into a single
- * AggregateError, logs the error with the provided message, and throws the aggregated error
- * to halt execution and provide error information to the caller.
+ * that failed. If failures are found, it logs each failure with its corresponding granuleId
+ * (correlated by index with the provided `granuleIds` array) and throws an Error whose message
+ * lists every failed granuleId.
+ *
+ * The `granuleIds` array MUST be positionally aligned with `results` (i.e. `granuleIds[i]`
+ * corresponds to `results[i]`). Any index without a corresponding granuleId will be reported
+ * as `<unknown>`.
  *
  * @param {Array<{status: 'fulfilled'|'rejected', value?: any, reason?: Error}>} results -
  *   Array of results from Promise.allSettled(), where each result has a 'status' property
  *   indicating 'fulfilled' or 'rejected'
- * @param {string} errorMessage - Error message to log when failed writing to the database
- * @returns {Array} - Returns the original results array if no rejected promises are detected
- * @throws {AggregateError} -
+ * @param {string} errorMessage - Error message prefix used when logging and throwing
+ * @param {string[]} [granuleIds=[]] - granuleIds positionally aligned with `results`
+ * @returns {Array} - Returns an empty array if no rejected promises are detected
+ * @throws {Error} - Thrown when any result is rejected; message includes failed granuleIds
  */
-const _filterGranuleWriteFailures = (results, errorMessage) => {
-  const failedWrites = results.filter((result) => result.status === 'rejected');
-  if (failedWrites.length > 0) {
-    const allFailures = failedWrites.map((failure) => failure.reason);
-    const aggregateError = new AggregateError(allFailures);
-    log.error(errorMessage, aggregateError);
-    throw aggregateError;
+const _filterGranuleWriteFailures = (results, errorMessage, granuleIds = []) => {
+  const failures = results
+    .map((result, index) => ({ result, granuleId: granuleIds[index] }))
+    .filter(({ result }) => result.status === 'rejected');
+
+  if (failures.length === 0) {
+    return [];
   }
-  return failedWrites;
+
+  const failedGranuleIds = failures.map(({ granuleId }) => granuleId ?? '<unknown>');
+
+  log.error(`${errorMessage}. Failed granuleIds: [${failedGranuleIds.join(', ')}]`);
+  failures.forEach(({ granuleId, result }) => {
+    log.error(
+      `Granule write failed for granuleId=${granuleId ?? '<unknown>'}:`,
+      result.reason
+    );
+  });
+
+  throw new Error(`${errorMessage}. Failed granuleIds: [${failedGranuleIds.join(', ')}]`);
 };
 
 /**
@@ -929,6 +944,8 @@ const writeGranuleExecutionAssociationsFromMessage = async ({
 
   log.info(`Retrieved ${granuleCumulusIds.length} granule cumulus IDs for granule IDs: [${granuleIds.join(', ')}]`);
 
+  const failureIdentifiers = granuleCumulusIds.map((id) => `cumulus_id=${id}`);
+
   const results = await Promise.allSettled(
     granuleCumulusIds.map((granuleCumulusId) =>
       granulesExecutionsPgModel.upsert(knex, {
@@ -937,7 +954,11 @@ const writeGranuleExecutionAssociationsFromMessage = async ({
       }))
   );
 
-  const filteredResults = _filterGranuleWriteFailures(results, 'Failed writing some granule-execution associations');
+  const filteredResults = _filterGranuleWriteFailures(
+    results,
+    'Failed writing some granule-execution associations',
+    failureIdentifiers
+  );
   log.debug('Completed upsert of granule-execution associations.');
   return filteredResults;
 };
@@ -1117,7 +1138,11 @@ const writeGranulesFromMessage = async ({
       });
     }
   ));
-  return _filterGranuleWriteFailures(results, 'Failed writing some granules to Postgres');
+  return _filterGranuleWriteFailures(
+    results,
+    'Failed writing some granules to Postgres',
+    granuleIds
+  );
 };
 
 /**
