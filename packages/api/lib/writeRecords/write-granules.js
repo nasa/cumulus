@@ -634,14 +634,10 @@ const _writeGranule = async ({
  * (correlated by index with the provided `granuleIds` array) and throws an Error whose message
  * lists every failed granuleId.
  *
- * The `granuleIds` array MUST be positionally aligned with `results` (i.e. `granuleIds[i]`
- * corresponds to `results[i]`). Any index without a corresponding granuleId will be reported
- * as `<unknown>`.
- *
  * @param {Array<{status: 'fulfilled'|'rejected', value?: any, reason?: Error}>} results -
  *   Array of results from Promise.allSettled(), where each result has a 'status' property
  *   indicating 'fulfilled' or 'rejected'
- * @param {string} errorMessage - Error message prefix used when logging and throwing
+ * @param {string} errorMessage - Error message to log when failed writing to the database
  * @param {string[]} [granuleIds=[]] - granuleIds positionally aligned with `results`
  * @returns {Array} - Returns an empty array if no rejected promises are detected
  * @throws {Error} - Thrown when any result is rejected; message includes failed granuleIds
