@@ -656,7 +656,6 @@ const _filterGranuleWriteFailures = (results, errorMessage, granuleIds = []) => 
     log.error(`${errorMessage}. Failed granuleIds: [${failedGranuleIds.join(', ')}]`);
     throw new AggregateError(allFailures);
   }
-
   return failedWrites;
 };
 
