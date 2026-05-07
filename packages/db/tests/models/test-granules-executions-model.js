@@ -54,7 +54,9 @@ test.beforeEach(async (t) => {
   t.context.granuleCumulusId = pgGranule.cumulus_id;
   t.context.joinRecord = {
     execution_cumulus_id: t.context.executionCumulusId,
+    execution_created_at: pgExecution.created_at,
     granule_cumulus_id: t.context.granuleCumulusId,
+    collection_cumulus_id: pgGranule.collection_cumulus_id,
   };
 });
 
@@ -177,6 +179,7 @@ test('GranulesExecutionsPgModel.search() returns all granule/execution join reco
     await granulesExecutionsPgModel.create(trx, {
       ...joinRecord,
       execution_cumulus_id: newExecutionCumulusId,
+      execution_created_at: newExecution.created_at,
     });
 
     t.deepEqual(
@@ -185,7 +188,10 @@ test('GranulesExecutionsPgModel.search() returns all granule/execution join reco
       }),
       [executionCumulusId, newExecutionCumulusId].map((executionId) => ({
         execution_cumulus_id: executionId,
+        execution_created_at: (executionId === newExecutionCumulusId)
+          ? newExecution.created_at : joinRecord.execution_created_at,
         granule_cumulus_id: joinRecord.granule_cumulus_id,
+        collection_cumulus_id: joinRecord.collection_cumulus_id,
       }))
     );
   });
@@ -211,6 +217,7 @@ test('GranulesExecutionsPgModel.searchByGranuleCumulusIds() returns correct valu
     await granulesExecutionsPgModel.create(trx, {
       ...joinRecord,
       execution_cumulus_id: newExecutionCumulusId,
+      execution_created_at: pgExecution.created_at,
     });
   });
 
@@ -239,6 +246,7 @@ test('GranulesExecutionsPgModel.searchByGranuleCumulusIds() works with a transac
     await granulesExecutionsPgModel.create(trx, {
       ...joinRecord,
       execution_cumulus_id: newExecutionCumulusId,
+      execution_created_at: newExecution.created_at,
     });
 
     const results = await granulesExecutionsPgModel

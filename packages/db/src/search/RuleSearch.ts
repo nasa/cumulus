@@ -40,8 +40,7 @@ export class RuleSearch extends BaseSearch {
       providers: providersTable,
     } = TableNames;
 
-    const countQuery = knex(this.tableName)
-      .count('* as count');
+    const countQuery = this.baseCountQuery(knex);
 
     const searchQuery = knex(this.tableName)
       .select(`${this.tableName}.*`)

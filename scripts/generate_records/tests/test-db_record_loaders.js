@@ -48,7 +48,7 @@ test('loadExecutions() uploads executions', async (t) => {
   );
   t.is(executions.length, 3);
   await Promise.all(executions.map(async (execution) => {
-    t.true(await executionModel.exists(t.context.knex, { cumulus_id: execution }));
+    t.true(await executionModel.exists(t.context.knex, { cumulus_id: execution.cumulus_id }));
   }));
   const paramedExecutions = await loadExecutions(
     t.context.knex,
@@ -58,7 +58,7 @@ test('loadExecutions() uploads executions', async (t) => {
     { original_payload: { a: 'b' }, final_payload: { c: 'd' } }
   );
   await Promise.all(paramedExecutions.map(async (execution) => {
-    const exec = await executionModel.get(t.context.knex, { cumulus_id: execution });
+    const exec = await executionModel.get(t.context.knex, { cumulus_id: execution.cumulus_id });
     t.deepEqual(exec.final_payload, { c: 'd' });
     t.deepEqual(exec.original_payload, { a: 'b' });
   }));
@@ -105,6 +105,7 @@ test('loadFiles() uploadsFiles', async (t) => {
   const filesUploaded = await loadFiles(
     t.context.knex,
     granuleCumulusId,
+    t.context.collectionCumulusId,
     12,
     fileModel
   );
@@ -114,6 +115,7 @@ test('loadFiles() uploadsFiles', async (t) => {
   const paramFilesUploaded = await loadFiles(
     t.context.knex,
     granuleCumulusId,
+    t.context.collectionCumulusId,
     12,
     fileModel,
     { bucket: 'a' }
@@ -134,7 +136,7 @@ test('loadGranulesExecutions() uploads GranulesExecutions', async (t) => {
     12,
     granuleModel
   );
-  const executionCumulusIds = await loadExecutions(
+  const executions = await loadExecutions(
     t.context.knex,
     t.context.collectionCumulusId,
     15,
@@ -142,8 +144,9 @@ test('loadGranulesExecutions() uploads GranulesExecutions', async (t) => {
   );
   const geUploads = await loadGranulesExecutions(
     t.context.knex,
+    t.context.collectionCumulusId,
     granuleCumulusIds,
-    executionCumulusIds,
+    executions,
     geModel
   );
   await Promise.all(geUploads.map(async (granuleExecution) => {

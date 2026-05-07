@@ -12,7 +12,9 @@ const {
   loadExecutions,
   loadCollection,
 } = require('./db_record_loaders');
+
 process.env.DISABLE_PG_SSL = 'true';
+
 /**
  *
  * @typedef {import('knex').Knex} Knex

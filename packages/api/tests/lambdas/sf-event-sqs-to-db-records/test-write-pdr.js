@@ -162,6 +162,7 @@ test('generatePdrRecord() generates correct PDR record', (t) => {
   } = t.context;
   const now = workflowStartTime + 3500;
   const updatedAt = Date.now();
+  const executionCreatedAt = new Date();
 
   cumulusMessage.payload = {
     ...cumulusMessage.payload,
@@ -176,6 +177,7 @@ test('generatePdrRecord() generates correct PDR record', (t) => {
       collectionCumulusId: 1,
       providerCumulusId: 2,
       executionCumulusId: 3,
+      executionCreatedAt,
       now,
       updatedAt,
     }),
@@ -192,6 +194,7 @@ test('generatePdrRecord() generates correct PDR record', (t) => {
       },
       progress: 50,
       execution_cumulus_id: 3,
+      execution_created_at: executionCreatedAt,
       collection_cumulus_id: 1,
       provider_cumulus_id: 2,
       created_at: new Date(workflowStartTime),

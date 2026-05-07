@@ -30,7 +30,8 @@ test.before(async (t) => {
     table.increments('cumulus_id').primary();
     table.bigInteger('test_cumulus_id');
     table.text('info');
-    table.timestamps(false, true);
+    table.timestamp('created_at', { useTz: true, precision: 3 }).defaultTo(t.context.knex.fn.now(3));
+    table.timestamp('updated_at', { useTz: true, precision: 3 }).defaultTo(t.context.knex.fn.now(3));
   });
   await t.context.knex.schema.createTable(t.context.emptyTableName, (table) => {
     table.increments('cumulus_id').primary();
@@ -195,6 +196,33 @@ test('BasePgModel.get() returns correct record', async (t) => {
   t.like(
     await basePgModel.get(knex, { info }),
     { ...defaultDates, info }
+  );
+});
+
+test('BasePgModel.get() returns only requested returningFields', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const info = cryptoRandomString({ length: 5 });
+  const testCumulusId = 12345;
+
+  await knex(tableName).insert({
+    test_cumulus_id: testCumulusId,
+    info,
+  });
+
+  const returningFields = ['info', 'test_cumulus_id'];
+  const record = await basePgModel.get(knex, { info }, returningFields);
+
+  t.is(record.info, info);
+  t.is(Number(record.test_cumulus_id), testCumulusId);
+
+  t.is(record.cumulus_id, undefined);
+  t.is(record.updated_at, undefined);
+
+  const recordKeys = Object.keys(record);
+  t.deepEqual(
+    recordKeys.sort(),
+    returningFields.sort(),
+    'The returned object should only contain the requested keys'
   );
 });
 
