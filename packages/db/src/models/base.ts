@@ -68,15 +68,23 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
    * @param {Partial<RecordType>} params - An object or any portion of an object of type RecordType
-   * @returns {Promise<RecordType>} The returned record
+   * @param {K[]} [returningFields] - Optional array of specific fields to return
+   * @returns {Promise<RecordType | Pick<RecordType, K>>} The returned record (full or partial)
    */
-  async get(
+  async get<K extends keyof RecordType>(
     knexOrTransaction: Knex | Knex.Transaction,
-    params: Partial<RecordType>
-  ): Promise<RecordType> {
-    const record: RecordType = await knexOrTransaction(this.tableName)
-      .where(params)
-      .first();
+    params: Partial<RecordType>,
+    returningFields?: K[]
+  ): Promise<RecordType | Pick<RecordType, K>> {
+    const query = knexOrTransaction(this.tableName).where(params);
+
+    if (returningFields && returningFields.length > 0) {
+      query.select(returningFields);
+    } else {
+      query.select('*');
+    }
+
+    const record = await query.first();
 
     if (!isRecordDefined(record)) {
       throw new RecordDoesNotExist(
@@ -192,6 +200,29 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
       .select('cumulus_id')
       .whereIn(columnNames, values);
     return records.map((record) => record.cumulus_id);
+  }
+
+  /**
+   * Get records from Postgres matching the provided column values,
+   * returning only the specified fields.
+   *
+   * @param knexOrTransaction - DB client or transaction
+   * @param columnNames - Column names used in the WHERE IN clause (supports composite keys)
+   * @param values -  record values for whereIn query
+   * @param returningFields - Fields to select and return from matching records
+   * @returns An array of objects containing only the requested fields
+   */
+  async getRecords<K extends keyof RecordType>(
+    knexOrTransaction: Knex | Knex.Transaction,
+    columnNames: Array<keyof RecordType>,
+    values: Array<any[]>, // tuples matching columnNames
+    returningFields: K[]
+  ): Promise<Array<Pick<RecordType, K>>> {
+    const records = await knexOrTransaction(this.tableName)
+      .select(returningFields)
+      .whereIn(columnNames, values);
+
+    return records;
   }
 
   /**

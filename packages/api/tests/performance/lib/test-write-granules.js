@@ -133,6 +133,7 @@ test.beforeEach(async (t) => {
     execution
   );
   t.context.executionCumulusId = pgExecution.cumulus_id;
+  t.context.executionCreatedAt = pgExecution.created_at;
   t.context.executionUrl = pgExecution.url;
 
   const [pgProvider] = await t.context.providerPgModel.create(
@@ -213,6 +214,7 @@ test('writeGranulesFromMessage operates on 2k granules with 200 files each withi
     cumulusMessages,
     knex,
     executionCumulusId,
+    executionCreatedAt,
     providerCumulusId,
     stepFunctionUtils,
   } = t.context;
@@ -222,6 +224,7 @@ test('writeGranulesFromMessage operates on 2k granules with 200 files each withi
   await pSettle(cumulusMessages.map((cumulusMessage) => () => writeGranulesFromMessage({
     cumulusMessage,
     executionCumulusId,
+    executionCreatedAt,
     providerCumulusId,
     knex,
     testOverrides: { stepFunctionUtils },

@@ -62,4 +62,6 @@ module "data_persistence" {
   tags                       = merge(var.tags, { Deployment = var.prefix })
   lambda_timeouts            = var.lambda_timeouts
   lambda_memory_sizes        = var.lambda_memory_sizes
+  db_partition_config        = var.db_partition_config
+  use_bootstrap              = var.use_bootstrap
 }

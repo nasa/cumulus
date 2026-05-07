@@ -29,7 +29,7 @@ const {
   getCollectionCumulusId,
   getMessageProviderCumulusId,
   getAsyncOperationCumulusId,
-  getParentExecutionCumulusId,
+  getParentExecution,
 } = require('../../lib/writeRecords/utils');
 
 const {
@@ -136,7 +136,7 @@ const writeRecords = async ({
   const [
     collectionCumulusId,
     asyncOperationCumulusId,
-    parentExecutionCumulusId,
+    parentExecution,
   ] = await Promise.all([
     getCollectionCumulusId(
       messageCollectionNameVersion,
@@ -146,11 +146,16 @@ const writeRecords = async ({
       messageAsyncOperationId,
       knex
     ),
-    getParentExecutionCumulusId(
+    getParentExecution(
       messageParentExecutionArn,
       knex
     ),
   ]);
+
+  const {
+    cumulus_id: parentExecutionCumulusId,
+    created_at: parentExecutionCreatedAt,
+  } = parentExecution || {};
 
   const fieldsToMeetRequirements = {
     messageCollectionNameVersion,
@@ -159,6 +164,7 @@ const writeRecords = async ({
     asyncOperationCumulusId,
     messageParentExecutionArn,
     parentExecutionCumulusId,
+    parentExecutionCreatedAt,
   };
   if (!shouldWriteExecutionToPostgres(fieldsToMeetRequirements)) {
     log.debug(`Could not satisfy requirements for writing records, fieldsToMeetRequirements: ${JSON.stringify(fieldsToMeetRequirements)}`);
@@ -166,14 +172,21 @@ const writeRecords = async ({
   }
 
   let executionCumulusId;
+  let executionCreatedAt;
   if (shouldWriteExecutionRecords) {
-    executionCumulusId = await writeExecutionRecordFromMessage({
+    const execution = await writeExecutionRecordFromMessage({
       cumulusMessage,
       collectionCumulusId,
       asyncOperationCumulusId,
       parentExecutionCumulusId,
+      parentExecutionCreatedAt,
       knex,
     });
+
+    ({
+      cumulus_id: executionCumulusId,
+      created_at: executionCreatedAt,
+    } = execution);
   }
 
   const providerCumulusId = await getMessageProviderCumulusId(cumulusMessage, knex);
@@ -185,6 +198,7 @@ const writeRecords = async ({
       providerCumulusId,
       knex,
       executionCumulusId,
+      executionCreatedAt,
     });
   }
 
@@ -192,6 +206,7 @@ const writeRecords = async ({
     return writeGranulesFromMessage({
       cumulusMessage,
       executionCumulusId,
+      executionCreatedAt,
       knex,
       testOverrides,
     });
@@ -201,6 +216,7 @@ const writeRecords = async ({
     return writeGranuleExecutionAssociationsFromMessage({
       cumulusMessage,
       executionCumulusId,
+      executionCreatedAt,
       knex,
     });
   }

@@ -7,6 +7,27 @@ This can be installed with npm install in this directory (or will be installed a
 
 generate_db_records.js and generate_db_executions.js are tested to run with both node v20/v22
 
+## Database Connection Environment Variables
+The following environment variables must be set in order for the script to connect to the database. For example:
+```sh
+PG_HOST=localhost \
+PG_PORT=9202 \
+PG_USER=dbuser \
+PG_PASSWORD=password \
+PG_DATABASE=prefix_db \
+node ./generate_db_records.js command_arguments
+```
+
+If you encounter the error `knex failed on attempted connection error: no pg_hba.conf entry for host`, you may need to enable SSL for the database connection.
+Set the following environment variables to force the client to use SSL/TLS and skip certificate validation:
+
+```sh
+NODE_TLS_REJECT_UNAUTHORIZED=0 \
+PGSSLMODE=require \
+```
+
+Set KNEX_DEBUG=true to enable debug logging and help diagnose connection issues.
+
 ## generate_db_records.js
 This is the default script for uploading bulk data to a cumulus database. it is granule oriented, handling files, executions and granule-executions with respect to granules and as such is well optimized for most database mocking applications. Its performance is dependent on there being a significant number (>= concurrency) of granules in order to parallelize well, and so will be sub-optimal for uploading only files, executions etc.
 

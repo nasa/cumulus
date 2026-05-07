@@ -36,3 +36,17 @@ variable "vpc_id" {
   type    = string
   default = null
 }
+
+variable "db_partition_config" {
+  type = object({
+    executions_total_years = number
+    granules_count         = number
+    files_count            = number
+  })
+  description = "Partitioning settings for the database migration Lambda"
+}
+
+variable "use_bootstrap" {
+  description = "If true, builds the schema from scratch using the bootstrap directory (full declarations) instead of incremental patches. Only runs on fresh databases."
+  type        = bool
+}

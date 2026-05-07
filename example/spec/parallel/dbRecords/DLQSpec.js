@@ -219,7 +219,7 @@ describe('when a bad record is ingested', () => {
     expect(parsed.executionArn).toEqual(executionArn);
     expect(parsed.granules).toEqual(null);
     expect(parsed.providerId).toEqual(null);
-    expect(parsed.error).toEqual('CumulusMessageError: getMessageWorkflowStartTime on a message without a workflow_start_time');
+    expect(parsed.error).toEqual('Error: Execution ARN is missing from the Cumulus message');
     leftoverS3Key = failedMessageS3Key;
   });
 });

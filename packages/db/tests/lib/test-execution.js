@@ -29,14 +29,15 @@ const {
 
 /**
  * Create a new Execution Record, and link it to the input GranuleCumulusId.
+ *
  * @param {Object} t - ava context
- * @param {number} granuleCumulusId
+ * @param {Object} granuleKeys - granule's cumulus_id and collection_cumulus_id
  * @param {Object} executionParams - params passed to create fake exectuion.
- * @returns {Promise<number>} - the executionCumulusId created.
+ * @returns {Promise<Object>} - the granules_executions record created.
  */
 const linkNewExecutionToGranule = async (
   t,
-  granuleCumulusId,
+  granuleKeys,
   executionParams
 ) => {
   const [pgExecution] = await t.context.executionPgModel.create(
@@ -46,20 +47,22 @@ const linkNewExecutionToGranule = async (
   const executionCumulusId = pgExecution.cumulus_id;
   const joinRecord = {
     execution_cumulus_id: executionCumulusId,
-    granule_cumulus_id: granuleCumulusId,
+    execution_created_at: pgExecution.created_at,
+    granule_cumulus_id: granuleKeys.cumulus_id,
+    collection_cumulus_id: granuleKeys.collection_cumulus_id,
   };
   await t.context.granulesExecutionsPgModel.create(t.context.knex, joinRecord);
-  return executionCumulusId;
+  return joinRecord;
 };
 
 /**
  * Creates and inserts into the database a new Granule record and a new Execution record,
  * and a GranuleExecution record to associate the two.
+ *
  * @param {Object} t - ava context
  * @param {Object} executionParams - params passed to create a fake execution.
  * @param {Object} granuleParams - params passed to create a fake granule.
- * @returns {Promise<Object>} - object containing the executionCumulusId and granuleCumulusId
- *                              for the new records.
+ * @returns {Promise<Object>} - granules_executions record
  */
 const newGranuleAssociatedWithExecution = async (
   t,
@@ -73,13 +76,13 @@ const newGranuleAssociatedWithExecution = async (
       ...granuleParams,
     })
   );
-  const granuleCumulusId = pgGranule.cumulus_id;
-  const executionCumulusId = await linkNewExecutionToGranule(
+
+  const granuleExecution = await linkNewExecutionToGranule(
     t,
-    granuleCumulusId,
+    pgGranule,
     executionParams
   );
-  return { executionCumulusId, granuleCumulusId };
+  return granuleExecution;
 };
 
 const batchCreateExecutions = async (knex, cumulusCollectionId, length = 100) => {
@@ -161,14 +164,18 @@ test('getExecutionInfoByGranuleCumulusId() gets all Executions related to a Gran
     knex,
     {
       granule_cumulus_id: granuleCumulusId,
+      collection_cumulus_id: collectionCumulusId,
       execution_cumulus_id: executionACumulusId,
+      execution_created_at: executionA.created_at,
     }
   );
   await granulesExecutionsPgModel.create(
     knex,
     {
       granule_cumulus_id: granuleCumulusId,
+      collection_cumulus_id: collectionCumulusId,
       execution_cumulus_id: executionBCumulusId,
+      execution_created_at: executionB.created_at,
     }
   );
 
@@ -228,14 +235,18 @@ test('getExecutionInfoByGranuleCumulusId() gets all Executions related to a Gran
     knex,
     {
       granule_cumulus_id: granuleCumulusId,
+      collection_cumulus_id: pgGranule.collection_cumulus_id,
       execution_cumulus_id: executionACumulusId,
+      execution_created_at: executionA.created_at,
     }
   );
   await granulesExecutionsPgModel.create(
     knex,
     {
       granule_cumulus_id: granuleCumulusId,
+      collection_cumulus_id: pgGranule.collection_cumulus_id,
       execution_cumulus_id: executionBCumulusId,
+      execution_created_at: executionB.created_at,
     }
   );
 
@@ -296,14 +307,18 @@ test('getExecutionInfoByGranuleCumulusId() gets specified execution info', async
     knex,
     {
       granule_cumulus_id: granuleCumulusId,
+      collection_cumulus_id: pgGranule.collection_cumulus_id,
       execution_cumulus_id: executionACumulusId,
+      execution_created_at: executionA.created_at,
     }
   );
   await granulesExecutionsPgModel.create(
     knex,
     {
       granule_cumulus_id: granuleCumulusId,
+      collection_cumulus_id: pgGranule.collection_cumulus_id,
       execution_cumulus_id: executionBCumulusId,
+      execution_created_at: executionB.created_at,
     }
   );
 
@@ -364,9 +379,13 @@ test('executionArnsFromGranuleIdsAndWorkflowNames() returns correct arn when a g
       granule_id: granuleId,
     }
   );
+  const granuleKeys = {
+    cumulus_id: granuleExecution.granule_cumulus_id,
+    collection_cumulus_id: granuleExecution.collection_cumulus_id,
+  };
   await linkNewExecutionToGranule(
     t,
-    granuleExecution.granuleCumulusId,
+    granuleKeys,
     secondExecutionParams
   );
 
@@ -409,9 +428,13 @@ test('executionArnsFromGranuleIdsAndWorkflowNames() returns all arns for a granu
       granule_id: granuleId,
     }
   );
+  const granuleKeys = {
+    cumulus_id: granuleExecution.granule_cumulus_id,
+    collection_cumulus_id: granuleExecution.collection_cumulus_id,
+  };
   await linkNewExecutionToGranule(
     t,
-    granuleExecution.granuleCumulusId,
+    granuleKeys,
     mostRecentExecution
   );
 
@@ -459,19 +482,23 @@ test('executionArnsFromGranuleIdsAndWorkflowNames() returns all arns for an arra
       granule_id: granuleId,
     }
   );
+  const granuleKeys = {
+    cumulus_id: granuleExecution.granule_cumulus_id,
+    collection_cumulus_id: granuleExecution.collection_cumulus_id,
+  };
   await linkNewExecutionToGranule(
     t,
-    granuleExecution.granuleCumulusId,
+    granuleKeys,
     mostRecentExecution
   );
   await linkNewExecutionToGranule(
     t,
-    granuleExecution.granuleCumulusId,
+    granuleKeys,
     oldExecution
   );
   await linkNewExecutionToGranule(
     t,
-    granuleExecution.granuleCumulusId,
+    granuleKeys,
     recentExecutionButExcludedFromResults
   );
 
@@ -519,9 +546,13 @@ test('executionArnsFromGranuleIdsAndWorkflowNames() returns all arns for an arra
     oldestExecution,
     { granule_id: granuleId }
   );
+  const granuleKeys = {
+    cumulus_id: granuleExecution.granule_cumulus_id,
+    collection_cumulus_id: granuleExecution.collection_cumulus_id,
+  };
   await linkNewExecutionToGranule(
     t,
-    granuleExecution.granuleCumulusId,
+    granuleKeys,
     recentExecutionButExcludedFromResults
   );
 
@@ -530,9 +561,13 @@ test('executionArnsFromGranuleIdsAndWorkflowNames() returns all arns for an arra
     oldExecution,
     { granule_id: anotherGranuleId }
   );
+  const secondGranuleKeys = {
+    cumulus_id: secondGranuleExecution.granule_cumulus_id,
+    collection_cumulus_id: secondGranuleExecution.collection_cumulus_id,
+  };
   await linkNewExecutionToGranule(
     t,
-    secondGranuleExecution.granuleCumulusId,
+    secondGranuleKeys,
     mostRecentExecution
   );
 
@@ -577,9 +612,13 @@ test('newGranuleAssociatedWithExecution() returns the most recent arn.', async (
       granule_id: granuleId,
     }
   );
+  const granuleKeys = {
+    cumulus_id: granuleExecution.granule_cumulus_id,
+    collection_cumulus_id: granuleExecution.collection_cumulus_id,
+  };
   await linkNewExecutionToGranule(
     t,
-    granuleExecution.granuleCumulusId,
+    granuleKeys,
     mostRecentExecution
   );
 
@@ -650,6 +689,7 @@ test('getWorkflowNameIntersectFromGranuleIds() returns correct values', async (t
   // granule 1 is associated with execution 1 + 3
   const [pgGranule1] = await upsertGranuleWithExecutionJoinRecord({
     executionCumulusId: executionCumulusId1,
+    executionCreatedAt: pgExecution1.created_at,
     granule: granuleRecords[0],
     knexTransaction: knex,
   });
@@ -657,12 +697,15 @@ test('getWorkflowNameIntersectFromGranuleIds() returns correct values', async (t
 
   await granulesExecutionsPgModel.create(knex, {
     granule_cumulus_id: granuleCumulusId1,
+    collection_cumulus_id: pgGranule1.collection_cumulus_id,
     execution_cumulus_id: executionCumulusId3,
+    execution_created_at: pgExecution3.created_at,
   });
 
   // granule 2 is associated with execution 2
   const [pgGranule2] = await upsertGranuleWithExecutionJoinRecord({
     executionCumulusId: executionCumulusId2,
+    executionCreatedAt: pgExecution2.created_at,
     granule: granuleRecords[1],
     knexTransaction: knex,
   });
@@ -671,6 +714,7 @@ test('getWorkflowNameIntersectFromGranuleIds() returns correct values', async (t
   // granule 3 is associated with executions 2 + 3
   const [pgGranule3] = await upsertGranuleWithExecutionJoinRecord({
     executionCumulusId: executionCumulusId1,
+    executionCreatedAt: pgExecution1.created_at,
     granule: granuleRecords[2],
     knexTransaction: knex,
   });
@@ -678,7 +722,9 @@ test('getWorkflowNameIntersectFromGranuleIds() returns correct values', async (t
 
   await granulesExecutionsPgModel.create(knex, {
     granule_cumulus_id: granuleCumulusId3,
+    collection_cumulus_id: pgGranule3.collection_cumulus_id,
     execution_cumulus_id: executionCumulusId3,
+    execution_created_at: pgExecution3.created_at,
   });
 
   const results = await getWorkflowNameIntersectFromGranuleIds(knex,
@@ -728,6 +774,7 @@ test('getWorkflowNameIntersectFromGranuleIds() returns empty array if there is n
   // granule 1 is associated with execution 1 + 3
   const [pgGranule1] = await upsertGranuleWithExecutionJoinRecord({
     executionCumulusId: executionCumulusId1,
+    executionCreatedAt: pgExecution1.created_at,
     granule: granuleRecords[0],
     knexTransaction: knex,
   });
@@ -735,12 +782,15 @@ test('getWorkflowNameIntersectFromGranuleIds() returns empty array if there is n
 
   await granulesExecutionsPgModel.create(knex, {
     granule_cumulus_id: granuleCumulusId1,
+    collection_cumulus_id: pgGranule1.collection_cumulus_id,
     execution_cumulus_id: executionCumulusId3,
+    execution_created_at: pgExecution3.created_at,
   });
 
   // granule 2 is associated with execution 2
   const [pgGranule2] = await upsertGranuleWithExecutionJoinRecord({
     executionCumulusId: executionCumulusId2,
+    executionCreatedAt: pgExecution2.created_at,
     granule: granuleRecords[1],
     knexTransaction: knex,
   });
@@ -749,6 +799,7 @@ test('getWorkflowNameIntersectFromGranuleIds() returns empty array if there is n
   // granule 3 is associated with executions 2 + 3
   const [pgGranule3] = await upsertGranuleWithExecutionJoinRecord({
     executionCumulusId: executionCumulusId1,
+    executionCreatedAt: pgExecution1.created_at,
     granule: granuleRecords[2],
     knexTransaction: knex,
   });
@@ -756,7 +807,9 @@ test('getWorkflowNameIntersectFromGranuleIds() returns empty array if there is n
 
   await granulesExecutionsPgModel.create(knex, {
     granule_cumulus_id: granuleCumulusId3,
+    collection_cumulus_id: pgGranule3.collection_cumulus_id,
     execution_cumulus_id: executionCumulusId3,
+    execution_created_at: pgExecution3.created_at,
   });
 
   const results = await getWorkflowNameIntersectFromGranuleIds(knex,
@@ -805,18 +858,24 @@ test('getWorkflowNameIntersectFromGranuleIds() returns the unique names of workf
   const timeSeparatedExecutionCumulusId3 = timeSeparatedPgExecution3.cumulus_id;
   const [{
     cumulus_id: timeSeparatedGranuleCumulusId,
+    collection_cumulus_id: timeSeparatedGranuleCollectionCumulusId,
   }] = await upsertGranuleWithExecutionJoinRecord({
     executionCumulusId: timeSeparatedExecutionCumulusId1,
+    executionCreatedAt: timeSeparatedPgExecution1.created_at,
     granule: timeSeparatedGranuleRecord,
     knexTransaction: knex,
   });
   await granulesExecutionsPgModel.create(knex, {
     granule_cumulus_id: timeSeparatedGranuleCumulusId,
+    collection_cumulus_id: timeSeparatedGranuleCollectionCumulusId,
     execution_cumulus_id: timeSeparatedExecutionCumulusId2,
+    execution_created_at: timeSeparatedPgExecution2.created_at,
   });
   await granulesExecutionsPgModel.create(knex, {
     granule_cumulus_id: timeSeparatedGranuleCumulusId,
+    collection_cumulus_id: timeSeparatedGranuleCollectionCumulusId,
     execution_cumulus_id: timeSeparatedExecutionCumulusId3,
+    execution_created_at: timeSeparatedPgExecution3.created_at,
   });
 
   const timeSeparatedResults = await getWorkflowNameIntersectFromGranuleIds(
@@ -847,18 +906,26 @@ test('getWorkflowNameIntersectFromGranuleIds() returns the unique names of workf
   const timeSyncedExecutionCumulusId1 = timeSyncedPgExecution1.cumulus_id;
   const timeSyncedExecutionCumulusId2 = timeSyncedPgExecution2.cumulus_id;
   const timeSyncedExecutionCumulusId3 = timeSyncedPgExecution3.cumulus_id;
-  const [{ cumulus_id: timeSyncedGranuleCumulusId }] = await upsertGranuleWithExecutionJoinRecord({
+  const [{
+    cumulus_id: timeSyncedGranuleCumulusId,
+    collection_cumulus_id: timeSyncedGranuleCollectionCumulusId,
+  }] = await upsertGranuleWithExecutionJoinRecord({
     executionCumulusId: timeSyncedExecutionCumulusId1,
+    executionCreatedAt: timeSyncedPgExecution1.created_at,
     granule: timeSyncedGranuleRecord,
     knexTransaction: knex,
   });
   await granulesExecutionsPgModel.create(knex, {
     granule_cumulus_id: timeSyncedGranuleCumulusId,
+    collection_cumulus_id: timeSyncedGranuleCollectionCumulusId,
     execution_cumulus_id: timeSyncedExecutionCumulusId2,
+    execution_created_at: timeSyncedPgExecution2.created_at,
   });
   await granulesExecutionsPgModel.create(knex, {
     granule_cumulus_id: timeSyncedGranuleCumulusId,
+    collection_cumulus_id: timeSyncedGranuleCollectionCumulusId,
     execution_cumulus_id: timeSyncedExecutionCumulusId3,
+    execution_created_at: timeSyncedPgExecution3.created_at,
   });
 
   const timeSyncedResults = await getWorkflowNameIntersectFromGranuleIds(
@@ -912,30 +979,35 @@ test('getWorfklowNameIntersectFromGranuleIds() returns unique workflow_names cor
   const timeSeparatedExecutionCumulusId1 = timeSeparatedPgExecution1.cumulus_id;
   const timeSeparatedExecutionCumulusId2 = timeSeparatedPgExecution2.cumulus_id;
   const timeSeparatedExecutionCumulusId3 = timeSeparatedPgExecution3.cumulus_id;
-  const timeSeparatedGranuleCumulusIds = await Promise.all(
+  const timeSeparatedGranules = await Promise.all(
     timeSeparatedGranuleRecords.map(async (granuleRecord) => {
       const [pgGranule] = await upsertGranuleWithExecutionJoinRecord({
         executionCumulusId: timeSeparatedExecutionCumulusId1,
+        executionCreatedAt: timeSeparatedPgExecution1.created_at,
         granule: granuleRecord,
         knexTransaction: knex,
       });
-      return pgGranule.cumulus_id;
+      return pgGranule;
     })
   );
-  await Promise.all(timeSeparatedGranuleCumulusIds.map(async (granuleCumulusId) => {
+  await Promise.all(timeSeparatedGranules.map(async (granule) => {
     await granulesExecutionsPgModel.create(knex, {
-      granule_cumulus_id: granuleCumulusId,
+      granule_cumulus_id: granule.cumulus_id,
+      collection_cumulus_id: granule.collection_cumulus_id,
       execution_cumulus_id: timeSeparatedExecutionCumulusId2,
+      execution_created_at: timeSeparatedPgExecution2.created_at,
     });
     await granulesExecutionsPgModel.create(knex, {
-      granule_cumulus_id: granuleCumulusId,
+      granule_cumulus_id: granule.cumulus_id,
+      collection_cumulus_id: granule.collection_cumulus_id,
       execution_cumulus_id: timeSeparatedExecutionCumulusId3,
+      execution_created_at: timeSeparatedPgExecution3.created_at,
     });
   }));
 
   const timeSeparatedResults = await getWorkflowNameIntersectFromGranuleIds(
     knex,
-    timeSeparatedGranuleCumulusIds
+    timeSeparatedGranules.map((granule) => granule.cumulus_id)
   );
   t.deepEqual(timeSeparatedResults.sort(), ['fakeWorkflow', 'fakeWorkflow2']);
 
@@ -976,30 +1048,35 @@ test('getWorfklowNameIntersectFromGranuleIds() returns unique workflow_names cor
   const timeSyncedExecutionCumulusId1 = timeSyncedPgExecution1.cumulus_id;
   const timeSyncedExecutionCumulusId2 = timeSyncedPgExecution2.cumulus_id;
   const timeSyncedExecutionCumulusId3 = timeSyncedPgExecution3.cumulus_id;
-  const timeSyncedGranuleCumulusIds = await Promise.all(
+  const timeSyncedGranules = await Promise.all(
     timeSyncedGranuleRecords.map(async (granuleRecord) => {
       const [pgGranule] = await upsertGranuleWithExecutionJoinRecord({
         executionCumulusId: timeSyncedExecutionCumulusId1,
+        executionCreatedAt: timeSyncedPgExecution1.created_at,
         granule: granuleRecord,
         knexTransaction: knex,
       });
-      return pgGranule.cumulus_id;
+      return pgGranule;
     })
   );
-  await Promise.all(timeSyncedGranuleCumulusIds.map(async (granuleCumulusId) => {
+  await Promise.all(timeSyncedGranules.map(async (granule) => {
     await granulesExecutionsPgModel.create(knex, {
-      granule_cumulus_id: granuleCumulusId,
+      granule_cumulus_id: granule.cumulus_id,
+      collection_cumulus_id: granule.collection_cumulus_id,
       execution_cumulus_id: timeSyncedExecutionCumulusId2,
+      execution_created_at: timeSyncedPgExecution2.created_at,
     });
     await granulesExecutionsPgModel.create(knex, {
-      granule_cumulus_id: granuleCumulusId,
+      granule_cumulus_id: granule.cumulus_id,
+      collection_cumulus_id: granule.collection_cumulus_id,
       execution_cumulus_id: timeSyncedExecutionCumulusId3,
+      execution_created_at: timeSyncedPgExecution3.created_at,
     });
   }));
 
   const timeSyncedResults = await getWorkflowNameIntersectFromGranuleIds(
     knex,
-    timeSyncedGranuleCumulusIds
+    timeSyncedGranules.map((granule) => granule.cumulus_id)
   );
   t.deepEqual(timeSyncedResults.sort(), ['fakeWorkflow', 'fakeWorkflow2']);
 });
@@ -1035,6 +1112,7 @@ test('getWorkflowNameIntersectFromGranuleIds() returns sorts by timestamp for si
 
   const [pgGranule] = await upsertGranuleWithExecutionJoinRecord({
     executionCumulusId: executionCumulusId1,
+    executionCreatedAt: pgExecution1.created_at,
     granule: granuleRecord,
     knexTransaction: knex,
   });
@@ -1042,12 +1120,16 @@ test('getWorkflowNameIntersectFromGranuleIds() returns sorts by timestamp for si
 
   await granulesExecutionsPgModel.create(knex, {
     granule_cumulus_id: granuleCumulusId,
+    collection_cumulus_id: pgGranule.collection_cumulus_id,
     execution_cumulus_id: executionCumulusId2,
+    execution_created_at: pgExecution2.created_at,
   });
 
   await granulesExecutionsPgModel.create(knex, {
     granule_cumulus_id: granuleCumulusId,
+    collection_cumulus_id: pgGranule.collection_cumulus_id,
     execution_cumulus_id: executionCumulusId3,
+    execution_created_at: pgExecution3.created_at,
   });
 
   const results = await getWorkflowNameIntersectFromGranuleIds(knex, [granuleCumulusId]);
@@ -1116,6 +1198,7 @@ test('getApiGranuleExecutionCumulusIdsByExecution() returns granule cumulus ids 
 
   const [granule1] = await upsertGranuleWithExecutionJoinRecord({
     executionCumulusId: executionCumulusId1,
+    executionCreatedAt: execution1.created_at,
     granule: granuleRecord1,
     knexTransaction: knex,
   });
@@ -1123,6 +1206,7 @@ test('getApiGranuleExecutionCumulusIdsByExecution() returns granule cumulus ids 
 
   const [granule2] = await upsertGranuleWithExecutionJoinRecord({
     executionCumulusId: executionCumulusId1,
+    executionCreatedAt: execution1.created_at,
     granule: granuleRecord2,
     knexTransaction: knex,
   });
@@ -1130,6 +1214,7 @@ test('getApiGranuleExecutionCumulusIdsByExecution() returns granule cumulus ids 
 
   const [granule3] = await upsertGranuleWithExecutionJoinRecord({
     executionCumulusId: executionCumulusId1,
+    executionCreatedAt: execution1.created_at,
     granule: granuleRecord3,
     knexTransaction: knex,
   });

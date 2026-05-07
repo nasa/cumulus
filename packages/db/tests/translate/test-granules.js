@@ -91,7 +91,7 @@ test.beforeEach(async (t) => {
       duration: 10.1,
       ending_date_time: new Date(Date.now() - 250 * 1000),
       error: {},
-      granule_id: cryptoRandomString({ length: 5 }),
+      granule_id: cryptoRandomString({ length: 10 }),
       last_update_date_time: new Date(Date.now() - 100 * 1000),
       pdr_cumulus_id: t.context.pdrCumulusId,
       processing_end_date_time: new Date(Date.now() - 500 * 1000),
@@ -136,14 +136,18 @@ test.beforeEach(async (t) => {
     t.context.knex,
     {
       granule_cumulus_id: t.context.granuleCumulusId,
+      collection_cumulus_id: t.context.collectionCumulusId,
       execution_cumulus_id: executionACumulusId,
+      execution_created_at: executionA.created_at,
     }
   );
   await granulesExecutionsPgModel.create(
     t.context.knex,
     {
       granule_cumulus_id: t.context.granuleCumulusId,
+      collection_cumulus_id: t.context.collectionCumulusId,
       execution_cumulus_id: executionBCumulusId,
+      execution_created_at: executionB.created_at,
     }
   );
 
@@ -158,6 +162,7 @@ test.beforeEach(async (t) => {
       bucket: 'cumulus-test-sandbox-private',
       checksum_type: 'md5',
       checksum_value: 'bogus-value',
+      collection_cumulus_id: t.context.collectionCumulusId,
       created_at: createdAt,
       file_name: t.context.fileKeys[0],
       file_size: 2098711627776,
@@ -171,6 +176,7 @@ test.beforeEach(async (t) => {
       bucket: 'cumulus-test-sandbox-private',
       checksum_type: 'md5',
       checksum_value: 'bogus-value',
+      collection_cumulus_id: t.context.collectionCumulusId,
       created_at: createdAt,
       file_name: t.context.fileKeys[1],
       file_size: 1099511627776,
@@ -681,10 +687,10 @@ test('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API granul
     archived: true,
     cmrLink: cryptoRandomString({ length: 10 }),
     duration: 10,
-    granuleId: cryptoRandomString({ length: 5 }),
+    granuleId: cryptoRandomString({ length: 10 }),
     collectionId: constructCollectionId('name', 'version'),
     pdrName: 'pdr-name',
-    producerGranuleId: cryptoRandomString({ length: 5 }),
+    producerGranuleId: cryptoRandomString({ length: 10 }),
     provider: 'provider',
     published: false,
     queryFields: {
@@ -773,10 +779,10 @@ test('translateApiGranuleToPostgresGranuleWithoutNilsRemoved does not remove nul
   const apiGranule = {
     cmrLink: cryptoRandomString({ length: 10 }),
     duration: 10,
-    granuleId: cryptoRandomString({ length: 5 }),
+    granuleId: cryptoRandomString({ length: 10 }),
     collectionId: constructCollectionId('name', 'version'),
     pdrName: 'pdr-name',
-    producerGranuleId: cryptoRandomString({ length: 5 }),
+    producerGranuleId: cryptoRandomString({ length: 10 }),
     provider: 'provider',
     published: false,
     status: 'running',
@@ -868,7 +874,7 @@ test.serial('translateApiGranuleToPostgresGranuleWithoutNilsRemoved throws on in
   };
 
   const apiGranule = {
-    granuleId: cryptoRandomString({ length: 5 }),
+    granuleId: cryptoRandomString({ length: 10 }),
     collectionId: null,
     status: granuleStatus,
   };
@@ -929,7 +935,7 @@ test.serial('translateApiGranuleToPostgresGranuleWithoutNilsRemoved throws on in
   };
 
   const apiGranule = {
-    granuleId: cryptoRandomString({ length: 5 }),
+    granuleId: cryptoRandomString({ length: 10 }),
     collectionId: collectionCumulusId,
     status: null,
   };
@@ -960,9 +966,9 @@ test.serial('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API
 
   const apiGranule = {
     archived: false,
-    granuleId: cryptoRandomString({ length: 5 }),
+    granuleId: cryptoRandomString({ length: 10 }),
     collectionId: constructCollectionId('name', 'version'),
-    producerGranuleId: cryptoRandomString({ length: 5 }),
+    producerGranuleId: cryptoRandomString({ length: 10 }),
     status: granuleStatus,
     cmrLink: null,
     duration: null,
@@ -1042,9 +1048,9 @@ test.serial('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API
   };
 
   const apiGranule = {
-    granuleId: cryptoRandomString({ length: 5 }),
+    granuleId: cryptoRandomString({ length: 10 }),
     collectionId: constructCollectionId('name', 'version'),
-    producerGranuleId: cryptoRandomString({ length: 5 }),
+    producerGranuleId: cryptoRandomString({ length: 10 }),
     status: granuleStatus,
   };
 
@@ -1105,8 +1111,8 @@ test.serial('translateApiGranuleToPostgresGranule converts API granule to Postgr
   };
 
   const apiGranule = {
-    granuleId: cryptoRandomString({ length: 5 }),
-    producerGranuleId: cryptoRandomString({ length: 5 }),
+    granuleId: cryptoRandomString({ length: 10 }),
+    producerGranuleId: cryptoRandomString({ length: 10 }),
     collectionId: constructCollectionId('name', 'version'),
     status: granuleStatus,
     cmrLink: null,
@@ -1160,10 +1166,10 @@ test('translateApiGranuleToPostgresGranule converts API granule to Postgres', as
   const apiGranule = {
     cmrLink: cryptoRandomString({ length: 10 }),
     duration: 10,
-    granuleId: cryptoRandomString({ length: 5 }),
+    granuleId: cryptoRandomString({ length: 10 }),
     collectionId: constructCollectionId('name', 'version'),
     pdrName: 'pdr-name',
-    producerGranuleId: cryptoRandomString({ length: 5 }),
+    producerGranuleId: cryptoRandomString({ length: 10 }),
     provider: 'provider',
     published: false,
     queryFields: {
@@ -1251,10 +1257,10 @@ test('translateApiGranuleToPostgresGranule removes null/undefined fields', async
   const apiGranule = {
     cmrLink: cryptoRandomString({ length: 10 }),
     duration: 10,
-    granuleId: cryptoRandomString({ length: 5 }),
+    granuleId: cryptoRandomString({ length: 10 }),
     collectionId: constructCollectionId('name', 'version'),
     pdrName: 'pdr-name',
-    producerGranuleId: cryptoRandomString({ length: 5 }),
+    producerGranuleId: cryptoRandomString({ length: 10 }),
     provider: 'provider',
     published: false,
     status: 'running',

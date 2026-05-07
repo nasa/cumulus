@@ -2,6 +2,7 @@ import { Knex } from 'knex';
 import cryptoRandomString from 'crypto-random-string';
 import { v4 as uuidv4 } from 'uuid';
 import pRetry from 'p-retry';
+import isNil from 'lodash/isNil';
 
 import { getExecutionUrlFromArn } from '@cumulus/message/Executions';
 import { randomId } from '@cumulus/common/test-utils';
@@ -59,6 +60,12 @@ export const destroyLocalTestDb = async ({
   if (knexAdmin) {
     await pRetry(async () => await deleteTestDatabase(knexAdmin, testDbName));
     await knexAdmin.destroy();
+  }
+};
+
+const requireField = (value: unknown, name: string) => {
+  if (isNil(value)) {
+    throw new Error(`${name} is required`);
   }
 };
 
@@ -125,8 +132,8 @@ export const fakeProviderRecordFactory = (
 export const fakeGranuleRecordFactory = (
   params: Partial<PostgresGranule>
 ): Partial<PostgresGranule> => ({
-  granule_id: cryptoRandomString({ length: 5 }),
-  producer_granule_id: cryptoRandomString({ length: 5 }),
+  granule_id: cryptoRandomString({ length: 10 }),
+  producer_granule_id: cryptoRandomString({ length: 10 }),
   status: 'completed',
   created_at: new Date(),
   updated_at: new Date(),
@@ -134,14 +141,20 @@ export const fakeGranuleRecordFactory = (
 });
 
 export const fakeFileRecordFactory = (
-  params: Partial<PostgresFile>
-): Omit<PostgresFile, 'granule_cumulus_id'> => ({
-  bucket: cryptoRandomString({ length: 3 }),
-  key: cryptoRandomString({ length: 3 }),
-  created_at: new Date(),
-  updated_at: new Date(),
-  ...params,
-});
+  params: Partial<PostgresFile> &
+  Pick<PostgresFile, 'granule_cumulus_id' | 'collection_cumulus_id'>
+): Partial<PostgresFile> => {
+  requireField(params.granule_cumulus_id, 'granule_cumulus_id');
+  requireField(params.collection_cumulus_id, 'collection_cumulus_id');
+
+  return {
+    bucket: cryptoRandomString({ length: 10 }),
+    key: cryptoRandomString({ length: 10 }),
+    created_at: new Date(),
+    updated_at: new Date(),
+    ...params,
+  };
+};
 
 export const fakeAsyncOperationRecordFactory = (
   params: Partial<PostgresAsyncOperation>
@@ -151,7 +164,7 @@ export const fakeAsyncOperationRecordFactory = (
   operation_type: 'Reconciliation Report',
   status: 'RUNNING',
   output: { test: 'output' },
-  task_arn: cryptoRandomString({ length: 3 }),
+  task_arn: cryptoRandomString({ length: 5 }),
   created_at: new Date(),
   updated_at: new Date(),
   ...params,
