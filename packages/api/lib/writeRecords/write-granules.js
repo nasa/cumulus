@@ -640,7 +640,7 @@ const _writeGranule = async ({
  * @param {string} errorMessage - Error message to log when failed writing to the database
  * @param {string[]} [granuleIds=[]] - granuleIds aligned with `results`
  * @returns {Array} - Returns the original results array if no rejected promises are detected
- * @throws {Error} - Thrown when any result is rejected; message includes failed granuleIds
+ * @throws {AggregateError} -
  */
 const _filterGranuleWriteFailures = (results, errorMessage, granuleIds = []) => {
   const failedWrites = results
