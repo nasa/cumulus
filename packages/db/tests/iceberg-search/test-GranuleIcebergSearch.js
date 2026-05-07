@@ -1036,7 +1036,7 @@ test.serial('GranuleIcebergSearch supports search which checks existence of erro
   t.is(response.results?.length, 50);
 });
 
-test('GranuleIcebergSearch does not call getEstimatedRowcount', async (t) => {
+test.serial('GranuleIcebergSearch does not call getEstimatedRowcount', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 50,

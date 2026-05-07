@@ -631,7 +631,7 @@ test.serial('ExecutionIcebergSearch includeFullRecord', async (t) => {
   t.deepEqual(results.results[40], expectedResponse40);
 });
 
-test('ExecutionIcebergSearch does not call getEstimatedRowcount', async (t) => {
+test.serial('ExecutionIcebergSearch does not call getEstimatedRowcount', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 50,
