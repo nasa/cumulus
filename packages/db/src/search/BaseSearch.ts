@@ -131,8 +131,7 @@ abstract class BaseSearch {
     knex: Knex,
     countSql: string
   ): boolean {
-    const { countQuery } = this.buildBasicQuery(knex);
-
+    const countQuery = this.baseCountQuery(knex);
     const basicQuerySql = countQuery?.toSQL().sql;
 
     return (
@@ -205,6 +204,17 @@ abstract class BaseSearch {
   }
 
   /**
+   * Builds the base count query for rowcount estimation.
+   * Subclasses should use this method for consistent rowcount behavior.
+   *
+   * @param knex - DB client
+   * @returns Knex count query builder
+   */
+  protected baseCountQuery(knex: Knex) {
+    return knex(this.tableName).count('* as count');
+  }
+
+  /**
    * Build basic query
    *
    * @param knex - DB client
@@ -214,8 +224,7 @@ abstract class BaseSearch {
     countQuery?: Knex.QueryBuilder,
     searchQuery: Knex.QueryBuilder,
   } {
-    const countQuery = knex(this.tableName)
-      .count('* as count');
+    const countQuery = this.baseCountQuery(knex);
 
     const searchQuery = knex(this.tableName)
       .select(`${this.tableName}.*`);
