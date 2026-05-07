@@ -35,11 +35,11 @@ const createFakeGranule = async (dbClient) => {
       status: 'running',
     })
   );
-  const granuleCumulusId = pgGranule.cumulus_id;
+
   // bigint for granule cumulus_id is treated as a string,
   // not number, by knex
   // see https://github.com/knex/knex/issues/387
-  return granuleCumulusId;
+  return pgGranule;
 };
 
 test.before(async (t) => {
@@ -50,8 +50,14 @@ test.before(async (t) => {
   t.context.knexAdmin = knexAdmin;
   t.context.knex = knex;
 
-  t.context.granuleCumulusId = await createFakeGranule(t.context.knex);
+  const pgGranule = await createFakeGranule(t.context.knex);
+  t.context.granuleCumulusId = pgGranule.cumulus_id;
+  t.context.collectionCumulusId = pgGranule.collection_cumulus_id;
   t.context.filePgModel = new FilePgModel();
+
+  const pgGranule2 = await createFakeGranule(t.context.knex);
+  t.context.granuleCumulusId2 = pgGranule2.cumulus_id;
+  t.context.collectionCumulusId2 = pgGranule2.collection_cumulus_id;
 });
 
 test.after.always(async (t) => {
@@ -64,12 +70,14 @@ test.after.always(async (t) => {
 test('FilePgModel.upsert() creates a new file record', async (t) => {
   const {
     knex,
+    collectionCumulusId,
     filePgModel,
     granuleCumulusId,
   } = t.context;
 
   const file = fakeFileRecordFactory({
     granule_cumulus_id: granuleCumulusId,
+    collection_cumulus_id: collectionCumulusId,
   });
 
   await filePgModel.upsert(knex, file);
@@ -83,12 +91,14 @@ test('FilePgModel.upsert() creates a new file record', async (t) => {
 test('FilePgModel.upsert() overwrites a file record', async (t) => {
   const {
     knex,
+    collectionCumulusId,
     filePgModel,
     granuleCumulusId,
   } = t.context;
 
   const file = fakeFileRecordFactory({
     granule_cumulus_id: granuleCumulusId,
+    collection_cumulus_id: collectionCumulusId,
     checksum_value: cryptoRandomString({ length: 3 }),
   });
   await filePgModel.create(knex, file);
@@ -108,9 +118,44 @@ test('FilePgModel.upsert() overwrites a file record', async (t) => {
   );
 });
 
+test('FilePgModel.upsert() overwrites a file record from different granule and collection', async (t) => {
+  const {
+    knex,
+    collectionCumulusId,
+    collectionCumulusId2,
+    filePgModel,
+    granuleCumulusId,
+    granuleCumulusId2,
+  } = t.context;
+
+  const file = fakeFileRecordFactory({
+    granule_cumulus_id: granuleCumulusId,
+    collection_cumulus_id: collectionCumulusId,
+    checksum_value: cryptoRandomString({ length: 3 }),
+  });
+  await filePgModel.create(knex, file);
+
+  const updatedFile = {
+    ...file,
+    granule_cumulus_id: granuleCumulusId2,
+    collection_cumulus_id: collectionCumulusId2,
+    checksum_value: cryptoRandomString({ length: 3 }),
+  };
+  await filePgModel.upsert(knex, updatedFile);
+
+  t.like(
+    await filePgModel.get(knex, {
+      bucket: file.bucket,
+      key: file.key,
+    }),
+    updatedFile
+  );
+});
+
 test('FilePgModel.upsert() creates multiple file records', async (t) => {
   const {
     knex,
+    collectionCumulusId,
     filePgModel,
     granuleCumulusId,
   } = t.context;
@@ -118,6 +163,7 @@ test('FilePgModel.upsert() creates multiple file records', async (t) => {
   const files = Array.from({ length: 1000 }, () =>
     fakeFileRecordFactory({
       granule_cumulus_id: granuleCumulusId,
+      collection_cumulus_id: collectionCumulusId,
     }));
 
   const result = await filePgModel.upsert(knex, files);
@@ -133,12 +179,14 @@ test('FilePgModel.upsert() creates multiple file records', async (t) => {
 test('FilePgModel.upsert() overwrites existing file records and inserts new ones', async (t) => {
   const {
     knex,
+    collectionCumulusId,
     filePgModel,
     granuleCumulusId,
   } = t.context;
 
   const file = fakeFileRecordFactory({
     granule_cumulus_id: granuleCumulusId,
+    collection_cumulus_id: collectionCumulusId,
     checksum_value: cryptoRandomString({ length: 3 }),
   });
   await filePgModel.create(knex, file);
@@ -150,6 +198,7 @@ test('FilePgModel.upsert() overwrites existing file records and inserts new ones
   const additionalFiles = Array.from({ length: 10 }, () =>
     fakeFileRecordFactory({
       granule_cumulus_id: granuleCumulusId,
+      collection_cumulus_id: collectionCumulusId,
     }));
   additionalFiles.push(updatedFile);
 
@@ -176,31 +225,33 @@ test('FilePgModel.upsert() creates no file records if input file list is empty',
 });
 
 test('FilePgModel.searchByGranuleCumulusIds() returns relevant files', async (t) => {
-  const usedGranuleCumulusIds = await Promise.all(range(5).map(() => (
+  const usedGranules = await Promise.all(range(5).map(() => (
     createFakeGranule(t.context.knex)
   )));
-  const unUsedGranuleCumulusIds = await Promise.all(range(5).map(() => (
+  const unUsedGranules = await Promise.all(range(5).map(() => (
     createFakeGranule(t.context.knex)
   )));
   const relevantFiles = await t.context.filePgModel.insert(
     t.context.knex,
-    usedGranuleCumulusIds.map((granuleCumulusId) => (
+    usedGranules.map((granule) => (
       fakeFileRecordFactory({
-        granule_cumulus_id: granuleCumulusId,
+        granule_cumulus_id: granule.cumulus_id,
+        collection_cumulus_id: granule.collection_cumulus_id,
       })
     ))
   );
   const irrelevantFiles = await t.context.filePgModel.insert(
     t.context.knex,
-    unUsedGranuleCumulusIds.map((granuleCumulusId) => (
+    unUsedGranules.map((granule) => (
       fakeFileRecordFactory({
-        granule_cumulus_id: granuleCumulusId,
+        granule_cumulus_id: granule.cumulus_id,
+        collection_cumulus_id: granule.collection_cumulus_id,
       })
     ))
   );
   const searched = await t.context.filePgModel.searchByGranuleCumulusIds(
     t.context.knex,
-    usedGranuleCumulusIds
+    usedGranules.map((g) => g.cumulus_id)
   );
 
   const foundFileCumulusIds = searched.map((file) => file.cumulus_id);
@@ -211,40 +262,42 @@ test('FilePgModel.searchByGranuleCumulusIds() returns relevant files', async (t)
   irrelevantFiles.forEach((irrelevantFile) => {
     t.false(foundFileCumulusIds.includes(irrelevantFile.cumulus_id));
   });
-  usedGranuleCumulusIds.forEach((usedGranuleCumulusId) => {
-    t.true(foundGranuleCumulusIds.includes(usedGranuleCumulusId));
+  usedGranules.forEach((usedGranule) => {
+    t.true(foundGranuleCumulusIds.includes(usedGranule.cumulus_id));
   });
-  unUsedGranuleCumulusIds.forEach((unUsedGranuleCumulusId) => {
-    t.false(foundGranuleCumulusIds.includes(unUsedGranuleCumulusId));
+  unUsedGranules.forEach((unUsedGranule) => {
+    t.false(foundGranuleCumulusIds.includes(unUsedGranule.cumulus_id));
   });
 });
 
 test('FilePgModel.searchByGranuleCumulusIds() allows to specify desired columns', async (t) => {
-  const usedGranuleCumulusIds = await Promise.all(range(5).map(() => (
+  const usedGranules = await Promise.all(range(5).map(() => (
     createFakeGranule(t.context.knex)
   )));
-  const unUsedGranuleCumulusIds = await Promise.all(range(5).map(() => (
+  const unUsedGranules = await Promise.all(range(5).map(() => (
     createFakeGranule(t.context.knex)
   )));
   const relevantFiles = await t.context.filePgModel.insert(
     t.context.knex,
-    usedGranuleCumulusIds.map((granuleCumulusId) => (
+    usedGranules.map((granule) => (
       fakeFileRecordFactory({
-        granule_cumulus_id: granuleCumulusId,
+        granule_cumulus_id: granule.cumulus_id,
+        collection_cumulus_id: granule.collection_cumulus_id,
       })
     ))
   );
   const irrelevantFiles = await t.context.filePgModel.insert(
     t.context.knex,
-    unUsedGranuleCumulusIds.map((granuleCumulusId) => (
+    unUsedGranules.map((granule) => (
       fakeFileRecordFactory({
-        granule_cumulus_id: granuleCumulusId,
+        granule_cumulus_id: granule.cumulus_id,
+        collection_cumulus_id: granule.collection_cumulus_id,
       })
     ))
   );
   let searched = await t.context.filePgModel.searchByGranuleCumulusIds(
     t.context.knex,
-    usedGranuleCumulusIds,
+    usedGranules.map((granule) => granule.cumulus_id),
     'cumulus_id'
   );
 
@@ -273,7 +326,7 @@ test('FilePgModel.searchByGranuleCumulusIds() allows to specify desired columns'
 
   searched = await t.context.filePgModel.searchByGranuleCumulusIds(
     t.context.knex,
-    usedGranuleCumulusIds,
+    usedGranules.map((granule) => granule.cumulus_id),
     ['cumulus_id', 'granule_cumulus_id']
   );
 
@@ -300,10 +353,10 @@ test('FilePgModel.searchByGranuleCumulusIds() allows to specify desired columns'
     t.false(foundFileCumulusIds.includes(irrelevantFile.cumulus_id));
   });
 
-  usedGranuleCumulusIds.forEach((usedGranuleCumulusId) => {
-    t.true(foundGranuleCumulusIds.includes(usedGranuleCumulusId));
+  usedGranules.forEach((usedGranule) => {
+    t.true(foundGranuleCumulusIds.includes(usedGranule.cumulus_id));
   });
-  unUsedGranuleCumulusIds.forEach((unUsedGranuleCumulusId) => {
-    t.false(foundGranuleCumulusIds.includes(unUsedGranuleCumulusId));
+  unUsedGranules.forEach((unUsedGranule) => {
+    t.false(foundGranuleCumulusIds.includes(unUsedGranule.cumulus_id));
   });
 });

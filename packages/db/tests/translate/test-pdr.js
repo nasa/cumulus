@@ -165,12 +165,17 @@ test('translateApiPdrToPostgresPdr converts API PDR to Postgres', async (t) => {
     updatedAt: Date.now(),
   };
 
+  const executionCreatedAt = new Date();
+
   const fakeKnex = {};
   const fakeCollectionPgModel = {
     getRecordCumulusId: () => Promise.resolve(1),
   };
   const fakeExecutionPgModel = {
-    getRecordCumulusId: () => Promise.resolve(2),
+    get: () => Promise.resolve({
+      cumulus_id: 2,
+      created_at: executionCreatedAt,
+    }),
   };
   const fakeProviderPgModel = {
     getRecordCumulusId: () => Promise.resolve(3),
@@ -191,6 +196,7 @@ test('translateApiPdrToPostgresPdr converts API PDR to Postgres', async (t) => {
     timestamp: new Date(record.timestamp),
     collection_cumulus_id: 1,
     execution_cumulus_id: 2,
+    execution_created_at: executionCreatedAt,
     provider_cumulus_id: 3,
   };
 

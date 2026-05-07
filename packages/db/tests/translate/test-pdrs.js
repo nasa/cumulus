@@ -8,6 +8,7 @@ test('translateApiPdrToPostgresPdr translates an API PDR to Postgres', async (t)
   const collectionCumulusId = 1;
   const providerCumulusId = 2;
   const executionCumulusId = 1;
+  const executionCreatedAt = new Date();
 
   const fakeDbClient = {};
   const fakeCollectionPgModel = {
@@ -17,7 +18,10 @@ test('translateApiPdrToPostgresPdr translates an API PDR to Postgres', async (t)
     getRecordCumulusId: () => Promise.resolve(providerCumulusId),
   };
   const fakeExecutionPgModel = {
-    getRecordCumulusId: () => Promise.resolve(executionCumulusId),
+    get: () => Promise.resolve({
+      cumulus_id: executionCumulusId,
+      created_at: executionCreatedAt,
+    }),
   };
 
   const apiPdr = {
@@ -49,6 +53,7 @@ test('translateApiPdrToPostgresPdr translates an API PDR to Postgres', async (t)
     collection_cumulus_id: collectionCumulusId,
     provider_cumulus_id: providerCumulusId,
     execution_cumulus_id: executionCumulusId,
+    execution_created_at: executionCreatedAt,
     progress: apiPdr.progress,
     pan_sent: apiPdr.PANSent,
     pan_message: apiPdr.PANmessage,

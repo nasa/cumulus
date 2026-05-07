@@ -5,6 +5,7 @@ const knex = require('knex');
 const cryptoRandomString = require('crypto-random-string');
 const omit = require('lodash/omit');
 const range = require('lodash/range');
+const sinon = require('sinon');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -630,14 +631,18 @@ test.serial('ExecutionIcebergSearch includeFullRecord', async (t) => {
   t.deepEqual(results.results[40], expectedResponse40);
 });
 
-test.serial('ExecutionIcebergSearch estimates the rowcount of the table by default', async (t) => {
+test.serial('ExecutionIcebergSearch does not call getEstimatedRowcount', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 50,
   };
   const dbSearch = new ExecutionIcebergSearch({ queryStringParameters }, connection);
+  const estimateSpy = sinon.spy(dbSearch, 'getEstimatedRowcount');
   const response = await dbSearch.query();
-  t.true(response.meta.count > 0, 'Expected response.meta.count to be greater than 0');
+
+  t.true(estimateSpy.notCalled);
+
+  t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
 });
 

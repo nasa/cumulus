@@ -30,8 +30,30 @@ const Logger = require('@cumulus/logger');
 
 const { publishExecutionSnsMessage } = require('../publishSnsMessageUtils');
 
+/**
+ * @typedef { import('knex').Knex } Knex
+ * @typedef { import('knex').Knex.Transaction } KnexTransaction
+ * @typedef { import('@cumulus/types').ApiExecution } ApiExecution
+ * @typedef { import('@cumulus/types/message').CumulusMessage} CumulusMessage
+ * @typedef { import('@cumulus/db').PostgresExecution } PostgresExecution
+ * @typedef { import('@cumulus/db').PostgresExecutionRecord } PostgresExecutionRecord
+ * @typedef { import('@cumulus/db').ExecutionPgModel } ExecutionPgModelType
+*/
+
 const logger = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-execution' });
 
+/**
+ * Determines whether an execution record should be written to Postgres.
+ *
+ * @param {object} params - Input parameters.
+ * @param {string} [params.messageCollectionNameVersion] - The collection name-version
+ * @param {number} [params.collectionCumulusId] - The collection identifier
+ * @param {number} [params.messageAsyncOperationId] - Async operation ID
+ * @param {number} [params.asyncOperationCumulusId] - Async operation identifier
+ * @param {string} [params.messageParentExecutionArn] - Parent execution ARN
+ * @param {number} [params.parentExecutionCumulusId] - Parent execution identifier
+ * @returns {boolean} - Returns `true` if the execution record should be written to Postgres
+ */
 const shouldWriteExecutionToPostgres = ({
   messageCollectionNameVersion,
   collectionCumulusId,
@@ -52,16 +74,40 @@ const shouldWriteExecutionToPostgres = ({
     && noMessageParentExecutionOrExistsInPostgres;
 };
 
+/**
+ * Builds a normalized execution object from a Cumulus message and related metadata.
+ *
+ * @param {object} params - Input parameters.
+ * @param {CumulusMessage} params.cumulusMessage - The raw Cumulus message containing
+ *   execution details.
+ * @param {number} [params.asyncOperationCumulusId] - Identifier for the associated async operation.
+ * @param {number} [params.collectionCumulusId] - Identifier for the associated collection.
+ * @param {number} [params.parentExecutionCumulusId] - Identifier for the parent execution
+ * @param {Date} [params.parentExecutionCreatedAt] - Creation timestamp of the parent execution.
+ * @param {number} [params.updatedAt=Date.now()] - Timestamp (in ms) used for `timestamp`
+ *   and `updated_at`.
+ * @throws {Error} Throws if only one of `parentExecutionCumulusId` or `parentExecutionCreatedAt`
+ *   is provided.
+ * @returns {PostgresExecution} - PG Execution
+ */
 const buildExecutionRecord = ({
   cumulusMessage,
   asyncOperationCumulusId,
   collectionCumulusId,
   parentExecutionCumulusId,
+  parentExecutionCreatedAt,
   updatedAt = Date.now(),
 }) => {
   const arn = getMessageExecutionArn(cumulusMessage);
+  if (!arn) {
+    throw new Error('Execution ARN is missing from the Cumulus message');
+  }
   const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
   const workflowStopTime = getMessageWorkflowStopTime(cumulusMessage);
+
+  if (isNil(parentExecutionCumulusId) !== isNil(parentExecutionCreatedAt)) {
+    throw new Error('parentExecutionCumulusId and parentExecutionCreatedAt must either both be set or both be unset');
+  }
 
   const record = {
     arn,
@@ -80,19 +126,23 @@ const buildExecutionRecord = ({
     async_operation_cumulus_id: asyncOperationCumulusId,
     collection_cumulus_id: collectionCumulusId,
     parent_cumulus_id: parentExecutionCumulusId,
+    parent_created_at: parentExecutionCreatedAt,
   };
-  return omitBy(record, isUndefined);
+  // Re-add arn to satisfy TS type checking (omitBy cannot guarantee required fields are preserved)
+  return { ...omitBy(record, isUndefined), arn };
 };
 
 /**
  * Write execution record to databases
  *
  * @param {object} params
- * @param {object} params.postgresRecord - Execution PostgreSQL record to be written
- * @param {object} params.knex - Knex client
- * @param {object} [params.executionPgModel] - PostgreSQL execution model
- * @param {object} [params.writeConstraints] - Boolean flag to set if record write constraints apply
- * @returns {Promise<object>} - PostgreSQL execution record that was written to the database
+ * @param {PostgresExecution} params.postgresRecord - Execution PostgreSQL record to be written
+ * @param {Knex} params.knex - Knex client
+ * @param {ExecutionPgModelType} [params.executionPgModel] - PostgreSQL execution model
+ * @param {boolean} [params.writeConstraints] - Boolean flag to set if record write constraints
+ *   apply
+ * @returns {Promise<PostgresExecutionRecord>} - PostgreSQL execution record that was written
+ *   to the database
  */
 const _writeExecutionRecord = async ({
   postgresRecord,
@@ -110,11 +160,13 @@ const _writeExecutionRecord = async ({
  * Write execution record to databases and publish SNS message
  *
  * @param {object} params
- * @param {object} params.postgresRecord - Execution PostgreSQL record to be written
- * @param {object} params.knex - Knex client
- * @param {object} [params.executionPgModel] - PostgreSQL execution model
- * @param {object} [params.writeConstraints] - Boolean flag to set if record write constraints apply
- * @returns {Promise<object>} - PostgreSQL execution record that was written to the database
+ * @param {PostgresExecution} params.postgresRecord - Execution PostgreSQL record to be written
+ * @param {Knex} params.knex - Knex client
+ * @param {ExecutionPgModelType} [params.executionPgModel] - PostgreSQL execution model
+ * @param {boolean} [params.writeConstraints] - Boolean flag to set if record write constraints
+ *   apply
+ * @returns {Promise<PostgresExecutionRecord>} - PostgreSQL execution record that was written
+ *   to the database
  */
 const _writeExecutionAndPublishSnsMessage = async ({
   postgresRecord,
@@ -138,12 +190,27 @@ const _writeExecutionAndPublishSnsMessage = async ({
   return writeExecutionResponse;
 };
 
+/**
+ * Write an execution record from a Cumulus Message to the database, then publish
+ * a corresponding SNS message
+ *
+ * @param {object} params
+ * @param {CumulusMessage} params.cumulusMessage - The Cumulus message
+ * @param {Knex} params.knex - Client to interact with PostgreSQL database
+ * @param {number} [params.collectionCumulusId] - Identifier for the associated collection
+ * @param {number} [params.asyncOperationCumulusId] - Identifier for the associated async operation
+ * @param {number} [params.parentExecutionCumulusId] - Identifier for the parent execution
+ * @param {Date} [params.parentExecutionCreatedAt] - Creation timestamp of the parent execution
+ * @param {number} [params.updatedAt=Date.now()] - Timestamp (in ms) used for record updateAt field
+ * @returns {Promise<PostgresExecutionRecord>} - write message response
+ */
 const writeExecutionRecordFromMessage = async ({
   cumulusMessage,
   knex,
   collectionCumulusId,
   asyncOperationCumulusId,
   parentExecutionCumulusId,
+  parentExecutionCreatedAt,
   updatedAt = Date.now(),
 }) => {
   const postgresRecord = buildExecutionRecord({
@@ -151,15 +218,25 @@ const writeExecutionRecordFromMessage = async ({
     collectionCumulusId,
     asyncOperationCumulusId,
     parentExecutionCumulusId,
+    parentExecutionCreatedAt,
     updatedAt,
   });
   const writeExecutionResponse = await _writeExecutionAndPublishSnsMessage({
-    postgresRecord: omitBy(postgresRecord, isUndefined),
+    // Re-add arn to satisfy TS type checking
+    postgresRecord: { ...omitBy(postgresRecord, isUndefined), arn: postgresRecord.arn },
     knex,
   });
-  return writeExecutionResponse.cumulus_id;
+  return writeExecutionResponse;
 };
 
+/**
+ * Write an execution record to the database from api record
+ *
+ * @param {object} params
+ * @param {Knex} params.knex - Client to interact with PostgreSQL database
+ * @param {ApiExecution} params.record- The execution api record
+ * @returns {Promise<PostgresExecutionRecord>} - write message response
+ */
 const writeExecutionRecordFromApi = async ({
   record: apiRecord,
   knex,
@@ -167,7 +244,8 @@ const writeExecutionRecordFromApi = async ({
   const postgresRecord = await
   translateApiExecutionToPostgresExecutionWithoutNilsRemoved(apiRecord, knex);
   return await _writeExecutionAndPublishSnsMessage({
-    postgresRecord: omitBy(postgresRecord, isUndefined),
+    // Re-add arn to satisfy TS type checking
+    postgresRecord: { ...omitBy(postgresRecord, isUndefined), arn: postgresRecord.arn },
     knex,
     writeConstraints: false,
   });

@@ -13,13 +13,23 @@
     "clean": "rm -rf dist",
     "db:local:schema": "env PGPASSWORD=password pg_dump -h localhost -U postgres --schema-only --no-owner | egrep -v '^--' | cat -s | tee schema.sql",
     "webpack": "../../node_modules/.bin/webpack",
-    "build-lambda-zip": "(cd dist/webpack && node ../../../../bin/zip.js lambda.zip index.js migrations/*.js)",
+    "build-lambda-zip": "(cd dist/webpack && node ../../../../bin/zip.js lambda.zip index.js migrations/*.js migrations-bootstrap/*.js lib/*.js)",
     "package": "npm run clean && npm run tsc && npm run webpack && npm run build-lambda-zip",
     "build": "npm run tsc",
+    "test": "../../node_modules/.bin/ava",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
     "tsc": "rm -rf dist && ../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"
   },
+  "ava": {
+    "files": [
+      "tests/*.js"
+    ],
+    "timeout": "2m"
+  },
   "dependencies": {
+    "@cumulus/common": "21.3.3",
     "@cumulus/db": "21.3.3",
     "knex": "2.4.1",
     "pg": "~8.13"

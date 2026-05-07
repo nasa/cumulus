@@ -44,8 +44,7 @@ export class PdrSearch extends BaseSearch {
       providers: providersTable,
       executions: executionsTable,
     } = TableNames;
-    const countQuery = knex(this.tableName)
-      .count('* as count');
+    const countQuery = this.baseCountQuery(knex);
 
     const searchQuery = knex(this.tableName)
       .select(`${this.tableName}.*`)

@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Breaking Changes
+
+- **CUMULUS-4780**
+  - Database Partitioning: The database schema has been rebuilt using a partitioned structure.
+  - Incompatibility: Because the table structures have fundamentally changed, existing databases
+    cannot be updated. A fresh database is required.
+
 ### Added
 
 - **CUMULUS-4829**
@@ -35,6 +42,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Make a containerized iceberg api that can be deployed to ECS.
 - **async-operations-update**
   - Update Async Operation container to new version 56, `cumuluss/async-operation:56`. Users should update their references to `async-operation` with the new version.
+- **CUMULUS-4780**
+  - Implemented partitioned schema for the consolidated database tables.
+- **CUMULUS-4804**
+  - Updated application logic to ensure compatibility with partitioned database schemas.
 
 ### Changed
 
@@ -89,6 +100,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported
 - **CUMULUS-4606**
   - Added prefix to IAM resource names to prevent collisions from multiple deployments in sandbox environment
+- **CUMULUS-4844**
+  - Fixed `@cumulus/db` `BaseSearch.shouldEstimateRowcount()` to compare against SQL generated
+    by `baseCountQuery()` instead of a hardcoded query string, ensuring accurate detection of table count queries.
 
 ## [v21.3.3] 2026-04-10
 

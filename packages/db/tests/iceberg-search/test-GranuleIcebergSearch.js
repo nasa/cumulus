@@ -6,6 +6,7 @@ const cryptoRandomString = require('crypto-random-string');
 const omit = require('lodash/omit');
 const random = require('lodash/random');
 const range = require('lodash/range');
+const sinon = require('sinon');
 const { s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -174,6 +175,7 @@ test.before(async (t) => {
         {
           cumulus_id: i,
           granule_cumulus_id: granule.cumulus_id,
+          collection_cumulus_id: t.context.granules[i].collection_cumulus_id,
           path: 'a.txt',
           checksum_type: 'md5',
         }
@@ -182,6 +184,7 @@ test.before(async (t) => {
         {
           cumulus_id: i + 100,
           granule_cumulus_id: granule.cumulus_id,
+          collection_cumulus_id: t.context.granules[i].collection_cumulus_id,
           path: 'b.txt',
           checksum_type: 'sha256',
         }
@@ -201,7 +204,9 @@ test.before(async (t) => {
   const earlierGranuleExecutions = t.context.granules
     .map((granule, i) => ({
       granule_cumulus_id: granule.cumulus_id,
+      collection_cumulus_id: granule.collection_cumulus_id,
       execution_cumulus_id: earlierExecutionRecords[i].cumulus_id,
+      execution_created_at: earlierExecutionRecords[i].created_at,
     }));
 
   // it's important for later testing that these are uploaded strictly in order
@@ -220,11 +225,15 @@ test.before(async (t) => {
     .flatMap((granule, i) => ([
       {
         granule_cumulus_id: granule.cumulus_id,
+        collection_cumulus_id: granule.collection_cumulus_id,
         execution_cumulus_id: laterExecutionRecords[i].cumulus_id,
+        execution_created_at: laterExecutionRecords[i].created_at,
       },
       {
         granule_cumulus_id: granule.cumulus_id,
+        collection_cumulus_id: granule.collection_cumulus_id,
         execution_cumulus_id: laterExecutionRecords[99 - i].cumulus_id,
+        execution_created_at: laterExecutionRecords[99 - i].created_at,
       },
     ]));
 
@@ -1027,14 +1036,18 @@ test.serial('GranuleIcebergSearch supports search which checks existence of erro
   t.is(response.results?.length, 50);
 });
 
-test.serial('GranuleIcebergSearch estimates the rowcount of the table by default', async (t) => {
+test.serial('GranuleIcebergSearch does not call getEstimatedRowcount', async (t) => {
   const { connection } = t.context;
   const queryStringParameters = {
     limit: 50,
   };
   const dbSearch = new GranuleIcebergSearch({ queryStringParameters }, connection);
+  const estimateSpy = sinon.spy(dbSearch, 'getEstimatedRowcount');
   const response = await dbSearch.query();
-  t.true(response.meta.count > 0, 'Expected response.meta.count to be greater than 0');
+
+  t.true(estimateSpy.notCalled);
+
+  t.is(response.meta.count, 100);
   t.is(response.results?.length, 50);
 });
 

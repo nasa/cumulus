@@ -31,6 +31,22 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { loadConfig } = require('../../helpers/testUtils');
 
+const createFile = async (config) => {
+  const file = {
+    bucket: config.buckets.public.name,
+    key: randomId('key'),
+    size: 8,
+  };
+
+  await s3PutObject({
+    Bucket: file.bucket,
+    Key: file.key,
+    Body: 'testfile',
+  });
+
+  return file;
+};
+
 describe('The Granules API', () => {
   let beforeAllError;
   let config;
@@ -47,8 +63,10 @@ describe('The Granules API', () => {
   let granuleId;
   let modifiedGranule;
   let invalidModifiedGranule;
+  let invalidModifiedGranuleFile;
   let prefix;
   let putReplaceGranule;
+  let putReplaceGranuleFile;
   let randomGranuleRecord;
   let updatedGranuleFromApi;
 
@@ -74,22 +92,15 @@ describe('The Granules API', () => {
         throw new Error(`failed to createExecution ${response.body.message}`);
       }
 
-      granuleFile = {
-        bucket: config.buckets.public.name,
-        key: randomId('key'),
-        size: 8,
-      };
-      await s3PutObject({
-        Bucket: granuleFile.bucket,
-        Key: granuleFile.key,
-        Body: 'testfile',
-      });
+      granuleFile = await createFile(config);
+      invalidModifiedGranuleFile = await createFile(config);
+      putReplaceGranuleFile = await createFile(config);
 
       putReplaceGranule = removeNilProperties(fakeGranuleFactoryV2({
         collectionId: collectionId,
         published: false,
         execution: undefined,
-        files: [granuleFile],
+        files: [putReplaceGranuleFile],
         status: 'completed',
       }));
 
@@ -383,7 +394,7 @@ describe('The Granules API', () => {
         collectionId: newCollectionId,
         published: false,
         execution: undefined,
-        files: [granuleFile],
+        files: [invalidModifiedGranuleFile],
       }));
       const response = await createGranule({
         prefix,

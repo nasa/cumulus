@@ -229,6 +229,7 @@ test.serial('deleteGranuleAndFiles() succeeds if a file is not present in S3', a
 
   const file = {
     granule_cumulus_id: pgGranule.cumulus_id,
+    collection_cumulus_id: pgGranule.collection_cumulus_id,
     bucket: process.env.system_bucket,
     file_name: `${granuleId}.hdf`,
     key: randomString(),

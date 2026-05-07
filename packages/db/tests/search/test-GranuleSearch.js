@@ -2,6 +2,7 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const omit = require('lodash/omit');
 const range = require('lodash/range');
+const sinon = require('sinon');
 
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { sleep } = require('@cumulus/common');
@@ -9,6 +10,7 @@ const {
   translatePostgresGranuleToApiGranuleWithoutDbQuery,
 } = require('../../dist/translate/granules');
 const {
+  destroyLocalTestDb,
   CollectionPgModel,
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
@@ -182,6 +184,7 @@ test.before(async (t) => {
         {
           cumulus_id: i,
           granule_cumulus_id: granule.cumulus_id,
+          collection_cumulus_id: t.context.granules[i].collection_cumulus_id,
           path: 'a.txt',
           checksum_type: 'md5',
         }
@@ -190,6 +193,7 @@ test.before(async (t) => {
         {
           cumulus_id: i + 100,
           granule_cumulus_id: granule.cumulus_id,
+          collection_cumulus_id: t.context.granules[i].collection_cumulus_id,
           path: 'b.txt',
           checksum_type: 'sha256',
         }
@@ -204,13 +208,16 @@ test.before(async (t) => {
     knex,
     t.context.pgGranules.map((_, i) => fakeExecutionRecordFactory({
       url: `earlierUrl${i}`,
-    }))
+    })),
+    ['cumulus_id', 'created_at']
   );
   await granuleExecutionPgModel.insert(
     knex,
     t.context.pgGranules.map((granule, i) => ({
       granule_cumulus_id: granule.cumulus_id,
+      collection_cumulus_id: t.context.granules[i].collection_cumulus_id,
       execution_cumulus_id: executionRecords[i].cumulus_id,
+      execution_created_at: executionRecords[i].created_at,
     }))
   );
   executionRecords = [];
@@ -220,7 +227,8 @@ test.before(async (t) => {
       knex,
       [fakeExecutionRecordFactory({
         url: `laterUrl${i}`,
-      })]
+      })],
+      ['cumulus_id', 'created_at']
     );
     executionRecords.push(executionRecord);
     //ensure that timestamp in execution record is distinct
@@ -231,16 +239,27 @@ test.before(async (t) => {
     knex,
     t.context.pgGranules.map((granule, i) => ({
       granule_cumulus_id: granule.cumulus_id,
+      collection_cumulus_id: t.context.granules[i].collection_cumulus_id,
       execution_cumulus_id: executionRecords[i].cumulus_id,
+      execution_created_at: executionRecords[i].created_at,
     }))
   );
   await granuleExecutionPgModel.insert(
     knex,
     t.context.pgGranules.map((granule, i) => ({
       granule_cumulus_id: granule.cumulus_id,
+      collection_cumulus_id: t.context.granules[i].collection_cumulus_id,
       execution_cumulus_id: executionRecords[99 - i].cumulus_id,
+      execution_created_at: executionRecords[99 - i].created_at,
     }))
   );
+});
+
+test.after.always(async (t) => {
+  await destroyLocalTestDb({
+    ...t.context,
+    testDbName,
+  });
 });
 
 test('GranuleSearch returns 10 granule records by default', async (t) => {
@@ -951,6 +970,48 @@ test('GranuleSearch estimates the rowcount of the table by default', async (t) =
   const response = await dbSearch.query(knex);
   t.true(response.meta.count > 0, 'Expected response.meta.count to be greater than 0');
   t.is(response.results?.length, 50);
+});
+
+test('GranuleSearch calls getEstimatedRowcount for table count when estimateTableRowCount is enabled', async (t) => {
+  const { knex } = t.context;
+
+  const queryStringParameters = {
+    limit: 50,
+  };
+
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+
+  const estimateStub = sinon.stub(dbSearch, 'getEstimatedRowcount')
+    .resolves(9999);
+
+  const response = await dbSearch.query(knex);
+
+  t.true(estimateStub.calledOnce);
+
+  t.true(
+    estimateStub.calledWithMatch({
+      knex,
+    })
+  );
+
+  t.is(response.meta.count, 9999);
+  t.is(response.results.length, 50);
+});
+
+test('GranuleSearch does not estimate rowcount when disabled', async (t) => {
+  const { knex } = t.context;
+
+  const dbSearch = new GranuleSearch({
+    queryStringParameters: {
+      estimateTableRowCount: 'false',
+    },
+  });
+
+  const estimateSpy = sinon.spy(dbSearch, 'getEstimatedRowcount');
+
+  await dbSearch.query(knex);
+
+  t.true(estimateSpy.notCalled);
 });
 
 test('GranuleSearch only returns count if countOnly is set to true', async (t) => {

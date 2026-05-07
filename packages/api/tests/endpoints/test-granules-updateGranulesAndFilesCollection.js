@@ -169,6 +169,7 @@ test.before(async (t) => {
     t.context.files.push(
       fakeFileRecordFactory({
         granule_cumulus_id: pgGranule.cumulus_id,
+        collection_cumulus_id: pgGranule.collection_cumulus_id,
         file_name: pgGranule.granule_id + '.hdf',
         updated_at: new Date().toISOString(),
         bucket: t.context.collectionId + '--bucket',
@@ -177,6 +178,7 @@ test.before(async (t) => {
       }),
       fakeFileRecordFactory({
         granule_cumulus_id: pgGranule.cumulus_id,
+        collection_cumulus_id: pgGranule.collection_cumulus_id,
         file_name: pgGranule.granule_id + '.txt',
         updated_at: new Date().toISOString(),
         bucket: t.context.collectionId + '--bucket',
@@ -185,6 +187,7 @@ test.before(async (t) => {
       }),
       fakeFileRecordFactory({
         granule_cumulus_id: pgGranule.cumulus_id,
+        collection_cumulus_id: pgGranule.collection_cumulus_id,
         file_name: pgGranule.granule_id + '.cmr',
         updated_at: new Date().toISOString(),
         bucket: t.context.collectionId + '--bucket',
