@@ -46,8 +46,6 @@ export const typeToTable: { [key: string]: string } = {
  *  - The `query()` method executes against PostgreSQL using a Knex client.
  *
  * DuckDB Support:
- *  - Subclasses that query DuckDB (e.g., *IcebergSearch classes) must override
- *    the `query()` and related methods
  *  - DuckDB subclasses are responsible for:
  *      - Executing queries using a DuckDB connection.
  *      - Handling sequential execution (to avoid prepared statement conflicts).

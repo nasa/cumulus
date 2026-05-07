@@ -10,7 +10,6 @@ const {
   translatePostgresGranuleToApiGranuleWithoutDbQuery,
 } = require('../../dist/translate/granules');
 const {
-  destroyLocalTestDb,
   CollectionPgModel,
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
@@ -184,7 +183,6 @@ test.before(async (t) => {
         {
           cumulus_id: i,
           granule_cumulus_id: granule.cumulus_id,
-          collection_cumulus_id: t.context.granules[i].collection_cumulus_id,
           path: 'a.txt',
           checksum_type: 'md5',
         }
@@ -193,7 +191,6 @@ test.before(async (t) => {
         {
           cumulus_id: i + 100,
           granule_cumulus_id: granule.cumulus_id,
-          collection_cumulus_id: t.context.granules[i].collection_cumulus_id,
           path: 'b.txt',
           checksum_type: 'sha256',
         }
@@ -208,16 +205,13 @@ test.before(async (t) => {
     knex,
     t.context.pgGranules.map((_, i) => fakeExecutionRecordFactory({
       url: `earlierUrl${i}`,
-    })),
-    ['cumulus_id', 'created_at']
+    }))
   );
   await granuleExecutionPgModel.insert(
     knex,
     t.context.pgGranules.map((granule, i) => ({
       granule_cumulus_id: granule.cumulus_id,
-      collection_cumulus_id: t.context.granules[i].collection_cumulus_id,
       execution_cumulus_id: executionRecords[i].cumulus_id,
-      execution_created_at: executionRecords[i].created_at,
     }))
   );
   executionRecords = [];
@@ -227,8 +221,7 @@ test.before(async (t) => {
       knex,
       [fakeExecutionRecordFactory({
         url: `laterUrl${i}`,
-      })],
-      ['cumulus_id', 'created_at']
+      })]
     );
     executionRecords.push(executionRecord);
     //ensure that timestamp in execution record is distinct
@@ -239,18 +232,14 @@ test.before(async (t) => {
     knex,
     t.context.pgGranules.map((granule, i) => ({
       granule_cumulus_id: granule.cumulus_id,
-      collection_cumulus_id: t.context.granules[i].collection_cumulus_id,
       execution_cumulus_id: executionRecords[i].cumulus_id,
-      execution_created_at: executionRecords[i].created_at,
     }))
   );
   await granuleExecutionPgModel.insert(
     knex,
     t.context.pgGranules.map((granule, i) => ({
       granule_cumulus_id: granule.cumulus_id,
-      collection_cumulus_id: t.context.granules[i].collection_cumulus_id,
       execution_cumulus_id: executionRecords[99 - i].cumulus_id,
-      execution_created_at: executionRecords[99 - i].created_at,
     }))
   );
 });
