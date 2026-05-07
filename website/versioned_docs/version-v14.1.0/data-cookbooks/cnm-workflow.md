@@ -228,7 +228,7 @@ To execute this workflow, you're required to include several Lambda resources in
 - <https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_to_cma_task.tf>
 - <https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_response_task.tf>
 
-**Please note:** To utilize these tasks you need to ensure you have a compatible CMA layer. See the [deployment instructions](../deployment/README.md#deploy-cumulus-message-adapter-layer) for more details on how to deploy a CMA layer.
+**Please note:** To utilize these tasks you need to ensure you have a compatible CMA layer. See the [deployment instructions](../deployment/README.md#deploy-the-cumulus-message-adapter-layer-deprecated) for more details on how to deploy a CMA layer.
 
 - `CNMToCMA`: <https://github.com/podaac/cumulus-cnm-to-granule>
 - `CnmResponse`: <https://github.com/podaac/cumulus-cnm-response-task>
