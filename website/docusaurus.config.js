@@ -10,6 +10,12 @@ function versionOptions() {
 }
 
 module.exports = {
+  markdown: {
+    format: 'detect',
+    hooks: {
+      onBrokenMarkdownLinks: 'log',
+    },
+  },
   title: 'Cumulus Documentation',
   tagline: 'This is a default tagline',
   url: 'https://nasa.github.io',
@@ -22,7 +28,6 @@ module.exports = {
   favicon: 'img/cumulus.ico',
   customFields: {},
   onBrokenLinks: 'log',
-  onBrokenMarkdownLinks: 'log',
   presets: [
     [
       '@docusaurus/preset-classic',
