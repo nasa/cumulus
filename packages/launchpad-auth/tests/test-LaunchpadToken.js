@@ -101,7 +101,7 @@ test.serial('removeLockFile deletes the lock file from S3', async (t) => {
 });
 
 test.serial('waitForLockFileRelease resolves when the lock file is absent', async (t) => {
-  const retries = 0;
+  const retries = 1;
   await t.notThrowsAsync(waitForLockFileRelease(retries));
 });
 
@@ -175,6 +175,9 @@ test.serial('getValidLaunchpadToken waits and reads when a lock file already exi
     }),
   });
   t.teardown(() => deleteS3Object(Bucket, Key));
+
+  await s3PutObject({ Bucket, Key: lockFileKey });
+  t.teardown(() => deleteS3Object(Bucket, lockFileKey));
 
   t.teardown(launchpad.__set__('waitForLockFileRelease', sinon.stub().resolves()));
 
