@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunk_cumulus_website=self.webpackChunk_cumulus_website||[]).push([[88418],{637940(e){e.exports=JSON.parse('{"categoryGeneratedIndex":{"title":"Getting Started","slug":"/category/getting-started","permalink":"/cumulus/docs/category/getting-started","sidebar":"docs","navigation":{"next":{"title":"Introduction","permalink":"/cumulus/docs/"}}}}')}}]);
