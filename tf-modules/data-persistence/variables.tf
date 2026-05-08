@@ -63,3 +63,29 @@ variable "lambda_memory_sizes" {
   type        = map(number)
   default     = {}
 }
+
+variable "db_partition_config" {
+  type = object({
+    executions_total_years = number
+    granules_count         = number
+    files_count            = number
+  })
+  description = <<EOT
+    Configuration for database table partitioning:
+    - executions_total_years: How many years worth of quarterly partitions to generate for 'executions'.
+    - granules_count: The number of hash/bigint-based partitions to create for the 'granules' table.
+    - files_count: The number of hash/bigint-based partitions to create for the 'files' table.
+  EOT
+
+  default = {
+    executions_total_years = 2
+    granules_count         = 512
+    files_count            = 1024
+  }
+}
+
+variable "use_bootstrap" {
+  description = "If true, builds the schema from scratch using the bootstrap directory (full declarations) instead of incremental patches. Only runs on fresh databases."
+  type        = bool
+  default     = false
+}

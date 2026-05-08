@@ -3,6 +3,7 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const range = require('lodash/range');
+const sinon = require('sinon');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { ExecutionSearch } = require('../../dist/search/ExecutionSearch');
 
@@ -616,6 +617,48 @@ test('ExecutionSearch estimates the rowcount of the table by default', async (t)
   const response = await dbSearch.query(knex);
   t.true(response.meta.count > 0, 'Expected response.meta.count to be greater than 0');
   t.is(response.results?.length, 50);
+});
+
+test('ExecutionSearch calls getEstimatedRowcount for table count when estimateTableRowCount is enabled', async (t) => {
+  const { knex } = t.context;
+
+  const queryStringParameters = {
+    limit: 50,
+  };
+
+  const dbSearch = new ExecutionSearch({ queryStringParameters });
+
+  const estimateStub = sinon.stub(dbSearch, 'getEstimatedRowcount')
+    .resolves(9999);
+
+  const response = await dbSearch.query(knex);
+
+  t.true(estimateStub.calledOnce);
+
+  t.true(
+    estimateStub.calledWithMatch({
+      knex,
+    })
+  );
+
+  t.is(response.meta.count, 9999);
+  t.is(response.results.length, 50);
+});
+
+test('ExecutionSearch does not estimate rowcount when disabled', async (t) => {
+  const { knex } = t.context;
+
+  const dbSearch = new ExecutionSearch({
+    queryStringParameters: {
+      estimateTableRowCount: 'false',
+    },
+  });
+
+  const estimateSpy = sinon.spy(dbSearch, 'getEstimatedRowcount');
+
+  await dbSearch.query(knex);
+
+  t.true(estimateSpy.notCalled);
 });
 
 test('ExecutionSearch only returns count if countOnly is set to true', async (t) => {

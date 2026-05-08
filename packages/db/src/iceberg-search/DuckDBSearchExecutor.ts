@@ -5,7 +5,7 @@ import Logger from '@cumulus/logger';
 import { prepareBindings } from './duckdbHelpers';
 import { Meta } from '../search/BaseSearch';
 import { DbQueryParameters } from '../types/search';
-import { acquireDuckDbConnection, releaseDuckDbConnection, clearDuckDbPool, PooledDuckDbConnection } from '../iceberg-connection';
+import { acquireDuckDbConnection, releaseDuckDbConnection, replaceDuckDbConnection, PooledDuckDbConnection } from '../iceberg-connection';
 
 const log = new Logger({ sender: '@cumulus/db/DuckDBSearchExecutor' });
 
@@ -22,6 +22,30 @@ export function isCatalogError(error: unknown): boolean {
   return (
     /^catalog error:\s*table with name\s+["']?[\w.-]+["']?\s+does not exist!/i
       .test(error.message)
+  );
+}
+
+/**
+ * Returns true for recoverable S3/HTTP data-access failures that can be fixed
+ * by rebuilding a stale DuckDB connection and retrying once.
+ *
+ * @param error - value to evaluate
+ * @returns true when the error matches S3 parquet HTTP 400 access failure
+ */
+export function isRecoverableS3HttpError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+
+  const message = error.message;
+  const s3ParquetHttp400Pattern = new RegExp(
+    [
+      'http get error on \'https?:\\/\\/[^\']*\\.s3\\.[^\']*amazonaws\\.com\\/[^\']*\\.parquet\'',
+      ' \\(http 400\\)',
+    ].join(''),
+    'i'
+  );
+  return (
+    // Intentionally strict: mirrors the observed DuckDB error text for S3 parquet GET HTTP 400.
+    s3ParquetHttp400Pattern.test(message)
   );
 }
 
@@ -74,7 +98,6 @@ export async function executeDuckDBSearch(params: {
       return { key: config.key, sql, bindings };
     });
 
-  const queryStartTime = Date.now();
   let pooledConnection: PooledDuckDbConnection = await acquireDuckDbConnection();
 
   try {
@@ -102,12 +125,10 @@ export async function executeDuckDBSearch(params: {
     try {
       await runNativeQueries(pooledConnection);
     } catch (error) {
-      if (isCatalogError(error)) {
-        log.warn('Catalog error detected; closing stale connection and clearing pool, then retrying query once.', error);
+      if (isCatalogError(error) || isRecoverableS3HttpError(error)) {
+        log.warn('Recoverable DuckDB connection error detected; closing stale connection and retrying query once.', error);
         pooledConnection.closeSync();
-        await clearDuckDbPool(queryStartTime);
-        pooledConnection = await acquireDuckDbConnection();
-
+        pooledConnection = await replaceDuckDbConnection();
         await runNativeQueries(pooledConnection);
       } else {
         throw error;

@@ -96,3 +96,22 @@ variable "dbRecreation" {
   description = "**Warning** Data loss will occur if set to 'true'. Boolean flag to set user database to be wiped and recreated on provision for each deploy"
   default     = true
 }
+
+variable "db_partition_config" {
+  type = object({
+    executions_total_years = number
+    granules_count         = number
+    files_count            = number
+  })
+  description = "Partition configuration for this deployment"
+  default = {
+    executions_total_years = 3
+    granules_count         = 4
+    files_count            = 4
+  }
+}
+variable "use_bootstrap" {
+  description = "Whether to run bootstrap migrations for this deployment"
+  type        = bool
+  default     = false
+}

@@ -15,7 +15,16 @@
     "node": ">=16.19.0"
   },
   "scripts": {
-    "clean": "rm -rf node_modules"
+    "clean": "rm -rf node_modules",
+    "test": "../../node_modules/.bin/ava",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "test:ci": "../../scripts/run_package_ci_unit.sh"
+  },
+  "ava": {
+    "files": [
+      "tests/*.js"
+    ],
+    "timeout": "10m"
   },
   "dependencies": {
     "@cumulus/api-client": "21.3.3",

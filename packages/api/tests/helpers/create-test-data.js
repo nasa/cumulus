@@ -55,6 +55,7 @@ const metadataFileFixture = fs.readFileSync(path.resolve(__dirname, '../data/met
 async function createGranuleAndFiles({
   collectionCumulusId,
   executionCumulusId,
+  executionCreatedAt,
   collectionId,
   dbClient,
   granuleParams = { published: false },
@@ -163,6 +164,7 @@ async function createGranuleAndFiles({
         bucket: f.bucket,
         file_name: f.fileName,
         granule_cumulus_id: pgGranule.cumulus_id,
+        collection_cumulus_id: pgGranule.collection_cumulus_id,
         key: f.key,
         file_size: f.size,
       };
@@ -183,14 +185,18 @@ async function createGranuleAndFiles({
       }
     );
     executionCumulusId = pgExecution.cumulus_id;
+    executionCreatedAt = pgExecution.created_at;
   }
+
   // Link existing Postgres execution to granule
   const granulesExecutionsModel = new GranulesExecutionsPgModel();
   await granulesExecutionsModel.create(
     dbClient,
     {
       granule_cumulus_id: pgGranule.cumulus_id,
+      collection_cumulus_id: pgGranule.collection_cumulus_id,
       execution_cumulus_id: executionCumulusId,
+      execution_created_at: executionCreatedAt,
     }
   );
 
@@ -269,6 +275,7 @@ async function createExecutionRecords({
     const testGranuleObject = await createGranuleAndFiles({
       collectionCumulusId: pgCollectionRecord.cumulus_id,
       executionCumulusId: pgExecutions[0][0].cumulus_id,
+      executionCreatedAt: pgExecutions[0][0].created_at,
       collectionId,
       dbClient: knex,
     });

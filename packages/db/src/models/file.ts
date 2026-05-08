@@ -3,6 +3,7 @@ import { Knex } from 'knex';
 import { BasePgModel } from './base';
 import { TableNames } from '../tables';
 
+import { isCollisionError } from '../lib/errors';
 import { PostgresFile, PostgresFileRecord } from '../types/file';
 
 class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
@@ -12,19 +13,51 @@ class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
     });
   }
 
-  upsert(
+  async upsert(
     knexOrTrx: Knex | Knex.Transaction,
     input: PostgresFile | PostgresFile[]
   ): Promise<PostgresFileRecord[]> {
     const files = Array.isArray(input) ? input : [input];
+    if (files.length === 0) return [];
 
-    if (files.length === 0) return Promise.resolve([]);
+    // Try a standard insert first (fastest path)
+    try {
+      return await knexOrTrx.transaction(async (trx) =>
+        await trx(this.tableName)
+          .insert(files)
+          .returning('*'));
+    } catch (error: any) {
+      // Catch the unique_violation thrown the trigger
+      if (isCollisionError(error)) {
+        return await knexOrTrx.transaction(async (trx) => {
+          const results: PostgresFileRecord[] = [];
+          for (const file of files) {
+            // Fallback: try update first, insert if not found
+            // eslint-disable-next-line no-await-in-loop
+            const updated = await trx(this.tableName)
+              .where({
+                bucket: file.bucket,
+                key: file.key,
+              })
+              .update(file)
+              .returning('*');
 
-    return knexOrTrx(this.tableName)
-      .insert(files)
-      .onConflict(['bucket', 'key'])
-      .merge()
-      .returning('*');
+            if (updated.length > 0) {
+              results.push(...updated);
+            } else {
+              // If the row doesn't exist yet, insert it
+              // eslint-disable-next-line no-await-in-loop
+              const inserted = await trx(this.tableName)
+                .insert(file)
+                .returning('*');
+              results.push(...inserted);
+            }
+          }
+          return results;
+        });
+      }
+      throw error;
+    }
   }
 
   /**
