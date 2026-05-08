@@ -10,6 +10,7 @@ const {
   translatePostgresGranuleToApiGranuleWithoutDbQuery,
 } = require('../../dist/translate/granules');
 const {
+  destroyLocalTestDb,
   CollectionPgModel,
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
