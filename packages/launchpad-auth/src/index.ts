@@ -10,7 +10,6 @@ import { Readable } from 'stream';
 import { s3 } from '@cumulus/aws-client/services';
 import {
   deleteS3Object,
-  fileExists,
   getObject,
   headObject,
   s3Join,
@@ -38,26 +37,28 @@ const getTokenFileKey = () => `${getEnvVar('stackName')}/launchpad/token.json`;
 /**
  * Poll S3 until the launchpad token lock file is NotFound or times out.
  *
- * @param {number} retries - number of retries in trying to find the lock file, defaults to 5
+ * @param {number} retries - number of poll attempts before timing out, defaults to 5
+ * @param {number} intervalMs - milliseconds between poll attempts, defaults to 1000
  *
  */
-async function waitForLockFileRelease(retries: number = 5) {
-  try {
-    await headObject(getBucket(), getLockFileKey(), { retries });
-  } catch (error) {
-    if (error.name === 'NotFound') return;
-    throw error;
+async function waitForLockFileRelease(
+  retries: number = 5,
+  intervalMs: number = 1000
+) {
+  /* eslint-disable no-await-in-loop */
+  for (let attempt = 0; attempt < retries; attempt += 1) {
+    try {
+      await headObject(getBucket(), getLockFileKey());
+    } catch (error) {
+      if (error.name === 'NotFound') {
+        return;
+      }
+      throw error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
   }
+  /* eslint-enable no-await-in-loop */
   throw new Error('Timed out waiting for launchpad token lock file to be released');
-}
-
-/**
- * Check if the lock file exists in S3.
- *
- * @returns {Promise<boolean>} - boolean for whether or not the lock file exists
- */
-async function lockFileExists() {
-  return await fileExists(getBucket(), getLockFileKey());
 }
 
 /**
@@ -79,6 +80,7 @@ async function createLockFile() {
   return await s3PutObject({
     Bucket: getBucket(),
     Key: getLockFileKey(),
+    IfNoneMatch: '*',
   });
 }
 
@@ -237,8 +239,7 @@ async function validateLaunchpadToken(
  * @returns {Promise<string>} - the Launchpad token
  */
 async function waitAndReadToken(config: LaunchpadTokenParams) {
-  const retries = 10;
-  await waitForLockFileRelease(retries);
+  await waitForLockFileRelease();
   return await getLaunchpadToken(config);
 }
 
@@ -278,12 +279,6 @@ async function generateLaunchpadToken(config: LaunchpadTokenParams) {
 export async function getValidLaunchpadToken(params: LaunchpadTokenParams) {
   let createdLock = false;
   try {
-    const isLocked = await lockFileExists();
-
-    if (isLocked) {
-      // Someone else is creating the token, wait for lock file release and just use that one
-      return await waitAndReadToken(params);
-    }
     // lock is not there, so we can create it here and try to make the token
     try {
       await createLockFile();
@@ -295,7 +290,6 @@ export async function getValidLaunchpadToken(params: LaunchpadTokenParams) {
       // Lost the token-creating race, so we wait and read like before
       return await waitAndReadToken(params);
     }
-
     return await generateLaunchpadToken(params);
   } catch (error) {
     log.error('Error during Launchpad token generation:', error);
@@ -312,7 +306,6 @@ module.exports = {
   validateLaunchpadToken,
   getValidLaunchpadToken,
   generateLaunchpadToken,
-  lockFileExists,
   createLockFile,
   removeLockFile,
   waitAndReadToken,

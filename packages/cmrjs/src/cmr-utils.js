@@ -246,10 +246,10 @@ function granulesToCmrFileObjects(granules, filterFunc = isCMRFile) {
  * @param {CMR} cmrClient - the CMR client whose launchpad token should be refreshed on 401
  * @param {() => Promise} operation - the CMR function with args to execute
  * @param {Object} [options]
- * @param {number} [options.retries=10] - number of retry attempts
+ * @param {number} [options.retries=5] - number of retry attempts
  * @returns {Promise} - result of CMR function call
  */
-async function withCmrLaunchpadTokenRefreshRetry(cmrClient, operation, { retries = 10 } = {}) {
+async function withCmrLaunchpadTokenRefreshRetry(cmrClient, operation, { retries = 5 } = {}) {
   return await pRetry(
     async () => {
       try {

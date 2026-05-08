@@ -324,7 +324,7 @@ export class CMR {
         throw new CMRInternalError(errorMessage);
       }
 
-      throw new Error(errorMessage);
+      throw Object.assign(new Error(errorMessage), { statusCode, cause: error });
     }
   }
 

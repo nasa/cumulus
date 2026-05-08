@@ -58,7 +58,6 @@ const {
   validateLaunchpadToken,
   getValidLaunchpadToken,
   generateLaunchpadToken,
-  lockFileExists,
   createLockFile,
   removeLockFile,
   waitForLockFileRelease,
@@ -99,17 +98,6 @@ test.serial('removeLockFile deletes the lock file from S3', async (t) => {
 
   await removeLockFile();
   t.falsy(await fileExists(bucket, lockFileKey));
-});
-
-test.serial('lockFileExists returns true when the lock file is present', async (t) => {
-  await createLockFile();
-  t.teardown(() => deleteS3Object(bucket, lockFileKey));
-
-  t.truthy(await lockFileExists());
-});
-
-test.serial('lockFileExists returns false when no lock file is present', async (t) => {
-  t.falsy(await lockFileExists());
 });
 
 test.serial('waitForLockFileRelease resolves when the lock file is absent', async (t) => {
@@ -188,7 +176,6 @@ test.serial('getValidLaunchpadToken waits and reads when a lock file already exi
   });
   t.teardown(() => deleteS3Object(Bucket, Key));
 
-  t.teardown(launchpad.__set__('lockFileExists', sinon.stub().resolves(true)));
   t.teardown(launchpad.__set__('waitForLockFileRelease', sinon.stub().resolves()));
 
   const result = await getValidLaunchpadToken(config);
@@ -201,7 +188,6 @@ test.serial('getValidLaunchpadToken creates the lock, generates a token, and rem
   const removeLockFileStub = sinon.stub().resolves();
   const generateStub = sinon.stub().resolves(newToken);
 
-  t.teardown(launchpad.__set__('lockFileExists', sinon.stub().resolves(false)));
   t.teardown(launchpad.__set__('createLockFile', createLockFileStub));
   t.teardown(launchpad.__set__('removeLockFile', removeLockFileStub));
   t.teardown(launchpad.__set__('generateLaunchpadToken', generateStub));
@@ -231,7 +217,6 @@ test.serial('getValidLaunchpadToken falls back to wait-and-read when createLockF
 
   const removeLockFileStub = sinon.stub().resolves();
 
-  t.teardown(launchpad.__set__('lockFileExists', sinon.stub().resolves(false)));
   t.teardown(launchpad.__set__(
     'createLockFile',
     sinon.stub().rejects(Object.assign(new Error('lost race'), { name: 'PreconditionFailed' }))
@@ -248,7 +233,6 @@ test.serial('getValidLaunchpadToken falls back to wait-and-read when createLockF
 test.serial('getValidLaunchpadToken removes the lock file even when token generation throws', async (t) => {
   const removeLockFileStub = sinon.stub().resolves();
 
-  t.teardown(launchpad.__set__('lockFileExists', sinon.stub().resolves(false)));
   t.teardown(launchpad.__set__('createLockFile', sinon.stub().resolves()));
   t.teardown(launchpad.__set__('removeLockFile', removeLockFileStub));
   t.teardown(launchpad.__set__('generateLaunchpadToken', sinon.stub().rejects(new Error('launchpad down'))));
@@ -258,7 +242,6 @@ test.serial('getValidLaunchpadToken removes the lock file even when token genera
 });
 
 test.serial('getValidLaunchpadToken rethrows non-PreconditionFailed errors from createLockFile', async (t) => {
-  t.teardown(launchpad.__set__('lockFileExists', sinon.stub().resolves(false)));
   t.teardown(launchpad.__set__('createLockFile', sinon.stub().rejects(new Error('s3 unreachable'))));
   t.teardown(launchpad.__set__('removeLockFile', sinon.stub().resolves()));
 
