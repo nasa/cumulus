@@ -639,7 +639,7 @@ const _writeGranule = async ({
  *   indicating 'fulfilled' or 'rejected'
  * @param {string} errorMessage - Error message to log when failed writing to the database
  * @param {string[]} [granuleIds=[]] - granuleIds aligned with `results`
- * @returns {Array} - Returns the original results array if no rejected promises are detected
+ * @returns {Array} - Returns an empty array if no rejected promises are detected
  * @throws {AggregateError} -
  */
 const _filterGranuleWriteFailures = (results, errorMessage, granuleIds = []) => {
@@ -648,13 +648,15 @@ const _filterGranuleWriteFailures = (results, errorMessage, granuleIds = []) => 
     .filter(({ result }) => result.status === 'rejected');
 
   if (failedWrites.length > 0) {
-    const failedGranuleIds = failedWrites.map(({ granuleId }) => granuleId ?? '');
+    const failedGranuleIds = failedWrites.map(({ granuleId }) => granuleId ?? '<unknown-granule>');
     const allFailures = failedWrites.map(
       ({ result }) => result.reason ?? new Error('Unknown failure')
     );
 
-    log.error(`${errorMessage}. Failed granuleIds: [${failedGranuleIds.join(', ')}]`);
-    throw new AggregateError(allFailures);
+    const aggregateError = new AggregateError(allFailures);
+    const fullErrorMessage = `${errorMessage}. Failed granuleIds/granuleCumulusIds: [${failedGranuleIds.join(', ')}]`;
+    log.error(fullErrorMessage, aggregateError);
+    throw aggregateError;
   }
   return failedWrites;
 };
