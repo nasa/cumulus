@@ -27,7 +27,7 @@ These former properties were deprecated (with notes about how to derive the same
   - `hyrax-metadata-updates`
 - `fileStagingDir` - no longer supported
 - `url_path` - no longer supported
-- `duplicate_found` - This property is no longer supported, however `sync-granule` and `move-granules` now produce a separate `granuleDuplicates` object as part of their output. The `granuleDuplicates` object is a map of granules by granule ID which includes the files that encountered duplicates during processing. [Guidance on how to integrate `granuleDuplicates` information into your workflow configuration is provided below](#optional---integrate-granuleduplicates-information).
+- `duplicate_found` - This property is no longer supported, however `sync-granule` and `move-granules` now produce a separate `granuleDuplicates` object as part of their output. The `granuleDuplicates` object is a map of granules by granule ID which includes the files that encountered duplicates during processing. [Guidance on how to integrate `granuleDuplicates` information into your workflow configuration is provided below](#upgrading-your-workflows).
 
 ## Exceptions
 
