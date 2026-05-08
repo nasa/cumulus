@@ -19,6 +19,7 @@
     "serve-remote": "./bin/cli.js serve",
     "serve": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test FAKE_AUTH=true ./bin/cli.js serve",
     "serve:debug": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test FAKE_AUTH=true node --inspect-brk ./bin/cli.js serve",
+    "test:docker:iceberg": "../../node_modules/.bin/ava tests/docker/test-iceberg-api.js",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "test": "../../node_modules/.bin/ava",
@@ -30,6 +31,7 @@
   "ava": {
     "files": [
       "tests/**/*.js",
+      "!tests/docker/**/*.js",
       "!tests/endpoints/fixtures/**/*.js",
       "!tests/endpoints/utils.js",
       "!tests/es/helpers/**/*.js",

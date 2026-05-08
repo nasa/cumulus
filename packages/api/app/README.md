@@ -125,6 +125,41 @@ docker run --rm -p 5001:5001 \
   cumulus-iceberg-api:latest
 ```
 
+### Build and Smoke Test With AVA
+
+If you want to validate the Dockerized Iceberg API locally instead of hitting a deployed stack, run the local AVA test:
+
+```bash
+cp packages/api/app/env.local.example packages/api/app/.env.local
+# Edit .env.local with your sandbox values
+
+docker build --platform linux/arm64 -f packages/api/app/Dockerfile -t cumulus-iceberg-api:local .
+
+npm run test:docker:iceberg --workspace @cumulus/api
+```
+
+The AVA test will:
+
+- use the prebuilt `cumulus-iceberg-api:local` image
+- run the container on `http://localhost:5001`
+- wait for `/health` to report ready
+- verify `GET /version`
+- verify `/granules` either rejects unauthenticated requests or succeeds when you provide a bearer token
+
+Optional authenticated check:
+
+```bash
+ICEBERG_API_TOKEN=<your-cumulus-api-token> npm run test:docker:iceberg --workspace @cumulus/api
+```
+
+Optional alternate env file / port:
+
+```bash
+ICEBERG_ENV_FILE=packages/api/app/.env.local ICEBERG_PORT=5002 npm run test:docker:iceberg --workspace @cumulus/api
+```
+
+The test implementation lives in `packages/api/tests/docker/test-iceberg-api.js`.
+
 Then test it (`$token` is a Cumulus API token obtained from the [`/token` endpoint](https://nasa.github.io/cumulus-api/#token) of the deployed Cumulus API):
 
 ```bash

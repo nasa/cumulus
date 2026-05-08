@@ -72,8 +72,8 @@ const REFRESH_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
 async function ensureFreshSecret(conn: DuckDBConnection) {
   const now = Date.now();
   if (now - lastSecretRefresh > REFRESH_INTERVAL_MS) {
-    await conn.run('CREATE OR REPLACE SECRET (TYPE S3, PROVIDER credential_chain);');
     lastSecretRefresh = now;
+    await conn.run('CREATE OR REPLACE SECRET (TYPE S3, PROVIDER credential_chain);');
     log.info('DuckDB AWS Secret refreshed.');
   }
 }
@@ -179,7 +179,7 @@ async function populateConnectionCache(conn: PooledDuckDbConnection): Promise<vo
       // eslint-disable-next-line no-await-in-loop
       await conn.run(`SELECT COUNT(*) FROM ${quoteIdent(tableName)};`);
     } catch (error) {
-      log.warn(`Cache warmup skipped for table ${tableName}.`);
+      log.warn(`Cache warmup skipped for table ${tableName}.`, error);
     }
   }
 }
