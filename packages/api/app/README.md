@@ -125,23 +125,27 @@ docker run --rm -p 5001:5001 \
   cumulus-iceberg-api:latest
 ```
 
-### Build and Smoke Test With AVA
+### Local Integration Test With AVA
 
-If you want to validate the Dockerized Iceberg API locally instead of hitting a deployed stack, run the local AVA test:
+If you want to validate the Iceberg API locally against your AWS sandbox, run the local AVA test. The test native spawns the Node Express server directly (bypassing Docker) to allow for easier debugging and seamless CI integration.
+
+First, prepare your environment variables:
 
 ```bash
 cp packages/api/app/env.local.example packages/api/app/.env.local
 # Edit .env.local with your sandbox values
-
-docker build --platform linux/arm64 -f packages/api/app/Dockerfile -t cumulus-iceberg-api:local .
-
-npm run test:docker:iceberg --workspace @cumulus/api
 ```
 
-Optional alternate env file / port:
+Then, export the variables to your shell and run the test:
 
 ```bash
-ICEBERG_ENV_FILE=packages/api/app/.env.local ICEBERG_PORT=5002 npm run test:docker:iceberg --workspace @cumulus/api
+# Export the environment variables from your env file
+export $(grep -v '^#' packages/api/app/.env.local | xargs)
+
+# Run the integration test directly using AVA
+./node_modules/.bin/ava packages/api/tests/docker/test-iceberg-api.js
 ```
+
+*(Note: The test automatically injects `FAKE_AUTH=true` internally to bypass DynamoDB authentication caching requirements.)*
 
 The test implementation lives in `packages/api/tests/docker/test-iceberg-api.js`.

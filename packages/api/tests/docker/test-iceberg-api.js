@@ -1,16 +1,13 @@
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
 const test = require('ava');
 const got = require('got');
 const isString = require('lodash/isString');
-const { execSync } = require('child_process');
 const { randomString } = require('@cumulus/common/test-utils');
 const { createJwtToken } = require('../../lib/token');
 const { localUserName } = require('../../bin/local-test-defaults');
 
-const REQUIRED_ENV_FILE_KEYS = [
+const REQUIRED_ENV_KEYS = [
   'AWS_ACCESS_KEY_ID',
   'AWS_SECRET_ACCESS_KEY',
   'AWS_ACCOUNT_ID',
@@ -20,14 +17,8 @@ const REQUIRED_ENV_FILE_KEYS = [
   'ICEBERG_NAMESPACE',
 ];
 
-const repoRoot = path.resolve(__dirname, '../../../..');
-const defaultEnvFile = path.join(repoRoot, 'packages/api/app/.env.local');
-
-let containerStarted = false;
-let containerName;
 let baseUrl;
 let authToken;
-let keepContainer;
 
 const icebergRoutes = [
   '/granules',
@@ -54,133 +45,22 @@ function buildAuthHeaders() {
   return { authorization: `Bearer ${authToken}` };
 }
 
-function parseEnvFile(filePath) {
-  const values = {};
-  const raw = fs.readFileSync(filePath, 'utf8');
-
-  raw.split(/\r?\n/u).forEach((line) => {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) return;
-
-    const equalIndex = trimmed.indexOf('=');
-    if (equalIndex === -1) return;
-
-    const key = trimmed.slice(0, equalIndex).trim();
-    const value = trimmed.slice(equalIndex + 1).trim();
-    values[key] = value;
-  });
-
-  return values;
-}
-
-function assertDockerAvailable() {
-  execSync('docker --version', { stdio: 'ignore' });
-}
-
-function assertDockerImageAvailable(imageTag) {
-  execSync(`docker image inspect ${imageTag}`, { stdio: 'ignore' });
-}
-
-function cleanupContainer() {
-  try {
-    execSync(`docker rm -f ${containerName}`, { stdio: 'ignore' });
-  } catch (_error) {
-    // Container may not exist/already be removed.
-  }
-}
-
-async function waitForHealth(url, timeoutSeconds) {
-  const deadline = Date.now() + (timeoutSeconds * 1000);
-
-  while (Date.now() < deadline) {
-    try {
-      // eslint-disable-next-line no-await-in-loop
-      const response = await got(`${url}/health`, {
-        throwHttpErrors: false,
-        retry: 0,
-      });
-
-      if (response.statusCode === 200) return;
-    } catch (_error) {
-      // Server may not yet be listening; continue retrying.
-    }
-
-    // eslint-disable-next-line no-await-in-loop
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-  }
-
-  throw new Error(`Timed out waiting for ${url}/health to return 200.`);
-}
-
-test.before(async () => {
-  const imageTag = process.env.ICEBERG_IMAGE_TAG || 'cumulus-iceberg-api:latest';
-  containerName = process.env.ICEBERG_CONTAINER_NAME || 'cumulus-iceberg-api-local-test';
-  const hostPort = process.env.ICEBERG_PORT || '5001';
-  const healthTimeoutSeconds = Number(process.env.ICEBERG_HEALTH_TIMEOUT_SECONDS || '180');
-  const envFile = process.env.ICEBERG_ENV_FILE || defaultEnvFile;
-  keepContainer = process.env.ICEBERG_KEEP_CONTAINER === 'true';
+test.before(() => {
+  const hostPort = process.env.ICEBERG_PORT || process.env.PORT || '5001';
   baseUrl = `http://localhost:${hostPort}`;
 
-  assertDockerAvailable();
-
-  if (!fs.existsSync(envFile)) {
-    throw new Error(
-      `Env file not found: ${envFile}. Copy packages/api/app/env.local.example `
-      + 'to packages/api/app/.env.local and fill values.'
-    );
-  }
-
-  const envValues = parseEnvFile(envFile);
-  const missingKeys = REQUIRED_ENV_FILE_KEYS.filter((key) => !envValues[key]);
+  const missingKeys = REQUIRED_ENV_KEYS.filter((key) => !process.env[key]);
   if (missingKeys.length > 0) {
-    throw new Error(`Env file missing required keys: ${missingKeys.join(', ')}`);
+    throw new Error(`Environment missing required keys: ${missingKeys.join(', ')}`);
   }
 
-  try {
-    assertDockerImageAvailable(imageTag);
-  } catch (_error) {
-    throw new Error(
-      `Required Docker image not found: ${imageTag}. Build it first, for example: `
-      + `docker build --platform linux/arm64 -f packages/api/app/Dockerfile -t ${imageTag} ${repoRoot}`
-    );
-  }
-
-  try {
-    cleanupContainer();
-  } catch (_error) {
-    // Ignore pre-existing container cleanup errors.
-  }
-
-  const tokenSecret = randomString();
+  const tokenSecret = process.env.TOKEN_SECRET || randomString();
   process.env.TOKEN_SECRET = tokenSecret;
   authToken = createJwtToken({
     accessToken: randomString(),
     username: localUserName,
     expirationTime: Math.floor(Date.now() / 1000) + 3600 * 24,
   });
-
-  execSync(
-    `docker run --rm -d --name ${containerName} -p ${hostPort}:5001 --env-file ${envFile} -e FAKE_AUTH=true -e TOKEN_SECRET=${tokenSecret} ${imageTag}`,
-    { stdio: 'inherit' }
-  );
-  containerStarted = true;
-
-  try {
-    await waitForHealth(baseUrl, healthTimeoutSeconds);
-  } catch (error) {
-    let logs = '';
-    try {
-      logs = execSync(`docker logs ${containerName}`, { encoding: 'utf8' });
-    } catch (logError) {
-      logs = `Also failed to read container logs: ${logError.message}`;
-    }
-    throw new Error(`${error.message}\nContainer logs:\n${logs}`);
-  }
-});
-
-test.after.always(() => {
-  if (!containerStarted || keepContainer) return;
-  cleanupContainer();
 });
 
 test.serial('Iceberg API version endpoint returns version payload', async (t) => {
