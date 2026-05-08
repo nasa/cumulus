@@ -63,19 +63,38 @@ function getRequiredEnv(name: 'AWS_ACCOUNT_ID' | 'ICEBERG_NAMESPACE'): string {
 
 let lastSecretRefresh = 0;
 const REFRESH_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+let secretRefreshPromise: Promise<void> | undefined;
 
 /**
  * Refreshes the DuckDB AWS secret only when the refresh interval has elapsed.
+ * Concurrent callers share a single in-flight refresh promise to avoid issuing
+ * multiple simultaneous CREATE OR REPLACE SECRET commands.
  *
  * @param conn - active DuckDB connection used to execute the secret refresh
  */
 async function ensureFreshSecret(conn: DuckDBConnection) {
   const now = Date.now();
-  if (now - lastSecretRefresh > REFRESH_INTERVAL_MS) {
-    lastSecretRefresh = now;
-    await conn.run('CREATE OR REPLACE SECRET (TYPE S3, PROVIDER credential_chain);');
-    log.info('DuckDB AWS Secret refreshed.');
+  if (now - lastSecretRefresh <= REFRESH_INTERVAL_MS) return;
+
+  if (secretRefreshPromise) {
+    await secretRefreshPromise;
+    return;
   }
+
+  secretRefreshPromise = (async () => {
+    try {
+      await conn.run('CREATE OR REPLACE SECRET (TYPE S3, PROVIDER credential_chain);');
+      lastSecretRefresh = Date.now();
+      log.info('DuckDB AWS Secret refreshed.');
+    } catch (error) {
+      lastSecretRefresh = 0;
+      log.warn('DuckDB AWS Secret refresh failed:', error);
+    } finally {
+      secretRefreshPromise = undefined;
+    }
+  })();
+
+  await secretRefreshPromise;
 }
 
 /**

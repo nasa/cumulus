@@ -15,7 +15,6 @@ const REQUIRED_ENV_FILE_KEYS = [
   'AWS_SECRET_ACCESS_KEY',
   'AWS_ACCOUNT_ID',
   'AWS_REGION',
-  'NODE_ENV',
   'api_config_secret_id',
   'dynamoTableNameString',
   'ICEBERG_NAMESPACE',
@@ -237,9 +236,10 @@ test.serial('Iceberg API protected routes reject unauthenticated requests', asyn
       ...defaultGotOptions,
     });
 
-    t.true(
-      [401, 403].includes(response.statusCode),
-      `${route} should reject unauthenticated requests with 401 or 403`
+    t.is(
+      response.statusCode,
+      401,
+      `${route} should reject unauthenticated requests with 401`
     );
   }
 });

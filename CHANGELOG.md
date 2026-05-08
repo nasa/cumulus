@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4711**
+  - Add integration tests for iceberg API
 - **CUMULUS-4829**
   - Add background job to refresh stale DuckDB connections for iceberg API
 - **CUMULUS-4815**

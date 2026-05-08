@@ -138,20 +138,6 @@ docker build --platform linux/arm64 -f packages/api/app/Dockerfile -t cumulus-ic
 npm run test:docker:iceberg --workspace @cumulus/api
 ```
 
-The AVA test will:
-
-- use the prebuilt `cumulus-iceberg-api:local` image
-- run the container on `http://localhost:5001`
-- wait for `/health` to report ready
-- verify `GET /version`
-- verify `/granules` either rejects unauthenticated requests or succeeds when you provide a bearer token
-
-Optional authenticated check:
-
-```bash
-ICEBERG_API_TOKEN=<your-cumulus-api-token> npm run test:docker:iceberg --workspace @cumulus/api
-```
-
 Optional alternate env file / port:
 
 ```bash
@@ -159,10 +145,3 @@ ICEBERG_ENV_FILE=packages/api/app/.env.local ICEBERG_PORT=5002 npm run test:dock
 ```
 
 The test implementation lives in `packages/api/tests/docker/test-iceberg-api.js`.
-
-Then test it (`$token` is a Cumulus API token obtained from the [`/token` endpoint](https://nasa.github.io/cumulus-api/#token) of the deployed Cumulus API):
-
-```bash
-curl http://localhost:5001/version
-curl -H "Authorization: Bearer $token" "http://localhost:5001/granules"
-```
