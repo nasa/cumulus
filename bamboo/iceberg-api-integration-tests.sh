@@ -9,11 +9,12 @@ export ICEBERG_NAMESPACE=${bamboo_ICEBERG_NAMESPACE}
 
 echo "*** Bootstrapping dependencies"
 npm install --ignore-scripts --no-package-lock
-npm run ci:bootstrap-no-scripts
+npm run ci:bootstrap
 
 export PORT=5001
 export FAKE_AUTH=true
 export TOKEN_SECRET=test-secret-12345
+export NODE_ENV=development
 
 echo "*** Starting Server"
 node packages/api/app/iceberg-index.js > iceberg-server-debug.log 2>&1 &
