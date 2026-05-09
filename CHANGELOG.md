@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **CUMULUS-4789**
+- **CUMULUS-4789** 
   - Update Docusaurus to latest version - 3.10
 - **CSD-104**
   - `PVLNumeric` now stores the original string value as `rawValue` before converting to `Number()`, preserving precision for large numeric strings.
