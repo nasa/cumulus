@@ -3,7 +3,7 @@ data "aws_region" "current" {}
 
 data "terraform_remote_state" "cumulus" {
   backend   = "s3"
-  workspace = var.PREFIX
+  workspace = "default"
   config    = local.cumulus_remote_state_config
 }
 
