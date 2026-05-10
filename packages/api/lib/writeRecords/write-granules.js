@@ -631,23 +631,31 @@ const _writeGranule = async ({
  * Filters and handles failed granule write operations from an array of Promise.allSettled results.
  *
  * This function examines the results of parallel granule write operations and identifies any
- * that failed. If failures are found, it aggregates all error reasons into a single
- * AggregateError, logs the error with the provided message, and throws the aggregated error
- * to halt execution and provide error information to the caller.
+ * that failed. If failures are found, it logs each failure with its corresponding granuleId
+ * and throws an Error whose message that lists every failed granuleId for tracking purposes.
  *
  * @param {Array<{status: 'fulfilled'|'rejected', value?: any, reason?: Error}>} results -
  *   Array of results from Promise.allSettled(), where each result has a 'status' property
  *   indicating 'fulfilled' or 'rejected'
  * @param {string} errorMessage - Error message to log when failed writing to the database
- * @returns {Array} - Returns the original results array if no rejected promises are detected
+ * @param {string[]} [granuleIds=[]] - granuleIds aligned with `results`
+ * @returns {Array} - Returns an empty array if no rejected promises are detected
  * @throws {AggregateError} -
  */
-const _filterGranuleWriteFailures = (results, errorMessage) => {
-  const failedWrites = results.filter((result) => result.status === 'rejected');
+const _filterGranuleWriteFailures = (results, errorMessage, granuleIds = []) => {
+  const failedWrites = results
+    .map((result, index) => ({ result, granuleId: granuleIds[index] }))
+    .filter(({ result }) => result.status === 'rejected');
+
   if (failedWrites.length > 0) {
-    const allFailures = failedWrites.map((failure) => failure.reason);
+    const failedGranuleIds = failedWrites.map(({ granuleId }) => granuleId ?? '<unknown-granule>');
+    const allFailures = failedWrites.map(
+      ({ result }) => result.reason ?? new Error('Unknown failure')
+    );
+
     const aggregateError = new AggregateError(allFailures);
-    log.error(errorMessage, aggregateError);
+    const fullErrorMessage = `${errorMessage}. Failed granuleIds/granuleCumulusIds: [${failedGranuleIds.join(', ')}]`;
+    log.error(fullErrorMessage, aggregateError);
     throw aggregateError;
   }
   return failedWrites;
@@ -929,6 +937,8 @@ const writeGranuleExecutionAssociationsFromMessage = async ({
 
   log.info(`Retrieved ${granuleCumulusIds.length} granule cumulus IDs for granule IDs: [${granuleIds.join(', ')}]`);
 
+  const failureIdentifiers = granuleCumulusIds.map((id) => `cumulus_id=${id}`);
+
   const results = await Promise.allSettled(
     granuleCumulusIds.map((granuleCumulusId) =>
       granulesExecutionsPgModel.upsert(knex, {
@@ -937,7 +947,11 @@ const writeGranuleExecutionAssociationsFromMessage = async ({
       }))
   );
 
-  const filteredResults = _filterGranuleWriteFailures(results, 'Failed writing some granule-execution associations');
+  const filteredResults = _filterGranuleWriteFailures(
+    results,
+    'Failed writing some granule-execution associations',
+    failureIdentifiers
+  );
   log.debug('Completed upsert of granule-execution associations.');
   return filteredResults;
 };
@@ -1117,7 +1131,11 @@ const writeGranulesFromMessage = async ({
       });
     }
   ));
-  return _filterGranuleWriteFailures(results, 'Failed writing some granules to Postgres');
+  return _filterGranuleWriteFailures(
+    results,
+    'Failed writing some granules to Postgres',
+    granuleIds
+  );
 };
 
 /**
