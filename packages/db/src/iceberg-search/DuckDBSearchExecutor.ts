@@ -36,16 +36,16 @@ export function isRecoverableS3HttpError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
 
   const message = error.message;
-  const s3ParquetHttp400Pattern = new RegExp(
+  const s3Http400Pattern = new RegExp(
     [
-      'http get error on \'https?:\\/\\/[^\']*\\.s3\\.[^\']*amazonaws\\.com\\/[^\']*\\.parquet\'',
+      'http get error on \'https?:\\/\\/[^\']*\\.s3\\.[^\']*amazonaws\\.com\\/[^\']*\\.(parquet|avro|json)\'',
       ' \\(http 400\\)',
     ].join(''),
     'i'
   );
   return (
     // Intentionally strict: mirrors the observed DuckDB error text for S3 parquet GET HTTP 400.
-    s3ParquetHttp400Pattern.test(message)
+    s3Http400Pattern.test(message)
   );
 }
 
@@ -127,7 +127,11 @@ export async function executeDuckDBSearch(params: {
     } catch (error) {
       if (isCatalogError(error) || isRecoverableS3HttpError(error)) {
         log.warn('Recoverable DuckDB connection error detected; closing stale connection and retrying query once.', error);
-        pooledConnection.closeSync();
+        try {
+          pooledConnection.closeSync();
+        } catch (e) {
+          log.warn('Failed to close connection during recovery, proceeding anyway.', e);
+        }
         pooledConnection = await replaceDuckDbConnection();
         await runNativeQueries(pooledConnection);
       } else {
