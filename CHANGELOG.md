@@ -22,6 +22,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Refactored `aws_s3_bucket_lifecycle_configuration` to support user-defined rules via Terraform variables.
   - Included configuration examples for `aws_s3_bucket_lifecycle_configuration` in the [documentation](https://nasa.github.io/cumulus/docs/configuration/lifecycle-policies).
 
+### Fixed
+
+- **CUMULUS-4844**
+  - Fixed `@cumulus/db` `BaseSearch.shouldEstimateRowcount()` to compare against SQL generated
+    by buildBasicQuery() instead of a hardcoded query string, ensuring accurate detection of table count queries.
+
 ## [v21.3.3] 2026-04-10
 
 - Upgraded package `lodash` to version 4.18.1.
