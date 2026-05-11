@@ -1,5 +1,6 @@
 import { DuckDBInstance, DuckDBConnection } from '@duckdb/node-api';
 import Logger from '@cumulus/logger';
+import noop from 'lodash/noop';
 
 const log = new Logger({ sender: '@cumulus/db/iceberg-connection' });
 
@@ -85,7 +86,9 @@ async function ensureFreshSecret(conn: DuckDBConnection): Promise<boolean> {
 
   secretRefreshPromise = (async () => {
     try {
-      await conn.run('CREATE OR REPLACE SECRET (TYPE S3, PROVIDER credential_chain);');
+      await conn.run(
+        'CREATE OR REPLACE SECRET (TYPE S3, PROVIDER credential_chain);'
+      );
       lastSecretRefresh = Date.now();
       log.info('DuckDB AWS Secret refreshed.');
       return true;
@@ -99,6 +102,22 @@ async function ensureFreshSecret(conn: DuckDBConnection): Promise<boolean> {
   })();
 
   return await secretRefreshPromise;
+}
+
+/**
+ * Pre-populate connection-level metadata and file/cache state for known views.
+ *
+ * @param conn
+ */
+async function populateConnectionCache(conn: PooledDuckDbConnection): Promise<void> {
+  for (const tableName of tableNames) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      await conn.run(`SELECT COUNT(*) FROM ${quoteIdent(tableName)};`);
+    } catch (error) {
+      log.warn(`Cache warmup skipped for table ${tableName}.`, error);
+    }
+  }
 }
 
 /**
@@ -177,6 +196,14 @@ async function configureConnection(conn: DuckDBConnection): Promise<void> {
         `ATTACH '${awsAccountId}' AS glue_iceberg (TYPE iceberg, ENDPOINT_TYPE 'glue');`
       );
       isGlueAttached = true;
+      if (wasRefreshed) {
+        // If we refreshed the secret and re-attached the catalog,
+        // we should re-warm the instance-wide cache using this connection
+        if (ENABLE_CACHE_WARMUP && isPoolCacheWarmupComplete) {
+          log.info('Re-warming instance-wide cache after secret refresh...');
+          populateConnectionCache(conn).catch(noop);
+        }
+      }
     } catch (e) {
       // If two connections try to ATTACH at the same time, one will fail with
       // "Database already exists". We check if it's there.
@@ -222,20 +249,8 @@ async function getConnection(): Promise<PooledDuckDbConnection> {
   return pooledConn;
 }
 
-/**
- * Pre-populate connection-level metadata and file/cache state for known views.
- *
- * @param conn
- */
-async function populateConnectionCache(conn: PooledDuckDbConnection): Promise<void> {
-  for (const tableName of tableNames) {
-    try {
-      // eslint-disable-next-line no-await-in-loop
-      await conn.run(`SELECT COUNT(*) FROM ${quoteIdent(tableName)};`);
-    } catch (error) {
-      log.warn(`Cache warmup skipped for table ${tableName}.`, error);
-    }
-  }
+export function forceSecretRefresh(): void {
+  lastSecretRefresh = 0;
 }
 
 /**
@@ -243,16 +258,12 @@ async function populateConnectionCache(conn: PooledDuckDbConnection): Promise<vo
  */
 export async function replaceDuckDbConnection(): Promise<PooledDuckDbConnection> {
   const newConn = await getConnection();
-  if (ENABLE_CACHE_WARMUP) {
-    populateConnectionCache(newConn).catch((error: unknown) => {
-      log.warn('Background cache warmup for connection failed.', error);
-    });
-  }
   return newConn;
 }
 
 /**
- * Start one-time background cache population for currently pooled connections.
+ * Start one-time background cache population using a single connection.
+ * Since DuckDB caches are instance-wide, doing this once benefits the whole pool.
  */
 function startPoolCacheWarmup(): void {
   if (!ENABLE_CACHE_WARMUP) {
@@ -265,31 +276,18 @@ function startPoolCacheWarmup(): void {
 
   poolCacheWarmupPromise = (async () => {
     try {
-      log.info('Starting background cache warmup for pooled DuckDB connections...');
-      await Promise.all(connectionPool.map((conn) => populateConnectionCache(conn)));
-      log.info('Background cache warmup for pooled connections complete.');
+      log.info('Starting background cache warmup using a single DuckDB connection...');
+      // Only use the first connection, as cache is instance-wide
+      if (connectionPool.length > 0) {
+        await populateConnectionCache(connectionPool[0]);
+      }
+      log.info('Background cache warmup complete.');
+    } catch (e) {
+      log.warn('Background cache warmup failed', e);
     } finally {
       isPoolCacheWarmupComplete = true;
     }
-  })().catch((error) => {
-    log.warn('Background cache warmup encountered an error. Continuing without blocking startup.', error);
-  });
-}
-
-/**
- * Start background cache warmup for a single connection.
- *
- * @param conn
- */
-function startConnectionCacheWarmup(conn: PooledDuckDbConnection): void {
-  if (!ENABLE_CACHE_WARMUP) {
-    return;
-  }
-
-  const cacheWarmupPromise = populateConnectionCache(conn);
-  cacheWarmupPromise.catch((error) => {
-    log.warn('Background cache warmup for connection failed.', error);
-  });
+  })();
 }
 
 /**
@@ -315,8 +313,6 @@ async function performConnectionRefresh(): Promise<void> {
     }
   }
 
-  const warmupPromises: Promise<void>[] = [];
-
   const neededReplacements = MAX_POOL_SIZE - connectionPool.length - inUseConnections.size;
   if (neededReplacements > 0) {
     log.debug(`Refilling pool: creating ${neededReplacements} new connections...`);
@@ -324,13 +320,6 @@ async function performConnectionRefresh(): Promise<void> {
       try {
         // eslint-disable-next-line no-await-in-loop
         const newConn = await getConnection();
-        if (ENABLE_CACHE_WARMUP) {
-          warmupPromises.push(
-            populateConnectionCache(newConn).catch((error: unknown) => {
-              log.warn('Background cache warmup for connection failed.', error);
-            })
-          );
-        }
         connectionPool.push(newConn);
         replacementSuccessCount += 1;
       } catch (e) {
@@ -339,7 +328,6 @@ async function performConnectionRefresh(): Promise<void> {
     }
   }
 
-  await Promise.all(warmupPromises);
   log.info(
     'Background pool check complete. '
     + `${staleRemovedCount} stale removed, ${replacementSuccessCount} explicitly refilled, `
@@ -435,7 +423,6 @@ export async function acquireDuckDbConnection(): Promise<PooledDuckDbConnection>
   }
 
   const conn = await getConnection();
-  startConnectionCacheWarmup(conn);
   inUseConnections.add(conn);
   return conn;
 }
