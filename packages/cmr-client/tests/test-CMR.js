@@ -306,7 +306,7 @@ test.serial('refreshLaunchpadToken updates the CMR token with getValidLaunchpadT
 });
 
 test.serial('refreshLaunchpadToken throws when passphrase, api, or certificate is missing', async (t) => {
-  const stub = sinon.stub(launchpad, 'getValidLaunchpadToken').resolves('failure');
+  const stub = sinon.stub(launchpad, 'getValidLaunchpadToken').resolves('Error');
   t.teardown(() => stub.restore());
 
   const cmr = new CMR({

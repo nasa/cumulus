@@ -116,7 +116,7 @@ test.serial('waitForLockFileRelease throws a timeout error when the lock file pe
   );
 });
 
-test.serial('generateLaunchpadToken issues a fresh token even when a cached token exists', async (t) => {
+test.serial('generateLaunchpadToken issues a valid token even when a cached token exists', async (t) => {
   const { Bucket, Key } = launchpadTokenBucketKey();
   t.teardown(() => deleteS3Object(Bucket, Key));
 
@@ -124,32 +124,32 @@ test.serial('generateLaunchpadToken issues a fresh token even when a cached toke
     Bucket,
     Key,
     Body: JSON.stringify({
-      sm_token: 'stale-token',
+      sm_token: 'invalid-token',
       session_maxtimeout: 3600,
       session_starttime: Date.now() / 1000,
     }),
   });
 
-  const fresh = randomString();
+  const validToken = randomString();
   nock('https://www.example.com:12345')
     .get('/api/gettoken')
-    .reply(200, JSON.stringify({ ...getTokenResponse, sm_token: fresh }));
+    .reply(200, JSON.stringify({ ...getTokenResponse, sm_token: validToken }));
 
   const result = await generateLaunchpadToken(config);
-  t.is(result, fresh);
+  t.is(result, validToken);
 });
 
 test.serial('generateLaunchpadToken handles NoSuchKey when no token file exists', async (t) => {
   const { Bucket, Key } = launchpadTokenBucketKey();
   t.teardown(() => deleteS3Object(Bucket, Key));
 
-  const fresh = randomString();
+  const validToken = randomString();
   nock('https://www.example.com:12345')
     .get('/api/gettoken')
-    .reply(200, JSON.stringify({ ...getTokenResponse, sm_token: fresh }));
+    .reply(200, JSON.stringify({ ...getTokenResponse, sm_token: validToken }));
 
   const result = await generateLaunchpadToken(config);
-  t.is(result, fresh);
+  t.is(result, validToken);
 });
 
 test.serial('generateLaunchpadToken rethrows non-NoSuchKey/NotFound errors from S3 delete', async (t) => {

@@ -55,7 +55,9 @@ async function waitForLockFileRelease(
       }
       throw error;
     }
-    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    if (attempt < retries - 1) {
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    }
   }
   /* eslint-enable no-await-in-loop */
   throw new Error('Timed out waiting for launchpad token lock file to be released');
@@ -71,8 +73,8 @@ async function removeLockFile() {
 }
 
 /**
- * Create a launchpad token lock file in S3, lets other processes know that a new launchpad token is
- * actively being created by another process
+ * Create a launchpad token lock file in S3, to let other processes know that a new launchpad token
+ * is actively being created by another process
  *
  * @returns {Promise<Object>} - S3 put response
  */

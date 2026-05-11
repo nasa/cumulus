@@ -76,8 +76,8 @@ export interface CMRConstructorParams {
  */
 export class CMR {
   private static instance: CMR;
-  // the variable below is to ensure that if the token is refreshed that all
-  // concurrent workers do not call the refreshTokenLambda
+  // the variable below is to ensure that if the token is in the process of
+  // being refreshed, that other concurrent workers do not attempt to do so as well
   private refreshPromise?: Promise<void>;
 
   clientId!: string;
@@ -184,10 +184,10 @@ export class CMR {
   }
 
   /**
-   * Refreshes the launchpad token due to authentication failures with launchpad/CMR. This function
+   * Refreshes the launchpad token due to authentication failures with launchpad. This function
    * calls getValidLaunchpadToken which creates a lock file in S3 at the token's location, to tell
    * other processes that a token recreation is in progress, fetches a new token from launchpad,
-   * stores it as a part of the CMR singleton class, and then use that one
+   * stores it as a part of the CMR singleton class, and then uses that one for calls
    *
    * @returns {Promise.<void>} refresh promise
    */

@@ -75,7 +75,7 @@ const cmrPassword = randomId('cmr-password');
 
 // for testing the launchpad 401 auth failure retry logic
 async function setupInvalidTokenForRetry(t) {
-  const invalidToken = 'stale-token';
+  const invalidToken = 'invalid-token';
   const validToken = randomString();
 
   await createBucket(process.env.system_bucket);
@@ -1590,7 +1590,7 @@ test.serial('publishECHO10XML2CMR refreshes an invalid launchpad token on a 401 
   ingestStub.onSecondCall().resolves({ result: { 'concept-id': conceptId } });
   t.teardown(() => ingestStub.restore());
 
-  // since its a singleton now we cant have the other instances messing with it here
+  // since its a singleton now we can't have the other instances messing with it here
   CMR.resetInstance();
   t.teardown(() => CMR.resetInstance());
 
@@ -1652,7 +1652,7 @@ test.serial('publishUMMGJSON2CMR refreshes an invalid launchpad token on a 401 a
   ingestUMMStub.onSecondCall().resolves({ 'concept-id': conceptId });
   t.teardown(() => ingestUMMStub.restore());
 
-  // since its a singleton now we cant have the other instances messing with it here
+  // since its a singleton now we can't have the other instances messing with it here
   CMR.resetInstance();
   t.teardown(() => CMR.resetInstance());
 

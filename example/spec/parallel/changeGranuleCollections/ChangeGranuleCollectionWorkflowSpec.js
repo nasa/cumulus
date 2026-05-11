@@ -74,7 +74,6 @@ describe('The ChangeGranuleCollections workflow', () => {
   let cmrClient;
   beforeAll(async () => {
     config = await loadConfig();
-    CMR.resetInstance();
     cmrClient = await getCMRClient(config);
     stackName = config.stackName;
     const testId = createTimestampedTestId(stackName, 'changeGranuleCollectionWorkflow');
