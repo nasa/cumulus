@@ -66,6 +66,24 @@ let lastSecretRefresh = 0;
 const REFRESH_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
 let secretRefreshPromise: Promise<boolean> | undefined;
 let isGlueAttached = false;
+let glueCatalogMaintenanceChain: Promise<void> = Promise.resolve();
+
+/**
+ * Serializes any operation that mutates the shared Glue catalog attachment
+ * state.
+ *
+ * DuckDB's Iceberg catalog is instance-wide, so concurrent detach/attach
+ * cycles can race with one another and with queries that are already using the
+ * catalog. This helper makes sure only one maintenance operation runs at a
+ * time.
+ *
+ * @param operation - catalog maintenance work to run exclusively
+ */
+async function withGlueCatalogMaintenance<T>(operation: () => Promise<T>): Promise<T> {
+  const run = glueCatalogMaintenanceChain.then(operation, operation);
+  glueCatalogMaintenanceChain = run.then(() => undefined, () => undefined);
+  return await run;
+}
 
 /**
  * Refreshes the DuckDB AWS secret only when the refresh interval has elapsed.
@@ -277,12 +295,27 @@ async function ensureGlueCatalog(
     return;
   }
 
-  if (isGlueAttached) {
-    log.info('Refreshing catalog attachment due to credential rotation.');
-    await detachGlueCatalog(conn);
-  }
+  await withGlueCatalogMaintenance(async () => {
+    if (!wasRefreshed && isGlueAttached) {
+      return;
+    }
 
-  await attachGlueCatalog(conn, awsAccountId);
+    const catalogPresent = await isGlueCatalogPresent(conn);
+
+    if (wasRefreshed && catalogPresent) {
+      log.info('Refreshing catalog attachment due to credential rotation.');
+      await detachGlueCatalog(conn);
+      await attachGlueCatalog(conn, awsAccountId);
+      return;
+    }
+
+    if (!catalogPresent) {
+      await attachGlueCatalog(conn, awsAccountId);
+      return;
+    }
+
+    isGlueAttached = true;
+  });
   warmInstanceCacheAfterRefresh(conn, wasRefreshed);
 }
 
@@ -314,9 +347,22 @@ async function ensureGlueSchemaAccessible(
     await useGlueSchema(conn, glueSchema);
   } catch (error) {
     log.warn('USE schema failed. Forcing a clean re-attach.', error);
-    await detachGlueCatalog(conn);
-    await attachGlueCatalog(conn, awsAccountId);
-    await useGlueSchema(conn, glueSchema);
+    await withGlueCatalogMaintenance(async () => {
+      const catalogPresent = await isGlueCatalogPresent(conn);
+
+      if (!catalogPresent) {
+        await attachGlueCatalog(conn, awsAccountId);
+      }
+
+      try {
+        await useGlueSchema(conn, glueSchema);
+      } catch (retryError) {
+        log.warn('Retrying USE schema after attach-only recovery failed; performing a clean re-attach.', retryError);
+        await detachGlueCatalog(conn);
+        await attachGlueCatalog(conn, awsAccountId);
+        await useGlueSchema(conn, glueSchema);
+      }
+    });
   }
 }
 
@@ -493,6 +539,25 @@ function startBackgroundConnectionRefresh(): void {
 }
 
 /**
+ * Closes all active and idle DuckDB connections.
+ *
+ * @param context - The context in which the connections are being closed (for logging).
+ */
+function closeAllConnections(context: string): void {
+  const allConnections = [...connectionPool, ...inUseConnections];
+  connectionPool.length = 0;
+  inUseConnections.clear();
+
+  for (const conn of allConnections) {
+    try {
+      conn.closeSync();
+    } catch (error) {
+      log.warn(`Error closing DuckDB connection during ${context}`, error);
+    }
+  }
+}
+
+/**
  * Initialize the DuckDB Instance and load required extensions.
  */
 export async function initializeDuckDb(): Promise<void> {
@@ -520,6 +585,7 @@ export async function initializeDuckDb(): Promise<void> {
       log.info(`DuckDB initialized with a pool of ${connectionPool.length}/${MAX_POOL_SIZE} connections.`);
     } catch (error) {
       log.error('Failed to initialize DuckDB:', error);
+      closeAllConnections('initialization failure');
       instance = undefined;
       initPromise = undefined;
       throw error;
@@ -576,6 +642,7 @@ export function setDuckDbStateForTesting(params: {
   poolCacheWarmupPromise = undefined;
   isPoolCacheWarmupComplete = true;
   isGlueAttached = true;
+  glueCatalogMaintenanceChain = Promise.resolve();
   connectionPool.length = 0;
   connectionPool.push(...params.pooledConnections);
   inUseConnections.clear();
@@ -635,12 +702,12 @@ export async function destroyDuckDb(): Promise<void> {
     clearInterval(backgroundRefreshInterval);
     backgroundRefreshInterval = undefined;
   }
-  connectionPool.length = 0;
-  inUseConnections.clear();
+  closeAllConnections('shutdown');
   instance = undefined;
   initPromise = undefined;
   dbVersionCache = undefined;
   poolCacheWarmupPromise = undefined;
   isPoolCacheWarmupComplete = false;
   isGlueAttached = false;
+  glueCatalogMaintenanceChain = Promise.resolve();
 }
