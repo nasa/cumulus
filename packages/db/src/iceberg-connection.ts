@@ -66,6 +66,7 @@ let lastSecretRefresh = 0;
 const REFRESH_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
 let secretRefreshPromise: Promise<boolean> | undefined;
 let isGlueAttached = false;
+let lastCatalogRefreshForSecretAt = 0;
 let glueCatalogMaintenanceChain: Promise<void> = Promise.resolve();
 
 /**
@@ -295,28 +296,49 @@ async function ensureGlueCatalog(
     return;
   }
 
+  let didRefreshCatalogForCurrentSecret = false;
+
   await withGlueCatalogMaintenance(async () => {
-    if (!wasRefreshed && isGlueAttached) {
+    const secretRefreshTime = lastSecretRefresh;
+    const needsCatalogRefreshForCurrentSecret = wasRefreshed
+      && secretRefreshTime > lastCatalogRefreshForSecretAt;
+
+    if (!needsCatalogRefreshForCurrentSecret && isGlueAttached) {
       return;
     }
 
     const catalogPresent = await isGlueCatalogPresent(conn);
 
-    if (wasRefreshed && catalogPresent) {
+    if (needsCatalogRefreshForCurrentSecret && catalogPresent) {
       log.info('Refreshing catalog attachment due to credential rotation.');
       await detachGlueCatalog(conn);
       await attachGlueCatalog(conn, awsAccountId);
+
+      if (isGlueAttached) {
+        lastCatalogRefreshForSecretAt = secretRefreshTime;
+        didRefreshCatalogForCurrentSecret = true;
+      }
       return;
     }
 
     if (!catalogPresent) {
       await attachGlueCatalog(conn, awsAccountId);
+
+      if (isGlueAttached && needsCatalogRefreshForCurrentSecret) {
+        lastCatalogRefreshForSecretAt = secretRefreshTime;
+        didRefreshCatalogForCurrentSecret = true;
+      }
       return;
     }
 
     isGlueAttached = true;
+
+    if (needsCatalogRefreshForCurrentSecret) {
+      lastCatalogRefreshForSecretAt = secretRefreshTime;
+    }
   });
-  warmInstanceCacheAfterRefresh(conn, wasRefreshed);
+
+  warmInstanceCacheAfterRefresh(conn, didRefreshCatalogForCurrentSecret);
 }
 
 /**
@@ -642,6 +664,7 @@ export function setDuckDbStateForTesting(params: {
   poolCacheWarmupPromise = undefined;
   isPoolCacheWarmupComplete = true;
   isGlueAttached = true;
+  lastCatalogRefreshForSecretAt = lastSecretRefresh;
   glueCatalogMaintenanceChain = Promise.resolve();
   connectionPool.length = 0;
   connectionPool.push(...params.pooledConnections);
@@ -709,5 +732,6 @@ export async function destroyDuckDb(): Promise<void> {
   poolCacheWarmupPromise = undefined;
   isPoolCacheWarmupComplete = false;
   isGlueAttached = false;
+  lastCatalogRefreshForSecretAt = 0;
   glueCatalogMaintenanceChain = Promise.resolve();
 }

@@ -19,6 +19,16 @@ test('isCatalogError returns false for non-catalog error', (t) => {
   t.false(isCatalogError(error));
 });
 
+test('isCatalogError returns true for Binder missing catalog error', (t) => {
+  const error = new Error('Binder Error: Catalog "glue_iceberg" does not exist!');
+  t.true(isCatalogError(error));
+});
+
+test('isCatalogError returns true for Binder missing catalog error with single quotes', (t) => {
+  const error = new Error('Binder Error: Catalog \'glue_iceberg\' does not exist!');
+  t.true(isCatalogError(error));
+});
+
 test('isCatalogError returns false for non-Error values', (t) => {
   t.false(isCatalogError({ message: 'Catalog Error: Table with name granules does not exist!' }));
   t.false(isCatalogError(undefined));

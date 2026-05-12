@@ -10,18 +10,24 @@ import { acquireDuckDbConnection, releaseDuckDbConnection, replaceDuckDbConnecti
 const log = new Logger({ sender: '@cumulus/db/DuckDBSearchExecutor' });
 
 /**
- * Returns true when the error is DuckDB's specific Catalog Error for a missing table,
- * e.g. "Catalog Error: Table with name granules does not exist!"
+ * Returns true when the error is a recoverable DuckDB catalog-related miss,
+ * including missing-table Catalog errors and Binder missing-catalog errors
+ * observed during transient catalog re-attachment windows.
  *
  * @param error - value to evaluate
- * @returns true when the error matches DuckDB missing-table catalog error
+ * @returns true when the error matches a recoverable catalog miss pattern
  */
 export function isCatalogError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
 
+  const missingTableCatalogPattern
+    = /^catalog error:\s*table with name\s+["']?[\w.-]+["']?\s+does not exist!/i;
+  const missingCatalogBinderPattern
+    = /^binder error:\s*catalog\s+["']?[\w.-]+["']?\s+does not exist!/i;
+
   return (
-    /^catalog error:\s*table with name\s+["']?[\w.-]+["']?\s+does not exist!/i
-      .test(error.message)
+    missingTableCatalogPattern.test(error.message)
+    || missingCatalogBinderPattern.test(error.message)
   );
 }
 
