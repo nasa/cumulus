@@ -1194,3 +1194,48 @@ test.serial('GranuleSearch supports existence checks and sorting for nested JSON
   t.is(meta.count, 1);
   t.is(results?.length, 1);
 });
+
+test('GranuleSearch prepends collection_cumulus_id to sort order for single collection queries', (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    collectionId: 'abc___V01',
+    sort_key: ['-updatedAt'],
+  };
+
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const { searchQuery } = dbSearch.buildSearch(knex);
+  const sql = searchQuery.toSQL().sql;
+
+  t.true(sql.includes('order by "granules"."collection_cumulus_id" asc, "granules"."updated_at" desc'));
+});
+
+test('GranuleSearch prepends collection_cumulus_id to sort order for multi-collection queries', (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    collectionId__in: ['abc___V01', 'efg___002'].join(','),
+    sort_key: ['-updatedAt'],
+  };
+
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const { searchQuery } = dbSearch.buildSearch(knex);
+  const sql = searchQuery.toSQL().sql;
+
+  t.true(sql.includes('order by "granules"."collection_cumulus_id" asc, "granules"."updated_at" desc'));
+});
+
+test('GranuleSearch does not prepend collection_cumulus_id to sort order when query is not collection-filtered', (t) => {
+  const { knex } = t.context;
+
+  const queryStringParameters = {
+    sort_key: ['-updatedAt'],
+  };
+
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+
+  const { searchQuery } = dbSearch.buildSearch(knex);
+  const sql = searchQuery.toSQL().sql;
+
+  t.false(sql.includes('"granules"."collection_cumulus_id" asc'));
+
+  t.true(sql.includes('order by "granules"."updated_at" desc'));
+});

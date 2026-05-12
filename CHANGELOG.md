@@ -46,6 +46,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Implemented partitioned schema for the consolidated database tables.
 - **CUMULUS-4804**
   - Updated application logic to ensure compatibility with partitioned database schemas.
+- **CUMULUS-4839**
+  - Updated `@cumulus/db/search` `GranuleSearch` query builder to prepend the partition key
+    `collection_cumulus_id` to sort orders when collection filters are present.
 
 ### Changed
 - **CUMULUS-4789** Update Docusaurus to latest version - 3.10

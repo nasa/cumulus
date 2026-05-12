@@ -24,6 +24,8 @@ export interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
   providerName?: string,
 }
 
+const collectionCumulusIdColumn = 'collection_cumulus_id';
+
 /**
  * Class to build and execute db search query for granules
  */
@@ -105,6 +107,45 @@ export class GranuleSearch extends BaseSearch {
     if (prefix) {
       [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.granule_id`, `${prefix}%`));
     }
+  }
+
+  /**
+   * Build queries for sort keys and fields
+   *
+   * Extends BaseSearch sorting behavior by optionally prepending the
+   * `collection_cumulus_id` partition key
+   *
+   * @param params
+   * @param params.searchQuery - query builder for search
+   * @param [params.dbQueryParameters] - db query parameters
+   */
+  protected buildSortQuery(params: {
+    searchQuery: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const { dbQueryParameters } = params;
+    const sort = dbQueryParameters?.sort || this.dbQueryParameters.sort;
+    const finalSort = [...(sort || [])];
+
+    // when querying collection-scoped data, prepend the partition key to the sort order
+    // to improve partition pruning and enable more efficient index/partition scans
+    if (this.searchCollection()
+      && finalSort.length > 0
+      && !finalSort.some(({ column }) => column === collectionCumulusIdColumn)) {
+      finalSort.unshift({
+        column: collectionCumulusIdColumn,
+        order: 'asc',
+      });
+    }
+
+    super.buildSortQuery({
+      ...params,
+      dbQueryParameters: {
+        ...dbQueryParameters,
+        ...this.dbQueryParameters,
+        sort: finalSort,
+      },
+    });
   }
 
   /**
