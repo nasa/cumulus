@@ -10,7 +10,6 @@
 * Anthony Lukach
 * Anthony Ortega
 * Bradley J. Hazuka
-* Brandon Lokey
 * Brian Tennity
 * Bryan Wexler
 * Charles Huang

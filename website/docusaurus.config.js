@@ -10,12 +10,7 @@ function versionOptions() {
 }
 
 module.exports = {
-  markdown: {
-    format: 'detect',
-    hooks: {
-      onBrokenMarkdownLinks: 'log',
-    },
-  },
+  onBrokenMarkdownLinks: 'log',
   title: 'Cumulus Documentation',
   tagline: 'This is a default tagline',
   url: 'https://nasa.github.io',
