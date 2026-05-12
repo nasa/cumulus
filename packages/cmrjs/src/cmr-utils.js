@@ -1006,10 +1006,6 @@ async function getCmrSettings(cmrConfig = {}) {
   };
 
   if (oauthProvider === 'launchpad') {
-    // checking for lock file and waiting for its release if it exists in case a new token
-    // is being created by another CMR process due to launchpad auth failures
-    await launchpad.waitForLockFileRelease();
-
     const launchpadPassphraseSecretName = cmrConfig.passphraseSecretName
       || process.env.launchpad_passphrase_secret_name;
     const passphrase = await getSecretString(

@@ -153,6 +153,9 @@ async function getValidLaunchpadTokenFromS3(): Promise<string | undefined> {
  * @alias module:launchpad-auth
  */
 export async function getLaunchpadToken(params: LaunchpadTokenParams): Promise<string> {
+  // checking for token lock file and waiting for its release if it exists in case
+  // a new token is being created by another process
+  await waitForLockFileRelease();
   let token = await getValidLaunchpadTokenFromS3();
 
   if (!token) {
