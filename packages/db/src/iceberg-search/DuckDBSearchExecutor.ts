@@ -128,12 +128,7 @@ export async function executeDuckDBSearch(params: {
       if (isCatalogError(error) || isRecoverableS3HttpError(error)) {
         log.warn('Recoverable DuckDB connection error detected; closing stale connection and retrying query once.', error);
         forceSecretRefresh();
-        try {
-          pooledConnection.closeSync();
-        } catch (e) {
-          log.warn('Failed to close connection during recovery, proceeding anyway.', e);
-        }
-        pooledConnection = await replaceDuckDbConnection();
+        pooledConnection = await replaceDuckDbConnection(pooledConnection);
         await runNativeQueries(pooledConnection);
       } else {
         throw error;
