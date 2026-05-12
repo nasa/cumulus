@@ -4481,7 +4481,10 @@ test.serial('updateGranuleStatusToQueued() updates granule status in PostgreSQL 
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
   t.is(Messages.length, 2);
-  t.deepEqual(publishedMessage.record, translatedPgGranule);
+  t.deepEqual(publishedMessage.record, {
+    ...translatedPgGranule,
+    cmrProvider: 'provider'
+  });
   t.is(publishedMessage.event, 'Update');
 });
 
@@ -4572,7 +4575,10 @@ test.serial('updateGranuleStatusToQueued() does not publish a SNS message if wri
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
   t.is(Messages.length, 1);
-  t.deepEqual(publishedMessage.record, apiGranule);
+  t.deepEqual(publishedMessage.record, {
+    ...apiGranule,
+    'cmrProvider': 'provider'
+  });
   t.is(publishedMessage.event, 'Create');
 });
 
@@ -4621,7 +4627,10 @@ test.serial('_writeGranule() successfully publishes an SNS message', async (t) =
   const snsMessageBody = JSON.parse(Messages[0].Body);
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
-  t.deepEqual(publishedMessage.record, translatedGranule);
+  t.deepEqual(publishedMessage.record, {
+    ...translatedGranule,
+    cmrProvider: 'provider'
+  });
   t.is(publishedMessage.event, 'Update');
 });
 

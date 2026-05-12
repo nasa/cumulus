@@ -293,7 +293,7 @@ const _publishPostgresGranuleUpdateToSns = async ({
   });
   const collectionPgModel = new CollectionPgModel();
   const metricsGranule = {
-    cmr_provider: await collectionPgModel.getCmrProvider(knex, pgGranule.collection_cumulus_id),
+    cmrProvider: await collectionPgModel.getCmrProvider(knex, pgGranule.collection_cumulus_id),
     ...translatedGranule,
   }
   await publishGranuleSnsMessageByEventType(metricsGranule, snsEventType);
