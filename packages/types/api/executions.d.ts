@@ -46,3 +46,7 @@ export interface ApiExecution {
   updatedAt?: number | null,
   archived: boolean,
 }
+
+export interface MetricsExecution extends ApiExecution {
+  cmr_provider: string,
+}

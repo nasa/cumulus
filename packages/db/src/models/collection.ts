@@ -29,6 +29,18 @@ class CollectionPgModel extends BasePgModel<PostgresCollection, PostgresCollecti
       .merge()
       .returning('*');
   }
+  getCmrProvider(
+    knexOrTransaction: Knex | Knex.Transaction,
+    collectionCumulusId: number | null | undefined
+  ) {
+    if (collectionCumulusId === null) {
+      return "";
+    }
+    return super.get(
+      knexOrTransaction,
+      {cumulus_id: collectionCumulusId}
+    )
+  }
 }
 
 export { CollectionPgModel };
