@@ -1,9 +1,0 @@
-stage = "sit"
-prefix = "npp"
-lambda_security_group_ids = ["sg-06b57c3539295b6fd"]
-lambda_subnet_ids = ["subnet-05f97d83f6d3e47fc", "subnet-006462bcf62042ed2"]
-resource_identifier = "nptest"
-submit_to_gibs = "true"
-system_bucket = "ppilone-internal"
-aws_profile = "sandbox-4787"
-region = "us-east-1"
