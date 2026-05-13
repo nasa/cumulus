@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v21.3.4] 2026-05-12
+
 ### Changed
 
 - **CUMULUS-4789**
@@ -24,6 +26,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **Security Vulnerabilities**
+  - Upgraded package `uuid` to version ^11.1.1.
 - **CUMULUS-4844**
   - Fixed `@cumulus/db` `BaseSearch.shouldEstimateRowcount()` to compare against SQL generated
     by buildBasicQuery() instead of a hardcoded query string, ensuring accurate detection of table count queries.
@@ -9657,7 +9661,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v21.3.3...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v21.3.4...HEAD
+[v21.3.4]: https://github.com/nasa/cumulus/compare/v21.3.3...v21.3.4
 [v21.3.3]: https://github.com/nasa/cumulus/compare/v21.3.2...v21.3.3
 [v21.3.2]: https://github.com/nasa/cumulus/compare/v21.3.1...v21.3.2
 [v21.3.1]: https://github.com/nasa/cumulus/compare/v21.3.0...v21.3.1

@@ -42,7 +42,6 @@
 * Michael Dorfman
 * Mike Dorfman
 * Naga Nages
-* Nagavenkata Nageswaran
 * Nate Pauzenga
 * Pat Cappelaere
 * Patrick Quinn
