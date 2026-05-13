@@ -110,7 +110,7 @@ data "aws_iam_policy_document" "bignbit_lambda_role_additional_policy" {
       "kms:GenerateDataKey"
     ]
     resources = [
-      "arn:aws:kms:${var.region}:665503794793:key/5c7cb79a-fc0a-41f6-97cb-2dd5df504f7e" # cumulus-uat-secrets
+      var.kms_bignbit_arn
     ]
   }
 }

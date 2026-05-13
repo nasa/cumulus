@@ -59,3 +59,8 @@ variable "bignbit_edl_password" {
   description = "Earthdata Login password credential"
   type        = string
 }
+
+variable "kms_bignbit_arn" {
+  description = "KMS ARN for BigNBit"
+  type        = string
+}
