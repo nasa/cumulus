@@ -18,7 +18,7 @@ resource "aws_sqs_queue" "mock_gibs_queue" {
   sqs_managed_sse_enabled   = true
 }
 
-// TODO unsure about these locals
+# TODO: CUMULUS-4785 should address these locals (make ENVs/create new fifo queue/etc. as needed)
 locals {
   # The GIBS account and queue information can be found here: https://wiki.earthdata.nasa.gov/x/i4GEHQ
   bignbit_gibs_region     = var.submit_to_gibs ? "us-east-1" : "us-west-2"
