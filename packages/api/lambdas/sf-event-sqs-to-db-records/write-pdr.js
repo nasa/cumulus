@@ -124,7 +124,7 @@ const writePdr = async ({
   const translatedPdr = await translatePostgresPdrToApiPdr(pgPdr, knex);
   const collectionPgModel = new CollectionPgModel();
   const metricsPdr = {
-    cmr_provider: collectionPgModel.getCmrProvider(knex, pgPdr.collection_cumulus_id),
+    cmrProvider: await collectionPgModel.getCmrProvider(knex, pgPdr.collection_cumulus_id),
     ...translatedPdr
   }
 

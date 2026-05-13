@@ -192,7 +192,7 @@ const _writeExecutionAndPublishSnsMessage = async ({
   );
   const collectionPgModel = new CollectionPgModel()
   const metricsExecution = {
-    cmr_provider: collectionPgModel.getCmrProvider(knex, postgresRecord.collection_cumulus_id),
+    cmrProvider: await collectionPgModel.getCmrProvider(knex, postgresRecord.collection_cumulus_id),
     ...translatedExecution
   }
   await publishExecutionSnsMessage(metricsExecution);

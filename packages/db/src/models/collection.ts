@@ -33,7 +33,7 @@ class CollectionPgModel extends BasePgModel<PostgresCollection, PostgresCollecti
     knexOrTransaction: Knex | Knex.Transaction,
     collectionCumulusId: number | null | undefined
   ) {
-    if (collectionCumulusId === null) {
+    if (!collectionCumulusId) {
       return "";
     }
     const collection = await super.get(
