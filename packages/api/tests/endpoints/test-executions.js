@@ -1227,7 +1227,10 @@ test.serial('POST /executions publishes message to SNS topic', async (t) => {
     knex
   );
 
-  t.deepEqual(executionRecord, translatedExecution);
+  t.deepEqual(executionRecord, {
+    cmrProvider: 'provider',
+    ...translatedExecution
+  });
 });
 
 test.serial('PUT /executions updates the record as expected in PostgreSQL', async (t) => {
@@ -1413,7 +1416,9 @@ test.serial('PUT /executions removes execution fields when nullified fields are 
     updatedPgRecord,
     t.context.knex
   );
-  t.deepEqual(translatedExecution, expectedApiRecord);
+  t.deepEqual(translatedExecution, {
+    ...expectedApiRecord
+  });
 });
 
 test.serial('PUT /executions throws error for arn mismatch between params and payload', async (t) => {
@@ -1576,6 +1581,7 @@ test.serial('PUT /executions publishes message to SNS topic', async (t) => {
   );
   t.deepEqual(executionRecord, {
     ...translatedExecution,
+    cmrProvider: 'provider',
     updatedAt: executionRecord.updatedAt,
   });
 });
