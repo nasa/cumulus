@@ -1239,3 +1239,77 @@ test('GranuleSearch does not prepend collection_cumulus_id to sort order when qu
 
   t.true(sql.includes('order by "granules"."updated_at" desc'));
 });
+
+test('GranuleSearch orders results by collection_cumulus_id first, then other fields for single-collection queries', async (t) => {
+  const { knex } = t.context;
+
+  const queryStringParameters = {
+    limit: 200,
+    collectionId: t.context.collectionId,
+    sort_key: ['-updatedAt'],
+  };
+
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+
+  t.is(response.meta.count, 50);
+  const results = response.results || [];
+  t.is(results.length, 50);
+
+  for (let i = 1; i < results.length; i += 1) {
+    const previous = results[i - 1];
+    const current = results[i];
+
+    t.is(current.collectionId, t.context.collectionId);
+
+    // verify ordering by updated_at desc
+    t.true(
+      new Date(previous.updatedAt).getTime()
+        >= new Date(current.updatedAt).getTime()
+    );
+  }
+});
+
+test('GranuleSearch orders results by collection_cumulus_id first, then other fields for multi-collection queries', async (t) => {
+  const { knex } = t.context;
+
+  const queryStringParameters = {
+    limit: 200,
+    collectionId__in: [
+      t.context.collectionId2,
+      t.context.collectionId,
+    ].join(','),
+    status: t.context.granuleSearchFields.status,
+    sort_key: ['-updatedAt'],
+  };
+
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+
+  const results = response.results || [];
+  t.is(results.length, 50);
+
+  for (let i = 1; i < results.length; i += 1) {
+    const previous = results[i - 1];
+    const current = results[i];
+
+    const sameCollection =
+      previous.collectionId === current.collectionId;
+
+    if (!sameCollection) {
+      // verify primary ordering by collection_cumulus_id.
+      // the API response does not expose collection_cumulus_id directly,
+      // so use the known insertion order from the test setup:
+      // t.context.collectionId was created before t.context.collectionId2,
+      // therefore its collection_cumulus_id should sort first.
+      t.true(previous.collectionId === t.context.collectionId);
+      t.true(current.collectionId === t.context.collectionId2);
+    } else {
+      // verify secondary ordering by updated_at desc within same collection
+      t.true(
+        new Date(previous.updatedAt).getTime()
+          >= new Date(current.updatedAt).getTime()
+      );
+    }
+  }
+});
