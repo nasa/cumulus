@@ -80,10 +80,9 @@
     "p-timeout": "^4.1.0",
     "p-wait-for": "^3.2.0",
     "pump": "^3.0.0",
-    "uuid": "^8.2.0"
+    "uuid": "^11.1.1"
   },
   "devDependencies": {
-    "@cumulus/test-data": "21.3.4",
-    "@types/uuid": "^8.0.0"
+    "@cumulus/test-data": "21.3.4"
   }
 }
