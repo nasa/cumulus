@@ -6,25 +6,22 @@
     "granuleDuplicates": {
       "type": "object",
       "additionalProperties": {
-        "type": "object",
-        "properties": {
-          "files": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "bucket",
-                "key"
-              ],
-              "properties": {
-                "bucket": {
-                  "description": "Bucket in-process file is being staged in in S3",
-                  "type": "string"
-                },
-                "key": {
-                  "description": "S3 Key for in-process file",
-                  "type": "string"
-                }
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "bucket",
+              "key"
+            ],
+            "properties": {
+              "bucket": {
+                "description": "Bucket in-process file is being staged in in S3",
+                "type": "string"
+              },
+              "key": {
+                "description": "S3 Key for in-process file",
+                "type": "string"
               }
             }
           }
