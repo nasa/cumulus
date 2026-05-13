@@ -128,6 +128,12 @@ variable "tea_internal_api_endpoint" {
   default     = null
 }
 
+variable "tea_distribution_url_per_cmr_provider" {
+  description = "Map of CMR provider short_name to TEA external endpoint URL. Used in consolidated deployments to route distribution URLs per Collection.cmrProvider. Falls back to tea_external_api_endpoint for any provider not listed."
+  type        = map(string)
+  default     = {}
+}
+
 variable "token_secret" {
   description = "A string value used for signing and verifying JSON Web Tokens (JWTs) issued by the archive API. Should be a 32-character string for security"
   type        = string
@@ -753,6 +759,6 @@ variable "iceberg_namespace" {
   default     = null
   validation {
     condition     = !var.deploy_iceberg_api || (var.iceberg_namespace != null && trimspace(var.iceberg_namespace) != "")
-      error_message = "iceberg_namespace must be set to a non-empty value when deploy_iceberg_api is true."
+    error_message = "iceberg_namespace must be set to a non-empty value when deploy_iceberg_api is true."
   }
 }

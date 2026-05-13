@@ -74,6 +74,12 @@ variable "distribution_url" {
   type = string
 }
 
+variable "distribution_url_per_cmr_provider" {
+  description = "Map of CMR provider short_name to distribution endpoint URL. Used in consolidated deployments to route distribution URLs per Collection.cmrProvider. Falls back to distribution_url for any provider not listed."
+  type        = map(string)
+  default     = {}
+}
+
 variable "dynamo_tables" {
   type = map(object({ name = string, arn = string }))
 }
