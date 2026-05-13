@@ -1,5 +1,7 @@
 # BigNBit (External Repo)
 
+BigNBit is a Cumulus module that can be installed as a post-ingest workflow to generate browse imagery via Harmony and then transfer that imagery to GIBS.
+
 This directory includes a Terraform module that fetches the BigNBit source from `https://github.com/podaac/bignbit/releases/download/0.4.1/bignbit-0.4.1-cumulus-tf.zip`.
 
 ## Deployment
