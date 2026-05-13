@@ -124,7 +124,7 @@ export class GranuleSearch extends BaseSearch {
     dbQueryParameters?: DbQueryParameters,
   }) {
     const { dbQueryParameters } = params;
-    const sort = dbQueryParameters?.sort || this.dbQueryParameters.sort;
+    const { sort } = dbQueryParameters || this.dbQueryParameters;
     const finalSort = [...(sort || [])];
 
     // when querying collection-scoped data, prepend the partition key to the sort order
@@ -141,8 +141,7 @@ export class GranuleSearch extends BaseSearch {
     super.buildSortQuery({
       ...params,
       dbQueryParameters: {
-        ...dbQueryParameters,
-        ...this.dbQueryParameters,
+        ...(dbQueryParameters || this.dbQueryParameters),
         sort: finalSort,
       },
     });
