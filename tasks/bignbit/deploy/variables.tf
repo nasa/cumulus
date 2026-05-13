@@ -49,3 +49,13 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "bignbit_edl_username" {
+  description = "Earthdata Login username credential"
+  type        = string
+}
+
+variable "bignbit_edl_password" {
+  description = "Earthdata Login password credential"
+  type        = string
+}

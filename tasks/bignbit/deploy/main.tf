@@ -37,7 +37,7 @@ resource "aws_s3_object" "bignbit_collection_config" {
 resource "aws_ssm_parameter" "bignbit_edl_username" {
   name        = "${var.prefix}-bignbit-${lower(var.resource_identifier)}-edl-username"
   type        = "SecureString"
-  value       = "CHANGEME"
+  value       = var.bignbit_edl_username
   description = "EDL username used by BigNBit when querying CMR"
   key_id      = aws_kms_key.bignbit_parameter_key.id
 
@@ -49,7 +49,7 @@ resource "aws_ssm_parameter" "bignbit_edl_username" {
 resource "aws_ssm_parameter" "bignbit_edl_password" {
   name        = "${var.prefix}-bignbit-${lower(var.resource_identifier)}-edl-password"
   type        = "SecureString"
-  value       = "CHANGEME"
+  value       = var.bignbit_edl_password
   description = "EDL password used by BigNBit when querying CMR"
   key_id      = aws_kms_key.bignbit_parameter_key.id
 
