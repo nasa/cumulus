@@ -5,7 +5,14 @@ import Logger from '@cumulus/logger';
 import { prepareBindings } from './duckdbHelpers';
 import { Meta } from '../search/BaseSearch';
 import { DbQueryParameters } from '../types/search';
-import { acquireDuckDbConnection, releaseDuckDbConnection, replaceDuckDbConnection, forceSecretRefresh, PooledDuckDbConnection } from '../iceberg-connection';
+import {
+  acquireDuckDbConnection,
+  releaseDuckDbConnection,
+  replaceDuckDbConnection,
+  forceSecretRefresh,
+  resetDuckDbInstance,
+  PooledDuckDbConnection,
+} from '../iceberg-connection';
 
 const log = new Logger({ sender: '@cumulus/db/DuckDBSearchExecutor' });
 
@@ -135,7 +142,22 @@ export async function executeDuckDBSearch(params: {
         log.warn('Recoverable DuckDB connection error detected; closing stale connection and retrying query once.', error);
         forceSecretRefresh();
         pooledConnection = await replaceDuckDbConnection(pooledConnection);
-        await runNativeQueries(pooledConnection);
+
+        try {
+          await runNativeQueries(pooledConnection);
+        } catch (retryError) {
+          // If S3 HTTP 400 persists even after connection retry, reset the entire
+          // DuckDB instance to clear instance-level caches that may be corrupted.
+          if (isRecoverableS3HttpError(retryError)) {
+            log.warn(
+              'Recoverable S3 error persisted after connection retry; '
+              + 'resetting DuckDB instance to clear corrupted instance-level caches.',
+              retryError
+            );
+            resetDuckDbInstance();
+          }
+          throw retryError;
+        }
       } else {
         throw error;
       }

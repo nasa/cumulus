@@ -14,6 +14,8 @@ let poolCacheWarmupPromise: Promise<void> | undefined;
 let isPoolCacheWarmupComplete = false;
 let backgroundRefreshInterval: NodeJS.Timeout | undefined;
 let refreshPoolPromise: Promise<void> | undefined;
+let healthCheckInterval: NodeJS.Timeout | undefined;
+let instanceNeedsReset = false;
 
 const connectionPool: PooledDuckDbConnection[] = [];
 const inUseConnections = new Set<PooledDuckDbConnection>();
@@ -22,6 +24,14 @@ const ENABLE_CACHE_WARMUP = process.env.DUCKDB_ENABLE_CACHE_WARMUP !== 'false';
 const STALE_CONNECTION_THRESHOLD_MS = 5 * 60 * 60 * 1000; // 5 hours
 const BACKGROUND_CHECK_INTERVAL_MS
   = Number(process.env.DUCKDB_POOL_CHECK_INTERVAL) || 10 * 60 * 1000; // 10 minutes
+const HEALTH_CHECK_INTERVAL_MS = Number(process.env.DUCKDB_HEALTH_CHECK_INTERVAL)
+  || 5 * 60 * 1000; // 5 minutes
+let lastSecretRefresh = 0;
+const REFRESH_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+let secretRefreshPromise: Promise<boolean> | undefined;
+let isGlueAttached = false;
+let lastCatalogRefreshForSecretAt = 0;
+let glueCatalogMaintenanceChain: Promise<void> = Promise.resolve();
 const tableNames = [
   'granules',
   'collections',
@@ -47,6 +57,153 @@ function quoteIdent(ident: string): string {
 }
 
 /**
+ * Checks if an error indicates persistent instance-level corruption.
+ * These are errors that indicate the entire instance's S3 access is broken,
+ * not just a transient issue with one query.
+ *
+ * @param error - the error to check
+ * @returns true if this error indicates instance-level corruption
+ */
+function isPersistentInstanceError(error: unknown): boolean {
+  if (!error) return false;
+  const msg = String(error).toLowerCase();
+  // S3 HTTP 400 that persists across multiple connections indicates instance corruption
+  return msg.includes('http 400') || msg.includes('http error 400');
+}
+
+/**
+ * Performs a lightweight health check to detect instance-level corruption.
+ * Runs a minimal Iceberg table probe and checks for persistent errors that
+ * would indicate the instance needs to be reset (e.g., corrupted S3 HTTP
+ * credential/cache state).
+ *
+ * This is intentionally kept simple to minimize resource impact.
+ */
+async function performHealthCheck(): Promise<void> {
+  if (!instance || instanceNeedsReset) {
+    return;
+  }
+
+  try {
+    // Try to acquire a connection without blocking (don't add to in-use set)
+    if (connectionPool.length === 0) {
+      log.debug('Health check skipped: no idle connections available');
+      return;
+    }
+
+    const testConn = connectionPool.pop();
+    if (!testConn) return;
+
+    try {
+      // Probe an Iceberg table so the check exercises catalog/S3 paths.
+      log.debug('Running instance health check against Iceberg metadata...');
+      await testConn.run('SELECT * FROM providers LIMIT 1;');
+      log.debug('Instance health check passed.');
+      connectionPool.push(testConn);
+    } catch (error) {
+      log.warn('Instance health check detected potential corruption:', error);
+      if (isPersistentInstanceError(error)) {
+        log.warn(
+          'Detected persistent S3 HTTP 400 error during health check. '
+          + 'Marking instance for reset on next in-flight query completion.'
+        );
+        instanceNeedsReset = true;
+        try {
+          testConn.closeSync();
+        } catch (closeError) {
+          log.warn('Error closing test connection', closeError);
+        }
+      } else {
+        // Return to pool if it's a transient error
+        connectionPool.push(testConn);
+      }
+    }
+  } catch (error) {
+    log.warn('Unexpected error during health check', error);
+  }
+}
+
+/**
+ * Starts periodic health checks to detect instance-level corruption proactively.
+ * If corruption is detected, stores a flag that the executor can use to trigger reset.
+ */
+function startHealthCheck(): void {
+  if (healthCheckInterval) return;
+
+  healthCheckInterval = setInterval(() => {
+    performHealthCheck().catch((error) => {
+      log.error('Error during background health check', error);
+    });
+  }, HEALTH_CHECK_INTERVAL_MS);
+
+  log.debug(`Started background health check (interval: ${HEALTH_CHECK_INTERVAL_MS}ms)`);
+}
+
+/**
+ * Stops the background health check.
+ */
+function stopHealthCheck(): void {
+  if (healthCheckInterval) {
+    clearInterval(healthCheckInterval);
+    healthCheckInterval = undefined;
+  }
+}
+
+/**
+ * Check if the instance has been marked for reset due to detected corruption.
+ * Used by the query executor to decide whether to trigger a full instance reset.
+ *
+ * @returns true if instance corruption was detected and reset is needed
+ */
+export function isInstanceResetNeeded(): boolean {
+  return instanceNeedsReset;
+}
+
+/**
+ * Safely reset the instance, only closing idle connections and leaving
+ * in-use connections to complete their queries naturally.
+ *
+ * @returns true if reset was performed, false if there are still in-use connections
+ */
+export function attemptGracefulInstanceReset(): boolean {
+  if (inUseConnections.size > 0) {
+    log.warn(
+      `Cannot perform instance reset yet: ${inUseConnections.size} in-use connections still active. `
+      + 'Will retry on next opportunity.'
+    );
+    return false;
+  }
+
+  log.warn(
+    'Performing graceful instance reset: closing idle connections and clearing caches. '
+    + 'Instance will be re-initialized on next connection request.'
+  );
+
+  // Close only idle connections
+  for (const conn of connectionPool) {
+    try {
+      conn.closeSync();
+    } catch (error) {
+      log.warn('Error closing idle connection during graceful reset', error);
+    }
+  }
+  connectionPool.length = 0;
+
+  // Reset state
+  instance = undefined;
+  initPromise = undefined;
+  dbVersionCache = undefined;
+  poolCacheWarmupPromise = undefined;
+  isPoolCacheWarmupComplete = false;
+  isGlueAttached = false;
+  lastCatalogRefreshForSecretAt = 0;
+  glueCatalogMaintenanceChain = Promise.resolve();
+  instanceNeedsReset = false;
+
+  return true;
+}
+
+/**
  * Retrieves the value of a required environment variable.
  * Throws an error if the variable is not set or empty.
  *
@@ -61,13 +218,6 @@ function getRequiredEnv(name: 'AWS_ACCOUNT_ID' | 'ICEBERG_NAMESPACE'): string {
 
   return value;
 }
-
-let lastSecretRefresh = 0;
-const REFRESH_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
-let secretRefreshPromise: Promise<boolean> | undefined;
-let isGlueAttached = false;
-let lastCatalogRefreshForSecretAt = 0;
-let glueCatalogMaintenanceChain: Promise<void> = Promise.resolve();
 
 /**
  * Serializes any operation that mutates the shared Glue catalog attachment
@@ -105,7 +255,7 @@ async function ensureFreshSecret(conn: DuckDBConnection): Promise<boolean> {
   secretRefreshPromise = (async () => {
     try {
       await conn.run(
-        'CREATE OR REPLACE SECRET (TYPE S3, PROVIDER credential_chain);'
+        'CREATE OR REPLACE SECRET (TYPE S3, PROVIDER credential_chain, REFRESH auto);'
       );
       lastSecretRefresh = Date.now();
       log.info('DuckDB AWS Secret refreshed.');
@@ -462,6 +612,29 @@ export async function replaceDuckDbConnection(
 }
 
 /**
+ * Aggressively clears the entire connection pool to force all future connections
+ * to be recreated fresh. Used when persistent data-access errors indicate stale
+ * instance-level state (e.g., S3 HTTP 400 that persists across normal retry).
+ *
+ * Closes all idle pooled connections immediately; in-use connections will be
+ * discarded on release rather than returned to the pool.
+ */
+export function clearDuckDbConnectionPool(): void {
+  log.info(
+    `Clearing DuckDB connection pool (${connectionPool.length} idle connections being discarded).`
+  );
+
+  for (const conn of connectionPool) {
+    try {
+      conn.closeSync();
+    } catch (error) {
+      log.warn('Error closing connection during pool clear', error);
+    }
+  }
+  connectionPool.length = 0;
+}
+
+/**
  * Start one-time background cache population using a single connection.
  * Since DuckDB caches are instance-wide, doing this once benefits the whole pool.
  */
@@ -558,6 +731,7 @@ function startBackgroundConnectionRefresh(): void {
   backgroundRefreshInterval = setInterval(() => {
     refreshStaleConnections().catch((error) => log.error('Error during connection refresh', error));
   }, BACKGROUND_CHECK_INTERVAL_MS);
+  startHealthCheck();
 }
 
 /**
@@ -577,6 +751,34 @@ function closeAllConnections(context: string): void {
       log.warn(`Error closing DuckDB connection during ${context}`, error);
     }
   }
+}
+
+/**
+ * Destroys the DuckDB instance and resets all module state to force complete
+ * re-initialization from scratch. Used when persistent errors indicate instance-level
+ * corruption (e.g., S3 HTTP 400 that persists across new connections).
+ *
+ * This is more aggressive than clearing the connection pool because it destroys the
+ * singleton instance itself, ensuring instance-level caches and state are cleared.
+ * The next acquireDuckDbConnection() call will trigger fresh initialization.
+ */
+export function resetDuckDbInstance(): void {
+  log.warn(
+    'Resetting DuckDB instance due to persistent errors. '
+    + 'All connections will be destroyed and instance re-initialized on next request.'
+  );
+
+  stopHealthCheck();
+  closeAllConnections('instance reset');
+  instance = undefined;
+  initPromise = undefined;
+  dbVersionCache = undefined;
+  poolCacheWarmupPromise = undefined;
+  isPoolCacheWarmupComplete = false;
+  isGlueAttached = false;
+  lastCatalogRefreshForSecretAt = 0;
+  glueCatalogMaintenanceChain = Promise.resolve();
+  instanceNeedsReset = false;
 }
 
 /**
@@ -621,6 +823,18 @@ export async function initializeDuckDb(): Promise<void> {
  * Acquire a connection from the pool or create a new one.
  */
 export async function acquireDuckDbConnection(): Promise<PooledDuckDbConnection> {
+  // Check if instance corruption was detected and attempt graceful reset
+  if (isInstanceResetNeeded()) {
+    if (attemptGracefulInstanceReset()) {
+      log.info('Instance reset completed. Reinitializing on next connection request.');
+    } else {
+      log.debug(
+        'Instance reset deferred: still waiting for in-use connections to complete. '
+        + 'Proceeding with current instance.'
+      );
+    }
+  }
+
   if (!instance) {
     await initializeDuckDb();
   }
@@ -666,6 +880,7 @@ export function setDuckDbStateForTesting(params: {
   isGlueAttached = true;
   lastCatalogRefreshForSecretAt = lastSecretRefresh;
   glueCatalogMaintenanceChain = Promise.resolve();
+  instanceNeedsReset = false;
   connectionPool.length = 0;
   connectionPool.push(...params.pooledConnections);
   inUseConnections.clear();
@@ -725,6 +940,7 @@ export async function destroyDuckDb(): Promise<void> {
     clearInterval(backgroundRefreshInterval);
     backgroundRefreshInterval = undefined;
   }
+  stopHealthCheck();
   closeAllConnections('shutdown');
   instance = undefined;
   initPromise = undefined;
