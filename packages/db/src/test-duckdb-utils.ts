@@ -45,7 +45,7 @@ export async function setupDuckDBWithS3ForTesting(dbFilePath: string = ':memory:
 
   setDuckDbStateForTesting({
     instance,
-    pooledConnections: [connection],
+    conns: [connection],
   });
 
   return { instance, connection };

@@ -8,8 +8,7 @@ import { DbQueryParameters } from '../types/search';
 import {
   acquireDuckDbConnection,
   releaseDuckDbConnection,
-  forceSecretRefresh,
-  rebuildDuckDbConnectionPool,
+  destroyDuckDb,
 } from '../iceberg-connection';
 
 const log = new Logger({ sender: '@cumulus/db/DuckDBSearchExecutor' });
@@ -38,7 +37,7 @@ export function isCatalogError(error: unknown): boolean {
 
 /**
  * Returns true for recoverable S3/HTTP data-access failures that can be fixed
- * by rebuilding a stale DuckDB connection and retrying once.
+ * by reinitializing the DuckDB instance and retrying once.
  *
  * @param error - value to evaluate
  * @returns true when the error matches S3 parquet HTTP 400 access failure
@@ -106,7 +105,8 @@ export async function executeDuckDBSearch(params: {
       return { key: config.key, sql, bindings };
     });
 
-  let pooledConnection: DuckDBConnection = await acquireDuckDbConnection();
+  let conn: DuckDBConnection = await acquireDuckDbConnection();
+  let hasActiveConnection = true;
 
   try {
     let countResult: any[] = [];
@@ -131,36 +131,26 @@ export async function executeDuckDBSearch(params: {
     };
 
     try {
-      await runNativeQueries(pooledConnection);
+      await runNativeQueries(conn);
     } catch (error) {
-      const hasRecoverableCatalogError = isCatalogError(error);
-      const hasRecoverableS3Error = isRecoverableS3HttpError(error);
-
-      if (!hasRecoverableCatalogError && !hasRecoverableS3Error) {
+      if (!isCatalogError(error) && !isRecoverableS3HttpError(error)) {
         throw error;
       }
 
-      log.warn('Recoverable DuckDB query error detected; retrying once with a fresh connection.', error);
-      forceSecretRefresh();
-
-      if (hasRecoverableS3Error) {
-        log.warn(
-          'Recoverable S3 HTTP error detected. Rebuilding DuckDB connection pool before retry.'
-        );
-      }
-
-      await releaseDuckDbConnection(pooledConnection);
-      if (hasRecoverableS3Error) {
-        await rebuildDuckDbConnectionPool();
-      }
-
-      pooledConnection = await acquireDuckDbConnection();
-      await runNativeQueries(pooledConnection);
-      log.info(
-        hasRecoverableS3Error
-          ? 'DuckDB query retry succeeded after pool rebuild.'
-          : 'DuckDB query retry succeeded after connection refresh.'
+      log.warn(
+        'Recoverable DuckDB query error detected; reinitializing instance and retrying once.',
+        error
       );
+
+      await releaseDuckDbConnection(conn);
+      hasActiveConnection = false;
+      await destroyDuckDb();
+
+      conn = await acquireDuckDbConnection();
+      hasActiveConnection = true;
+
+      await runNativeQueries(conn);
+      log.info('DuckDB query retry succeeded after instance reinitialization.');
     }
 
     // 3. Post-process resulting data
@@ -169,11 +159,13 @@ export async function executeDuckDBSearch(params: {
     meta.page = dbQueryParameters.page;
     meta.count = Number(countResult[0]?.count ?? 0);
 
-    const translateRecords = makeTranslateRecords(pooledConnection);
+    const translateRecords = makeTranslateRecords(conn);
     const apiRecords = await translateRecords(records, knexBuilder);
 
     return { meta, results: apiRecords };
   } finally {
-    await releaseDuckDbConnection(pooledConnection);
+    if (hasActiveConnection) {
+      await releaseDuckDbConnection(conn);
+    }
   }
 }

@@ -14,6 +14,9 @@ let refreshPoolPromise: Promise<void> | undefined;
 
 const connectionPool: DuckDBConnection[] = [];
 const inUseConnections = new Set<DuckDBConnection>();
+// Maps retired-but-still-in-flight connections to the old DuckDBInstance they
+// belong to, so the old instance can be closed once the last one is released.
+const retiredConnections = new Map<DuckDBConnection, DuckDBInstance>();
 const MAX_POOL_SIZE = Number(process.env.DUCKDB_MAX_POOL) || 3;
 const ENABLE_CACHE_WARMUP = process.env.DUCKDB_ENABLE_CACHE_WARMUP !== 'false';
 const POOL_REBUILD_INTERVAL_MS
@@ -384,12 +387,9 @@ async function ensureGlueSchemaAccessible(
 }
 
 /**
- * Applies all session-level configuration to an existing DuckDB connection:
+ * Applies all session-level configuration to a newly created DuckDB connection:
  * loads required extensions, applies performance settings, refreshes AWS credentials,
- * attaches (or re-attaches) the Iceberg Glue catalog, and sets the default search path.
- *
- * Safe to call on a freshly created connection as well as on a pooled connection
- * that has lost its catalog state (e.g. after being idle overnight).
+ * attaches the Iceberg Glue catalog, and sets the default search path.
  *
  * @param conn
  */
@@ -414,70 +414,6 @@ async function getConnection(): Promise<DuckDBConnection> {
   const connection = await instance!.connect();
   await configureConnection(connection);
   return connection;
-}
-
-/**
- * Forces the next connection configuration flow to recreate the DuckDB AWS
- * secret instead of reusing the cached refresh timestamp.
- */
-export function forceSecretRefresh(): void {
-  lastSecretRefresh = 0;
-}
-
-/**
- * Rebuilds the idle DuckDB connection pool by closing all idle connections and
- * recreating replacements up to the configured pool size budget.
- *
- * In-use connections are left untouched and continue serving active queries.
- */
-export async function rebuildDuckDbConnectionPool(): Promise<void> {
-  if (refreshPoolPromise) {
-    await refreshPoolPromise;
-    return;
-  }
-
-  refreshPoolPromise = (async () => {
-    const startTime = Date.now();
-    let closedIdleCount = 0;
-    let replacementSuccessCount = 0;
-
-    log.info(
-      `Rebuilding DuckDB connection pool (${connectionPool.length} idle connections will be replaced).`
-    );
-
-    while (connectionPool.length > 0) {
-      const pooledConn = connectionPool.pop()!;
-      try {
-        pooledConn.closeSync();
-      } catch (error) {
-        log.warn('Error closing DuckDB connection during pool rebuild', error);
-      } finally {
-        closedIdleCount += 1;
-      }
-    }
-
-    const neededReplacements = Math.max(0, MAX_POOL_SIZE - inUseConnections.size);
-    for (let i = 0; i < neededReplacements; i += 1) {
-      try {
-        // eslint-disable-next-line no-await-in-loop
-        const newConn = await getConnection();
-        connectionPool.push(newConn);
-        replacementSuccessCount += 1;
-      } catch (error) {
-        log.error('Failed to create DuckDB connection during pool rebuild', error);
-      }
-    }
-
-    log.info(
-      'DuckDB pool rebuild complete. '
-      + `${closedIdleCount} idle closed, ${replacementSuccessCount} replacements created, `
-      + `in ${Date.now() - startTime}ms.`
-    );
-  })().finally(() => {
-    refreshPoolPromise = undefined;
-  });
-
-  await refreshPoolPromise;
 }
 
 /**
@@ -507,6 +443,102 @@ function startPoolCacheWarmup(): void {
       isPoolCacheWarmupComplete = true;
     }
   })();
+}
+
+/**
+ * Rebuilds the DuckDB connection pool by creating a brand-new DuckDB instance
+ * and replacing all connections — idle and in-use — with fresh connections
+ * backed by the new instance.
+ *
+ * In-use connections belonging to the old instance are "retired": they
+ * continue serving their current query, but are closed (not re-pooled) when
+ * released back via `releaseDuckDbConnection`.
+ */
+export async function rebuildDuckDbConnectionPool(): Promise<void> {
+  if (refreshPoolPromise) {
+    await refreshPoolPromise;
+    return;
+  }
+
+  refreshPoolPromise = (async () => {
+    const startTime = Date.now();
+
+    log.info(
+      'Rebuilding DuckDB connection pool with a new instance '
+      + `(${connectionPool.length} idle, ${inUseConnections.size} in-use connections will be retired).`
+    );
+
+    // Stop the background interval — startBackgroundConnectionRefresh will
+    // restart it once the new instance is live.
+    if (backgroundRefreshInterval) {
+      clearInterval(backgroundRefreshInterval);
+      backgroundRefreshInterval = undefined;
+    }
+
+    // Retire all in-use connections: they stay alive for their current query
+    // but will be closed (not re-pooled) when released.  We also remove them
+    // from inUseConnections now so the pool size accounting starts clean for
+    // the new instance.
+    const oldInstanceRef = instance!;
+    for (const conn of inUseConnections) {
+      retiredConnections.set(conn, oldInstanceRef);
+    }
+    inUseConnections.clear();
+
+    // Close all idle connections immediately.
+    let closedIdleCount = 0;
+    while (connectionPool.length > 0) {
+      const conn = connectionPool.pop()!;
+      try {
+        conn.closeSync();
+      } catch (error) {
+        log.warn('Error closing idle DuckDB connection during pool rebuild', error);
+      } finally {
+        closedIdleCount += 1;
+      }
+    }
+
+    // Swap in a new instance and reset all instance-level state.
+    // Note: we do NOT close the old instance here — it must stay alive until
+    // every retired connection has been released (see releaseDuckDbConnection).
+    instance = await DuckDBInstance.create(':memory:');
+    initPromise = Promise.resolve();
+    dbVersionCache = undefined;
+    lastSecretRefresh = 0;
+    secretRefreshPromise = undefined;
+    isGlueAttached = false;
+    lastCatalogRefreshForSecretAt = 0;
+    glueCatalogMaintenanceChain = Promise.resolve();
+    isPoolCacheWarmupComplete = false;
+    poolCacheWarmupPromise = undefined;
+
+    // Populate the new pool.
+    let replacementSuccessCount = 0;
+    for (let i = 0; i < MAX_POOL_SIZE; i += 1) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        const newConn = await getConnection();
+        connectionPool.push(newConn);
+        replacementSuccessCount += 1;
+      } catch (error) {
+        log.error('Failed to create DuckDB connection during pool rebuild', error);
+      }
+    }
+
+    startPoolCacheWarmup();
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    startBackgroundConnectionRefresh();
+
+    log.info(
+      'DuckDB pool rebuild complete. '
+      + `${closedIdleCount} idle closed, ${replacementSuccessCount} replacements created `
+      + `on new instance, in ${Date.now() - startTime}ms.`
+    );
+  })().finally(() => {
+    refreshPoolPromise = undefined;
+  });
+
+  await refreshPoolPromise;
 }
 
 /**
@@ -601,11 +633,11 @@ export async function acquireDuckDbConnection(): Promise<DuckDBConnection> {
  *
  * @param params
  * @param params.instance
- * @param params.pooledConnections
+ * @param params.conns
  */
 export function setDuckDbStateForTesting(params: {
   instance: DuckDBInstance;
-  pooledConnections: DuckDBConnection[];
+  conns: DuckDBConnection[];
 }): void {
   instance = params.instance;
   initPromise = Promise.resolve();
@@ -615,16 +647,41 @@ export function setDuckDbStateForTesting(params: {
   lastCatalogRefreshForSecretAt = lastSecretRefresh;
   glueCatalogMaintenanceChain = Promise.resolve();
   connectionPool.length = 0;
-  connectionPool.push(...params.pooledConnections);
+  connectionPool.push(...params.conns);
   inUseConnections.clear();
 }
 
 /**
  * Release a connection back to the pool for reuse.
  *
+ * Connections that were retired during a pool rebuild are closed instead of
+ * re-pooled so they do not pollute the new instance's pool.
+ *
  * @param conn
  */
 export async function releaseDuckDbConnection(conn: DuckDBConnection): Promise<void> {
+  if (retiredConnections.has(conn)) {
+    const oldInstance = retiredConnections.get(conn)!;
+    retiredConnections.delete(conn);
+    try {
+      conn.closeSync();
+    } catch (error) {
+      log.warn('Error closing retired DuckDB connection on release', error);
+    }
+    // Close the old instance only after its last retired connection is done.
+    const hasMoreRetiredOnSameInstance = [...retiredConnections.values()].some(
+      (inst) => inst === oldInstance
+    );
+    if (!hasMoreRetiredOnSameInstance) {
+      try {
+        oldInstance.closeSync();
+      } catch (error) {
+        log.warn('Error closing old DuckDB instance after last retired connection released', error);
+      }
+    }
+    return;
+  }
+
   if (!inUseConnections.has(conn)) {
     log.error('Double release detected for DuckDB connection. Ignoring to prevent pool corruption.');
     return;
@@ -663,9 +720,24 @@ export async function destroyDuckDb(): Promise<void> {
     backgroundRefreshInterval = undefined;
   }
   closeAllConnections('shutdown');
+  for (const [conn, oldInstance] of retiredConnections) {
+    try {
+      conn.closeSync();
+    } catch (error) {
+      log.warn('Error closing retired DuckDB connection during shutdown', error);
+    }
+    try {
+      oldInstance.closeSync();
+    } catch {
+      // ignore — old instance may already be closed
+    }
+  }
+  retiredConnections.clear();
   instance = undefined;
   initPromise = undefined;
   dbVersionCache = undefined;
+  lastSecretRefresh = 0;
+  secretRefreshPromise = undefined;
   poolCacheWarmupPromise = undefined;
   isPoolCacheWarmupComplete = false;
   isGlueAttached = false;
