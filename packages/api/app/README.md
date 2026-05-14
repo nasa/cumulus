@@ -72,8 +72,11 @@ The Dockerfile automatically uses `iceberg-index.js` as the entry point. In prod
 |---|---|---|
 | `PORT` | `5001` | HTTP port the server listens on |
 | `DUCKDB_MAX_POOL` | `20` | DuckDB connection pool size |
+| `DUCKDB_POOL_REBUILD_INTERVAL` | `18000000` | Milliseconds between preemptive DuckDB idle-pool rebuilds (default 5 hours) |
 | `AWS_REGION` | `us-east-1` | AWS region |
 | `NODE_ENV` | _(unset)_ | Set to `development` to have DuckDB auto-install extensions (Mac/local use); production uses pre-bundled extensions from the Docker image |
+
+DuckDB refresh behavior is intentionally simple: idle pooled connections are rebuilt on a fixed interval (default every 5 hours), and the pool is also rebuilt on-demand when a recoverable S3 HTTP data-access error is detected during query execution.
 
 ---
 
