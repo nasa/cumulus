@@ -60,7 +60,7 @@ variable "force_new_deployment" {
 variable "cpu" {
   description = "The number of CPU units the Amazon ECS container agent will reserve for the task"
   type        = number
-  default     = 4096 # 4 CPUs
+  default     = 2048 # 2 CPUs
 }
 
 variable "cpu_architecture" {
@@ -72,7 +72,7 @@ variable "cpu_architecture" {
 variable "memory" {
   description = "The amount of memory (in MB) that the ECS container agent reserves for a task."
   type        = number
-  default     = 16384 # 16GB
+  default     = 4096 # 4GB
 }
 
 variable "batch_size" {
