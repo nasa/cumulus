@@ -76,6 +76,12 @@ variable "small_tables_memory" {
   default     = 8192 # 8GB
 }
 
+variable "small_tables_batch_size" {
+  description = "The maximum number of replication messages that will be written to Iceberg at once"
+  type        = number
+  default     = 20000
+}
+
 variable "granules_table_cpu" {
   description = "The number of CPU units the Amazon ECS container agent will reserve for the granules table task"
   type    = number
@@ -85,6 +91,12 @@ variable "granules_table_memory" {
   description = "The amount of memory (in MB) that the ECS container agent reserves for the granules table task."
   type        = number
   default     = 8192 # 8GB
+}
+
+variable "granules_table_batch_size" {
+  description = "The maximum number of replication messages that will be written to Iceberg at once"
+  type        = number
+  default     = 20000
 }
 
 variable "executions_table_cpu" {
@@ -99,6 +111,12 @@ variable "executions_table_memory" {
   default     = 16384 # 16GB
 }
 
+variable "executions_table_batch_size" {
+  description = "The maximum number of replication messages that will be written to Iceberg at once"
+  type        = number
+  default     = 20000
+}
+
 variable "files_table_cpu" {
   description = "The number of CPU units the Amazon ECS container agent will reserve for the files table task"
   type    = number
@@ -109,6 +127,12 @@ variable "files_table_memory" {
   description = "The amount of memory (in MB) that the ECS container agent reserves for the files table task."
   type        = number
   default     = 16384 # 16GB
+}
+
+variable "files_table_batch_size" {
+  description = "The maximum number of replication messages that will be written to Iceberg at once"
+  type        = number
+  default     = 20000
 }
 
 variable "volume_size_in_gb" {

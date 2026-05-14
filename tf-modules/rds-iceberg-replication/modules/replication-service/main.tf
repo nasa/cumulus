@@ -8,7 +8,8 @@ terraform {
 }
 
 locals {
-  full_name = "${var.prefix}-${var.slot_name}-replication"
+  full_name      = "${var.prefix}-${var.slot_name}-replication"
+  batch_size_str = tostring(var.batch_size)
 }
 
 data "aws_subnet" "selected" {
@@ -147,7 +148,8 @@ resource "aws_ecs_task_definition" "default" {
         { name = "ICEBERG_NAMESPACE", value = var.iceberg_namespace },
         { name = "ICEBERG_S3_BUCKET", value = var.iceberg_s3_bucket },
         { name = "SLOT_NAME", value = var.slot_name },
-        { name = "COMPACTION_INTERVAL_SEC", value = var.compaction_interval_sec }
+        { name = "COMPACTION_INTERVAL_SEC", value = var.compaction_interval_sec },
+        { name = "BATCH_SIZE", value = local.batch_size_str }
       ]
       secrets = [
         { name = "PG_ADMIN_LOGIN_CREDS", valueFrom = var.admin_db_login_secret_arn }
