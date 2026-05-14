@@ -46,8 +46,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Implemented partitioned schema for the consolidated database tables.
 - **CUMULUS-4804**
   - Updated application logic to ensure compatibility with partitioned database schemas.
+- **CUMULUS-4839**
+  - Updated `@cumulus/db/search` `GranuleSearch` query builder to prepend the partition key
+    `collection_cumulus_id` to sort orders when collection filters are present.
 
 ### Changed
+- **CUMULUS-4789** Update Docusaurus to latest version - 3.10
 
 - **CSD-104**
   - `PVLNumeric` now stores the original string value as `rawValue` before converting to `Number()`, preserving precision for large numeric strings.
@@ -95,6 +99,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Upgraded package `lodash` to version 4.18.1.
   - Updated package overrides to address CVEs GHSA-43fc-jf86-j433 and GHSA-r5fr-rjxr-66jc.
   - added a `webpack` override to `/website/package.json` due to docusaurus conflicts
+  - Upgraded package `uuid` to version ^11.1.1.
 - **CSD-100**
   - made changes to the `PrivateApiLambda` and `ApiEndpoints` lambdas to ensure the environment variables
     are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported
