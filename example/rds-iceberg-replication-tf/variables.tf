@@ -45,13 +45,13 @@ variable "force_new_deployment" {
 variable "small_tables_cpu" {
   description = "The number of CPU units the Amazon ECS container agent will reserve for the small_tables task"
   type    = number
-  default = 4096 # 4 CPUs
+  default = 2048 # 2 CPUs
 }
 
 variable "small_tables_memory" {
   description = "The amount of memory (in MB) that the ECS container agent reserves for the small_tables task."
   type        = number
-  default     = 8192 # 8GB
+  default     = 4096 # 4GB
 }
 
 variable "small_tables_batch_size" {
@@ -63,12 +63,12 @@ variable "small_tables_batch_size" {
 variable "granules_table_cpu" {
   description = "The number of CPU units the Amazon ECS container agent will reserve for the granules table task"
   type    = number
-  default = 4096 # 4 CPUs
+  default = 2048 # 2 CPUs
 }
 variable "granules_table_memory" {
   description = "The amount of memory (in MB) that the ECS container agent reserves for the granules table task."
   type        = number
-  default     = 8192 # 8GB
+  default     = 4096 # 4GB
 }
 
 variable "granules_table_batch_size" {
@@ -80,13 +80,13 @@ variable "granules_table_batch_size" {
 variable "executions_table_cpu" {
   description = "The number of CPU units the Amazon ECS container agent will reserve for the executions table task"
   type    = number
-  default = 4096 # 4 CPUs
+  default = 2048 # 2 CPUs
 }
 
 variable "executions_table_memory" {
   description = "The amount of memory (in MB) that the ECS container agent reserves for the executions table task."
   type        = number
-  default     = 16384 # 16GB
+  default     = 4096 # 4GB
 }
 
 variable "executions_table_batch_size" {
@@ -98,13 +98,13 @@ variable "executions_table_batch_size" {
 variable "files_table_cpu" {
   description = "The number of CPU units the Amazon ECS container agent will reserve for the files table task"
   type    = number
-  default = 4096 # 4 CPUs
+  default = 2048 # 2 CPUs
 }
 
 variable "files_table_memory" {
   description = "The amount of memory (in MB) that the ECS container agent reserves for the files table task."
   type        = number
-  default     = 16384 # 16GB
+  default     = 4096 # 4GB
 }
 
 variable "files_table_batch_size" {
