@@ -75,6 +75,12 @@ variable "memory" {
   default     = 16384 # 16GB
 }
 
+variable "batch_size" {
+  description = "The maximum number of replication messages that will be written to Iceberg at once"
+  type        = number
+  default     = 20000
+}
+
 variable "volume_size_in_gb" {
   description = "Size in GB of the volume mount used to serialize kafka messages"
   type        = number

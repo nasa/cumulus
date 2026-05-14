@@ -23,6 +23,7 @@ locals {
       column_exclude_list = ""
       memory             = var.small_tables_memory
       cpu                = var.small_tables_cpu
+      batch_size         = var.small_tables_batch_size
     }
     executions = {
       slot_name           = "${local.underscore_prefix}_executions"
@@ -30,6 +31,7 @@ locals {
       column_exclude_list = "${var.pg_schema}.executions.original_payload,${var.pg_schema}.executions.final_payload"
       memory             = var.executions_table_memory
       cpu                = var.executions_table_cpu
+      batch_size         = var.executions_table_batch_size
     }
     granules = {
       slot_name          = "${local.underscore_prefix}_granules"
@@ -37,6 +39,7 @@ locals {
       column_exclude_list = ""
       memory             = var.granules_table_memory
       cpu                = var.granules_table_cpu
+      batch_size         = var.granules_table_batch_size
     }
     files = {
       slot_name          = "${local.underscore_prefix}_files"
@@ -44,6 +47,7 @@ locals {
       column_exclude_list = ""
       memory             = var.files_table_memory
       cpu                = var.files_table_cpu
+      batch_size         = var.files_table_batch_size
     }
   }
 }
@@ -77,6 +81,7 @@ module "replication_services" {
   memory                    = each.value.memory
   cpu                       = each.value.cpu
   cpu_architecture          = var.cpu_architecture
+  batch_size                = each.value.batch_size
   volume_size_in_gb         = var.volume_size_in_gb
   admin_db_login_secret_arn = var.admin_db_login_secret_arn
   pg_db                     = var.pg_db
