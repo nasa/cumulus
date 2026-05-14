@@ -708,6 +708,12 @@ variable "iceberg_api_memory" {
   default     = 512
 }
 
+variable "duckdb_max_pool_size" {
+  description = "Maximum number of DuckDB connections in the connection pool"
+  type        = number
+  default     = 3
+}
+
 variable "cumulus_iceberg_api_image_version" {
   description = "Version of the Cumulus Iceberg API image"
   type        = string

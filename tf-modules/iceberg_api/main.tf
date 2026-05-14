@@ -6,6 +6,7 @@ locals {
     "ICEBERG_NAMESPACE"    = var.iceberg_namespace
     "ECS_TASK_MEMORY"      = tostring(var.iceberg_api_memory)
     "ECS_TASK_CPU"         = tostring(var.iceberg_api_cpu)
+    "DUCKDB_MAX_POOL_SIZE" = tostring(var.duckdb_max_pool_size)
   }
 }
 

@@ -227,6 +227,7 @@ module "cumulus" {
   iceberg_s3_bucket = var.iceberg_s3_bucket
   iceberg_namespace = var.iceberg_namespace
   iceberg_health_check_grace_period_seconds = var.iceberg_health_check_grace_period_seconds
+  duckdb_max_pool_size = var.duckdb_max_pool_size
 }
 
 resource "aws_security_group" "no_ingress_all_egress" {

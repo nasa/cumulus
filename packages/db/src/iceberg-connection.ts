@@ -14,10 +14,17 @@ let refreshPoolPromise: Promise<void> | undefined;
 
 const connectionPool: DuckDBConnection[] = [];
 const inUseConnections = new Set<DuckDBConnection>();
+const pendingAcquireResolvers: Array<{
+  resolve: (conn: DuckDBConnection) => void;
+  reject: (error: Error) => void;
+}> = [];
 // Maps retired-but-still-in-flight connections to the old DuckDBInstance they
 // belong to, so the old instance can be closed once the last one is released.
 const retiredConnections = new Map<DuckDBConnection, DuckDBInstance>();
-const MAX_POOL_SIZE = Number(process.env.DUCKDB_MAX_POOL) || 3;
+const configuredPoolSize = Number(process.env.DUCKDB_MAX_POOL_SIZE);
+const MAX_POOL_SIZE = Number.isInteger(configuredPoolSize) && configuredPoolSize > 0
+  ? configuredPoolSize
+  : 3;
 const ENABLE_CACHE_WARMUP = process.env.DUCKDB_ENABLE_CACHE_WARMUP !== 'false';
 const POOL_REBUILD_INTERVAL_MS
   = Number(process.env.DUCKDB_POOL_REBUILD_INTERVAL) || 5 * 60 * 60 * 1000; // 5 hours
@@ -446,6 +453,20 @@ function startPoolCacheWarmup(): void {
 }
 
 /**
+ * Hands pooled connections directly to queued acquirers, preserving the fixed
+ * pool size while allowing callers beyond the pool size to wait for the next
+ * available connection.
+ */
+function drainPendingAcquiresFromPool(): void {
+  while (connectionPool.length > 0 && pendingAcquireResolvers.length > 0) {
+    const conn = connectionPool.pop()!;
+    inUseConnections.add(conn);
+    const waiter = pendingAcquireResolvers.shift()!;
+    waiter.resolve(conn);
+  }
+}
+
+/**
  * Rebuilds the DuckDB connection pool by creating a brand-new DuckDB instance
  * and replacing all connections — idle and in-use — with fresh connections
  * backed by the new instance.
@@ -484,6 +505,7 @@ export async function rebuildDuckDbConnectionPool(): Promise<void> {
       retiredConnections.set(conn, oldInstanceRef);
     }
     inUseConnections.clear();
+    const hasRetiredConnections = retiredConnections.size > 0;
 
     // Close all idle connections immediately.
     let closedIdleCount = 0;
@@ -502,6 +524,15 @@ export async function rebuildDuckDbConnectionPool(): Promise<void> {
     // Note: we do NOT close the old instance here — it must stay alive until
     // every retired connection has been released (see releaseDuckDbConnection).
     instance = await DuckDBInstance.create(':memory:');
+
+    if (!hasRetiredConnections) {
+      try {
+        oldInstanceRef.closeSync();
+      } catch (error) {
+        log.warn('Error closing old DuckDB instance during pool rebuild', error);
+      }
+    }
+
     initPromise = Promise.resolve();
     dbVersionCache = undefined;
     lastSecretRefresh = 0;
@@ -528,6 +559,7 @@ export async function rebuildDuckDbConnectionPool(): Promise<void> {
     startPoolCacheWarmup();
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
     startBackgroundConnectionRefresh();
+    drainPendingAcquiresFromPool();
 
     log.info(
       'DuckDB pool rebuild complete. '
@@ -594,6 +626,7 @@ export async function initializeDuckDb(): Promise<void> {
 
       startPoolCacheWarmup();
       startBackgroundConnectionRefresh();
+      drainPendingAcquiresFromPool();
 
       log.info(`DuckDB initialized with a pool of ${connectionPool.length}/${MAX_POOL_SIZE} connections.`);
     } catch (error) {
@@ -609,12 +642,15 @@ export async function initializeDuckDb(): Promise<void> {
 }
 
 /**
- * Acquire a connection from the pool or create a new one.
+ * Acquire a connection from the fixed-size pool, waiting if all pooled
+ * connections are currently in use.
  */
 export async function acquireDuckDbConnection(): Promise<DuckDBConnection> {
   if (!instance) {
     await initializeDuckDb();
   }
+
+  drainPendingAcquiresFromPool();
 
   while (connectionPool.length > 0) {
     const conn = connectionPool.pop()!;
@@ -622,9 +658,9 @@ export async function acquireDuckDbConnection(): Promise<DuckDBConnection> {
     return conn;
   }
 
-  const conn = await getConnection();
-  inUseConnections.add(conn);
-  return conn;
+  return await new Promise((resolve, reject) => {
+    pendingAcquireResolvers.push({ resolve, reject });
+  });
 }
 
 /**
@@ -649,6 +685,7 @@ export function setDuckDbStateForTesting(params: {
   connectionPool.length = 0;
   connectionPool.push(...params.conns);
   inUseConnections.clear();
+  drainPendingAcquiresFromPool();
 }
 
 /**
@@ -688,6 +725,13 @@ export async function releaseDuckDbConnection(conn: DuckDBConnection): Promise<v
   }
   inUseConnections.delete(conn);
 
+  if (pendingAcquireResolvers.length > 0) {
+    inUseConnections.add(conn);
+    const waiter = pendingAcquireResolvers.shift()!;
+    waiter.resolve(conn);
+    return;
+  }
+
   if (connectionPool.length < MAX_POOL_SIZE) {
     connectionPool.push(conn);
   } else {
@@ -720,6 +764,12 @@ export async function destroyDuckDb(): Promise<void> {
     backgroundRefreshInterval = undefined;
   }
   closeAllConnections('shutdown');
+
+  while (pendingAcquireResolvers.length > 0) {
+    const waiter = pendingAcquireResolvers.shift()!;
+    waiter.reject(new Error('DuckDB is shutting down.'));
+  }
+
   for (const [conn, oldInstance] of retiredConnections) {
     try {
       conn.closeSync();
