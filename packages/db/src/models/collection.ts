@@ -34,13 +34,13 @@ class CollectionPgModel extends BasePgModel<PostgresCollection, PostgresCollecti
     collectionCumulusId: number | null | undefined
   ) {
     if (!collectionCumulusId) {
-      return "";
+      return '';
     }
     const collection = await super.get(
       knexOrTransaction,
-      {cumulus_id: collectionCumulusId}
-    )
-    return collection.cmr_provider
+      { cumulus_id: collectionCumulusId }
+    );
+    return collection.cmr_provider;
   }
 }
 

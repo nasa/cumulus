@@ -93,11 +93,10 @@ export const deleteGranuleAndFiles = async (params: {
     await granulePgModel.delete(knex, {
       cumulus_id: pgGranule.cumulus_id,
     });
-    const collectionPgModel = new CollectionPgModel();
     const metricsGranule = {
-      cmrProvider: await collectionPgModel.getCmrProvider(knex, pgGranule.collection_cumulus_id)
+      cmrProvider: await collectionPgModel.getCmrProvider(knex, pgGranule.collection_cumulus_id),
       ...pgGranule,
-    }
+    };
     await publishGranuleDeleteSnsMessage(metricsGranule);
     logger.debug(`Successfully deleted granule ${pgGranule.granule_id} from PostgreSQL`);
     await deleteS3Files(files);

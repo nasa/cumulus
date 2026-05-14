@@ -295,7 +295,7 @@ const _publishPostgresGranuleUpdateToSns = async ({
   const metricsGranule = {
     cmrProvider: await collectionPgModel.getCmrProvider(knex, pgGranule.collection_cumulus_id),
     ...translatedGranule,
-  }
+  };
   await publishGranuleSnsMessageByEventType(metricsGranule, snsEventType);
   log.info('Successfully wrote granule %j to SNS topic', metricsGranule);
 };

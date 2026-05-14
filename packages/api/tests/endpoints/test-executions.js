@@ -1229,7 +1229,7 @@ test.serial('POST /executions publishes message to SNS topic', async (t) => {
 
   t.deepEqual(executionRecord, {
     cmrProvider: 'provider',
-    ...translatedExecution
+    ...translatedExecution,
   });
 });
 
@@ -1416,9 +1416,7 @@ test.serial('PUT /executions removes execution fields when nullified fields are 
     updatedPgRecord,
     t.context.knex
   );
-  t.deepEqual(translatedExecution, {
-    ...expectedApiRecord
-  });
+  t.deepEqual(translatedExecution, expectedApiRecord);
 });
 
 test.serial('PUT /executions throws error for arn mismatch between params and payload', async (t) => {

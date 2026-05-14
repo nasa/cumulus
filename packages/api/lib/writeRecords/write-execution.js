@@ -40,7 +40,6 @@ const { publishExecutionSnsMessage } = require('../publishSnsMessageUtils');
  * @typedef { import('@cumulus/db').PostgresExecution } PostgresExecution
  * @typedef { import('@cumulus/db').PostgresExecutionRecord } PostgresExecutionRecord
  * @typedef { import('@cumulus/db').ExecutionPgModel } ExecutionPgModelType
- * 
 */
 
 const logger = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-execution' });
@@ -190,11 +189,11 @@ const _writeExecutionAndPublishSnsMessage = async ({
     writeExecutionResponse,
     knex
   );
-  const collectionPgModel = new CollectionPgModel()
+  const collectionPgModel = new CollectionPgModel();
   const metricsExecution = {
     cmrProvider: await collectionPgModel.getCmrProvider(knex, postgresRecord.collection_cumulus_id),
-    ...translatedExecution
-  }
+    ...translatedExecution,
+  };
   await publishExecutionSnsMessage(metricsExecution);
   return writeExecutionResponse;
 };
