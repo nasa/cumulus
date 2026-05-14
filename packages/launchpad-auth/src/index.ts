@@ -140,8 +140,8 @@ async function getValidLaunchpadTokenFromS3(): Promise<string | undefined> {
 }
 
 /**
- * Get a Launchpad token. There may be a lock file is the token is being recreated by
- * a process due to launchpad 401 auth errors, so this function will check if there is one
+ * Get a Launchpad token. There may be a lock file if the token is being recreated by
+ * a process due to a launchpad 401 auth error, so this function will check if there is one
  * and wait until it's removed by the process creating the new token, and then will get the
  * newly made valid token.
  *
@@ -264,7 +264,7 @@ async function generateLaunchpadToken(config: LaunchpadTokenParams) {
   try {
     await deleteS3Object(getSystemBucket(), getTokenFileKey());
   } catch (error) {
-    if (error.name !== 'NoSuchKey' && error.name !== 'NotFound') {
+    if (!(error instanceof Error && ['NoSuchKey', 'NotFound'].includes(error.name))) {
       throw error;
     }
   }
