@@ -75,15 +75,15 @@ export interface CMRConstructorParams {
   * due to branch logic/complexity in token vs password/username handling
  */
 export class CMR {
-  private static instance: CMR;
+  private static instance?: CMR;
   // the variable below is to ensure that if the token is in the process of
   // being refreshed, that other concurrent workers do not attempt to do so as well
   private refreshPromise?: Promise<void>;
 
-  clientId!: string;
-  provider!: string;
+  clientId: string;
+  provider: string;
   username?: string;
-  oauthProvider!: string;
+  oauthProvider: string;
   password?: string;
   passwordSecretName?: string;
   token?: string;
@@ -94,11 +94,7 @@ export class CMR {
   /**
    * The constructor for the CMR class
    */
-  constructor(params: CMRConstructorParams) {
-    if (CMR.instance) {
-      return CMR.instance;
-    }
-
+  private constructor(params: CMRConstructorParams) {
     this.clientId = params.clientId;
     this.provider = params.provider;
     this.username = params.username;
@@ -111,6 +107,17 @@ export class CMR {
     this.certificate = params.certificate;
 
     CMR.instance = this;
+  }
+
+  /**
+   * Creates a new CMR singleton instance of one does not already exist,
+   * if one does, returns it
+   */
+  static getInstance(params: CMRConstructorParams) {
+    if (!CMR.instance) {
+      CMR.instance = new CMR(params);
+    }
+    return CMR.instance;
   }
 
   /**
@@ -140,10 +147,9 @@ export class CMR {
   /**
    * Resets the CMR singleton instance to undefined, only used for testing with
    * suites that create multiple instances in sequence.
-   *
    */
   static resetInstance() {
-    CMR.instance = undefined as any;
+    CMR.instance = undefined;
   }
 
   /**

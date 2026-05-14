@@ -30,7 +30,7 @@ import { getEnvVar } from './utils';
 
 const log = new Logger({ sender: '@cumulus/launchpad-auth' });
 
-const getBucket = () => getEnvVar('system_bucket');
+const getSystemBucket = () => getEnvVar('system_bucket');
 const getLockFileKey = () => `${getEnvVar('stackName')}/launchpad/token-lock.json`;
 const getTokenFileKey = () => `${getEnvVar('stackName')}/launchpad/token.json`;
 
@@ -48,7 +48,7 @@ async function waitForLockFileRelease(
   /* eslint-disable no-await-in-loop */
   for (let attempt = 0; attempt < retries; attempt += 1) {
     try {
-      await headObject(getBucket(), getLockFileKey());
+      await headObject(getSystemBucket(), getLockFileKey());
     } catch (error) {
       if (error.name === 'NotFound') {
         return;
@@ -69,7 +69,7 @@ async function waitForLockFileRelease(
  * @returns {Promise<Object>} - S3 delete response
  */
 async function removeLockFile() {
-  return await deleteS3Object(getBucket(), getLockFileKey());
+  return await deleteS3Object(getSystemBucket(), getLockFileKey());
 }
 
 /**
@@ -80,7 +80,7 @@ async function removeLockFile() {
  */
 async function createLockFile() {
   return await s3PutObject({
-    Bucket: getBucket(),
+    Bucket: getSystemBucket(),
     Key: getLockFileKey(),
     IfNoneMatch: '*',
   });
@@ -99,7 +99,7 @@ function launchpadTokenBucketKey(): {
 } {
   const stackName = getEnvVar('stackName');
   return {
-    Bucket: getBucket(),
+    Bucket: getSystemBucket(),
     Key: s3Join(stackName, 'launchpad/token.json'),
   };
 }
@@ -140,7 +140,10 @@ async function getValidLaunchpadTokenFromS3(): Promise<string | undefined> {
 }
 
 /**
- * Get a Launchpad token
+ * Get a Launchpad token. There may be a lock file is the token is being recreated by
+ * a process due to launchpad 401 auth errors, so this function will check if there is one
+ * and wait until it's removed by the process creating the new token, and then will get the
+ * newly made valid token.
  *
  * @param {Object} params - the configuration parameters for creating LaunchpadToken object
  * @param {string} params.api - the Launchpad token service api endpoint
@@ -244,7 +247,6 @@ async function validateLaunchpadToken(
  * @returns {Promise<string>} - the Launchpad token
  */
 async function waitAndReadToken(config: LaunchpadTokenParams) {
-  await waitForLockFileRelease();
   return await getLaunchpadToken(config);
 }
 
@@ -260,7 +262,7 @@ async function waitAndReadToken(config: LaunchpadTokenParams) {
  */
 async function generateLaunchpadToken(config: LaunchpadTokenParams) {
   try {
-    await deleteS3Object(getBucket(), getTokenFileKey());
+    await deleteS3Object(getSystemBucket(), getTokenFileKey());
   } catch (error) {
     if (error.name !== 'NoSuchKey' && error.name !== 'NotFound') {
       throw error;

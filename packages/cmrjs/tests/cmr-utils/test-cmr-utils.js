@@ -1586,7 +1586,7 @@ test.serial('publishECHO10XML2CMR refreshes an invalid launchpad token on a 401 
 
   const conceptId = randomString();
   const ingestStub = sinon.stub(CMR.prototype, 'ingestGranule');
-  ingestStub.onFirstCall().rejects((new Error('unauthorized'), { statusCode: 401 }));
+  ingestStub.onFirstCall().rejects(Object.assign(new Error('Unauthorized'), { statusCode: 401 }));
   ingestStub.onSecondCall().resolves({ result: { 'concept-id': conceptId } });
   t.teardown(() => ingestStub.restore());
 
@@ -1648,7 +1648,7 @@ test.serial('publishUMMGJSON2CMR refreshes an invalid launchpad token on a 401 a
 
   const conceptId = randomString();
   const ingestUMMStub = sinon.stub(CMR.prototype, 'ingestUMMGranule');
-  ingestUMMStub.onFirstCall().rejects((new Error('unauthorized'), { statusCode: 401 }));
+  ingestUMMStub.onFirstCall().rejects(Object.assign(new Error('Unauthorized'), { statusCode: 401 }));
   ingestUMMStub.onSecondCall().resolves({ 'concept-id': conceptId });
   t.teardown(() => ingestUMMStub.restore());
 
