@@ -14,7 +14,7 @@ Utilities for authentication by Cumulus using Launchpad.
 
 <dl>
 <dt><a href="#module_launchpad-auth">launchpad-auth</a></dt>
-<dd><p>Utility functions for generating and validating Launchpad tokens</p>
+<dd><p>Utility functions for generating, refreshing, and validating Launchpad tokens</p>
 </dd>
 </dl>
 
@@ -29,7 +29,7 @@ Utilities for authentication by Cumulus using Launchpad.
 <a name="module_launchpad-auth"></a>
 
 ### launchpad-auth
-Utility functions for generating and validating Launchpad tokens
+Utility functions for generating, refreshing, and validating Launchpad tokens
 
 
 * [launchpad-auth](#module_launchpad-auth)
