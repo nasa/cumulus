@@ -7,6 +7,7 @@ locals {
     "ECS_TASK_MEMORY"      = tostring(var.iceberg_api_memory)
     "ECS_TASK_CPU"         = tostring(var.iceberg_api_cpu)
     "DUCKDB_MAX_POOL_SIZE" = tostring(var.duckdb_max_pool_size)
+    "DUCKDB_POOL_REBUILD_INTERVAL_SECONDS" = tostring(var.duckdb_pool_rebuild_interval_seconds)
   }
 }
 

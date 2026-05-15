@@ -714,6 +714,12 @@ variable "duckdb_max_pool_size" {
   default     = 3
 }
 
+variable "duckdb_pool_rebuild_interval_seconds" {
+  description = "Seconds between preemptive DuckDB idle-pool rebuilds"
+  type        = number
+  default     = 18000
+}
+
 variable "cumulus_iceberg_api_image_version" {
   description = "Version of the Cumulus Iceberg API image"
   type        = string

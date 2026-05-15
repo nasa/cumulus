@@ -116,6 +116,12 @@ variable "duckdb_max_pool_size" {
   default     = 3
 }
 
+variable "duckdb_pool_rebuild_interval_seconds" {
+  description = "Seconds between preemptive DuckDB idle-pool rebuilds"
+  type        = number
+  default     = 18000
+}
+
 variable "cloudwatch_log_retention_periods" {
   type        = map(number)
   description = "retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"

@@ -26,8 +26,21 @@ const MAX_POOL_SIZE = Number.isInteger(configuredPoolSize) && configuredPoolSize
   ? configuredPoolSize
   : 3;
 const ENABLE_CACHE_WARMUP = process.env.DUCKDB_ENABLE_CACHE_WARMUP !== 'false';
-const POOL_REBUILD_INTERVAL_MS
-  = Number(process.env.DUCKDB_POOL_REBUILD_INTERVAL) || 5 * 60 * 60 * 1000; // 5 hours
+const DEFAULT_POOL_REBUILD_INTERVAL_SECONDS = 5 * 60 * 60; // 5 hours
+const configuredPoolRebuildIntervalSeconds = Number(
+  process.env.DUCKDB_POOL_REBUILD_INTERVAL_SECONDS
+);
+
+function getPoolRebuildIntervalMs(): number {
+  if (Number.isFinite(configuredPoolRebuildIntervalSeconds)
+    && configuredPoolRebuildIntervalSeconds > 0) {
+    return configuredPoolRebuildIntervalSeconds * 1000;
+  }
+
+  return DEFAULT_POOL_REBUILD_INTERVAL_SECONDS * 1000;
+}
+
+const POOL_REBUILD_INTERVAL_MS = getPoolRebuildIntervalMs();
 let lastSecretRefresh = 0;
 const REFRESH_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
 let secretRefreshPromise: Promise<boolean> | undefined;

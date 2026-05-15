@@ -29,6 +29,7 @@ module "iceberg_api" {
   api_config_secret_arn    = "arn:aws:secretsmanager:us-west-2:123456789012:secret:cumulus/api-config"
   iceberg_api_cpu          = 256
   iceberg_api_memory       = 512
+  duckdb_pool_rebuild_interval_seconds = 18000
   cumulus_iceberg_api_image_version = "latest"
 
   ecs_execution_role_arn   = "arn:aws:iam::123456789012:role/cumulus-ecs-execution-role"
@@ -60,6 +61,7 @@ module "iceberg_api" {
 | api_config_secret_arn | ARN of the API config secret | `string` | n/a | yes |
 | iceberg_api_cpu | CPU allocation for Iceberg API ECS task | `number` | `256` | no |
 | iceberg_api_memory | Memory allocation for Iceberg API ECS task | `number` | `512` | no |
+| duckdb_pool_rebuild_interval_seconds | Seconds between preemptive DuckDB idle-pool rebuilds | `number` | `18000` | no |
 | cumulus_iceberg_api_image_version | Version of the Cumulus Iceberg API image | `string` | n/a | yes |
 | ecs_execution_role_arn | ARN of the ECS execution role | `string` | n/a | yes |
 | ecs_cluster_arn | ARN of the ECS cluster | `string` | n/a | yes |
