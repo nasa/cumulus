@@ -80,7 +80,7 @@ export const deleteGranuleAndFiles = async (params: {
     { granule_cumulus_id: pgGranule.cumulus_id }
   );
 
-  const granuleToPublishToSns = await translatePostgresGranuleToApiGranule({
+  const granuleToPublish = await translatePostgresGranuleToApiGranule({
     granulePgRecord: pgGranule,
     knexOrTransaction: knex,
     collectionPgModel,
@@ -95,14 +95,14 @@ export const deleteGranuleAndFiles = async (params: {
     });
     const metricsGranule = {
       cmrProvider: await collectionPgModel.getCmrProvider(knex, pgGranule.collection_cumulus_id),
-      ...pgGranule,
+      ...granuleToPublish,
     };
     await publishGranuleDeleteSnsMessage(metricsGranule);
     logger.debug(`Successfully deleted granule ${pgGranule.granule_id} from PostgreSQL`);
     await deleteS3Files(files);
     logger.debug(`Successfully removed S3 files ${JSON.stringify(files)}`);
     return {
-      collection: granuleToPublishToSns.collectionId,
+      collection: granuleToPublish.collectionId,
       deletedGranuleId: pgGranule.granule_id,
       deletionTime: Date.now(),
       deletedFiles: files,
