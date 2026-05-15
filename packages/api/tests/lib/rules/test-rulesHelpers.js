@@ -72,8 +72,6 @@ const rulesHelpers = proxyquire('../../../lib/rulesHelpers', {
   },
 });
 
-const { ResourceNotFoundError, resourceNotFoundInfo } = require('../../../lib/errors');
-
 const testDbName = randomString(12);
 
 let workflow;
@@ -1455,34 +1453,46 @@ test.serial('Multiple rules using same SNS topic can be created and deleted', as
   });
 });
 
-test.serial('deleteSnsTrigger throws more detailed ResourceNotFoundError', async (t) => {
-  const errorMessage = 'Resource is not found in resource policy.';
-  const error = new Error(errorMessage);
-  error.name = 'ResourceNotFoundException';
-  const { snsTopicArn } = t.context;
+test.serial('deleteSnsTrigger tolerates a missing lambda permission statement and still unsubscribes', async (t) => {
+  // Test for the case where the lambda permission statement is
+  // already absent (e.g. the rule reused an existing subscription that was
+  // created out-of-band, or an operator manually cleaned up AWS resources)
+  const snsMock = mockClient(awsServices.sns());
+  const lambdaMock = mockClient(awsServices.lambda());
 
-  const ruleWithTrigger = await rulesHelpers.createRuleTrigger(fakeRuleFactoryV2({
-    rule: {
-      type: 'sns',
-      value: snsTopicArn,
-    },
-    workflow,
+  const topicArn = `arn:aws:sns:us-east-1:000000000000:${randomString()}`;
+  const subscriptionArn = `${topicArn}:${randomString()}`;
+
+  const notFoundError = new Error('Resource is not found in resource policy.');
+  notFoundError.name = 'ResourceNotFoundException';
+
+  lambdaMock.onAnyCommand().rejects();
+  lambdaMock.on(RemovePermissionCommand).rejects(notFoundError);
+
+  snsMock
+    .onAnyCommand()
+    .rejects()
+    .on(UnsubscribeCommand)
+    .resolves({});
+
+  const rule = fakeRuleFactoryV2({
+    rule: { type: 'sns', value: topicArn, arn: subscriptionArn },
     state: 'ENABLED',
-  }));
+  });
 
-  const lambdaStub = sinon.stub(awsServices.lambda(), 'send');
-  lambdaStub.throws(error);
+  await t.notThrowsAsync(
+    rulesHelpers.deleteSnsTrigger(t.context.testKnex, rule)
+  );
 
-  await t.throwsAsync(
-    rulesHelpers.deleteSnsTrigger(t.context.testKnex, ruleWithTrigger),
-    {
-      instanceOf: ResourceNotFoundError,
-      message: `${errorMessage} ${resourceNotFoundInfo}`,
-    }
+  // Unsubscribe should still have been issued
+  t.is(
+    snsMock.commandCalls(UnsubscribeCommand, { SubscriptionArn: subscriptionArn }).length,
+    1
   );
 
   t.teardown(() => {
-    lambdaStub.restore();
+    snsMock.restore();
+    lambdaMock.restore();
   });
 });
 

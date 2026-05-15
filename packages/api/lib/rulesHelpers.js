@@ -39,7 +39,7 @@ const {
 } = require('@aws-sdk/client-sns');
 
 const { handleScheduleEvent } = require('../lambdas/sf-scheduler');
-const { isResourceNotFoundException, ResourceNotFoundError } = require('./errors');
+const { isResourceNotFoundException } = require('./errors');
 const { getSnsTriggerPermissionId } = require('./snsRuleHelpers');
 const { recordIsValid } = require('./schema');
 const ruleSchema = require('./schemas').rule;
@@ -323,10 +323,11 @@ async function deleteSnsTrigger(knex, rule) {
     await lambda().send(new RemovePermissionCommand(permissionParams));
   } catch (error) {
     if (isResourceNotFoundException(error)) {
-      throw new ResourceNotFoundError(error);
+      log.warn(`Permission statement ${permissionParams.StatementId} not found on ${permissionParams.FunctionName}; nothing to remove. This may indicate the SNS subscription and/or lambda trigger were already deleted (e.g. manually from AWS).`);
+    } else {
+      log.info(`Error attempting to delete permission statement ${JSON.stringify(error)}`);
+      throw error;
     }
-    log.info(`Error attempting to delete permission statement ${JSON.stringify(error)}`);
-    throw error;
   }
   // delete sns subscription
   const subscriptionParams = {
