@@ -2347,7 +2347,10 @@ test.serial('PATCH publishes an SNS message after a successful granule update', 
   const snsMessageBody = JSON.parse(Messages[0].Body);
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
-  t.deepEqual(publishedMessage.record, translatedGranule);
+  t.deepEqual(publishedMessage.record, {
+    ...translatedGranule,
+    cmrProvider: 'provider',
+  });
   t.is(publishedMessage.event, 'Update');
 });
 
