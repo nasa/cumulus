@@ -57,7 +57,7 @@ const {
   getLaunchpadToken,
   validateLaunchpadToken,
   getValidLaunchpadToken,
-  generateLaunchpadToken,
+  generateNewLaunchpadToken,
   createLockFile,
   removeLockFile,
   waitForLockFileRelease,
@@ -86,9 +86,15 @@ test.afterEach((t) => {
   nock.cleanAll();
 });
 
-test.serial('createLockFile writes a lock file to S3', async (t) => {
-  t.teardown(() => deleteS3Object(bucket, lockFileKey));
+test.afterEach.always(async () => {
+  const { Bucket, Key } = launchpadTokenBucketKey();
+  await Promise.all([
+    deleteS3Object(bucket, lockFileKey),
+    deleteS3Object(Bucket, Key),
+  ]);
+});
 
+test.serial('createLockFile writes a lock file to S3', async (t) => {
   await createLockFile();
   t.truthy(await fileExists(bucket, lockFileKey));
 });
@@ -100,6 +106,27 @@ test.serial('removeLockFile deletes the lock file from S3', async (t) => {
   t.falsy(await fileExists(bucket, lockFileKey));
 });
 
+test.serial('isLockStale returns false for a fresh lock file', async (t) => {
+  await createLockFile();
+  const isLockStale = launchpad.__get__('isLockStale');
+  t.false(await isLockStale());
+});
+
+test.serial('isLockStale returns false when no lock file exists', async (t) => {
+  const isLockStale = launchpad.__get__('isLockStale');
+  t.false(await isLockStale());
+});
+
+test.serial('isLockStale returns true when lock file is older than TTL', async (t) => {
+  const isLockStale = launchpad.__get__('isLockStale');
+  const headObjectStub = sinon.stub().resolves({
+    LastModified: new Date(Date.now() - 120 * 1000),
+  });
+  t.teardown(launchpad.__set__('headObject', headObjectStub));
+
+  t.true(await isLockStale());
+});
+
 test.serial('waitForLockFileRelease resolves when the lock file is absent', async (t) => {
   const retries = 1;
   await t.notThrowsAsync(waitForLockFileRelease(retries));
@@ -108,17 +135,25 @@ test.serial('waitForLockFileRelease resolves when the lock file is absent', asyn
 test.serial('waitForLockFileRelease throws a timeout error when the lock file persists', async (t) => {
   const retries = 2;
   await createLockFile();
-  t.teardown(() => deleteS3Object(bucket, lockFileKey));
 
   await t.throwsAsync(
     waitForLockFileRelease(retries),
-    { message: /Timed out waiting for launchpad token lock file/ }
+    { message: /Timed out waiting for launchpad token lock file removal/ }
   );
 });
 
-test.serial('generateLaunchpadToken issues a valid token even when a cached token exists', async (t) => {
+test.serial('waitForLockFileRelease propagates non-NotFound S3 errors without retrying', async (t) => {
+  const headObjectStub = sinon.stub().rejects(
+    Object.assign(new Error('access denied'), { name: 'AccessDenied' })
+  );
+  t.teardown(launchpad.__set__('headObject', headObjectStub));
+
+  await t.throwsAsync(waitForLockFileRelease(5), { message: 'access denied' });
+  t.is(headObjectStub.callCount, 1);
+});
+
+test.serial('generateNewLaunchpadToken issues a valid token even when a cached token exists', async (t) => {
   const { Bucket, Key } = launchpadTokenBucketKey();
-  t.teardown(() => deleteS3Object(Bucket, Key));
 
   await s3PutObject({
     Bucket,
@@ -135,30 +170,27 @@ test.serial('generateLaunchpadToken issues a valid token even when a cached toke
     .get('/api/gettoken')
     .reply(200, JSON.stringify({ ...getTokenResponse, sm_token: validToken }));
 
-  const result = await generateLaunchpadToken(config);
+  const result = await generateNewLaunchpadToken(config);
   t.is(result, validToken);
 });
 
-test.serial('generateLaunchpadToken handles NoSuchKey when no token file exists', async (t) => {
-  const { Bucket, Key } = launchpadTokenBucketKey();
-  t.teardown(() => deleteS3Object(Bucket, Key));
-
+test.serial('generateNewLaunchpadToken handles NoSuchKey when no token file exists', async (t) => {
   const validToken = randomString();
   nock('https://www.example.com:12345')
     .get('/api/gettoken')
     .reply(200, JSON.stringify({ ...getTokenResponse, sm_token: validToken }));
 
-  const result = await generateLaunchpadToken(config);
+  const result = await generateNewLaunchpadToken(config);
   t.is(result, validToken);
 });
 
-test.serial('generateLaunchpadToken rethrows non-NoSuchKey/NotFound errors from S3 delete', async (t) => {
+test.serial('generateNewLaunchpadToken rethrows non-NoSuchKey/NotFound errors from S3 delete', async (t) => {
   const stub = sinon.stub(S3, 'deleteS3Object').rejects(
     Object.assign(new Error('boom'), { name: 'AccessDenied' })
   );
   t.teardown(() => stub.restore());
 
-  await t.throwsAsync(generateLaunchpadToken(config), { message: 'boom' });
+  await t.throwsAsync(generateNewLaunchpadToken(config), { message: 'boom' });
 });
 
 test.serial('getValidLaunchpadToken waits and reads when a lock file already exists', async (t) => {
@@ -174,10 +206,8 @@ test.serial('getValidLaunchpadToken waits and reads when a lock file already exi
       session_starttime: Date.now() / 1000,
     }),
   });
-  t.teardown(() => deleteS3Object(Bucket, Key));
 
   await s3PutObject({ Bucket, Key: lockFileKey });
-  t.teardown(() => deleteS3Object(Bucket, lockFileKey));
 
   t.teardown(launchpad.__set__('waitForLockFileRelease', sinon.stub().resolves()));
 
@@ -193,7 +223,7 @@ test.serial('getValidLaunchpadToken creates the lock, generates a token, and rem
 
   t.teardown(launchpad.__set__('createLockFile', createLockFileStub));
   t.teardown(launchpad.__set__('removeLockFile', removeLockFileStub));
-  t.teardown(launchpad.__set__('generateLaunchpadToken', generateStub));
+  t.teardown(launchpad.__set__('generateNewLaunchpadToken', generateStub));
 
   const result = await getValidLaunchpadToken(config);
 
@@ -201,6 +231,31 @@ test.serial('getValidLaunchpadToken creates the lock, generates a token, and rem
   t.true(createLockFileStub.calledOnce);
   t.true(generateStub.calledOnce);
   t.true(removeLockFileStub.calledOnce);
+});
+
+test.serial('getValidLaunchpadToken clears a stale lock and retries acquisition', async (t) => {
+  const newToken = randomString();
+  const createLockFileStub = sinon.stub();
+  createLockFileStub.onFirstCall().rejects(
+    Object.assign(new Error('locked'), { name: 'PreconditionFailed' })
+  );
+  createLockFileStub.onSecondCall().resolves();
+
+  const isLockStaleStub = sinon.stub().resolves(true);
+  const removeLockFileStub = sinon.stub().resolves();
+  const generateStub = sinon.stub().resolves(newToken);
+
+  t.teardown(launchpad.__set__('createLockFile', createLockFileStub));
+  t.teardown(launchpad.__set__('isLockStale', isLockStaleStub));
+  t.teardown(launchpad.__set__('removeLockFile', removeLockFileStub));
+  t.teardown(launchpad.__set__('generateNewLaunchpadToken', generateStub));
+
+  const result = await getValidLaunchpadToken(config);
+
+  t.is(result, newToken);
+  t.is(createLockFileStub.callCount, 2);
+  t.true(isLockStaleStub.calledOnce);
+  t.is(removeLockFileStub.callCount, 2);
 });
 
 test.serial('getValidLaunchpadToken falls back to wait-and-read when createLockFile races', async (t) => {
@@ -216,7 +271,6 @@ test.serial('getValidLaunchpadToken falls back to wait-and-read when createLockF
       session_starttime: Date.now() / 1000,
     }),
   });
-  t.teardown(() => deleteS3Object(Bucket, Key));
 
   const removeLockFileStub = sinon.stub().resolves();
 
@@ -238,7 +292,7 @@ test.serial('getValidLaunchpadToken removes the lock file even when token genera
 
   t.teardown(launchpad.__set__('createLockFile', sinon.stub().resolves()));
   t.teardown(launchpad.__set__('removeLockFile', removeLockFileStub));
-  t.teardown(launchpad.__set__('generateLaunchpadToken', sinon.stub().rejects(new Error('launchpad down'))));
+  t.teardown(launchpad.__set__('generateNewLaunchpadToken', sinon.stub().rejects(new Error('launchpad down'))));
 
   await t.throwsAsync(getValidLaunchpadToken(config), { message: 'launchpad down' });
   t.true(removeLockFileStub.calledOnce);
@@ -249,6 +303,35 @@ test.serial('getValidLaunchpadToken rethrows non-PreconditionFailed errors from 
   t.teardown(launchpad.__set__('removeLockFile', sinon.stub().resolves()));
 
   await t.throwsAsync(getValidLaunchpadToken(config), { message: 's3 unreachable' });
+});
+
+test.serial('getValidLaunchpadToken waits and reads when a stale lock is reclaimed by another process', async (t) => {
+  const cachedToken = randomString();
+  const { Bucket, Key } = launchpadTokenBucketKey();
+
+  await s3PutObject({
+    Bucket,
+    Key,
+    Body: JSON.stringify({
+      sm_token: cachedToken,
+      session_maxtimeout: 3600,
+      session_starttime: Date.now() / 1000,
+    }),
+  });
+
+  const createLockFileStub = sinon.stub().rejects(
+    Object.assign(new Error('locked'), { name: 'PreconditionFailed' })
+  );
+
+  t.teardown(launchpad.__set__('createLockFile', createLockFileStub));
+  t.teardown(launchpad.__set__('isLockStale', sinon.stub().resolves(true)));
+  t.teardown(launchpad.__set__('removeLockFile', sinon.stub().resolves()));
+  t.teardown(launchpad.__set__('waitForLockFileRelease', sinon.stub().resolves()));
+
+  const result = await getValidLaunchpadToken(config);
+
+  t.is(result, cachedToken);
+  t.is(createLockFileStub.callCount, 2);
 });
 
 test.serial('LaunchpadToken.requestToken returns token', async (t) => {
@@ -305,8 +388,6 @@ test.serial('getLaunchpadToken gets a new token when existing token is expired',
   // get a new token when the existing token is expired
   const fourthToken = await getLaunchpadToken(config);
   t.not(thirdToken, fourthToken);
-
-  await deleteS3Object(Bucket, Key);
 });
 
 test.serial('getLaunchpadToken does not update the token in s3 if the token has been updated by another thread', async (t) => {
@@ -339,10 +420,6 @@ test.serial('getLaunchpadToken does not update the token in s3 if the token has 
   // token is updated
   const tokenReturned = await launchpad.getLaunchpadToken(config);
   t.is(tokenReturned, secondToken);
-
-  // delete s3 token
-  const { Bucket, Key } = launchpadTokenBucketKey();
-  await deleteS3Object(Bucket, Key);
 });
 
 test.serial('validateLaunchpadToken returns success status when user is in specified group', async (t) => {

@@ -279,6 +279,112 @@ test.serial('getToken throws if no username is provided when using Earthdata Log
   );
 });
 
+test.serial('withCmrLaunchpadTokenRefreshRetry does not retry for non-launchpad clients', async (t) => {
+  const cmr = new CMR({
+    provider: 'CUMULUS',
+    clientId: 'clientId',
+    oauthProvider: 'earthdata',
+    username: 'username',
+    password: 'password',
+  });
+
+  const refreshSpy = sinon.spy(cmr, 'checkRefreshLaunchpadToken');
+  t.teardown(() => refreshSpy.restore());
+
+  const operation = sinon.stub().resolves('result');
+
+  const result = await cmr.withCmrLaunchpadTokenRefreshRetry(operation);
+
+  t.is(result, 'result');
+  t.is(operation.callCount, 1);
+  t.false(refreshSpy.called);
+});
+
+test.serial('withCmrLaunchpadTokenRefreshRetry passes through non-401 errors without retry', async (t) => {
+  const cmr = new CMR({
+    provider: 'CUMULUS',
+    clientId: 'clientId',
+    oauthProvider: 'launchpad',
+    token: 'some-token',
+    passphrase: 'passphrase',
+    api: 'api',
+    certificate: 'cert',
+  });
+
+  const refreshSpy = sinon.spy(cmr, 'checkRefreshLaunchpadToken');
+  t.teardown(() => refreshSpy.restore());
+
+  const operation = sinon.stub().rejects(
+    Object.assign(new Error('Bad Request'), { statusCode: 400 })
+  );
+
+  await t.throwsAsync(
+    () => cmr.withCmrLaunchpadTokenRefreshRetry(operation),
+    { message: 'Bad Request' }
+  );
+
+  t.is(operation.callCount, 1);
+  t.false(refreshSpy.called);
+});
+
+test.serial('withCmrLaunchpadTokenRefreshRetry refreshes launchpad token on 401 and retries successfully', async (t) => {
+  const cmr = new CMR({
+    provider: 'CUMULUS',
+    clientId: 'clientId',
+    oauthProvider: 'launchpad',
+    token: 'invalid-token',
+    passphrase: 'passphrase',
+    api: 'api',
+    certificate: 'cert',
+  });
+
+  const refreshStub = sinon.stub(cmr, 'checkRefreshLaunchpadToken')
+    .callsFake(() => {
+      cmr.token = 'valid-token';
+    });
+  t.teardown(() => refreshStub.restore());
+
+  const operation = sinon.stub();
+  operation.onFirstCall().rejects(Object.assign(new Error('Unauthorized'), { statusCode: 401 }));
+  operation.onSecondCall().resolves('success');
+
+  const result = await cmr.withCmrLaunchpadTokenRefreshRetry(operation);
+
+  t.is(result, 'success');
+  t.is(operation.callCount, 2);
+  t.true(refreshStub.calledOnce);
+  t.is(cmr.token, 'valid-token');
+});
+
+test.serial('withCmrLaunchpadTokenRefreshRetry exhausts retries and throws an error with preserved statusCode and cause', async (t) => {
+  const cmr = new CMR({
+    provider: 'CUMULUS',
+    clientId: 'clientId',
+    oauthProvider: 'launchpad',
+    token: 'invalid-token',
+    passphrase: 'passphrase',
+    api: 'api',
+    certificate: 'cert',
+  });
+
+  const refreshStub = sinon.stub(cmr, 'checkRefreshLaunchpadToken').resolves();
+  t.teardown(() => refreshStub.restore());
+
+  const originalError = Object.assign(new Error('Unauthorized'), { statusCode: 401 });
+  const operation = sinon.stub().rejects(originalError);
+
+  const retries = 2;
+  const error = await t.throwsAsync(
+    () => cmr.withCmrLaunchpadTokenRefreshRetry(operation, retries),
+    { message: /CMR launchpad authentication failed after 3 attempts/ }
+  );
+
+  t.is(operation.callCount, retries + 1);
+  t.is(refreshStub.callCount, retries);
+  t.is(error.statusCode, 401);
+  t.is(error.cause, originalError);
+});
+
 test.serial('refreshLaunchpadToken updates the CMR token with getValidLaunchpadToken', async (t) => {
   const validToken = 'valid-launchpad-token';
   const stub = sinon.stub(launchpad, 'getValidLaunchpadToken').resolves(validToken);
@@ -363,7 +469,18 @@ test.serial('checkRefreshLaunchpadToken handles concurrent refresh calls correct
   t.is(cmr.token, 'second-valid-token');
 });
 
-test.serial('resetInstance properly reverts the CMR singleton to undefined', (t) => {
+test.serial('getInstance creates a new CMR instance if one does not already exist', (t) => {
+  const firstCMR = CMR.getInstance({
+    provider: 'CUMULUS',
+    clientId: 'clientId',
+    oauthProvider: 'launchpad',
+  });
+
+  const secondCMR = CMR.getInstance();
+  t.is(firstCMR, secondCMR);
+});
+
+test.serial('getInstance returns the latest created CMR instance', (t) => {
   const firstCMR = new CMR({
     provider: 'CUMULUS',
     clientId: 'clientId',
@@ -376,11 +493,29 @@ test.serial('resetInstance properly reverts the CMR singleton to undefined', (t)
     oauthProvider: 'earthdata',
   });
 
+  const thirdCMR = CMR.getInstance();
+  t.is(secondCMR, thirdCMR);
+  t.not(firstCMR, thirdCMR);
+});
+
+test.serial('resetInstance properly reverts the CMR singleton to undefined', (t) => {
+  const firstCMR = CMR.getInstance({
+    provider: 'CUMULUS',
+    clientId: 'clientId',
+    oauthProvider: 'launchpad',
+  });
+
+  const secondCMR = CMR.getInstance({
+    provider: 'CMR',
+    clientId: 'clientId2',
+    oauthProvider: 'earthdata',
+  });
+
   t.is(secondCMR, firstCMR);
 
   CMR.resetInstance();
 
-  const thirdCMR = new CMR({
+  const thirdCMR = CMR.getInstance({
     provider: 'fake-provider',
     clientId: 'clientId3',
     oauthProvider: 'launchpad',

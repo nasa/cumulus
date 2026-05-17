@@ -1,3 +1,4 @@
+import pRetry from 'p-retry';
 import get from 'lodash/get';
 import got, { Headers } from 'got';
 import { CMRInternalError } from '@cumulus/errors';
@@ -116,6 +117,8 @@ export class CMR {
   static getInstance(params: CMRConstructorParams) {
     if (!CMR.instance) {
       CMR.instance = new CMR(params);
+    } else {
+      log.warn('Returning existing CMR configuration. If you are attempting to use different parameters to create a new instance, please reset the old one using CMR.resetInstance()');
     }
     return CMR.instance;
   }
@@ -211,6 +214,63 @@ export class CMR {
   }
 
   /**
+  * Runs a CMR operation with retry logic for launchpad failures. If the operation fails with a
+  * 401, refresh the Launchpad token and retry.
+  *
+  * @param {() => Promise} operation - the CMR function with args to execute
+  * @param {number} [retries=5] - number of retry attempts on 401
+  * @returns {Promise} - result of CMR function call
+  */
+  async withCmrLaunchpadTokenRefreshRetry<T>(
+    operation: () => Promise<T>,
+    retries: number = 5
+  ): Promise<T> {
+    if (this.oauthProvider !== 'launchpad') {
+      return await operation();
+    }
+
+    try {
+      return await pRetry(
+        async () => {
+          try {
+            return await operation();
+          } catch (error) {
+            if (error.statusCode !== 401) {
+              throw new pRetry.AbortError(error);
+            }
+            throw error;
+          }
+        },
+        {
+          retries,
+          onFailedAttempt: async (error) => {
+            if (error.retriesLeft > 0) {
+              log.warn(
+                `CMR call failed with 401 on attempt ${error.attemptNumber}, `
+                + 'refreshing launchpad token and retrying'
+              );
+              await this.checkRefreshLaunchpadToken();
+            }
+          },
+        }
+      );
+    } catch (error) {
+      if (error.statusCode === 401) {
+        log.error(
+          `CMR call failed with 401 after ${retries + 1} attempts; exhausted retries`
+        );
+        throw Object.assign(
+          new Error(
+            `CMR launchpad authentication failed after ${retries + 1} attempts: ${error.message}`
+          ),
+          { statusCode: 401, cause: error }
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
    * Return object containing CMR request headers for PUT / POST / DELETE
    *
    * @param {Object} params
@@ -269,8 +329,10 @@ export class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async ingestCollection(xml: string): Promise<unknown> {
-    const headers = this.getWriteHeaders({ token: await this.getToken() });
-    return await ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, headers);
+    return await this.withCmrLaunchpadTokenRefreshRetry(async () => {
+      const headers = this.getWriteHeaders({ token: await this.getToken() });
+      return await ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, headers);
+    });
   }
 
   /**
@@ -281,8 +343,10 @@ export class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async ingestGranule(xml: string, cmrRevisionId?: string): Promise<unknown> {
-    const headers = this.getWriteHeaders({ token: await this.getToken(), cmrRevisionId });
-    return await ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, headers);
+    return await this.withCmrLaunchpadTokenRefreshRetry(async () => {
+      const headers = this.getWriteHeaders({ token: await this.getToken(), cmrRevisionId });
+      return await ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, headers);
+    });
   }
 
   /**
@@ -294,44 +358,46 @@ export class CMR {
    */
   async ingestUMMGranule(ummgMetadata: UmmMetadata, cmrRevisionId?: string)
     : Promise<CMRResponseBody | CMRErrorResponseBody> {
-    const headers = this.getWriteHeaders({
-      token: await this.getToken(),
-      ummgVersion: ummVersion(ummgMetadata),
-      cmrRevisionId,
-    });
+    return await this.withCmrLaunchpadTokenRefreshRetry(async () => {
+      const headers = this.getWriteHeaders({
+        token: await this.getToken(),
+        ummgVersion: ummVersion(ummgMetadata),
+        cmrRevisionId,
+      });
 
-    const granuleId = ummgMetadata.GranuleUR || 'no GranuleId found on input metadata';
-    logDetails.granuleId = granuleId;
+      const granuleId = ummgMetadata.GranuleUR || 'no GranuleId found on input metadata';
+      logDetails.granuleId = granuleId;
 
-    try {
-      const response = await got.put(
-        `${getIngestUrl({ provider: this.provider })}granules/${granuleId}`,
-        {
-          json: ummgMetadata,
-          responseType: 'json',
-          headers,
+      try {
+        const response = await got.put(
+          `${getIngestUrl({ provider: this.provider })}granules/${granuleId}`,
+          {
+            json: ummgMetadata,
+            responseType: 'json',
+            headers,
+          }
+        );
+        return <CMRResponseBody>response.body;
+      } catch (error) {
+        log.error(error, logDetails);
+        const statusCode = get(error, 'response.statusCode', error.code);
+        const statusMessage = get(error, 'response.statusMessage', error.message);
+        let errorMessage = `Failed to ingest, statusCode: ${statusCode}, statusMessage: ${statusMessage}`;
+
+        const responseError = get(error, 'response.body.errors');
+        if (responseError) {
+          errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(responseError)}`;
         }
-      );
-      return <CMRResponseBody>response.body;
-    } catch (error) {
-      log.error(error, logDetails);
-      const statusCode = get(error, 'response.statusCode', error.code);
-      const statusMessage = get(error, 'response.statusMessage', error.message);
-      let errorMessage = `Failed to ingest, statusCode: ${statusCode}, statusMessage: ${statusMessage}`;
 
-      const responseError = get(error, 'response.body.errors');
-      if (responseError) {
-        errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(responseError)}`;
+        log.error(errorMessage);
+
+        if (statusCode >= 500 && statusCode < 600) {
+          throw new CMRInternalError(errorMessage);
+        }
+
+        throw Object.assign(new Error(errorMessage), { statusCode, cause: error });
       }
-
-      log.error(errorMessage);
-
-      if (statusCode >= 500 && statusCode < 600) {
-        throw new CMRInternalError(errorMessage);
-      }
-
-      throw Object.assign(new Error(errorMessage), { statusCode, cause: error });
-    }
+    });
   }
 
   /**
@@ -341,8 +407,10 @@ export class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async deleteCollection(datasetID: string): Promise<unknown> {
-    const headers = this.getWriteHeaders({ token: await this.getToken() });
-    return await deleteConcept('collections', datasetID, this.provider, headers);
+    return await this.withCmrLaunchpadTokenRefreshRetry(async () => {
+      const headers = this.getWriteHeaders({ token: await this.getToken() });
+      return await deleteConcept('collections', datasetID, this.provider, headers);
+    });
   }
 
   /**
@@ -352,8 +420,10 @@ export class CMR {
    * @returns {Promise.<Object>} the CMR response
    */
   async deleteGranule(granuleUR: string): Promise<unknown> {
-    const headers = this.getWriteHeaders({ token: await this.getToken() });
-    return await deleteConcept('granules', granuleUR, this.provider, headers);
+    return await this.withCmrLaunchpadTokenRefreshRetry(async () => {
+      const headers = this.getWriteHeaders({ token: await this.getToken() });
+      return await deleteConcept('granules', granuleUR, this.provider, headers);
+    });
   }
 
   async searchConcept(

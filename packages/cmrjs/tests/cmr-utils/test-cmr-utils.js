@@ -73,27 +73,6 @@ const launchpadPassphrase = randomId('launchpad-passphrase');
 const cmrPasswordSecret = randomId('cmr-password-secret');
 const cmrPassword = randomId('cmr-password');
 
-// for testing the launchpad 401 auth failure retry logic
-async function setupInvalidTokenForRetry(t) {
-  const invalidToken = 'invalid-token';
-  const validToken = randomString();
-
-  await createBucket(process.env.system_bucket);
-  t.teardown(() => recursivelyDeleteS3Bucket(process.env.system_bucket));
-
-  await putJsonS3Object(
-    process.env.system_bucket,
-    `${process.env.stackName}/launchpad/token.json`,
-    {
-      sm_token: invalidToken,
-      session_maxtimeout: 3600,
-      session_starttime: Date.now() / 1000,
-    }
-  );
-
-  return { invalidToken, validToken };
-}
-
 test.before(async (t) => {
   process.env.CMR_ENVIRONMENT = 'OPS';
   process.env.system_bucket = randomString();
@@ -1578,52 +1557,6 @@ test.serial('publishECHO10XML2CMR passes cmrRevisionId to ingestGranule', async 
   t.is(ingestGranuleSpy.getCall(0).args[1], cmrRevisionId);
 });
 
-test.serial('publishECHO10XML2CMR refreshes an invalid launchpad token on a 401 auth failure and retries successfully', async (t) => {
-  const { invalidToken, validToken } = await setupInvalidTokenForRetry(t);
-
-  const refreshStub = sinon.stub(launchpad, 'getValidLaunchpadToken').resolves(validToken);
-  t.teardown(() => refreshStub.restore());
-
-  const conceptId = randomString();
-  const ingestStub = sinon.stub(CMR.prototype, 'ingestGranule');
-  ingestStub.onFirstCall().rejects(Object.assign(new Error('Unauthorized'), { statusCode: 401 }));
-  ingestStub.onSecondCall().resolves({ result: { 'concept-id': conceptId } });
-  t.teardown(() => ingestStub.restore());
-
-  // since its a singleton now we can't have the other instances messing with it here
-  CMR.resetInstance();
-  t.teardown(() => CMR.resetInstance());
-
-  const cmrClient = new CMR({
-    provider: 'CUMULUS',
-    clientId: 'clientId',
-    oauthProvider: 'launchpad',
-    token: invalidToken,
-    passphrase: 'test-passphrase',
-    api: 'test-api',
-    certificate: 'test-cert',
-  });
-
-  t.is(cmrClient.token, invalidToken);
-
-  const publishECHO10XML2CMR = cmrUtil.__get__('publishECHO10XML2CMR');
-
-  const result = await publishECHO10XML2CMR(
-    {
-      granuleId: 'testGranuleId',
-      filename: 's3://bucket/test.cmr.xml',
-      metadataObject: { Granule: { GranuleUR: 'testGranuleId' } },
-    },
-    cmrClient
-  );
-
-  t.is(result.conceptId, conceptId);
-  t.is(result.granuleId, 'testGranuleId');
-  t.is(ingestStub.callCount, 2);
-  t.true(refreshStub.calledOnce);
-  t.is(cmrClient.token, validToken);
-});
-
 test.serial('publishUMMGJSON2CMR passes cmrRevisionId to ingestUMMGranule', async (t) => {
   const cmrFileObject = { filename: 'test.cmr.json', granuleId: 'testGranuleId', metadataObject: {} };
   const cmrRevisionId = Math.floor(Math.random() * 100);
@@ -1638,52 +1571,6 @@ test.serial('publishUMMGJSON2CMR passes cmrRevisionId to ingestUMMGranule', asyn
 
   await cmrUtil.publish2CMR(cmrFileObject, credentials, cmrRevisionId);
   t.is(ingestUMMGranuleSpy.getCall(0).args[1], cmrRevisionId);
-});
-
-test.serial('publishUMMGJSON2CMR refreshes an invalid launchpad token on a 401 auth failure and retries successfully', async (t) => {
-  const { invalidToken, validToken } = await setupInvalidTokenForRetry(t);
-
-  const refreshStub = sinon.stub(launchpad, 'getValidLaunchpadToken').resolves(validToken);
-  t.teardown(() => refreshStub.restore());
-
-  const conceptId = randomString();
-  const ingestUMMStub = sinon.stub(CMR.prototype, 'ingestUMMGranule');
-  ingestUMMStub.onFirstCall().rejects(Object.assign(new Error('Unauthorized'), { statusCode: 401 }));
-  ingestUMMStub.onSecondCall().resolves({ 'concept-id': conceptId });
-  t.teardown(() => ingestUMMStub.restore());
-
-  // since its a singleton now we can't have the other instances messing with it here
-  CMR.resetInstance();
-  t.teardown(() => CMR.resetInstance());
-
-  const cmrClient = new CMR({
-    provider: 'CUMULUS',
-    clientId: 'clientId',
-    oauthProvider: 'launchpad',
-    token: invalidToken,
-    passphrase: 'test-passphrase',
-    api: 'test-api',
-    certificate: 'test-cert',
-  });
-
-  t.is(cmrClient.token, invalidToken);
-
-  const publishUMMGJSON2CMR = cmrUtil.__get__('publishUMMGJSON2CMR');
-
-  const result = await publishUMMGJSON2CMR(
-    {
-      granuleId: 'testGranuleId',
-      filename: 's3://bucket/test.cmr.json',
-      metadataObject: { GranuleUR: 'testGranuleId' },
-    },
-    cmrClient
-  );
-
-  t.is(result.conceptId, conceptId);
-  t.is(result.granuleId, 'testGranuleId');
-  t.is(ingestUMMStub.callCount, 2);
-  t.true(refreshStub.calledOnce);
-  t.is(cmrClient.token, validToken);
 });
 
 test(

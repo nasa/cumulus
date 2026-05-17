@@ -13,7 +13,6 @@ const path = require('path');
 const urljoin = require('url-join');
 const xml2js = require('xml2js');
 const omit = require('lodash/omit');
-const pRetry = require('p-retry');
 const {
   buildS3Uri,
   parseS3Uri,
@@ -240,33 +239,6 @@ function granulesToCmrFileObjects(granules, filterFunc = isCMRFile) {
 }
 
 /**
- * Runs a CMR operation with retry logic for launchpad failures. If the operation fails with a
- * 401, refresh the Launchpad token and retry.
- *
- * @param {CMR} cmrClient - the CMR client whose launchpad token should be refreshed on 401
- * @param {() => Promise} operation - the CMR function with args to execute
- * @param {Object} [options]
- * @param {number} [options.retries=5] - number of retry attempts
- * @returns {Promise} - result of CMR function call
- */
-async function withCmrLaunchpadTokenRefreshRetry(cmrClient, operation, { retries = 5 } = {}) {
-  return await pRetry(
-    async () => {
-      try {
-        return await operation();
-      } catch (error) {
-        if (error.statusCode === 401) {
-          await cmrClient.checkRefreshLaunchpadToken();
-          throw error;
-        }
-        throw new pRetry.AbortError(error);
-      }
-    },
-    { retries }
-  );
-}
-
-/**
  * Posts CMR XML files from S3 to CMR.
  *
  * @param {Object} cmrFile - an object representing the cmr file
@@ -278,19 +250,9 @@ async function withCmrLaunchpadTokenRefreshRetry(cmrClient, operation, { retries
  * @returns {Promise<Object>} CMR's success response which includes the concept-id
  */
 async function publishECHO10XML2CMR(cmrFile, cmrClient, revisionId) {
-  let res;
   const builder = new xml2js.Builder();
   const xml = builder.buildObject(cmrFile.metadataObject);
-
-  if (cmrClient.oauthProvider === 'launchpad') {
-    res = await withCmrLaunchpadTokenRefreshRetry(
-      cmrClient,
-      () => cmrClient.ingestGranule(xml, revisionId)
-    );
-  } else {
-    res = await cmrClient.ingestGranule(xml, revisionId);
-  }
-
+  const res = await cmrClient.ingestGranule(xml, revisionId);
   const conceptId = res.result['concept-id'];
   let resultLog = `Published ${cmrFile.granuleId} to the CMR. conceptId: ${conceptId}`;
 
@@ -318,18 +280,8 @@ async function publishECHO10XML2CMR(cmrFile, cmrClient, revisionId) {
  * @returns {Promise<Object>} CMR's success response which includes the concept-id
  */
 async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId) {
-  let res;
   const granuleId = cmrFile.metadataObject.GranuleUR;
-
-  if (cmrClient.oauthProvider === 'launchpad') {
-    res = await withCmrLaunchpadTokenRefreshRetry(
-      cmrClient,
-      () => cmrClient.ingestUMMGranule(cmrFile.metadataObject, revisionId)
-    );
-  } else {
-    res = await cmrClient.ingestUMMGranule(cmrFile.metadataObject, revisionId);
-  }
-
+  const res = await cmrClient.ingestUMMGranule(cmrFile.metadataObject, revisionId);
   const conceptId = res['concept-id'];
 
   const filename = getS3UrlOfFile(cmrFile);
@@ -387,12 +339,6 @@ function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
  */
 async function removeFromCMR(granuleUR, creds) {
   const cmrClient = new CMR(creds);
-  if (cmrClient.oauthProvider === 'launchpad') {
-    return await withCmrLaunchpadTokenRefreshRetry(
-      cmrClient,
-      () => cmrClient.deleteGranule(granuleUR)
-    );
-  }
   return await cmrClient.deleteGranule(granuleUR);
 }
 
@@ -1414,25 +1360,12 @@ function buildCMRQuery(results) {
  * containing the found collections
  */
 async function getCollectionsByShortNameAndVersion(results) {
-  let response;
   const query = buildCMRQuery(results);
   const cmrClient = new CMR(await getCmrSettings());
-  if (cmrClient.oauthProvider === 'launchpad') {
-    response = await withCmrLaunchpadTokenRefreshRetry(cmrClient, async () => {
-      const headers = cmrClient.getReadHeaders({ token: await cmrClient.getToken() });
-      return got.post(
-        `${getSearchUrl()}collections.json`,
-        {
-          json: query,
-          responseType: 'json',
-          headers: { Accept: 'application/json', ...headers },
-        }
-      );
-    });
-  } else {
-    const headers = cmrClient.getReadHeaders({ token: await cmrClient.getToken() });
 
-    response = await got.post(
+  const response = await cmrClient.withCmrLaunchpadTokenRefreshRetry(async () => {
+    const headers = cmrClient.getReadHeaders({ token: await cmrClient.getToken() });
+    return await got.post(
       `${getSearchUrl()}collections.json`,
       {
         json: query,
@@ -1443,7 +1376,8 @@ async function getCollectionsByShortNameAndVersion(results) {
         },
       }
     );
-  }
+  });
+
   return response.body;
 }
 

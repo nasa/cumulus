@@ -6,6 +6,7 @@
 
 import pick from 'lodash/pick';
 import { Readable } from 'stream';
+import pRetry from 'p-retry';
 
 import { s3 } from '@cumulus/aws-client/services';
 import {
@@ -33,34 +34,39 @@ const log = new Logger({ sender: '@cumulus/launchpad-auth' });
 const getSystemBucket = () => getEnvVar('system_bucket');
 const getLockFileKey = () => `${getEnvVar('stackName')}/launchpad/token-lock.json`;
 const getTokenFileKey = () => `${getEnvVar('stackName')}/launchpad/token.json`;
+const LOCK_TTL_MS = 60 * 1000;
 
 /**
- * Poll S3 until the launchpad token lock file is NotFound or times out.
+ * Poll S3 until the launchpad token lock file is NotFound or times out with exponential backoff
  *
  * @param {number} retries - number of poll attempts before timing out, defaults to 5
- * @param {number} intervalMs - milliseconds between poll attempts, defaults to 1000
  *
  */
 async function waitForLockFileRelease(
-  retries: number = 5,
-  intervalMs: number = 1000
+  retries: number = 5
 ) {
-  /* eslint-disable no-await-in-loop */
-  for (let attempt = 0; attempt < retries; attempt += 1) {
-    try {
-      await headObject(getSystemBucket(), getLockFileKey());
-    } catch (error) {
-      if (error.name === 'NotFound') {
-        return;
+  await pRetry(
+    async () => {
+      try {
+        await headObject(getSystemBucket(), getLockFileKey());
+      } catch (error) {
+        if (error.name === 'NotFound' || error.name === 'NoSuchKey') {
+          return;
+        }
+        throw new pRetry.AbortError(error);
       }
-      throw error;
+      throw new Error('Timed out waiting for launchpad token lock file removal');
+    },
+    {
+      retries,
+      maxTimeout: 5000,
+      onFailedAttempt: (error) => {
+        log.debug(
+          `Waiting for launchpad token lock file release: attempt ${error.attemptNumber} failed, ${error.retriesLeft} retries left`
+        );
+      },
     }
-    if (attempt < retries - 1) {
-      await new Promise((resolve) => setTimeout(resolve, intervalMs));
-    }
-  }
-  /* eslint-enable no-await-in-loop */
-  throw new Error('Timed out waiting for launchpad token lock file to be released');
+  );
 }
 
 /**
@@ -84,6 +90,28 @@ async function createLockFile() {
     Key: getLockFileKey(),
     IfNoneMatch: '*',
   });
+}
+
+/**
+ * Check whether the launchpad token lock file in S3 is stale from a previous process
+ * that failed to remove it.
+ *
+ * @returns {Promise<boolean>} - boolean for if the lock file is stale
+ */
+async function isLockStale(): Promise<boolean> {
+  try {
+    const head = await headObject(getSystemBucket(), getLockFileKey());
+    if (!head.LastModified) {
+      return false;
+    }
+    const ageMs = Date.now() - head.LastModified.getTime();
+    return ageMs > LOCK_TTL_MS;
+  } catch (error) {
+    if (error.name === 'NoSuchKey' || error.name === 'NotFound') {
+      return false;
+    }
+    throw error;
+  }
 }
 
 /**
@@ -251,7 +279,7 @@ async function waitAndReadToken(config: LaunchpadTokenParams) {
 }
 
 /**
- * Remove the failing existing token and create a new launchpad token using the launchpad config
+ * Remove the existing token and create a new launchpad token using the launchpad config
  *
  * @param {Object} params - the configuration parameters for creating LaunchpadToken object
  * @param {string} params.api - the Launchpad token service api endpoint
@@ -260,7 +288,7 @@ async function waitAndReadToken(config: LaunchpadTokenParams) {
  *
  * @returns {Promise<string>} - generated Launchpad token
  */
-async function generateLaunchpadToken(config: LaunchpadTokenParams) {
+async function generateNewLaunchpadToken(config: LaunchpadTokenParams) {
   try {
     await deleteS3Object(getSystemBucket(), getTokenFileKey());
   } catch (error) {
@@ -273,8 +301,25 @@ async function generateLaunchpadToken(config: LaunchpadTokenParams) {
 }
 
 /**
- * Lambda handler that checks for a lock file, generates a Launchpad token if needed,
- * stores it in S3, then re-invokes the calling Lambda.
+ * Attempt to create the launchpad token lock file.
+ *
+ * @returns {Promise<boolean>} - if the lock was successfully acquired or not
+ * @throws if S3 returns any error other than PreconditionFailed.
+ */
+async function acquireLock(): Promise<boolean> {
+  try {
+    await createLockFile();
+    return true;
+  } catch (error) {
+    if (error.name === 'PreconditionFailed') {
+      return false;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Checks for a lock file, generates or reads a Launchpad token if needed, then returns it
  *
  * @param {Object} params - the configuration parameters for creating LaunchpadToken object
  * @param {string} params.api - the Launchpad token service api endpoint
@@ -286,24 +331,29 @@ async function generateLaunchpadToken(config: LaunchpadTokenParams) {
 export async function getValidLaunchpadToken(params: LaunchpadTokenParams) {
   let createdLock = false;
   try {
-    // lock is not there, so we can create it here and try to make the token
-    try {
-      await createLockFile();
-      createdLock = true;
-    } catch (err) {
-      if (err.name !== 'PreconditionFailed') {
-        throw err;
-      }
-      // Lost the token-creating race, so we wait and read like before
+    // try to acquire the lock so the token can be created
+    createdLock = await acquireLock();
+    // some other process created the lock, but we need to check if its stale
+    if (!createdLock && await isLockStale()) {
+      log.warn('Found stale launchpad token lock file: removing it and retrying');
+      await removeLockFile();
+      createdLock = await acquireLock();
+    }
+    // lost the token-creating race, so we wait and read like before
+    if (!createdLock) {
       return await waitAndReadToken(params);
     }
-    return await generateLaunchpadToken(params);
+    return await generateNewLaunchpadToken(params);
   } catch (error) {
     log.error('Error during Launchpad token generation:', error);
     throw error;
   } finally {
     if (createdLock) {
-      await removeLockFile();
+      try {
+        await removeLockFile();
+      } catch (error) {
+        log.error('Failed to remove launchpad token lock file; lock may be stale', error);
+      }
     }
   }
 }
@@ -312,7 +362,7 @@ module.exports = {
   getLaunchpadToken,
   validateLaunchpadToken,
   getValidLaunchpadToken,
-  generateLaunchpadToken,
+  generateNewLaunchpadToken,
   createLockFile,
   removeLockFile,
   waitAndReadToken,
