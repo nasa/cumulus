@@ -18,11 +18,6 @@ test.before(() => {
 
 test.afterEach.always(() => {
   nock.cleanAll();
-  /* since the CMR class follows a singleton pattern, and in the tests below we create multiple
-  CMR instances to test a variety of different configurations, it is neccessary to reset the
-  CMR instance per suite so the suites can work with the respective one they create
-  */
-  CMR.resetInstance();
 });
 
 test.after.always(() => {
@@ -225,6 +220,42 @@ test.serial('ingestUMMGranule() throws an exception if the input fails validatio
       message: 'Failed to ingest, statusCode: 422, statusMessage: Unprocessable Entity, CMR error message: [{"path":["Temporal"],"errors":["oh snap"]}]',
     }
   );
+});
+
+test.serial('ingestUMMGranule refreshes launchpad token on 401 and retries successfully', async (t) => {
+  const cmrSearch = new CMR({
+    oauthProvider: 'launchpad',
+    token: 'invalid-token',
+    clientId: 'client',
+    passphrase: 'passphrase',
+    api: 'api',
+    certificate: 'cert',
+  });
+
+  const refreshStub = sinon.stub(cmrSearch, 'checkRefreshLaunchpadToken')
+    .callsFake(() => {
+      cmrSearch.token = 'valid-token';
+    });
+  t.teardown(() => refreshStub.restore());
+
+  const ummgMetadata = { GranuleUR: 'asdf' };
+  const successBody = { 'concept-id': 'G123-CUMULUS' };
+
+  process.env.CMR_ENVIRONMENT = 'SIT';
+
+  nock('https://cmr.sit.earthdata.nasa.gov')
+    .put(`/ingest/providers/${cmrSearch.provider}/granules/${ummgMetadata.GranuleUR}`)
+    .reply(401, { errors: ['Unauthorized'] });
+
+  nock('https://cmr.sit.earthdata.nasa.gov')
+    .put(`/ingest/providers/${cmrSearch.provider}/granules/${ummgMetadata.GranuleUR}`)
+    .reply(200, successBody);
+
+  const result = await cmrSearch.ingestUMMGranule(ummgMetadata);
+
+  t.deepEqual(result, successBody);
+  t.true(refreshStub.calledOnce);
+  t.true(nock.isDone());
 });
 
 test.serial('getCmrPassword returns the set password if no secret exists', async (t) => {

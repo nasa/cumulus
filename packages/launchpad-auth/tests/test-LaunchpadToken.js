@@ -119,10 +119,10 @@ test.serial('isLockStale returns false when no lock file exists', async (t) => {
 
 test.serial('isLockStale returns true when lock file is older than TTL', async (t) => {
   const isLockStale = launchpad.__get__('isLockStale');
-  const headObjectStub = sinon.stub().resolves({
+  const headObjectStub = sinon.stub(S3, 'headObject').resolves({
     LastModified: new Date(Date.now() - 120 * 1000),
   });
-  t.teardown(launchpad.__set__('headObject', headObjectStub));
+  t.teardown(() => headObjectStub.restore());
 
   t.true(await isLockStale());
 });
@@ -143,10 +143,10 @@ test.serial('waitForLockFileRelease throws a timeout error when the lock file pe
 });
 
 test.serial('waitForLockFileRelease propagates non-NotFound S3 errors without retrying', async (t) => {
-  const headObjectStub = sinon.stub().rejects(
+  const headObjectStub = sinon.stub(S3, 'headObject').rejects(
     Object.assign(new Error('access denied'), { name: 'AccessDenied' })
   );
-  t.teardown(launchpad.__set__('headObject', headObjectStub));
+  t.teardown(() => headObjectStub.restore());
 
   await t.throwsAsync(waitForLockFileRelease(5), { message: 'access denied' });
   t.is(headObjectStub.callCount, 1);

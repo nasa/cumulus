@@ -30,9 +30,6 @@ const result = {
 const resultThunk = () => ({ result });
 
 test.before(async (t) => {
-  process.env.system_bucket = randomString();
-  process.env.stackName = randomString();
-
   // Store the CMR password
   t.context.cmrPasswordSecretName = randomString();
   await awsServices.secretsManager().createSecret({

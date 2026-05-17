@@ -75,8 +75,6 @@ const cmrPassword = randomId('cmr-password');
 
 test.before(async (t) => {
   process.env.CMR_ENVIRONMENT = 'OPS';
-  process.env.system_bucket = randomString();
-  process.env.stackName = randomString();
 
   process.env.cmr_provider = 'CUMULUS-TEST';
   process.env.cmr_client_id = 'Cumulus-Client-Id';

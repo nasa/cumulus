@@ -265,20 +265,6 @@ async function validateLaunchpadToken(
 }
 
 /**
- * Wait for the lock file to release and read/return the created token
- *
- * @param {Object} params - the configuration parameters for creating LaunchpadToken object
- * @param {string} params.api - the Launchpad token service api endpoint
- * @param {string} params.passphrase - the passphrase of the Launchpad PKI certificate
- * @param {string} params.certificate - the name of the Launchpad PKI pfx certificate
- *
- * @returns {Promise<string>} - the Launchpad token
- */
-async function waitAndReadToken(config: LaunchpadTokenParams) {
-  return await getLaunchpadToken(config);
-}
-
-/**
  * Remove the existing token and create a new launchpad token using the launchpad config
  *
  * @param {Object} params - the configuration parameters for creating LaunchpadToken object
@@ -341,7 +327,7 @@ export async function getValidLaunchpadToken(params: LaunchpadTokenParams) {
     }
     // lost the token-creating race, so we wait and read like before
     if (!createdLock) {
-      return await waitAndReadToken(params);
+      return await getLaunchpadToken(params);
     }
     return await generateNewLaunchpadToken(params);
   } catch (error) {
@@ -352,7 +338,7 @@ export async function getValidLaunchpadToken(params: LaunchpadTokenParams) {
       try {
         await removeLockFile();
       } catch (error) {
-        log.error('Failed to remove launchpad token lock file; lock may be stale', error);
+        log.error('Failed to remove launchpad token lock file', error);
       }
     }
   }
@@ -365,6 +351,5 @@ module.exports = {
   generateNewLaunchpadToken,
   createLockFile,
   removeLockFile,
-  waitAndReadToken,
   waitForLockFileRelease,
 };
