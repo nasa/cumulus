@@ -74,6 +74,7 @@ describe('The SNS-type rule', () => {
   let lambdaStep;
   let newTopicArn;
   let newValueTopicName;
+  let snsExistingSubscriptionTopicName;
   let createdRule;
   let ruleName;
   let snsMessage;
@@ -96,6 +97,7 @@ describe('The SNS-type rule', () => {
       ruleName = timestampedName('SnsRuleIntegrationTestRule');
       const snsTopicName = timestampedName(`${config.stackName}_SnsRuleIntegrationTestTopic`);
       newValueTopicName = timestampedName(`${config.stackName}_SnsRuleValueChangeTestTopic`);
+      snsExistingSubscriptionTopicName = timestampedName(`${config.stackName}_SnsExistingSubscriptionTestTopic`);
       consumerName = `${config.stackName}-messageConsumer`;
 
       executionNamePrefix = randomId('prefix');
@@ -366,7 +368,8 @@ describe('The SNS-type rule', () => {
     beforeAll(async () => {
       if (beforeAllFailed) return;
       try {
-        const { TopicArn } = await createSnsTopic(newValueTopicName);
+        const { TopicArn } = await createSnsTopic(snsExistingSubscriptionTopicName);
+        newTopicArn = TopicArn;
         const subscriptionParams = {
           TopicArn,
           Protocol: 'lambda',
@@ -394,9 +397,17 @@ describe('The SNS-type rule', () => {
       }
     });
 
-    it('uses the existing subscription', () => {
+    it('uses the existing subscription', async () => {
       if (beforeAllFailed) fail(beforeAllFailed);
       expect(putRule.rule.arn).toEqual(subscriptionArn);
+      expect(await getNumberOfTopicSubscriptions(newTopicArn)).toBeGreaterThan(0);
+    });
+
+    it('adds the new policy', async () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
+      const { Policy } = await lambda().send(new GetPolicyCommand({ FunctionName: consumerName }));
+      const { Statement } = JSON.parse(Policy);
+      expect(Statement.some((s) => s.Sid === getSnsTriggerPermissionId(putRule))).toBeTrue();
     });
   });
 

@@ -109,7 +109,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fixed `@cumulus/db` `BaseSearch.shouldEstimateRowcount()` to compare against SQL generated
     by `baseCountQuery()` instead of a hardcoded query string, ensuring accurate detection of table count queries.
 - **CUMULUS-4874**
-  - Fixed
+  - Fixed `@cumulus/api` `endpoints/rules/patchRule` to delete old Kinesis and SNS resources prior
+    to allocating new resources.
+  - Refactored `@cumulus/api` `addSnsTrigger` to verify active Lambda permissions before adding permission.
+  - Updated `packages/test-data` .nc mock granule files to match the checksums defined in their signal validation files.
 
 ## [v21.3.3] 2026-04-10
 
