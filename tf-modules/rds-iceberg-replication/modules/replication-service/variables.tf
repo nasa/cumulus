@@ -136,13 +136,13 @@ variable "iceberg_namespace" {
 
 variable "pg_db" {
   description = "postgres database"
-  type = string
+  type        = string
 }
 
 variable "pg_schema" {
   description = "The name of the schema in the postgres database that contains the tables"
-  type = string
-  default = "public"
+  type        = string
+  default     = "public"
 }
 
 variable "ecs_infrastructure_role" {
@@ -180,6 +180,6 @@ variable "ecs_cluster" {
 
 variable "compaction_interval_sec" {
   description = "The period in seconds between compactions"
-  type = string
-  default = "30"
+  type        = string
+  default     = "30"
 }

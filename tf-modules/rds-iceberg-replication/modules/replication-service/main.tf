@@ -61,7 +61,7 @@ resource "aws_ecs_service" "kafka-replication" {
   force_new_deployment               = var.force_new_deployment
   launch_type                        = "FARGATE"
   depends_on                         = [var.ecs_infrastructure_role]
-  enable_execute_command = true
+  enable_execute_command             = true
 
   network_configuration {
     subnets          = [var.subnet] # Pin to one subnet/AZ for EBS consistency

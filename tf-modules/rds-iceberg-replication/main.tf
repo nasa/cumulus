@@ -18,36 +18,36 @@ locals {
   underscore_prefix = replace(var.prefix, "-", "_")
   replication_services = {
     small-tables = {
-      slot_name          = "${local.underscore_prefix}_small_tables"
-      table_include_list = "${var.pg_schema}.collections,${var.pg_schema}.async_operations,${var.pg_schema}.providers,${var.pg_schema}.pdrs,${var.pg_schema}.reconciliation_reports,${var.pg_schema}.rules,${var.pg_schema}.granules_executions"
+      slot_name           = "${local.underscore_prefix}_small_tables"
+      table_include_list  = "${var.pg_schema}.collections,${var.pg_schema}.async_operations,${var.pg_schema}.providers,${var.pg_schema}.pdrs,${var.pg_schema}.reconciliation_reports,${var.pg_schema}.rules,${var.pg_schema}.granules_executions"
       column_exclude_list = ""
-      memory             = var.small_tables_memory
-      cpu                = var.small_tables_cpu
-      batch_size         = var.small_tables_batch_size
+      memory              = var.small_tables_memory
+      cpu                 = var.small_tables_cpu
+      batch_size          = var.small_tables_batch_size
     }
     executions = {
       slot_name           = "${local.underscore_prefix}_executions"
       table_include_list  = "${var.pg_schema}.executions"
       column_exclude_list = "${var.pg_schema}.executions.original_payload,${var.pg_schema}.executions.final_payload"
-      memory             = var.executions_table_memory
-      cpu                = var.executions_table_cpu
-      batch_size         = var.executions_table_batch_size
+      memory              = var.executions_table_memory
+      cpu                 = var.executions_table_cpu
+      batch_size          = var.executions_table_batch_size
     }
     granules = {
-      slot_name          = "${local.underscore_prefix}_granules"
-      table_include_list = "${var.pg_schema}.granules"
+      slot_name           = "${local.underscore_prefix}_granules"
+      table_include_list  = "${var.pg_schema}.granules"
       column_exclude_list = ""
-      memory             = var.granules_table_memory
-      cpu                = var.granules_table_cpu
-      batch_size         = var.granules_table_batch_size
+      memory              = var.granules_table_memory
+      cpu                 = var.granules_table_cpu
+      batch_size          = var.granules_table_batch_size
     }
     files = {
-      slot_name          = "${local.underscore_prefix}_files"
-      table_include_list = "${var.pg_schema}.files"
+      slot_name           = "${local.underscore_prefix}_files"
+      table_include_list  = "${var.pg_schema}.files"
       column_exclude_list = ""
-      memory             = var.files_table_memory
-      cpu                = var.files_table_cpu
-      batch_size         = var.files_table_batch_size
+      memory              = var.files_table_memory
+      cpu                 = var.files_table_cpu
+      batch_size          = var.files_table_batch_size
     }
   }
 }
@@ -64,8 +64,8 @@ module "replication_services" {
   for_each = local.replication_services
   source   = "./modules/replication-service"
 
-  slot_name          = each.value.slot_name
-  table_include_list = each.value.table_include_list
+  slot_name           = each.value.slot_name
+  table_include_list  = each.value.table_include_list
   column_exclude_list = each.value.column_exclude_list
 
   prefix                    = var.prefix
@@ -92,4 +92,23 @@ module "replication_services" {
   task_security_group_id    = module.cluster.no_ingress_all_egress_security_group.id
   ecs_cluster               = module.cluster.replication_ecs_cluster
   compaction_interval_sec   = var.compaction_interval_sec
+}
+
+module "cleanup_service" {
+  source                   = "./modules/cleanup-service"
+  prefix                   = var.prefix
+  subnet                   = var.subnet
+  iceberg_s3_bucket        = var.iceberg_s3_bucket
+  iceberg_namespace        = var.iceberg_namespace
+  memory                   = var.snapshot_cleanup_memory
+  cpu                      = var.snapshot_cleanup_cpu
+  cpu_architecture         = var.cpu_architecture
+  ecs_task_execution_role  = module.cluster.task_execution_role
+  task_security_group_id   = module.cluster.no_ingress_all_egress_security_group.id
+  ecs_cluster              = module.cluster.replication_ecs_cluster
+  iceberg_cleanup_image    = var.iceberg_cleanup_image
+  table_include_list       = var.snapshot_table_include_list
+  cleanup_interval_minutes = var.snapshot_cleanup_interval_minutes
+  older_than_minutes       = var.snapshot_older_than_minutes
+  retain_last              = var.snapshot_retain_last
 }
