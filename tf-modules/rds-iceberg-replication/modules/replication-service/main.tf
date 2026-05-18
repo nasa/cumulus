@@ -16,17 +16,39 @@ data "aws_subnet" "selected" {
   id = var.subnet
 }
 
-# Pre-provision the EBS volume — this persists independently of the task
-resource "aws_ebs_volume" "kafka_data" {
-  availability_zone = data.aws_subnet.selected.availability_zone
-  size              = var.volume_size_in_gb
-  type              = "gp3"
-  encrypted         = true
-  tags              = merge(var.tags, { Name = "${local.full_name}-kafka-data" })
+resource "aws_efs_access_point" "kafka_data" {
+  file_system_id = aws_efs_file_system.kafka_data.id
+
+  posix_user {
+    uid = 1001
+    gid = 1001
+  }
+
+  root_directory {
+    path = "/kafka"
+    creation_info {
+      owner_uid   = 1001
+      owner_gid   = 1001
+      permissions = "755"
+    }
+  }
+
+  tags = var.tags
+}
+
+resource "aws_efs_file_system" "kafka_data" {
+  encrypted = true
+  tags      = merge(var.tags, { Name = "${local.full_name}-kafka-data" })
 
   lifecycle {
-    prevent_destroy = true # Safety net — don't accidentally nuke the Kafka data
+    prevent_destroy = true
   }
+}
+
+resource "aws_efs_mount_target" "kafka_data" {
+  file_system_id  = aws_efs_file_system.kafka_data.id
+  subnet_id       = var.subnet
+  security_groups = [var.task_security_group_id]
 }
 
 resource "aws_ecs_service" "kafka-replication" {
@@ -47,15 +69,6 @@ resource "aws_ecs_service" "kafka-replication" {
     assign_public_ip = false # Fargate tasks in private subnets usually don't need public IPs
   }
 
-  volume_configuration {
-    name = "kafka-data"
-    managed_ebs_volume {
-      encrypted   = true
-      size_in_gb  = var.volume_size_in_gb
-      volume_type = "gp3"
-      role_arn    = var.ecs_infrastructure_role.arn
-    }
-  }
   wait_for_steady_state = true
 }
 
@@ -72,9 +85,17 @@ resource "aws_ecs_task_definition" "default" {
   task_role_arn      = var.fargate_task_role.arn
 
   volume {
-    name                = "kafka-data"
-    configure_at_launch = true # Required for Fargate
-  }
+    name = "kafka-data"
+    efs_volume_configuration {
+      file_system_id          = aws_efs_file_system.kafka_data.id
+      root_directory          = "/"
+      transit_encryption      = "ENABLED"
+      authorization_config {
+        access_point_id = aws_efs_access_point.kafka_data.id
+        iam             = "DISABLED"
+      }
+    }
+}
 
   container_definitions = jsonencode([
     {
