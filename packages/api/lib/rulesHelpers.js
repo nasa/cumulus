@@ -39,7 +39,6 @@ const {
 } = require('@aws-sdk/client-sns');
 
 const { handleScheduleEvent } = require('../lambdas/sf-scheduler');
-const { isResourceNotFoundException, ResourceNotFoundError } = require('./errors');
 const { getSnsTriggerPermissionId } = require('./snsRuleHelpers');
 const { recordIsValid } = require('./schema');
 const ruleSchema = require('./schemas').rule;
