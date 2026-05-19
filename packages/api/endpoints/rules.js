@@ -158,6 +158,9 @@ async function patchRule(params) {
     return invokeRerun(oldApiRule).then(() => res.send(oldApiRule));
   }
 
+  if (['kinesis', 'sns'].includes(oldApiRule.rule.type)) {
+    await deleteRuleResources(knex, oldApiRule);
+  }
   const apiRuleWithTrigger = await updateRuleTrigger(oldApiRule, apiRule);
   const apiPgRule = await translateApiRuleToPostgresRuleRaw(apiRuleWithTrigger, knex);
   log.debug(`rules.patchRule apiRuleWithTrigger: ${JSON.stringify(apiRuleWithTrigger)}`);
@@ -169,9 +172,6 @@ async function patchRule(params) {
   });
 
   log.info(`rules.patchRule translatedRule: ${JSON.stringify(translatedRule)}`);
-  if (['kinesis', 'sns'].includes(oldApiRule.rule.type)) {
-    await deleteRuleResources(knex, oldApiRule);
-  }
   return res.send(translatedRule);
 }
 
