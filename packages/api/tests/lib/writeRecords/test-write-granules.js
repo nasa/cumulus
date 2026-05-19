@@ -4577,7 +4577,7 @@ test.serial('updateGranuleStatusToQueued() does not publish a SNS message if wri
   t.is(Messages.length, 1);
   t.deepEqual(publishedMessage.record, {
     ...apiGranule,
-    cmrProvider: t.context.cmr_provider,
+    cmrProvider: t.context.collection.cmr_provider,
   });
   t.is(publishedMessage.event, 'Create');
 });
@@ -4629,7 +4629,7 @@ test.serial('_writeGranule() successfully publishes an SNS message', async (t) =
 
   t.deepEqual(publishedMessage.record, {
     ...translatedGranule,
-    cmrProvider: t.context.cmr_provider,
+    cmrProvider: t.context.collection.cmr_provider,
   });
   t.is(publishedMessage.event, 'Update');
 });
