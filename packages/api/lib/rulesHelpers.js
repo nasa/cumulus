@@ -532,7 +532,7 @@ async function checkForSnsSubscriptions(ruleItem) {
   } catch (error) {
     // Ignore ResourceNotFoundException which means the Lambda has NO resource policy at all
     if (!isResourceNotFoundException(error)) {
-      log.info(`Error attempting to getting permission statement ${JSON.stringify(error)}`);
+      log.info(`Error attempting to get permission statement ${JSON.stringify(error)}`);
       throw error;
     }
   }
