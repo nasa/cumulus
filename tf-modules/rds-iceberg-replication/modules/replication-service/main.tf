@@ -61,7 +61,7 @@ resource "aws_ecs_service" "kafka-replication" {
   force_new_deployment               = var.force_new_deployment
   launch_type                        = "FARGATE"
   depends_on                         = [var.ecs_infrastructure_role]
-  enable_execute_command = true
+  enable_execute_command             = true
 
   network_configuration {
     subnets          = [var.subnet] # Pin to one subnet/AZ for EBS consistency
@@ -87,15 +87,15 @@ resource "aws_ecs_task_definition" "default" {
   volume {
     name = "kafka-data"
     efs_volume_configuration {
-      file_system_id          = aws_efs_file_system.kafka_data.id
-      root_directory          = "/"
-      transit_encryption      = "ENABLED"
+      file_system_id     = aws_efs_file_system.kafka_data.id
+      root_directory     = "/"
+      transit_encryption = "ENABLED"
       authorization_config {
         access_point_id = aws_efs_access_point.kafka_data.id
         iam             = "DISABLED"
       }
     }
-}
+  }
 
   container_definitions = jsonencode([
     {

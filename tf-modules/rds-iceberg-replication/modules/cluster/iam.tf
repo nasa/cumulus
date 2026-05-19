@@ -14,7 +14,7 @@ resource "aws_iam_role" "ecs_task_execution_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
-  role       = aws_iam_role.ecs_task_execution_role.name
+  role = aws_iam_role.ecs_task_execution_role.name
   # AWS managed policy for basic ECS execution permissions
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
@@ -130,15 +130,15 @@ resource "aws_iam_policy" "ssm_access_policy" {
     Version = "2012-10-17",
     Statement = [
       {
-            "Effect": "Allow",
-            "Action": [
-                "ssmmessages:CreateControlChannel",
-                "ssmmessages:CreateDataChannel",
-                "ssmmessages:OpenControlChannel",
-                "ssmmessages:OpenDataChannel"
-            ],
-            "Resource": "*"
-        }
+        "Effect" : "Allow",
+        "Action" : [
+          "ssmmessages:CreateControlChannel",
+          "ssmmessages:CreateDataChannel",
+          "ssmmessages:OpenControlChannel",
+          "ssmmessages:OpenDataChannel"
+        ],
+        "Resource" : "*"
+      }
     ]
   })
 }
@@ -166,7 +166,7 @@ resource "aws_iam_role" "ecs_infrastructure_role" {
       Action = "sts:AssumeRole"
       Effect = "Allow"
       Principal = {
-        Service = "ecs.amazonaws.com"  # Note: ecs, not ecs-tasks
+        Service = "ecs.amazonaws.com" # Note: ecs, not ecs-tasks
       }
     }]
   })

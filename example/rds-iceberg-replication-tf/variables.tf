@@ -22,7 +22,7 @@ variable "region" {
 
 variable "subnet" {
   description = "Subnet for Fargate tasks"
-  type    = string
+  type        = string
 }
 
 variable "tags" {
@@ -38,14 +38,14 @@ variable "vpc_id" {
 
 variable "force_new_deployment" {
   description = "Enable to force a new task deployment of the service. See https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service#force_new_deployment"
-  type = bool
-  default = false
+  type        = bool
+  default     = false
 }
 
 variable "small_tables_cpu" {
   description = "The number of CPU units the Amazon ECS container agent will reserve for the small_tables task"
-  type    = number
-  default = 2048 # 2 CPUs
+  type        = number
+  default     = 2048 # 2 CPUs
 }
 
 variable "small_tables_memory" {
@@ -62,8 +62,8 @@ variable "small_tables_batch_size" {
 
 variable "granules_table_cpu" {
   description = "The number of CPU units the Amazon ECS container agent will reserve for the granules table task"
-  type    = number
-  default = 2048 # 2 CPUs
+  type        = number
+  default     = 2048 # 2 CPUs
 }
 variable "granules_table_memory" {
   description = "The amount of memory (in MB) that the ECS container agent reserves for the granules table task."
@@ -79,8 +79,8 @@ variable "granules_table_batch_size" {
 
 variable "executions_table_cpu" {
   description = "The number of CPU units the Amazon ECS container agent will reserve for the executions table task"
-  type    = number
-  default = 2048 # 2 CPUs
+  type        = number
+  default     = 2048 # 2 CPUs
 }
 
 variable "executions_table_memory" {
@@ -97,8 +97,8 @@ variable "executions_table_batch_size" {
 
 variable "files_table_cpu" {
   description = "The number of CPU units the Amazon ECS container agent will reserve for the files table task"
-  type    = number
-  default = 2048 # 2 CPUs
+  type        = number
+  default     = 2048 # 2 CPUs
 }
 
 variable "files_table_memory" {
@@ -127,48 +127,48 @@ variable "volume_size_in_gb" {
 
 variable "kafka_image" {
   description = "Image used to start the kafka container. See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-image"
-  type = string
+  type        = string
 }
 
 variable "connect_image" {
   description = "Image used to start the kafka-connect container. See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-image"
-  type = string
+  type        = string
 }
 
 variable "bootstrap_image" {
   description = "Image used to start the bootstrap container. See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-image"
-  type = string
+  type        = string
 }
 
 variable "iceberg_s3_bucket" {
   description = "S3 bucket where iceberg tables are stored"
-  type = string
+  type        = string
 }
 
 variable "iceberg_namespace" {
   description = "iceberg namespace (same as glue database)"
-  type = string
+  type        = string
 }
 
 variable "pg_db" {
   description = "postgres database"
-  type = string
+  type        = string
 }
 
 variable "pg_schema" {
   description = "The name of the schema in the postgres database that contains the tables"
-  type = string
-  default = "public"
+  type        = string
+  default     = "public"
 }
 
 variable "rds_security_group" {
   description = "The security-group created for the RDS cluster. Resources accessing the cluster need to have this"
-  type = string
+  type        = string
 }
 
 variable "rds_endpoint" {
   description = "The read/write endpoint for the RDS cluster"
-  type = string
+  type        = string
 }
 
 variable "admin_db_login_secret_arn" {
@@ -178,6 +178,6 @@ variable "admin_db_login_secret_arn" {
 
 variable "compaction_interval_sec" {
   description = "The period in seconds between compactions"
-  type = string
-  default = "30"
+  type        = string
+  default     = "30"
 }
