@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v22.0.0] 2026-05-12
+
 ### Breaking Changes
 
 - **CUMULUS-4780**
@@ -108,6 +110,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4844**
   - Fixed `@cumulus/db` `BaseSearch.shouldEstimateRowcount()` to compare against SQL generated
     by `baseCountQuery()` instead of a hardcoded query string, ensuring accurate detection of table count queries.
+- **CUMULUS-4874**
+  - Fixed `@cumulus/api` `endpoints/rules/patchRule` to delete old Kinesis and SNS resources prior
+    to allocating new resources.
+  - Refactored `@cumulus/api` `addSnsTrigger` to verify active Lambda permissions before adding permission.
+  - Updated snsRuleSpec.js integration test to verify that the updated rule with an existing
+    subscription topic correctly triggers workflows.
+  - Updated `packages/test-data` .nc mock granule files to match the checksums defined in their
+    signal validation files.
 
 ## [v21.3.3] 2026-04-10
 
@@ -9763,7 +9773,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v21.3.3...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v22.0.0...HEAD
+[v22.0.0]: https://github.com/nasa/cumulus/compare/v21.3.3...v22.0.0
 [v21.3.3]: https://github.com/nasa/cumulus/compare/v21.3.2...v21.3.3
 [v21.3.2]: https://github.com/nasa/cumulus/compare/v21.3.1...v21.3.2
 [v21.3.1]: https://github.com/nasa/cumulus/compare/v21.3.0...v21.3.1

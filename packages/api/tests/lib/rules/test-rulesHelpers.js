@@ -1151,8 +1151,9 @@ test.serial('deleteRuleResources() removes SNS source mappings and permissions',
   const pgRule = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, testKnex);
   const [newPgRule] = await rulePgModel.create(testKnex, pgRule);
 
-  const { subExists } = await checkForSnsSubscriptions(ruleWithTrigger);
+  const { subExists, hasLambdaPermission } = await checkForSnsSubscriptions(ruleWithTrigger);
   t.true(subExists);
+  t.true(hasLambdaPermission);
 
   const { Policy } = await awsServices.lambda().send(new GetPolicyCommand({
     FunctionName: process.env.messageConsumer,
@@ -1162,8 +1163,12 @@ test.serial('deleteRuleResources() removes SNS source mappings and permissions',
 
   await deleteRuleResources(testKnex, ruleWithTrigger);
 
-  const { subExists: subExists2 } = await checkForSnsSubscriptions(ruleWithTrigger);
+  const {
+    subExists: subExists2,
+    hasLambdaPermission: hasLambdaPermission2,
+  } = await checkForSnsSubscriptions(ruleWithTrigger);
   t.false(subExists2);
+  t.false(hasLambdaPermission2);
 
   await t.throwsAsync(
     awsServices.lambda().send(new GetPolicyCommand({
@@ -1277,15 +1282,22 @@ test.serial('checkForSnsSubscriptions returns the correct status of a Rule\'s su
     state: 'ENABLED',
   });
 
+  const subscriptionStatus = await checkForSnsSubscriptions(snsRule);
+
+  t.false(subscriptionStatus.subExists);
+  t.false(subscriptionStatus.hasLambdaPermission);
+  t.falsy(subscriptionStatus.existingSubscriptionArn);
+
   const ruleWithTrigger = await createRuleTrigger(snsRule);
   const pgRule = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, testKnex);
   const [newPgRule] = await rulePgModel.create(testKnex, pgRule);
 
-  const response = await checkForSnsSubscriptions(ruleWithTrigger);
+  const updatedSubscriptionStatus = await checkForSnsSubscriptions(ruleWithTrigger);
 
-  t.is(response.subExists, true);
+  t.true(updatedSubscriptionStatus.subExists);
+  t.true(updatedSubscriptionStatus.hasLambdaPermission);
   // Subscription ARN will be different from but include the Topic ARN
-  t.true(response.existingSubscriptionArn.includes(topic1.TopicArn));
+  t.true(updatedSubscriptionStatus.existingSubscriptionArn.includes(topic1.TopicArn));
 
   t.teardown(() => rulePgModel.delete(testKnex, newPgRule));
 });
@@ -1859,6 +1871,17 @@ test.serial('Creating an enabled SNS rule creates an event source mapping', asyn
   lambdaMock.on(AddPermissionCommand).callsFake(() => {
     mockCalled = true;
   });
+  lambdaMock
+    .on(GetPolicyCommand)
+    .resolves({
+      Policy: JSON.stringify({
+        Statement: [
+          {
+            Sid: 'lambda-permission-id',
+          },
+        ],
+      }),
+    });
 
   await createRuleTrigger(rule);
   const subscribeCalls = snsMock.commandCalls(SubscribeCommand);
