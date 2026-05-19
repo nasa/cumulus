@@ -4,7 +4,6 @@ const {
   createRejectableTransaction,
   CollectionPgModel,
   PdrPgModel,
-  ProviderPgModel,
   translatePostgresPdrToApiPdr,
 } = require('@cumulus/db');
 const {
@@ -124,10 +123,8 @@ const writePdr = async ({
   });
   const translatedPdr = await translatePostgresPdrToApiPdr(pgPdr, knex);
   const collectionPgModel = new CollectionPgModel();
-  const providerPgModel = new ProviderPgModel();
   const metricsPdr = {
     cmrProvider: await collectionPgModel.getCmrProvider(knex, pgPdr.collection_cumulus_id),
-    cumulusProvider: await providerPgModel.getProviderName(knex, pgPdr.provider_cumulus_id),
     ...translatedPdr,
   };
 

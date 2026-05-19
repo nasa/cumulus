@@ -22,19 +22,6 @@ class ProviderPgModel extends BasePgModel<PostgresProvider, PostgresProviderReco
       .merge()
       .returning('*');
   }
-  async getProviderName(
-    knexOrTransaction: Knex | Knex.Transaction,
-    providerCumulusId: number | null | undefined
-  ) {
-    if (!providerCumulusId) {
-      return '';
-    }
-    const provider = await super.get(
-      knexOrTransaction,
-      { cumulus_id: providerCumulusId }
-    );
-    return provider.name;
-  }
 }
 
 export { ProviderPgModel };
