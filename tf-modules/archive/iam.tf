@@ -34,6 +34,7 @@ data "aws_iam_policy_document" "lambda_api_gateway_policy" {
       "logs:CreateLogStream",
       "logs:PutLogEvents",
       "lambda:GetFunction",
+      "lambda:GetPolicy",
       "lambda:invokeFunction",
       "lambda:CreateEventSourceMapping",
       "lambda:UpdateEventSourceMapping",

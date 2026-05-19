@@ -1,1 +1,2 @@
-prefix = "cumulus-sit"
+prefix        = "cumulus-sit"
+use_bootstrap = true
