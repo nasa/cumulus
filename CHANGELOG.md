@@ -46,6 +46,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Implemented partitioned schema for the consolidated database tables.
 - **CUMULUS-4804**
   - Updated application logic to ensure compatibility with partitioned database schemas.
+- **CUMULUS-4839**
+  - Updated `@cumulus/db/search` `GranuleSearch` query builder to prepend the partition key
+    `collection_cumulus_id` to sort orders when collection filters are present.
 
 ### Changed
 - **CUMULUS-4789** Update Docusaurus to latest version - 3.10
@@ -96,6 +99,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Upgraded package `lodash` to version 4.18.1.
   - Updated package overrides to address CVEs GHSA-43fc-jf86-j433 and GHSA-r5fr-rjxr-66jc.
   - added a `webpack` override to `/website/package.json` due to docusaurus conflicts
+  - Upgraded package `uuid` to version ^11.1.1.
 - **CSD-100**
   - made changes to the `PrivateApiLambda` and `ApiEndpoints` lambdas to ensure the environment variables
     are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported
@@ -104,6 +108,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4844**
   - Fixed `@cumulus/db` `BaseSearch.shouldEstimateRowcount()` to compare against SQL generated
     by `baseCountQuery()` instead of a hardcoded query string, ensuring accurate detection of table count queries.
+- **CUMULUS-4874**
+  - Fixed `@cumulus/api` `endpoints/rules/patchRule` to delete old Kinesis and SNS resources prior
+    to allocating new resources.
+  - Refactored `@cumulus/api` `addSnsTrigger` to verify active Lambda permissions before adding permission.
+  - Updated snsRuleSpec.js integration test to verify that the updated rule with an existing
+    subscription topic correctly triggers workflows.
+  - Updated `packages/test-data` .nc mock granule files to match the checksums defined in their
+    signal validation files.
 
 ## [v21.3.3] 2026-04-10
 

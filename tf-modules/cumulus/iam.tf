@@ -48,6 +48,7 @@ data "aws_iam_policy_document" "lambda_processing_policy" {
       "kinesis:ListStreams",
       "kinesis:PutRecord",
       "lambda:GetFunction",
+      "lambda:GetPolicy",
       "lambda:invokeFunction",
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
