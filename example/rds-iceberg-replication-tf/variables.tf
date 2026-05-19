@@ -22,7 +22,7 @@ variable "region" {
 
 variable "subnet" {
   description = "Subnet for Fargate tasks"
-  type    = string
+  type        = string
 }
 
 variable "tags" {
@@ -38,26 +38,85 @@ variable "vpc_id" {
 
 variable "force_new_deployment" {
   description = "Enable to force a new task deployment of the service. See https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service#force_new_deployment"
-  type = bool
-  default = false
+  type        = bool
+  default     = false
 }
 
-variable "cpu" {
-  description = "The number of CPU units the Amazon ECS container agent will reserve for the task"
-  type    = number
-  default = 4096 # 4 CPUs
+variable "small_tables_cpu" {
+  description = "The number of CPU units the Amazon ECS container agent will reserve for the small_tables task"
+  type        = number
+  default     = 2048 # 2 CPUs
+}
+
+variable "small_tables_memory" {
+  description = "The amount of memory (in MB) that the ECS container agent reserves for the small_tables task."
+  type        = number
+  default     = 4096 # 4GB
+}
+
+variable "small_tables_batch_size" {
+  description = "The maximum number of replication messages that will be written to Iceberg at once"
+  type        = number
+  default     = 20000
+}
+
+variable "granules_table_cpu" {
+  description = "The number of CPU units the Amazon ECS container agent will reserve for the granules table task"
+  type        = number
+  default     = 2048 # 2 CPUs
+}
+variable "granules_table_memory" {
+  description = "The amount of memory (in MB) that the ECS container agent reserves for the granules table task."
+  type        = number
+  default     = 4096 # 4GB
+}
+
+variable "granules_table_batch_size" {
+  description = "The maximum number of replication messages that will be written to Iceberg at once"
+  type        = number
+  default     = 20000
+}
+
+variable "executions_table_cpu" {
+  description = "The number of CPU units the Amazon ECS container agent will reserve for the executions table task"
+  type        = number
+  default     = 2048 # 2 CPUs
+}
+
+variable "executions_table_memory" {
+  description = "The amount of memory (in MB) that the ECS container agent reserves for the executions table task."
+  type        = number
+  default     = 4096 # 4GB
+}
+
+variable "executions_table_batch_size" {
+  description = "The maximum number of replication messages that will be written to Iceberg at once"
+  type        = number
+  default     = 20000
+}
+
+variable "files_table_cpu" {
+  description = "The number of CPU units the Amazon ECS container agent will reserve for the files table task"
+  type        = number
+  default     = 2048 # 2 CPUs
+}
+
+variable "files_table_memory" {
+  description = "The amount of memory (in MB) that the ECS container agent reserves for the files table task."
+  type        = number
+  default     = 4096 # 4GB
+}
+
+variable "files_table_batch_size" {
+  description = "The maximum number of replication messages that will be written to Iceberg at once"
+  type        = number
+  default     = 20000
 }
 
 variable "cpu_architecture" {
   description = "The architecture of the cpu platform. Valid values are X86_64 and ARM64"
   type        = string
   default     = "ARM64"
-}
-
-variable "memory" {
-  description = "The amount of memory (in MB) that the ECS container agent reserves for a task."
-  type        = number
-  default     = 16384 # 16GB
 }
 
 variable "volume_size_in_gb" {
@@ -68,44 +127,57 @@ variable "volume_size_in_gb" {
 
 variable "kafka_image" {
   description = "Image used to start the kafka container. See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-image"
-  type = string
+  type        = string
 }
 
 variable "connect_image" {
   description = "Image used to start the kafka-connect container. See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-image"
-  type = string
+  type        = string
 }
 
 variable "bootstrap_image" {
   description = "Image used to start the bootstrap container. See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-image"
-  type = string
-}
-
-variable "data_persistence_remote_state_config" {
-  type = object({ bucket = string, key = string, region = string })
-}
-
-variable "rds_cluster_remote_state_config" {
-  type = object({ bucket = string, key = string, region = string })
+  type        = string
 }
 
 variable "iceberg_s3_bucket" {
   description = "S3 bucket where iceberg tables are stored"
-  type = string
+  type        = string
 }
 
 variable "iceberg_namespace" {
   description = "iceberg namespace (same as glue database)"
-  type = string
+  type        = string
 }
 
 variable "pg_db" {
   description = "postgres database"
-  type = string
+  type        = string
 }
 
 variable "pg_schema" {
   description = "The name of the schema in the postgres database that contains the tables"
-  type = string
-  default = "public"
+  type        = string
+  default     = "public"
+}
+
+variable "rds_security_group" {
+  description = "The security-group created for the RDS cluster. Resources accessing the cluster need to have this"
+  type        = string
+}
+
+variable "rds_endpoint" {
+  description = "The read/write endpoint for the RDS cluster"
+  type        = string
+}
+
+variable "admin_db_login_secret_arn" {
+  description = "Arn for AWS Secrets Manager secret for database administrator credentials"
+  type        = string
+}
+
+variable "compaction_interval_sec" {
+  description = "The period in seconds between compactions"
+  type        = string
+  default     = "30"
 }

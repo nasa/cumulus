@@ -53,6 +53,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `collection_cumulus_id` to sort orders when collection filters are present.
 
 ### Changed
+- **CUMULUS-4776** Split iceberg replication into separate services and add support for partitioned tables
+
 - **CUMULUS-4789** Update Docusaurus to latest version - 3.10
 
 - **CSD-104**

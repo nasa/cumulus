@@ -16,7 +16,7 @@ variable "vpc_id" {
 
 variable "iceberg_s3_bucket" {
   description = "S3 bucket where iceberg tables are stored"
-  type = string
+  type        = string
 }
 
 variable "tags" {
