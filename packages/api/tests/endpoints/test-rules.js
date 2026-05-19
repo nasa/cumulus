@@ -10,6 +10,7 @@ const sinon = require('sinon');
 const {
   CreateFunctionCommand,
   AddPermissionCommand,
+  GetPolicyCommand,
   RemovePermissionCommand,
 } = require('@aws-sdk/client-lambda');
 const { mockClient } = require('aws-sdk-client-mock');
@@ -1115,6 +1116,17 @@ test.serial('PATCH sets SNS rule to "disabled" and removes source mapping ARN', 
 
   const mockLambdaClient = mockClient(awsServices.lambda()).onAnyCommand().rejects();
   mockLambdaClient.on(AddPermissionCommand).resolves();
+  mockLambdaClient
+    .on(GetPolicyCommand)
+    .resolves({
+      Policy: JSON.stringify({
+        Statement: [
+          {
+            Sid: 'lambda-permission-id',
+          },
+        ],
+      }),
+    });
   mockLambdaClient.on(RemovePermissionCommand).resolves();
 
   t.teardown(() => {
@@ -1572,6 +1584,17 @@ test.serial('PUT sets SNS rule to "disabled" and removes source mapping ARN', as
     .resolves({});
   const mockLambdaClient = mockClient(awsServices.lambda()).onAnyCommand().rejects();
   mockLambdaClient.on(AddPermissionCommand).resolves();
+  mockLambdaClient
+    .on(GetPolicyCommand)
+    .resolves({
+      Policy: JSON.stringify({
+        Statement: [
+          {
+            Sid: 'lambda-permission-id',
+          },
+        ],
+      }),
+    });
   mockLambdaClient.on(RemovePermissionCommand).resolves();
 
   t.teardown(() => {

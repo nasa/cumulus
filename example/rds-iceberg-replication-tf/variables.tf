@@ -116,13 +116,13 @@ variable "files_table_batch_size" {
 variable "snapshot_cleanup_cpu" {
   description = "The number of CPU units the Amazon ECS container agent will reserve for the snapshot cleanup task"
   type        = number
-  default     = 4096 # 4 CPUs
+  default     = 2048 # 2 CPUs
 }
 
 variable "snapshot_cleanup_memory" {
   description = "The amount of memory (in MB) that the ECS container agent reserves for the snapshot cleanup task."
   type        = number
-  default     = 16384 # 16GB
+  default     = 2048 # 2GB
 }
 
 variable "cpu_architecture" {
