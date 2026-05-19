@@ -34,12 +34,16 @@ module "rds_iceberg_replication" {
   force_new_deployment              = var.force_new_deployment
   small_tables_cpu                  = var.small_tables_cpu
   small_tables_memory               = var.small_tables_memory
+  small_tables_batch_size           = var.small_tables_batch_size
   granules_table_cpu                = var.granules_table_cpu
   granules_table_memory             = var.granules_table_memory
+  granules_table_batch_size         = var.granules_table_batch_size
   executions_table_cpu              = var.executions_table_cpu
   executions_table_memory           = var.executions_table_memory
+  executions_table_batch_size       = var.executions_table_batch_size
   files_table_cpu                   = var.files_table_cpu
   files_table_memory                = var.files_table_memory
+  files_table_batch_size            = var.files_table_batch_size
   snapshot_cleanup_cpu              = var.snapshot_cleanup_cpu
   snapshot_cleanup_memory           = var.snapshot_cleanup_memory
   cpu_architecture                  = var.cpu_architecture

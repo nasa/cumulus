@@ -30,7 +30,7 @@ resource "aws_iam_role_policy" "iceberg_cleanup_s3" {
     Statement = [
       {
         Effect   = "Allow"
-        Action   = ["s3:GetObject", "s3:DeleteObject"]
+        Action   = ["s3:GetObject", "s3:DeleteObject", "s3:PutObject"]
         Resource = "arn:aws:s3:::${var.iceberg_s3_bucket}/warehouse/${var.iceberg_namespace}/*"
       },
       {
@@ -66,7 +66,8 @@ resource "aws_iam_role_policy" "iceberg_cleanup_glue" {
           "glue:CreateTableOptimizer",
           "glue:UpdateTableOptimizer",
           "glue:GetTableOptimizer",
-          "glue:ListTableOptimizers"
+          "glue:ListTableOptimizers",
+          "glue:UpdateTable"
         ]
         Resource = [
           "arn:aws:glue:${var.region}:${data.aws_caller_identity.current.account_id}:catalog",
