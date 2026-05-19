@@ -48,7 +48,7 @@ async function getCMRClient(config) {
   Object.entries(lambdaConfig.Environment.Variables).forEach(([key, value]) => {
     process.env[key] = value;
   });
-  return new CMR(await getCmrSettings());
+  return CMR.getInstance(await getCmrSettings());
 }
 
 describe('The ChangeGranuleCollections workflow', () => {

@@ -34,7 +34,7 @@ const _removeGranuleFromCmr = async (granule, collectionId) => {
   }
 
   const cmrSettings = await cmrjsCmrUtils.getCmrSettings();
-  const cmr = new CMR(cmrSettings);
+  const cmr = CMR.getInstance(cmrSettings);
   try {
     metadata = await cmr.getGranuleMetadata(granule.cmr_link);
   } catch (error) {

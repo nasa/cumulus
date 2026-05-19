@@ -89,7 +89,7 @@ test.afterEach((t) => {
 test.afterEach.always(async () => {
   const { Bucket, Key } = launchpadTokenBucketKey();
   await Promise.all([
-    deleteS3Object(bucket, lockFileKey),
+    deleteS3Object(Bucket, lockFileKey),
     deleteS3Object(Bucket, Key),
   ]);
 });
