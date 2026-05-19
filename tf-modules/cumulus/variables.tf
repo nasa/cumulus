@@ -753,6 +753,6 @@ variable "iceberg_namespace" {
   default     = null
   validation {
     condition     = !var.deploy_iceberg_api || (var.iceberg_namespace != null && trimspace(var.iceberg_namespace) != "")
-      error_message = "iceberg_namespace must be set to a non-empty value when deploy_iceberg_api is true."
+    error_message = "iceberg_namespace must be set to a non-empty value when deploy_iceberg_api is true."
   }
 }
