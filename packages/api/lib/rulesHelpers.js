@@ -322,10 +322,9 @@ async function deleteSnsTrigger(knex, rule) {
   try {
     await lambda().send(new RemovePermissionCommand(permissionParams));
   } catch (error) {
-    console.log(error);
-    // if (isResourceNotFoundException(error)) {
-    //   throw new ResourceNotFoundError(error);
-    // }
+    if (isResourceNotFoundException(error)) {
+      throw new ResourceNotFoundError(error);
+    }
     log.info(`Error attempting to delete permission statement ${JSON.stringify(error)}`);
     throw error;
   }
