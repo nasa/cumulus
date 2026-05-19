@@ -42,6 +42,7 @@
         "tests/": "dist/tests/"
       }
     },
+    "timeout": "5m",
     "failFast": true
   },
   "dependencies": {
