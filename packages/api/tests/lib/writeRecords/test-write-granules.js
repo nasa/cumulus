@@ -4483,7 +4483,7 @@ test.serial('updateGranuleStatusToQueued() updates granule status in PostgreSQL 
   t.is(Messages.length, 2);
   t.deepEqual(publishedMessage.record, {
     ...translatedPgGranule,
-    cmrProvider: t.context.collection.cmrProvider,
+    cmrProvider: t.context.collection.cmr_provider,
   });
   t.is(publishedMessage.event, 'Update');
 });
