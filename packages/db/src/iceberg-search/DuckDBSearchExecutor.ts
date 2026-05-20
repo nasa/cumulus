@@ -5,29 +5,39 @@ import Logger from '@cumulus/logger';
 import { prepareBindings } from './duckdbHelpers';
 import { Meta } from '../search/BaseSearch';
 import { DbQueryParameters } from '../types/search';
-import { acquireDuckDbConnection, releaseDuckDbConnection, replaceDuckDbConnection, PooledDuckDbConnection } from '../iceberg-connection';
+import {
+  acquireDuckDbConnection,
+  releaseDuckDbConnection,
+  destroyDuckDb,
+} from '../iceberg-connection';
 
 const log = new Logger({ sender: '@cumulus/db/DuckDBSearchExecutor' });
 
 /**
- * Returns true when the error is DuckDB's specific Catalog Error for a missing table,
- * e.g. "Catalog Error: Table with name granules does not exist!"
+ * Returns true when the error is a recoverable DuckDB catalog-related miss,
+ * including missing-table Catalog errors and Binder missing-catalog errors
+ * observed during transient catalog re-attachment windows.
  *
  * @param error - value to evaluate
- * @returns true when the error matches DuckDB missing-table catalog error
+ * @returns true when the error matches a recoverable catalog miss pattern
  */
 export function isCatalogError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
 
+  const missingTableCatalogPattern
+    = /^catalog error:\s*table with name\s+["']?[\w.-]+["']?\s+does not exist!/i;
+  const missingCatalogBinderPattern
+    = /^binder error:\s*catalog\s+["']?[\w.-]+["']?\s+does not exist!/i;
+
   return (
-    /^catalog error:\s*table with name\s+["']?[\w.-]+["']?\s+does not exist!/i
-      .test(error.message)
+    missingTableCatalogPattern.test(error.message)
+    || missingCatalogBinderPattern.test(error.message)
   );
 }
 
 /**
  * Returns true for recoverable S3/HTTP data-access failures that can be fixed
- * by rebuilding a stale DuckDB connection and retrying once.
+ * by reinitializing the DuckDB instance and retrying once.
  *
  * @param error - value to evaluate
  * @returns true when the error matches S3 parquet HTTP 400 access failure
@@ -36,17 +46,14 @@ export function isRecoverableS3HttpError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
 
   const message = error.message;
-  const s3ParquetHttp400Pattern = new RegExp(
+  const s3Http400Pattern = new RegExp(
     [
-      'http get error on \'https?:\\/\\/[^\']*\\.s3\\.[^\']*amazonaws\\.com\\/[^\']*\\.parquet\'',
+      'http get error on \'https?:\\/\\/[^\']*\\.s3\\.[^\']*amazonaws\\.com\\/[^\']*\\.(parquet|avro|json)\'',
       ' \\(http 400\\)',
     ].join(''),
     'i'
   );
-  return (
-    // Intentionally strict: mirrors the observed DuckDB error text for S3 parquet GET HTTP 400.
-    s3ParquetHttp400Pattern.test(message)
-  );
+  return s3Http400Pattern.test(message);
 }
 
 /**
@@ -65,7 +72,7 @@ export async function executeDuckDBSearch(params: {
   dbQueryParameters: DbQueryParameters;
   getMetaTemplate: () => Meta;
   makeTranslateRecords: (
-    conn: PooledDuckDbConnection
+    conn: DuckDBConnection
   ) => (records: any[], knexClient: Knex) => any[] | Promise<any[]>;
   buildSearch: (knexBuilder: Knex) => {
     countQuery?: Knex.QueryBuilder;
@@ -98,7 +105,8 @@ export async function executeDuckDBSearch(params: {
       return { key: config.key, sql, bindings };
     });
 
-  let pooledConnection: PooledDuckDbConnection = await acquireDuckDbConnection();
+  let conn: DuckDBConnection = await acquireDuckDbConnection();
+  let hasActiveConnection = true;
 
   try {
     let countResult: any[] = [];
@@ -123,16 +131,26 @@ export async function executeDuckDBSearch(params: {
     };
 
     try {
-      await runNativeQueries(pooledConnection);
+      await runNativeQueries(conn);
     } catch (error) {
-      if (isCatalogError(error) || isRecoverableS3HttpError(error)) {
-        log.warn('Recoverable DuckDB connection error detected; closing stale connection and retrying query once.', error);
-        pooledConnection.closeSync();
-        pooledConnection = await replaceDuckDbConnection();
-        await runNativeQueries(pooledConnection);
-      } else {
+      if (!isCatalogError(error) && !isRecoverableS3HttpError(error)) {
         throw error;
       }
+
+      log.warn(
+        'Recoverable DuckDB query error detected; reinitializing instance and retrying once.',
+        error
+      );
+
+      await releaseDuckDbConnection(conn);
+      hasActiveConnection = false;
+      await destroyDuckDb();
+
+      conn = await acquireDuckDbConnection();
+      hasActiveConnection = true;
+
+      await runNativeQueries(conn);
+      log.info('DuckDB query retry succeeded after instance reinitialization.');
     }
 
     // 3. Post-process resulting data
@@ -141,11 +159,13 @@ export async function executeDuckDBSearch(params: {
     meta.page = dbQueryParameters.page;
     meta.count = Number(countResult[0]?.count ?? 0);
 
-    const translateRecords = makeTranslateRecords(pooledConnection);
+    const translateRecords = makeTranslateRecords(conn);
     const apiRecords = await translateRecords(records, knexBuilder);
 
     return { meta, results: apiRecords };
   } finally {
-    await releaseDuckDbConnection(pooledConnection);
+    if (hasActiveConnection) {
+      await releaseDuckDbConnection(conn);
+    }
   }
 }

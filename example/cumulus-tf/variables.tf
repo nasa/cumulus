@@ -299,6 +299,18 @@ variable "iceberg_api_memory" {
   description = "The amount of memory in MB to reserve for the Iceberg API Fargate Task"
 }
 
+variable "duckdb_max_pool_size" {
+  type        = number
+  default     = 3
+  description = "Maximum number of DuckDB connections in the connection pool"
+}
+
+variable "duckdb_pool_rebuild_interval_seconds" {
+  type        = number
+  default     = 18000
+  description = "Seconds between preemptive DuckDB idle-pool rebuilds"
+}
+
 variable "api_service_autoscaling_min_capacity" {
   type        = number
   default     = 1
