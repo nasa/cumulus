@@ -60,6 +60,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - One precondition for consolidating deployments is that every S3 bucket name in the merged bucket map must be globally unique.
 
 ### Changed
+- **CUMULUS-4776** Split iceberg replication into separate services and add support for partitioned tables
+
 - **CUMULUS-4789** Update Docusaurus to latest version - 3.10
 
 - **CSD-104**
