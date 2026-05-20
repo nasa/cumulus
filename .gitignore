@@ -55,4 +55,4 @@ test_output.txt
 __pycache__/
 *.egg-info/
 schemas/output.json
-**/schemas/input.json
+tasks/lzards-backup/schemas/input.json
