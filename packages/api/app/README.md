@@ -71,9 +71,12 @@ The Dockerfile automatically uses `iceberg-index.js` as the entry point. In prod
 | Variable | Default | Description |
 |---|---|---|
 | `PORT` | `5001` | HTTP port the server listens on |
-| `DUCKDB_MAX_POOL` | `20` | DuckDB connection pool size |
+| `DUCKDB_MAX_POOL_SIZE` | `3` | DuckDB connection pool size |
+| `DUCKDB_POOL_REBUILD_INTERVAL_SECONDS` | `18000` | Seconds between preemptive DuckDB idle-pool rebuilds (default 5 hours) |
 | `AWS_REGION` | `us-east-1` | AWS region |
 | `NODE_ENV` | _(unset)_ | Set to `development` to have DuckDB auto-install extensions (Mac/local use); production uses pre-bundled extensions from the Docker image |
+
+DuckDB refresh behavior is intentionally simple: idle pooled connections are rebuilt on a fixed interval (default every 5 hours), and the pool is also rebuilt on-demand when a recoverable S3 HTTP data-access error is detected during query execution.
 
 ---
 
@@ -125,9 +128,27 @@ docker run --rm -p 5001:5001 \
   cumulus-iceberg-api:latest
 ```
 
-Then test it (`$token` is a Cumulus API token obtained from the [`/token` endpoint](https://nasa.github.io/cumulus-api/#token) of the deployed Cumulus API):
+### Local Integration Test With AVA
+
+If you want to validate the Iceberg API locally against your AWS sandbox, run the local AVA test. The test native spawns the Node Express server directly (bypassing Docker) to allow for easier debugging and seamless CI integration.
+
+First, prepare your environment variables:
 
 ```bash
-curl http://localhost:5001/version
-curl -H "Authorization: Bearer $token" "http://localhost:5001/granules"
+cp packages/api/app/env.local.example packages/api/app/.env.local
+# Edit .env.local with your sandbox values
 ```
+
+Then, export the variables to your shell and run the test:
+
+```bash
+# Export the environment variables from your env file
+export $(grep -v '^#' packages/api/app/.env.local | xargs)
+
+# Run the integration test directly using AVA
+./node_modules/.bin/ava packages/api/tests/docker/test-iceberg-api.js
+```
+
+*(Note: The test automatically injects `FAKE_AUTH=true` internally to bypass DynamoDB authentication caching requirements.)*
+
+The test implementation lives in `packages/api/tests/docker/test-iceberg-api.js`.

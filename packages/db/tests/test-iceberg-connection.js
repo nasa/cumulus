@@ -40,6 +40,7 @@ const makeFakeConnection = () => {
  * @param {object} [connTemplate] - optionally share a single connection across all connect() calls
  */
 const makeFakeInstance = (connTemplate) => ({
+  closeSync: sinon.stub(),
   connect: sinon.stub().callsFake(() => Promise.resolve(connTemplate ?? makeFakeConnection())),
 });
 
@@ -172,7 +173,7 @@ test.serial('releaseDuckDbConnection discards connections when pool is at MAX_PO
   await initializeDuckDb();
 
   // Drain the entire pool
-  const maxPool = Number(process.env.DUCKDB_MAX_POOL) || 3;
+  const maxPool = Number(process.env.DUCKDB_MAX_POOL_SIZE) || 3;
   const drained = [];
   for (let i = 0; i < maxPool; i += 1) {
     // eslint-disable-next-line no-await-in-loop
@@ -198,6 +199,45 @@ test.serial('releaseDuckDbConnection discards connections when pool is at MAX_PO
     connectCallsBefore,
     'no new connection should be created – pool was already full before the extra release'
   );
+});
+
+test.serial('acquireDuckDbConnection waits for a pooled connection when the pool is exhausted', async (t) => {
+  const fakeInst = makeFakeInstance();
+  const { duckdbModule } = makeDuckDBStub(fakeInst);
+  const {
+    initializeDuckDb,
+    acquireDuckDbConnection,
+    releaseDuckDbConnection,
+  } = loadIcebergModule(duckdbModule);
+
+  await initializeDuckDb();
+
+  const maxPool = Number(process.env.DUCKDB_MAX_POOL_SIZE) || 3;
+  const drained = [];
+  for (let i = 0; i < maxPool; i += 1) {
+    // eslint-disable-next-line no-await-in-loop
+    drained.push(await acquireDuckDbConnection());
+  }
+
+  let extraAcquireResolved = false;
+  const extraAcquire = acquireDuckDbConnection().then((conn) => {
+    extraAcquireResolved = true;
+    return conn;
+  });
+
+  await Promise.resolve();
+
+  t.false(extraAcquireResolved, 'extra acquire should wait until a pooled connection is released');
+  t.is(
+    fakeInst.connect.callCount,
+    maxPool,
+    'pool exhaustion should not create an overflow connection'
+  );
+
+  await releaseDuckDbConnection(drained[0]);
+  const reacquired = await extraAcquire;
+
+  t.is(reacquired, drained[0], 'waiting acquire should receive the released pooled connection');
 });
 
 // ---------------------------------------------------------------------------
@@ -328,7 +368,7 @@ test.serial('background connection refresh replaces stale connections', async (t
 
   await icebergModule.initializeDuckDb();
 
-  const maxPool = Number(process.env.DUCKDB_MAX_POOL) || 3;
+  const maxPool = Number(process.env.DUCKDB_MAX_POOL_SIZE) || 3;
   t.is(fakeInst.connect.callCount, maxPool, 'Initial connections created');
 
   // Advance time past the 5-hour threshold and wait for setInterval callbacks
@@ -340,5 +380,78 @@ test.serial('background connection refresh replaces stale connections', async (t
     fakeInst.connect.callCount,
     maxPool * 2,
     'New connections should be created to replace stale ones'
+  );
+});
+
+// ---------------------------------------------------------------------------
+// 8. Hardening regression coverage
+// ---------------------------------------------------------------------------
+
+test.serial('initializeDuckDb defaults to pool size 3 when DUCKDB_MAX_POOL_SIZE is invalid', async (t) => {
+  const savedPoolSize = process.env.DUCKDB_MAX_POOL_SIZE;
+  process.env.DUCKDB_MAX_POOL_SIZE = '-5';
+  t.teardown(() => {
+    if (savedPoolSize === undefined) delete process.env.DUCKDB_MAX_POOL_SIZE;
+    else process.env.DUCKDB_MAX_POOL_SIZE = savedPoolSize;
+  });
+
+  const fakeInst = makeFakeInstance();
+  const { duckdbModule } = makeDuckDBStub(fakeInst);
+  const icebergModule = loadIcebergModule(duckdbModule);
+
+  await icebergModule.initializeDuckDb();
+
+  t.is(fakeInst.connect.callCount, 3, 'invalid pool size should fall back to default size 3');
+});
+
+test.serial('rebuildDuckDbConnectionPool closes old instance immediately when no connections are retired', async (t) => {
+  const oldInstance = {
+    connect: sinon.stub().callsFake(() => Promise.resolve(makeFakeConnection())),
+    closeSync: sinon.stub(),
+  };
+  const newInstance = {
+    connect: sinon.stub().callsFake(() => Promise.resolve(makeFakeConnection())),
+    closeSync: sinon.stub(),
+  };
+
+  const createStub = sinon.stub();
+  createStub.onFirstCall().resolves(oldInstance);
+  createStub.onSecondCall().resolves(newInstance);
+
+  const icebergModule = loadIcebergModule({ DuckDBInstance: { create: createStub } });
+
+  await icebergModule.initializeDuckDb();
+  await icebergModule.rebuildDuckDbConnectionPool();
+
+  t.true(oldInstance.closeSync.calledOnce, 'old instance should be closed during rebuild when no retired connections exist');
+});
+
+test.serial('destroyDuckDb rejects queued acquireDuckDbConnection waiters', async (t) => {
+  const fakeInst = makeFakeInstance();
+  const { duckdbModule } = makeDuckDBStub(fakeInst);
+  const {
+    initializeDuckDb,
+    acquireDuckDbConnection,
+    destroyDuckDb,
+  } = loadIcebergModule(duckdbModule);
+
+  await initializeDuckDb();
+
+  const maxPool = Number(process.env.DUCKDB_MAX_POOL_SIZE) || 3;
+  const drained = [];
+  for (let i = 0; i < maxPool; i += 1) {
+    // eslint-disable-next-line no-await-in-loop
+    drained.push(await acquireDuckDbConnection());
+  }
+
+  const pendingAcquire = acquireDuckDbConnection();
+  await Promise.resolve();
+
+  await destroyDuckDb();
+
+  await t.throwsAsync(
+    () => pendingAcquire,
+    { message: /DuckDB is shutting down/ },
+    'queued acquire should reject on shutdown instead of waiting indefinitely'
   );
 });
