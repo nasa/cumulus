@@ -87,8 +87,9 @@ module "archive" {
 
   background_queue_url = module.ingest.background_queue_url
 
-  distribution_api_id = var.tea_rest_api_id
-  distribution_url    = var.tea_external_api_endpoint
+  distribution_api_id               = var.tea_rest_api_id
+  distribution_url                  = var.tea_external_api_endpoint
+  distribution_url_per_cmr_provider = var.tea_distribution_url_per_cmr_provider
 
   users = var.archive_api_users
 

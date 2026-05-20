@@ -8,7 +8,10 @@ const Logger = require('@cumulus/logger');
 const { getObjectSize } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 
-const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
+const {
+  fetchDistributionBucketMap,
+  resolveDistributionEndpoint,
+} = require('@cumulus/distribution-utils');
 
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 
@@ -125,11 +128,16 @@ async function updateGranulesCmrMetadata(event) {
     event.config.excludeDataGranule : false;
 
   const distributionBucketMap = await fetchDistributionBucketMap();
+  const distEndpoint = resolveDistributionEndpoint(
+    config.cmr_provider,
+    config.distribution_endpoint_per_cmr_provider,
+    config.distribution_endpoint
+  );
   const updatedCmrFiles = await updateEachCmrFileMetadata(
     cmrFiles,
     granulesByGranuleId,
     cmrGranuleUrlType,
-    config.distribution_endpoint,
+    distEndpoint,
     bucketTypes,
     distributionBucketMap,
     config.excludeFileRegex,

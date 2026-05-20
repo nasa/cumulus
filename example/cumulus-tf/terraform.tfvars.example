@@ -83,6 +83,16 @@ deploy_cumulus_distribution = true
 # Optional. Uncomment if using TEA.
 # toggle this after deployed to put the correct port in. (and hosts and config)
 # tea_distribution_url = "TEA distribution URL"
+# tea_distribution_url_per_cmr_provider = {
+#   LARC_CLOUD = "https://data.asdc.earthdata.nasa.gov/"
+#   ASDC_DEV2  = "https://data.asdc.earthdata.nasa.gov/"
+#   GHRC_DAAC  = "https://data.ghrc.earthdata.nasa.gov/"
+#   GHRC_CLOUD = "https://data.ghrc.earthdata.nasa.gov/"
+#   GHRC_CDEV  = "https://data.ghrc.earthdata.nasa.gov/"
+#   OB_CLOUD   = "https://obdaac-tea.earthdatacloud.nasa.gov/"
+#   OB_CLD_SIT = "https://obdaac-tea.earthdatacloud.nasa.gov/"
+#   ORNL_CLOUD = "https://data.ornldaac.earthdata.nasa.gov/"
+# }
 
 # Optional. Uncomment to enable S3 jitter for SyncGranule to prevent S3 SlowDown errors.
 # Set to a value between 1-59000 milliseconds. Recommended: 5000 (5 seconds) for high-concurrency environments.
