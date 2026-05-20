@@ -36,14 +36,8 @@ variable "rds_port" {
   default     = "5432"
 }
 
-variable "db_admin_username" {
-  description = "Username for RDS database administrator authentication"
-  type        = string
-  default     = "postgres"
-}
-
-variable "db_admin_password" {
-  description = "Password for RDS database administrator authentication"
+variable "admin_db_login_secret_arn" {
+  description = "Arn for AWS Secrets Manager secret for database administrator credentials"
   type        = string
 }
 
@@ -66,7 +60,7 @@ variable "force_new_deployment" {
 variable "cpu" {
   description = "The number of CPU units the Amazon ECS container agent will reserve for the task"
   type        = number
-  default     = 4096 # 4 CPUs
+  default     = 2048 # 2 CPUs
 }
 
 variable "cpu_architecture" {
@@ -78,7 +72,13 @@ variable "cpu_architecture" {
 variable "memory" {
   description = "The amount of memory (in MB) that the ECS container agent reserves for a task."
   type        = number
-  default     = 16384 # 16GB
+  default     = 4096 # 4GB
+}
+
+variable "batch_size" {
+  description = "The maximum number of replication messages that will be written to Iceberg at once"
+  type        = number
+  default     = 20000
 }
 
 variable "volume_size_in_gb" {
@@ -136,13 +136,13 @@ variable "iceberg_namespace" {
 
 variable "pg_db" {
   description = "postgres database"
-  type = string
+  type        = string
 }
 
 variable "pg_schema" {
   description = "The name of the schema in the postgres database that contains the tables"
-  type = string
-  default = "public"
+  type        = string
+  default     = "public"
 }
 
 variable "ecs_infrastructure_role" {
@@ -176,4 +176,10 @@ variable "ecs_cluster" {
     name = string
     id   = string
   })
+}
+
+variable "compaction_interval_sec" {
+  description = "The period in seconds between compactions"
+  type        = string
+  default     = "30"
 }
