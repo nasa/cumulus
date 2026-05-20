@@ -31,4 +31,6 @@ module "iceberg_api" {
   iceberg_s3_bucket                         = var.iceberg_s3_bucket
   iceberg_namespace                         = var.iceberg_namespace
   cumulus_iceberg_api_image_version         = var.cumulus_iceberg_api_image_version
+  duckdb_max_pool_size                      = var.duckdb_max_pool_size
+  duckdb_pool_rebuild_interval_seconds      = var.duckdb_pool_rebuild_interval_seconds
 }
