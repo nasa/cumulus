@@ -144,7 +144,7 @@ variable "snapshot_cleanup_cpu" {
 variable "snapshot_cleanup_memory" {
   description = "The amount of memory (in MB) that the ECS container agent reserves for the snapshot cleanup task."
   type        = number
-  default     = 2048 # 2GB
+  default     = 4096 # 4GB
 }
 
 variable "volume_size_in_gb" {
