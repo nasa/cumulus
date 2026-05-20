@@ -183,7 +183,7 @@ test.before(async (t) => {
     name: collectionName,
     version: collectionVersion,
   });
-
+  t.context.cmrProvider = testPgCollection.cmr_provider;
   const [pgCollection] = await t.context.collectionPgModel.create(
     knex,
     testPgCollection
@@ -1227,7 +1227,10 @@ test.serial('POST /executions publishes message to SNS topic', async (t) => {
     knex
   );
 
-  t.deepEqual(executionRecord, translatedExecution);
+  t.deepEqual(executionRecord, {
+    cmrProvider: t.context.cmrProvider,
+    ...translatedExecution,
+  });
 });
 
 test.serial('PUT /executions updates the record as expected in PostgreSQL', async (t) => {
@@ -1576,6 +1579,7 @@ test.serial('PUT /executions publishes message to SNS topic', async (t) => {
   );
   t.deepEqual(executionRecord, {
     ...translatedExecution,
+    cmrProvider: t.context.cmrProvider,
     updatedAt: executionRecord.updatedAt,
   });
 });

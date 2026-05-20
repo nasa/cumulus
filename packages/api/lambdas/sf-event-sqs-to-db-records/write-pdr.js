@@ -2,6 +2,7 @@
 
 const {
   createRejectableTransaction,
+  CollectionPgModel,
   PdrPgModel,
   translatePostgresPdrToApiPdr,
 } = require('@cumulus/db');
@@ -120,8 +121,14 @@ const writePdr = async ({
     });
     return pgPdr.cumulus_id;
   });
-  const pdrToPublish = await translatePostgresPdrToApiPdr(pgPdr, knex);
-  await publishPdrSnsMessage(pdrToPublish);
+  const translatedPdr = await translatePostgresPdrToApiPdr(pgPdr, knex);
+  const collectionPgModel = new CollectionPgModel();
+  const metricsPdr = {
+    cmrProvider: await collectionPgModel.getCmrProvider(knex, pgPdr.collection_cumulus_id),
+    ...translatedPdr,
+  };
+
+  await publishPdrSnsMessage(metricsPdr);
   return pdrCumulusId;
 };
 

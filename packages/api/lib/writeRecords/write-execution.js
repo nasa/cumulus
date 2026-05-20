@@ -6,6 +6,7 @@ const omitBy = require('lodash/omitBy');
 
 const {
   ExecutionPgModel,
+  CollectionPgModel,
   translateApiExecutionToPostgresExecutionWithoutNilsRemoved,
   translatePostgresExecutionToApiExecution,
 } = require('@cumulus/db');
@@ -34,6 +35,7 @@ const { publishExecutionSnsMessage } = require('../publishSnsMessageUtils');
  * @typedef { import('knex').Knex } Knex
  * @typedef { import('knex').Knex.Transaction } KnexTransaction
  * @typedef { import('@cumulus/types').ApiExecution } ApiExecution
+ * @typedef { import('@cumulus/types').MetricsExecution } MetricsExecution
  * @typedef { import('@cumulus/types/message').CumulusMessage} CumulusMessage
  * @typedef { import('@cumulus/db').PostgresExecution } PostgresExecution
  * @typedef { import('@cumulus/db').PostgresExecutionRecord } PostgresExecutionRecord
@@ -182,11 +184,17 @@ const _writeExecutionAndPublishSnsMessage = async ({
       writeConstraints,
     }
   );
+
   const translatedExecution = await translatePostgresExecutionToApiExecution(
     writeExecutionResponse,
     knex
   );
-  await publishExecutionSnsMessage(translatedExecution);
+  const collectionPgModel = new CollectionPgModel();
+  const metricsExecution = {
+    cmrProvider: await collectionPgModel.getCmrProvider(knex, postgresRecord.collection_cumulus_id),
+    ...translatedExecution,
+  };
+  await publishExecutionSnsMessage(metricsExecution);
   return writeExecutionResponse;
 };
 

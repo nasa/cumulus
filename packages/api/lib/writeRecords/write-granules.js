@@ -287,12 +287,17 @@ const _publishPostgresGranuleUpdateToSns = async ({
   pgGranule,
   knex,
 }) => {
-  const granuletoPublish = await translatePostgresGranuleToApiGranule({
+  const translatedGranule = await translatePostgresGranuleToApiGranule({
     granulePgRecord: pgGranule,
     knexOrTransaction: knex,
   });
-  await publishGranuleSnsMessageByEventType(granuletoPublish, snsEventType);
-  log.info('Successfully wrote granule %j to SNS topic', granuletoPublish);
+  const collectionPgModel = new CollectionPgModel();
+  const metricsGranule = {
+    cmrProvider: await collectionPgModel.getCmrProvider(knex, pgGranule.collection_cumulus_id),
+    ...translatedGranule,
+  };
+  await publishGranuleSnsMessageByEventType(metricsGranule, snsEventType);
+  log.info('Successfully wrote granule %j to SNS topic', metricsGranule);
 };
 
 /**
