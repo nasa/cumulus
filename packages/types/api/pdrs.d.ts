@@ -28,5 +28,5 @@ export interface ApiPdrRecord extends ApiPdr {
 }
 
 export interface MetricsPdrRecord extends ApiPdrRecord {
-  cmr_provider: string
+  cmrProvider: string
 }

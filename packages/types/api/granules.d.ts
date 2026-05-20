@@ -76,5 +76,5 @@ export type ApiGranule = {
 } & PartialGranuleTemporalInfo & PartialGranuleProcessingInfo;
 
 export type MetricsGranule = {
-  cmr_provider: string
+  cmrProvider: string
 } & ApiGranule;

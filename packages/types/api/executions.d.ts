@@ -48,5 +48,5 @@ export interface ApiExecution {
 }
 
 export interface MetricsExecution extends ApiExecution {
-  cmr_provider: string,
+  cmrProvider: string,
 }
