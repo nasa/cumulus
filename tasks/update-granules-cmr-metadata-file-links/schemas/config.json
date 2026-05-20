@@ -3,7 +3,6 @@
   "description": "Describes the config used by the update-granules-cmr-metadata-file-links task",
   "type": "object",
   "required": [
-    "distribution_endpoint",
     "buckets"
   ],
   "properties": {
@@ -29,7 +28,18 @@
     },
     "distribution_endpoint": {
       "type": "string",
-      "description": "The api distribution endpoint"
+      "description": "The api distribution endpoint. Used as the fallback when distribution_endpoint_per_cmr_provider has no entry for cmr_provider."
+    },
+    "distribution_endpoint_per_cmr_provider": {
+      "type": "object",
+      "description": "Map of CMR provider short_name to distribution endpoint URL. Used in consolidated deployments to route distribution URLs per Collection.cmrProvider.",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "cmr_provider": {
+      "type": "string",
+      "description": "The CMR provider short_name for the granule's collection. Used to look up the per-provider distribution endpoint."
     },
     "etags": {
       "type": "object",
