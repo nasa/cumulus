@@ -80,10 +80,11 @@ locals {
         certificate          = var.launchpad_certificate
         passphraseSecretName = length(var.launchpad_passphrase) == 0 ? "" : aws_secretsmanager_secret.message_template_launchpad_passphrase.name
       }
-      distribution_endpoint = var.distribution_url
-      collection            = {}
-      provider              = {}
-      template              = "s3://${var.system_bucket}/${local.message_template_key}"
+      distribution_endpoint                  = var.distribution_url
+      distribution_endpoint_per_cmr_provider = var.distribution_url_per_cmr_provider
+      collection                             = {}
+      provider                               = {}
+      template                               = "s3://${var.system_bucket}/${local.message_template_key}"
     }
     payload   = {}
     exception = null

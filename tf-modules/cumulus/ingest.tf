@@ -5,7 +5,8 @@ module "ingest" {
 
   buckets = var.buckets
 
-  distribution_url = var.tea_external_api_endpoint
+  distribution_url                  = var.tea_external_api_endpoint
+  distribution_url_per_cmr_provider = var.tea_distribution_url_per_cmr_provider
 
   cumulus_message_adapter_lambda_layer_version_arn = var.cumulus_message_adapter_lambda_layer_version_arn
 

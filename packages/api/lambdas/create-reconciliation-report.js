@@ -3,6 +3,7 @@
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
+const isPlainObject = require('lodash/isPlainObject');
 const keyBy = require('lodash/keyBy');
 const pickBy = require('lodash/pickBy');
 const camelCase = require('lodash/camelCase');
@@ -14,12 +15,13 @@ const { s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { removeNilProperties } = require('@cumulus/common/util');
-const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
+const { fetchDistributionBucketMap, resolveDistributionEndpoint } = require('@cumulus/distribution-utils');
 const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
 
 const { CMRSearchConceptQueue } = require('@cumulus/cmr-client');
 const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 const {
+  CollectionPgModel,
   CollectionSearch,
   getFilesAndGranuleInfoQuery,
   getGranulesByApiPropertiesQuery,
@@ -389,14 +391,31 @@ async function reconciliationReportForCollections(recReportParams) {
  * @param {Object} params.bucketsConfig          - bucket configuration
  * @param {Object} params.distributionBucketMap  - mapping of bucket->distirubtion path values
  *                                                 (e.g. { bucket: distribution path })
+ * @param {string} params.distEndpoint           - resolved distribution endpoint URL for the
+ *                                                 granule's collection (per cmrProvider)
  * @returns {Promise<Object>}    - an object with the okCount, onlyInCumulus, onlyInCmr
  */
-async function reconciliationReportForGranuleFiles(params) {
-  if (!process.env.DISTRIBUTION_ENDPOINT) {
-    throw new Error('DISTRIBUTION_ENDPOINT is not defined in function environment variables, but is required');
+function parseDistributionEndpointMap() {
+  const raw = process.env.DISTRIBUTION_ENDPOINT_PER_CMR_PROVIDER;
+  if (!raw) return undefined;
+  try {
+    const parsed = JSON.parse(raw);
+    if (isPlainObject(parsed)) {
+      return parsed;
+    }
+    log.warn(`DISTRIBUTION_ENDPOINT_PER_CMR_PROVIDER did not parse to a map; ignoring: ${raw}`);
+    return undefined;
+  } catch (error) {
+    log.warn(`Failed to parse DISTRIBUTION_ENDPOINT_PER_CMR_PROVIDER as JSON; ignoring. Error: ${error.message}`);
+    return undefined;
   }
-  const distEndpoint = process.env.DISTRIBUTION_ENDPOINT;
-  const { granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap } = params;
+}
+
+async function reconciliationReportForGranuleFiles(params) {
+  const { granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap, distEndpoint } = params;
+  if (!distEndpoint) {
+    throw new Error('distEndpoint is required for reconciliationReportForGranuleFiles');
+  }
   let okCount = 0;
   const onlyInCumulus = [];
   const onlyInCmr = [];
@@ -528,6 +547,14 @@ async function reconciliationReportForGranules(params) {
   /** @type {FilesReport} */
   const filesReport = { okCount: 0, onlyInCumulus: [], onlyInCmr: [] };
   try {
+    const collectionPgModel = new CollectionPgModel();
+    const collectionRecord = await collectionPgModel.get(knex, { name, version });
+    const distEndpoint = resolveDistributionEndpoint(
+      collectionRecord.cmr_provider,
+      parseDistributionEndpointMap(),
+      process.env.DISTRIBUTION_ENDPOINT
+    );
+
     const cmrSettings = /** @type CMRSettings */(await getCmrSettings());
     const searchParams = new URLSearchParams({ short_name: name, version: version, sort_key: 'granule_ur' });
     cmrGranuleSearchParams(recReportParams).forEach(([paramName, paramValue]) => {
@@ -615,7 +642,7 @@ async function reconciliationReportForGranules(params) {
         // compare the files now to avoid keeping the granules' information in memory
         // eslint-disable-next-line no-await-in-loop
         const fileReport = await reconciliationReportForGranuleFiles({
-          granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap,
+          granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap, distEndpoint,
         });
         filesReport.okCount += fileReport.okCount;
         filesReport.onlyInCumulus = filesReport.onlyInCumulus.concat(fileReport.onlyInCumulus);

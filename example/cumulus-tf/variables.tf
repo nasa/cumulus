@@ -211,6 +211,12 @@ variable "tea_distribution_url" {
   default = null
 }
 
+variable "tea_distribution_url_per_cmr_provider" {
+  description = "Map of CMR provider short_name to TEA external endpoint URL. Used in consolidated deployments to route distribution URLs per Collection.cmrProvider. Falls back to tea_distribution_url for any provider not listed."
+  type        = map(string)
+  default     = {}
+}
+
 variable "sync_granule_s3_jitter_max_ms" {
   description = "Maximum random jitter in milliseconds for SyncGranule S3 operations (0-59000). Set to 0 to disable."
   type        = number
