@@ -54,5 +54,5 @@ unit-logs/
 test_output.txt
 __pycache__/
 *.egg-info/
-schemas/output.json
-tasks/lzards-backup/schemas/input.json
+**/schemas/output.json
+**/schemas/input.json
