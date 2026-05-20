@@ -247,7 +247,7 @@ export class CMR {
             if (error.retriesLeft > 0) {
               log.warn(
                 `CMR call failed with 401 on attempt ${error.attemptNumber}, `
-                + 'refreshing launchpad token and retrying'
+                + 'refreshing launchpad token and retrying', error
               );
               await this.checkRefreshLaunchpadToken();
             }
@@ -257,7 +257,7 @@ export class CMR {
     } catch (error) {
       if (error.statusCode === 401) {
         log.error(
-          `CMR call failed with 401 after ${retries + 1} attempts; exhausted retries`
+          `CMR call failed with 401 after ${retries + 1} attempts; exhausted retries`, error
         );
         throw Object.assign(
           new Error(
