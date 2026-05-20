@@ -1,9 +1,9 @@
 import { Knex } from 'knex';
 import pick from 'lodash/pick';
+import { DuckDBConnection } from '@duckdb/node-api';
 
 import { ApiGranuleRecord } from '@cumulus/types/api/granules';
 import Logger from '@cumulus/logger';
-import { PooledDuckDbConnection } from '../iceberg-connection';
 
 import {
   getExecutionInfoByGranuleCumulusIds,
@@ -36,7 +36,7 @@ export class GranuleIcebergSearch extends GranuleSearch {
   private async translateRecords(
     pgRecords: GranuleRecord[],
     knexClient: Knex,
-    dbConnection: PooledDuckDbConnection
+    dbConnection: DuckDBConnection
   ): Promise<Partial<ApiGranuleRecord>[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
 

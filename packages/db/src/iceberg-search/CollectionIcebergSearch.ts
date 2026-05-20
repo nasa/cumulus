@@ -1,7 +1,7 @@
 import { Knex } from 'knex';
 import pick from 'lodash/pick';
 import Logger from '@cumulus/logger';
-import { PooledDuckDbConnection } from '../iceberg-connection';
+import { DuckDBConnection } from '@duckdb/node-api';
 
 import { CollectionSearch, Statuses, StatsRecords, CollectionRecordApi } from '../search/CollectionSearch';
 import { TableNames } from '../tables';
@@ -28,7 +28,7 @@ export class CollectionIcebergSearch extends CollectionSearch {
   private async fetchGranuleStatusAggregation(
     collectionCumulusIds: number[],
     knexClient: Knex,
-    dbConnection: PooledDuckDbConnection
+    dbConnection: DuckDBConnection
   ): Promise<StatsRecords> {
     const granulesTable = TableNames.granules;
     let statsQuery = knexClient(granulesTable);
@@ -83,7 +83,7 @@ export class CollectionIcebergSearch extends CollectionSearch {
   private async translateRecords(
     pgRecords: PostgresCollectionRecord[],
     knexClient: Knex,
-    dbConnection: PooledDuckDbConnection
+    dbConnection: DuckDBConnection
   ): Promise<Partial<CollectionRecordApi>[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
 
