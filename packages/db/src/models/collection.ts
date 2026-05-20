@@ -38,7 +38,8 @@ class CollectionPgModel extends BasePgModel<PostgresCollection, PostgresCollecti
     }
     const collection = await super.get(
       knexOrTransaction,
-      { cumulus_id: collectionCumulusId }
+      { cumulus_id: collectionCumulusId },
+      ['cmr_provider']
     );
     return collection.cmr_provider;
   }
