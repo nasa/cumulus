@@ -93,3 +93,22 @@ module "replication_services" {
   ecs_cluster               = module.cluster.replication_ecs_cluster
   compaction_interval_sec   = var.compaction_interval_sec
 }
+
+module "cleanup_service" {
+  source                   = "./modules/cleanup-service"
+  prefix                   = var.prefix
+  subnet                   = var.subnet
+  iceberg_s3_bucket        = var.iceberg_s3_bucket
+  iceberg_namespace        = var.iceberg_namespace
+  memory                   = var.snapshot_cleanup_memory
+  cpu                      = var.snapshot_cleanup_cpu
+  cpu_architecture         = var.cpu_architecture
+  ecs_task_execution_role  = module.cluster.task_execution_role
+  task_security_group_id   = module.cluster.no_ingress_all_egress_security_group.id
+  ecs_cluster              = module.cluster.replication_ecs_cluster
+  iceberg_cleanup_image    = var.iceberg_cleanup_image
+  table_include_list       = var.snapshot_table_include_list
+  cleanup_interval_minutes = var.snapshot_cleanup_interval_minutes
+  older_than_minutes       = var.snapshot_older_than_minutes
+  retain_last              = var.snapshot_retain_last
+}

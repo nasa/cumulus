@@ -113,6 +113,18 @@ variable "files_table_batch_size" {
   default     = 20000
 }
 
+variable "snapshot_cleanup_cpu" {
+  description = "The number of CPU units the Amazon ECS container agent will reserve for the snapshot cleanup task"
+  type        = number
+  default     = 2048 # 2 CPUs
+}
+
+variable "snapshot_cleanup_memory" {
+  description = "The amount of memory (in MB) that the ECS container agent reserves for the snapshot cleanup task."
+  type        = number
+  default     = 4096 # 4GB
+}
+
 variable "cpu_architecture" {
   description = "The architecture of the cpu platform. Valid values are X86_64 and ARM64"
   type        = string
@@ -180,4 +192,33 @@ variable "compaction_interval_sec" {
   description = "The period in seconds between compactions"
   type        = string
   default     = "30"
+}
+
+variable "iceberg_cleanup_image" {
+  description = "Image used to start the Iceberg cleanup task."
+  type        = string
+}
+
+variable "snapshot_table_include_list" {
+  description = "comma-separated list of Iceberg tables to have snapshots cleaned up"
+  type        = string
+  default     = "async_operations,collections,executions,files_table,granules,granules_executions,pdrs,providers,reconciliation_reports,rules"
+}
+
+variable "snapshot_older_than_minutes" {
+  description = "Expire snapshots older than this many minutes"
+  type        = number
+  default     = 120
+}
+
+variable "snapshot_retain_last" {
+  description = "Minimum number of snapshots to retain regardless of age"
+  type        = number
+  default     = 2
+}
+
+variable "snapshot_cleanup_interval_minutes" {
+  description = "How often to run the snapshot cleanup task"
+  type        = number
+  default     = 60
 }
