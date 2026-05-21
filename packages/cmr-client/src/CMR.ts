@@ -118,7 +118,7 @@ export class CMR {
     if (!CMR.instance) {
       CMR.instance = new CMR(params);
     } else {
-      log.warn('Returning existing CMR configuration. If you are attempting to use different parameters to create a new instance, please reset the old one using CMR.resetInstance()');
+      log.warn('Returning existing CMR configuration. If you are attempting to use different parameters to create a new instance, please add them and restart the lambda');
     }
     return CMR.instance;
   }

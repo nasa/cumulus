@@ -194,14 +194,20 @@ async function getValidLaunchpadTokenFromS3(): Promise<string | undefined> {
  * @param params.api - the Launchpad token service api endpoint
  * @param params.passphrase - the passphrase of the Launchpad PKI certificate
  * @param params.certificate - the name of the Launchpad PKI pfx certificate
+ * @param skipLockWait - whether or not to skip waiting for the lock to release
  *
  * @returns - the Launchpad token
  *
  * @async
  * @alias module:launchpad-auth
  */
-export async function getLaunchpadToken(params: LaunchpadTokenParams): Promise<string> {
-  await waitForLockFileRelease();
+export async function getLaunchpadToken(
+  params: LaunchpadTokenParams,
+  skipLockWait: boolean = false
+): Promise<string> {
+  if (!skipLockWait) {
+    await waitForLockFileRelease();
+  }
   let token = await getValidLaunchpadTokenFromS3();
 
   if (!token) {
@@ -299,7 +305,7 @@ async function generateNewLaunchpadToken(config: LaunchpadTokenParams): Promise<
     }
   }
 
-  return await getLaunchpadToken(config);
+  return await getLaunchpadToken(config, true);
 }
 
 /**
