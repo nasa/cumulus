@@ -28,19 +28,4 @@ npm install
 npm run ci:bootstrap
 npm run package
 
-echo "***Bamboo plan revision: $bamboo_plan_revision"
-if [[ $PUBLISH_FLAG == true ]]; then
-  ICEBERG_IMAGE_VERSION=$(jq --raw-output .version lerna.json)
-else
-  ICEBERG_IMAGE_VERSION=$(echo $bamboo_plan_revision | cut -c1-7)
-fi
-
-echo "***ICEBERG_IMAGE_VERSION: $ICEBERG_IMAGE_VERSION"
-
-if [[ -z $ICEBERG_IMAGE_VERSION ]]; then
-  echo "Error: ICEBERG_IMAGE_VERSION is not set (PUBLISH_FLAG=${PUBLISH_FLAG}). Expected bamboo_plan_revision." >&2
-  exit 1
-fi
-export ICEBERG_IMAGE_VERSION
-. ./bamboo/deploy-iceberg-api-image.sh
 . ./bamboo/deploy-integration-stack.sh

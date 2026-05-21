@@ -42,8 +42,9 @@ else
   ROLE_BOUNDARY=NGAPShNonProdRoleBoundary
 fi
 
+set_iceberg_image_version
+
 DEPLOY_ICEBERG_API="${DEPLOY_ICEBERG_API:-false}"
-ICEBERG_IMAGE_VERSION="${ICEBERG_IMAGE_VERSION:-latest}"
 echo "Deploy Iceberg API: ${DEPLOY_ICEBERG_API}"
 echo "Using Iceberg API image version ${ICEBERG_IMAGE_VERSION}"
 
