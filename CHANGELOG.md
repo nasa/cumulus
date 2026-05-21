@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4883**
+  - Add script to build Iceberg API docker image and push it to ECR as part of the build process
 - **CUMULUS-4705**
   - Add Fargate task to cleanup old Iceberg table snapshots on a schedule
 - **CUMULUS-4711**
