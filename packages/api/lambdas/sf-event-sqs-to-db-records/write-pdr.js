@@ -138,7 +138,7 @@ const writePdr = async ({
   let finalCmrProvider = cmrProvider;
   if (!cmrProvider) {
     const collectionPgModel = new CollectionPgModel();
-    finalCmrProvider = collectionPgModel.getCmrProvider(knex, pgPdr.collection_cumulus_id);
+    finalCmrProvider = await collectionPgModel.getCmrProvider(knex, pgPdr.collection_cumulus_id);
   }
 
   const metricsPdr = {
