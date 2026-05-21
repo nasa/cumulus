@@ -1,6 +1,7 @@
 import { DuplicateHandling } from '@cumulus/types';
 
 export interface PostgresCollection {
+  mission: string,
   cmr_provider: string,
   files: string,
   granule_id_validation_regex: string,
