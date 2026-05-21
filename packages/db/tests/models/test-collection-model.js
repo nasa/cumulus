@@ -90,7 +90,7 @@ test('CollectionPgModel.getCmrProvider() gets a cmr provider', async (t) => {
   const [dbCollection] = await collectionPgModel.create(knex, collectionRecord);
   const cmrProvider = await collectionPgModel.getCmrProvider(knex, dbCollection.cumulus_id);
   t.is(cmrProvider, collectionRecord.cmr_provider);
-  const collectionRecord2 = fakeCollectionRecordFactory({cmr_provider: 'anyotherstring'})
+  const collectionRecord2 = fakeCollectionRecordFactory({ cmr_provider: 'anyotherstring' });
 
   const [dbCollections] = await collectionPgModel.create(knex, collectionRecord2);
   const cmrProvider2 = await collectionPgModel.getCmrProvider(knex, dbCollections.cumulus_id);

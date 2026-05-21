@@ -31,11 +31,8 @@ class CollectionPgModel extends BasePgModel<PostgresCollection, PostgresCollecti
   }
   async getCmrProvider(
     knexOrTransaction: Knex | Knex.Transaction,
-    collectionCumulusId: number | null | undefined
+    collectionCumulusId: number
   ) {
-    if (!collectionCumulusId) {
-      return '';
-    }
     const collection = await super.get(
       knexOrTransaction,
       { cumulus_id: collectionCumulusId },
