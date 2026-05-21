@@ -203,7 +203,7 @@ const _writeExecutionAndPublishSnsMessage = async ({
     );
   }
   const metricsExecution = {
-    finalCmrProvider,
+    cmrProvider: finalCmrProvider,
     ...translatedExecution,
   };
 
