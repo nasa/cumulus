@@ -28,4 +28,17 @@ npm install
 npm run ci:bootstrap
 npm run package
 
+echo "***Bamboo build number: $bamboo_buildNumber"
+if [[ $PUBLISH_FLAG == true ]]; then
+  ICEBERG_IMAGE_VERSION=$(jq --raw-output .version lerna.json)
+else
+  ICEBERG_IMAGE_VERSION=${bamboo_buildNumber}
+fi
+
+if [[ -z $ICEBERG_IMAGE_VERSION ]]; then
+  echo "Error: ICEBERG_IMAGE_VERSION is not set (PUBLISH_FLAG=${PUBLISH_FLAG}). Expected bamboo_buildNumber." >&2
+  exit 1
+fi
+export ICEBERG_IMAGE_VERSION
+. ./bamboo/deploy-iceberg-api-image.sh
 . ./bamboo/deploy-integration-stack.sh
