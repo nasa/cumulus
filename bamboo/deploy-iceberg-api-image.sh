@@ -13,6 +13,8 @@ if [[ -z $ICEBERG_IMAGE_VERSION ]]; then
   exit 1
 fi
 
+apt-get update && apt-get install -y docker.io
+
 image="cumulus-iceberg-api"
 aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin "https://${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 # Create ECR repo if it doesn't exist
