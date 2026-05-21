@@ -436,8 +436,8 @@ test.serial('writePdr() successfully publishes an SNS message', async (t) => {
   t.is(pdrRecord.pdrName, pdr.name);
   t.is(pdrRecord.status, cumulusMessage.meta.status);
   t.deepEqual(pdrRecord, {
-    cmrProvider: t.context.cmrProvider,
     ...translatedRecord,
+    cmrProvider: t.context.cmrProvider,
   });
 });
 

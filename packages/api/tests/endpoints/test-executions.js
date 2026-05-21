@@ -1228,8 +1228,8 @@ test.serial('POST /executions publishes message to SNS topic', async (t) => {
   );
 
   t.deepEqual(executionRecord, {
-    cmrProvider: t.context.cmrProvider,
     ...translatedExecution,
+    cmrProvider: t.context.cmrProvider,
   });
 });
 
