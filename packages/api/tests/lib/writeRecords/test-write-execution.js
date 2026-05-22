@@ -647,7 +647,7 @@ test.serial('writeExecutionRecordFromApi() successfully publishes an SNS message
   });
 });
 
-test('writeExecutionRecordFromMessage() successfully publishes an SNS message with a collection and cmr provider', async (t) => {
+test.serial('writeExecutionRecordFromMessage() successfully publishes an SNS message with a collection and mission', async (t) => {
   const {
     cumulusMessage,
     executionArn,
@@ -655,7 +655,7 @@ test('writeExecutionRecordFromMessage() successfully publishes an SNS message wi
     knex,
     QueueUrl,
   } = t.context;
-  const collection = fakeCollectionRecordFactory({ cmr_provider: 'thisisacmrprovider' });
+  const collection = fakeCollectionRecordFactory({ mission: 'thisisamission' });
   const collectionPgModel = new CollectionPgModel();
   const [collectionRecord] = await collectionPgModel.create(t.context.knex, collection);
   await writeExecutionRecordFromMessage({
