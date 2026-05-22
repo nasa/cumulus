@@ -183,7 +183,7 @@ test.before(async (t) => {
     name: collectionName,
     version: collectionVersion,
   });
-  t.context.cmrProvider = testPgCollection.cmr_provider;
+  t.context.mission = testPgCollection.mission;
   const [pgCollection] = await t.context.collectionPgModel.create(
     knex,
     testPgCollection
@@ -1229,7 +1229,7 @@ test.serial('POST /executions publishes message to SNS topic', async (t) => {
 
   t.deepEqual(executionRecord, {
     ...translatedExecution,
-    cmrProvider: t.context.cmrProvider,
+    mission: t.context.mission,
   });
 });
 
@@ -1579,7 +1579,7 @@ test.serial('PUT /executions publishes message to SNS topic', async (t) => {
   );
   t.deepEqual(executionRecord, {
     ...translatedExecution,
-    cmrProvider: t.context.cmrProvider,
+    mission: t.context.mission,
     updatedAt: executionRecord.updatedAt,
   });
 });

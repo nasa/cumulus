@@ -180,6 +180,7 @@ test('Attempting to delete a provider with an associated granule does not delete
     granule_id_extraction_regex: 'fake',
     files: {},
     cmr_provider: 'provider',
+    mission: 'mission',
   };
 
   const [pgCollection] = await collectionPgModel.create(

@@ -76,7 +76,7 @@ test.serial('the queue receives a correctly formatted workflow message without a
     templateBucket,
     stackName,
   } = t.context;
-  const collection = { name: 'test-collection', version: '0.0.0', cmrProvider: 'provider' };
+  const collection = { name: 'test-collection', version: '0.0.0', mission: 'mission', cmrProvider: 'provider' };
   const provider = { id: 'test-provider' };
 
   let output;
@@ -145,7 +145,7 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
     templateBucket,
     stackName,
   } = t.context;
-  const collection = { name: 'test-collection', version: '0.0.0', cmrProvider: 'provider' };
+  const collection = { name: 'test-collection', version: '0.0.0', mission: 'mission', cmrProvider: 'provider' };
   const provider = { id: 'test-provider' };
   const pdr = { name: randomString(), path: randomString() };
   const arn = randomString();
@@ -219,7 +219,7 @@ test.serial('enqueueGranuleIngestMessage does not transform granule objects ', a
     foo: 'bar', // should not be removed or altered
   };
   const { queueUrl } = t.context;
-  const collection = { name: 'test-collection', version: '0.0.0', cmrProvider: 'provider' };
+  const collection = { name: 'test-collection', version: '0.0.0', mission: 'mission', cmrProvider: 'provider' };
   const provider = { id: 'test-provider' };
 
   const {
@@ -277,7 +277,7 @@ test.serial('enqueueGranuleIngestMessage uses the executionNamePrefix if specifi
     workflow,
   } = t.context;
 
-  const collection = { name: 'test-collection', version: '0.0.0', cmrProvider: 'provider' };
+  const collection = { name: 'test-collection', version: '0.0.0', mission: 'mission', cmrProvider: 'provider' };
   const provider = { id: 'test-provider' };
 
   const granule = {

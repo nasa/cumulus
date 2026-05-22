@@ -41,6 +41,7 @@ const fakeCollection = {
   name: 'fakeCollection',
   version: '000',
   cmrProvider: 'provider',
+  mission: 'mission',
 };
 const fakeCollectionWithoutProvider = {
   name: 'fakeCollection',

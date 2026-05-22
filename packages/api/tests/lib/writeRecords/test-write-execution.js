@@ -608,7 +608,7 @@ test.serial('writeExecutionRecordFromMessage() successfully publishes an SNS mes
   t.is(executionRecord.status, cumulusMessage.meta.status);
   t.deepEqual(executionRecord, {
     ...translatedExecution,
-    cmrProvider: '',
+    mission: '',
   });
 });
 
@@ -643,7 +643,7 @@ test.serial('writeExecutionRecordFromApi() successfully publishes an SNS message
   t.is(executionRecord.status, cumulusMessage.meta.status);
   t.deepEqual(executionRecord, {
     ...translatedExecution,
-    cmrProvider: '',
+    mission: '',
   });
 });
 
@@ -680,6 +680,6 @@ test('writeExecutionRecordFromMessage() successfully publishes an SNS message wi
   t.is(executionRecord.status, cumulusMessage.meta.status);
   t.deepEqual(executionRecord, {
     ...translatedExecution,
-    cmrProvider: collection.cmr_provider,
+    mission: collection.mission,
   });
 });
