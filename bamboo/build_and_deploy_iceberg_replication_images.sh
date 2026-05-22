@@ -2,6 +2,8 @@ set -ex
 
 . ./bamboo/use-working-directory.sh
 . ./bamboo/set-bamboo-env-variables.sh
+. ./bamboo/abort-if-not-pr-or-redeployment.sh
+. ./bamboo/abort-if-skip-integration-tests.sh
 
 if [[ "DEPLOY_ICEBERG_REPLICATION" != "true" ]]; then
   echo "Skipping deploy Iceberg replication images step (DEPLOY_ICEBERG_REPLICATION=$DEPLOY_ICEBERG_REPLICATION)" >&2
