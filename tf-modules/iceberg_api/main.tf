@@ -96,9 +96,6 @@ resource "aws_ecs_service" "iceberg_api" {
   }
 
   force_new_deployment = true
-  triggers = {
-    redeployment = sha256(jsonencode(aws_ecs_task_definition.iceberg_api))
-  }
 }
 
 resource "aws_lb" "iceberg_api" {
