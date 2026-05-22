@@ -15,10 +15,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- **CUMULUS-4711**
-  - Add integration tests for iceberg API
 - **CUMULUS-4866**
   - Add cmrProvider to sns output granules, executions, pdrs
+- **CUMULUS-4705**
+  - Add Fargate task to cleanup old Iceberg table snapshots on a schedule
+- **CUMULUS-4711**
+  - Add integration tests for iceberg API
 - **CUMULUS-4829**
   - Add background job to refresh stale DuckDB connections for iceberg API
 - **CUMULUS-4815**
