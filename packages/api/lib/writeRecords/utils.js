@@ -140,12 +140,38 @@ const getCollectionCumulusId = async (
 };
 
 /**
+ * retrieves the collection configured cmr_provider
+ *
+ * @param {number} collectionCumulusId -
+ * The name and version of
+ * the collection, formatted as 'name__version'.
+ * @param {Knex} knex - An instance of a Knex database client.
+ * @param {CollectionPgModel} [collectionPgModel=new CollectionPgModel()] - An instance of the
+ *  CollectionPgModel class.
+ * @returns {Promise<string>} - A promise that resolves to the Cumulus ID
+ * of the collection, or undefined if the collection name/version
+ *  is not provided or if the lookup fails.
+ *
+ * @async
+ * @throws {Error} Throws an error if there is a problem with the database lookup
+ * that is not a failed lookup.
+ */
+const getCollectionCmrProvider = (
+  collectionCumulusId,
+  knex,
+  collectionPgModel = new CollectionPgModel()
+) => collectionPgModel.getCmrProvider(
+  knex,
+  collectionCumulusId
+);
+
+/**
  * Looks up an Provider's cumulus_id by providerId.
  *
  * @param {string} [providerId = ''] - Full url of stepfunction execution
  * @param {Knex} knex - knex Client
  * @param {Object} providerPgModel - Instance of the provider database model
- * @returns {integer} - RDS internal cumulus_id
+ * @returns {Promise<number>} - RDS internal cumulus_id
  */
 const getProviderCumulusId = async (
   providerId,
@@ -236,6 +262,7 @@ module.exports = {
   getParentExecution,
   getProviderCumulusId,
   getCollectionCumulusId,
+  getCollectionCmrProvider,
   getMessageProviderCumulusId,
   isStatusFinalState,
   isStatusActiveState,

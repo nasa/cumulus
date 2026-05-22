@@ -27,6 +27,7 @@ const { isEventBridgeEvent } = require('@cumulus/aws-client/Lambda');
 
 const {
   getCollectionCumulusId,
+  getCollectionCmrProvider,
   getMessageProviderCumulusId,
   getAsyncOperationCumulusId,
   getParentExecution,
@@ -151,6 +152,13 @@ const writeRecords = async ({
       knex
     ),
   ]);
+  let cmrProvider = '';
+  if (collectionCumulusId) {
+    cmrProvider = await getCollectionCmrProvider(
+      collectionCumulusId,
+      knex
+    );
+  }
 
   const {
     cumulus_id: parentExecutionCumulusId,
@@ -180,6 +188,7 @@ const writeRecords = async ({
       asyncOperationCumulusId,
       parentExecutionCumulusId,
       parentExecutionCreatedAt,
+      cmrProvider,
       knex,
     });
 
@@ -196,9 +205,10 @@ const writeRecords = async ({
       cumulusMessage,
       collectionCumulusId,
       providerCumulusId,
-      knex,
       executionCumulusId,
       executionCreatedAt,
+      cmrProvider,
+      knex,
     });
   }
 
@@ -207,6 +217,7 @@ const writeRecords = async ({
       cumulusMessage,
       executionCumulusId,
       executionCreatedAt,
+      cmrProvider,
       knex,
       testOverrides,
     });
