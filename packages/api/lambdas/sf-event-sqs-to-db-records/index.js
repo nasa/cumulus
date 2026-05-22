@@ -152,9 +152,9 @@ const writeRecords = async ({
       knex
     ),
   ]);
-  let cmrProvider = '';
+  let mission = '';
   if (collectionCumulusId) {
-    cmrProvider = await getCollectionCmrProvider(
+    mission = await getCollectionCmrProvider(
       collectionCumulusId,
       knex
     );
@@ -188,7 +188,7 @@ const writeRecords = async ({
       asyncOperationCumulusId,
       parentExecutionCumulusId,
       parentExecutionCreatedAt,
-      cmrProvider,
+      mission,
       knex,
     });
 
@@ -207,7 +207,7 @@ const writeRecords = async ({
       providerCumulusId,
       executionCumulusId,
       executionCreatedAt,
-      cmrProvider,
+      mission,
       knex,
     });
   }
@@ -217,7 +217,7 @@ const writeRecords = async ({
       cumulusMessage,
       executionCumulusId,
       executionCreatedAt,
-      cmrProvider,
+      mission,
       knex,
       testOverrides,
     });

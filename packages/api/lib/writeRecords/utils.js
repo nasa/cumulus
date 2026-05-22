@@ -156,11 +156,11 @@ const getCollectionCumulusId = async (
  * @throws {Error} Throws an error if there is a problem with the database lookup
  * that is not a failed lookup.
  */
-const getCollectionCmrProvider = (
+const getCollectionMission = (
   collectionCumulusId,
   knex,
   collectionPgModel = new CollectionPgModel()
-) => collectionPgModel.getCmrProvider(
+) => collectionPgModel.getMission(
   knex,
   collectionCumulusId
 );

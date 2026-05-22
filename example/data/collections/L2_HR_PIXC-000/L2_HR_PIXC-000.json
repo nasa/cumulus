@@ -22,5 +22,6 @@
       "type": "metadata"
     }
   ],
-  "cmrProvider": "CUMULUS"
+  "cmrProvider": "CUMULUS",
+  "mission": "CUMULUS"
 }

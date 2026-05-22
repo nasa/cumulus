@@ -29,10 +29,12 @@ export const up = async (knex: Knex): Promise<void> => {
     table.timestamp('updated_at', { useTz: true, precision: TIMESTAMP_PRECISION }).defaultTo(knex.fn.now(TIMESTAMP_PRECISION));
 
     table.text('cmr_provider').notNullable();
+    table.text('mission').notNullable();
 
     table.unique(['name', 'version']);
 
     table.index(['cmr_provider'], 'collection_cmr_provider_index');
+    table.index(['mission'], 'collection_mission_index');
     table.index(['updated_at'], 'collections_updated_at_index');
   });
 

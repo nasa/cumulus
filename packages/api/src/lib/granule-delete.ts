@@ -94,7 +94,7 @@ export const deleteGranuleAndFiles = async (params: {
       cumulus_id: pgGranule.cumulus_id,
     });
     const metricsGranule = {
-      cmrProvider: await collectionPgModel.getCmrProvider(knex, pgGranule.collection_cumulus_id),
+      mission: await collectionPgModel.getMission(knex, pgGranule.collection_cumulus_id),
       ...apiGranule,
     };
     await publishGranuleDeleteSnsMessage(metricsGranule);

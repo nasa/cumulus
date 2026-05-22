@@ -26,5 +26,6 @@
     "uniquifyGranuleId": true,
     "hashLength": 6
   },
-  "cmrProvider": "CUMULUS"
+  "cmrProvider": "CUMULUS",
+  "mission": "CUMULUS"
 }

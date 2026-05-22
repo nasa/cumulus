@@ -47,6 +47,7 @@ export const collectionsIcebergSql = (tableName: string = 'collections') => `
     files JSON NOT NULL,
     process TEXT,
     cmr_provider TEXT,
+    mission TEXT,
     url_path TEXT,
     duplicate_handling TEXT,
     report_to_ems BOOLEAN,
