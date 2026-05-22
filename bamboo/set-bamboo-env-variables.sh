@@ -59,6 +59,8 @@ declare -a param_list=(
   "bamboo_VERSION_FLAG"
   "bamboo_CUMULUS_BASE_IMAGE"
   "bamboo_DEPLOY_ICEBERG_API"
+  "bamboo_DEPLOY_ICEBERG_REPLICATION"
+  "bamboo_DEBEZIUM_VERSION"
 )
 
 ## Strip 'bamboo_SECRET_' from secret keys

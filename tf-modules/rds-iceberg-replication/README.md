@@ -1,6 +1,6 @@
 # rds-iceberg-replication
 
-This module provides a deployment for an ECS Fargate cluster with a single task that contains containers needed for RDS to Iceberg replication.
+This module provides a deployment for an ECS Fargate cluster with a service/task that contains containers needed for RDS to Iceberg replication and a cron task that periodically cleans up old snapshots.
 
 ## Input variables
 
