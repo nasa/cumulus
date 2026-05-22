@@ -16,6 +16,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-4866**
+  - Add mission to database collection model
+  - Add mission to sns outputs to executions, granules, pdrs
+- **CUMULUS-4866**
   - Add cmrProvider to sns output granules, executions, pdrs
 - **CUMULUS-4705**
   - Add Fargate task to cleanup old Iceberg table snapshots on a schedule
