@@ -8,7 +8,7 @@ hide_title: false
 
 the updated Collection db model can be found [here](https://github.com/nasa/cumulus/blob/master/packages/db/src/types/collection.ts)
 
-the mission field now replaces the stack-wide configured mission on a per-collection basis. This field cannot be null, but this presents a problem for existing databases, where collections already exist. as a result an update must be run manually.
+the mission field distinguishes the data mission which can be used to differentiate metrics stack on a per-collection basis. This field cannot be null, but this presents a problem for existing databases, where collections already exist. as a result an update must be run manually.
 
 ## Upgrade Steps
 
