@@ -312,7 +312,7 @@ test.serial('deleteGranuleAndFiles() will not delete S3 Files if the PostgreSQL 
 });
 
 
-test.only('deleteGranuleAndFiles() publishes SNS message', async (t) => {
+test('deleteGranuleAndFiles() publishes SNS message', async (t) => {
   const { collectionId, collectionCumulusId, QueueUrl, testCollection, knex } = t.context;
 
   const {
@@ -336,7 +336,10 @@ test.only('deleteGranuleAndFiles() publishes SNS message', async (t) => {
       t.true(await filePgModel.exists(knex, { bucket: file.bucket, key: file.key }));
     })
   );
-
+  await deleteGranuleAndFiles({
+    knex: knex,
+    pgGranule: newPgGranule,
+  });
   const { Messages } = await sqs().receiveMessage({
     QueueUrl,
     MaxNumberOfMessages: 1,
@@ -344,7 +347,6 @@ test.only('deleteGranuleAndFiles() publishes SNS message', async (t) => {
   });
   const snsMessageBody = JSON.parse(Messages[0].Body);
   const publishedMessage = JSON.parse(snsMessageBody.Message);
-  console.log(publishedMessage.record)
   t.is(Messages.length, 1);
   t.deepEqual(publishedMessage.record, {
     ...apiGranule,
