@@ -311,7 +311,6 @@ test.serial('deleteGranuleAndFiles() will not delete S3 Files if the PostgreSQL 
   ]));
 });
 
-
 test('deleteGranuleAndFiles() publishes SNS message', async (t) => {
   const { collectionId, collectionCumulusId, QueueUrl, testCollection, knex } = t.context;
 
