@@ -42,12 +42,6 @@ else
   ROLE_BOUNDARY=NGAPShNonProdRoleBoundary
 fi
 
-set_iceberg_image_version
-
-DEPLOY_ICEBERG_API="${DEPLOY_ICEBERG_API:-false}"
-echo "Deploy Iceberg API: ${DEPLOY_ICEBERG_API}"
-echo "Using Iceberg API image version ${ICEBERG_IMAGE_VERSION}"
-
 # Deploy data-persistence-tf via terraform
 echo "Deploying Cumulus data-persistence module to $DEPLOYMENT"
 ../terraform apply \
@@ -60,9 +54,7 @@ echo "Deploying Cumulus data-persistence module to $DEPLOYMENT"
   -var "vpc_id=$VPC_ID" \
   -var "rds_admin_access_secret_arn=$RDS_ADMIN_ACCESS_SECRET_ARN" \
   -var "rds_security_group=$RDS_SECURITY_GROUP" \
-  -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/$ROLE_BOUNDARY" \
-  -var "cumulus_iceberg_api_image_version=$ICEBERG_IMAGE_VERSION" \
-  -var "deploy_iceberg_api=$DEPLOY_ICEBERG_API"
+  -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/$ROLE_BOUNDARY"
 
 cd ../cumulus-tf
 # Ensure remote state is configured for the deployment
