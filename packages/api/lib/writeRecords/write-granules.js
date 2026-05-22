@@ -287,29 +287,36 @@ const _removeExcessFiles = async ({
 * @param {Object} params
 * @param {string} params.snsEventType
 * @param {PostgresGranuleRecord} params.pgGranule
-* @param {string | null} [params.mission=null]
+* @param {{mission: string, cmrProvider: string} | null} [params.missionAndCmrProvider=null]
 * @param {Knex} params.knex - Instance of a Knex client
 */
 const _publishPostgresGranuleUpdateToSns = async ({
   snsEventType,
   pgGranule,
-  mission = null,
+  missionAndCmrProvider = null,
   knex,
 }) => {
   const translatedGranule = await translatePostgresGranuleToApiGranule({
     granulePgRecord: pgGranule,
     knexOrTransaction: knex,
   });
-  let finalMission = mission;
-  if (!mission) {
+  let finalMissionAndCmrProvider = missionAndCmrProvider;
+  if (!missionAndCmrProvider) {
     const collectionPgModel = new CollectionPgModel();
-    finalMission = await collectionPgModel.getMission(
+    const {
+      mission,
+      cmr_provider: cmrProvider,
+    } = await collectionPgModel.getMissionAndCmrProvider(
       knex,
       pgGranule.collection_cumulus_id
     );
+    finalMissionAndCmrProvider = {
+      mission,
+      cmrProvider,
+    };
   }
   const metricsGranule = {
-    mission: finalMission,
+    ...finalMissionAndCmrProvider,
     ...translatedGranule,
   };
   await publishGranuleSnsMessageByEventType(metricsGranule, snsEventType);

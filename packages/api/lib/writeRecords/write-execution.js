@@ -165,7 +165,7 @@ const _writeExecutionRecord = async ({
  * @param {PostgresExecution} params.postgresRecord - Execution PostgreSQL record to be written
  * @param {Knex} params.knex - Knex client
  * @param {ExecutionPgModelType} [params.executionPgModel] - PostgreSQL execution model
- * @param {string | null} params.mission - collection mission inherited from calling function.
+ * @param {{mission: string, cmrProvider: string} | null} params.missionAndCmrProvider - collection mission inherited from calling function.
  *   will be determined if left null
  * @param {boolean} [params.writeConstraints] - Boolean flag to set if record write constraints
  *   apply
@@ -176,7 +176,7 @@ const _writeExecutionAndPublishSnsMessage = async ({
   postgresRecord,
   knex,
   executionPgModel,
-  mission = null,
+  missionAndCmrProvider = null,
   writeConstraints = true,
 }) => {
   const writeExecutionResponse = await _writeExecutionRecord(
@@ -192,18 +192,28 @@ const _writeExecutionAndPublishSnsMessage = async ({
     writeExecutionResponse,
     knex
   );
-  let finalmission = '';
-  if (mission) {
-    finalmission = mission;
+  let finalMissionAndCmrProvider = {
+    mission: '',
+    cmrProvider: '',
+  };
+  if (missionAndCmrProvider) {
+    finalMissionAndCmrProvider = missionAndCmrProvider;
   } else if (postgresRecord.collection_cumulus_id) {
     const collectionPgModel = new CollectionPgModel();
-    finalmission = await collectionPgModel.getMission(
+    const {
+      mission: mission,
+      cmr_provider: cmrProvider,
+    } = await collectionPgModel.getMissionAndCmrProvider(
       knex,
       postgresRecord.collection_cumulus_id
     );
+    finalMissionAndCmrProvider = {
+      mission,
+      cmrProvider,
+    }
   }
   const metricsExecution = {
-    mission: finalmission,
+    ...finalMissionAndCmrProvider,
     ...translatedExecution,
   };
 

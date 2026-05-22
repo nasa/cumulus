@@ -29,16 +29,16 @@ class CollectionPgModel extends BasePgModel<PostgresCollection, PostgresCollecti
       .merge()
       .returning('*');
   }
-  async getMission(
+  async getMissionAndCmrProvider(
     knexOrTransaction: Knex | Knex.Transaction,
     collectionCumulusId: number
-  ) {
-    const collection = await super.get(
+  ): Promise<{ mission: string, cmr_provider: string }> {
+
+    return super.get(
       knexOrTransaction,
       { cumulus_id: collectionCumulusId },
-      ['mission']
+      ['mission', 'cmr_provider']
     );
-    return collection.mission;
   }
 }
 

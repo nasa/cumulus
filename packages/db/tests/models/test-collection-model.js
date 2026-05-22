@@ -81,18 +81,33 @@ test('CollectionPgModel.upsert() overwrites a collection record', async (t) => {
   );
 });
 
-test('CollectionPgModel.getMission() gets a collection mission', async (t) => {
+test('CollectionPgModel.getMissionAndCmrProvider() gets a collection mission and cmr provider', async (t) => {
   const {
     knex,
     collectionPgModel,
     collectionRecord,
   } = t.context;
   const [dbCollection] = await collectionPgModel.create(knex, collectionRecord);
-  const mission = await collectionPgModel.getMission(knex, dbCollection.cumulus_id);
-  t.is(mission, collectionRecord.mission);
-  const collectionRecord2 = fakeCollectionRecordFactory({ mission: 'anyotherstring' });
+  const missionAndCmrProvider = await collectionPgModel.getMissionAndCmrProvider(
+    knex,
+    dbCollection.cumulus_id
+  );
+  t.is(missionAndCmrProvider, {
+    mission: collectionRecord.mission,
+    cmr_provider: collectionRecord.cmr_provider,
+  });
+  const collectionRecord2 = fakeCollectionRecordFactory({
+    provider: 'adifferentprovider',
+    mission: 'anyotherstring'
+  });
 
   const [dbCollections] = await collectionPgModel.create(knex, collectionRecord2);
-  const mission2 = await collectionPgModel.getMission(knex, dbCollections.cumulus_id);
-  t.is(mission2, collectionRecord2.mission);
+  const missionAndCmrProvider2 = await collectionPgModel.getMissionAndCmrProvider(
+    knex,
+    dbCollections.cumulus_id
+  );
+  t.is(missionAndCmrProvider2, {
+    mission: collectionRecord2.mission,
+    cmr_provider: collectionRecord2.cmr_provider,
+  });
 });
