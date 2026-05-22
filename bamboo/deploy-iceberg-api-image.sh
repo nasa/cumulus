@@ -8,6 +8,7 @@ if [[ "$DEPLOY_ICEBERG_API" != "true" ]]; then
   echo "Skipping deploy Iceberg API Image step (DEPLOY_ICEBERG_API=$DEPLOY_ICEBERG_API)" >&2
   exit 0
 fi
+echo "***Deploying Iceberg API image"
 
 if ! command -v docker >/dev/null 2>&1; then
   apt-get update && apt-get install -y docker.io
