@@ -193,13 +193,14 @@ const _writeExecutionAndPublishSnsMessage = async ({
     knex
   );
   let finalCmrProvider = '';
+  const { collection_cumulus_id } = postgresRecord;
   if (cmrProvider) {
     finalCmrProvider = cmrProvider;
-  } else if (postgresRecord.collection_cumulus_id) {
+  } else if (collection_cumulus_id) {
     const collectionPgModel = new CollectionPgModel();
     finalCmrProvider = await collectionPgModel.getCmrProvider(
       knex,
-      postgresRecord.collection_cumulus_id
+      collection_cumulus_id
     );
   }
   const metricsExecution = {
