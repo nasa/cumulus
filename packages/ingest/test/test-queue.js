@@ -370,7 +370,7 @@ test.serial('enqueueParsePdrMessage does not overwrite the collection or provide
     name: 'ABC123',
     version: '001',
     cmrProvider: 'provider',
-    mission: 'mission'
+    mission: 'mission',
   };
 
   const provider = {
@@ -424,7 +424,7 @@ test.serial('enqueueGranuleIngestMessage does not overwrite the collection or pr
     name: 'ABC123',
     version: '001',
     cmrProvider: 'provider',
-    mission: 'mission'
+    mission: 'mission',
   };
 
   const provider = {

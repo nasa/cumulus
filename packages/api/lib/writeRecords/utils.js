@@ -262,7 +262,7 @@ module.exports = {
   getParentExecution,
   getProviderCumulusId,
   getCollectionCumulusId,
-  getCollectionCmrProvider,
+  getCollectionMission,
   getMessageProviderCumulusId,
   isStatusFinalState,
   isStatusActiveState,

@@ -26,7 +26,7 @@ export const translatePostgresCollectionToApiCollection = (
   meta: parseIfJson(collectionRecord.meta),
   tags: parseIfJson(collectionRecord.tags),
   cmrProvider: collectionRecord.cmr_provider,
-  mission: collectionRecord.mission
+  mission: collectionRecord.mission,
 }));
 
 /**

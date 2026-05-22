@@ -27,7 +27,7 @@ const { isEventBridgeEvent } = require('@cumulus/aws-client/Lambda');
 
 const {
   getCollectionCumulusId,
-  getCollectionCmrProvider,
+  getCollectionMission,
   getMessageProviderCumulusId,
   getAsyncOperationCumulusId,
   getParentExecution,
@@ -154,7 +154,7 @@ const writeRecords = async ({
   ]);
   let mission = '';
   if (collectionCumulusId) {
-    mission = await getCollectionCmrProvider(
+    mission = await getCollectionMission(
       collectionCumulusId,
       knex
     );
