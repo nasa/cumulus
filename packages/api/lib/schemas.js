@@ -98,6 +98,11 @@ module.exports.collection = {
       description: 'cmr provider corresponding to this collection',
       type: 'string',
     },
+    mission: {
+      title: 'mission',
+      description: 'mission corresponding to this collection',
+      type: 'string',
+    },
     name: {
       title: 'Name',
       description: 'Collection short_name registered with the CMR',
