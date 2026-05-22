@@ -647,7 +647,7 @@ test.serial('writeExecutionRecordFromApi() successfully publishes an SNS message
   });
 });
 
-test('writeExecutionRecordFromMessage() successfully publishes an SNS message with a collection and cmr provider', async (t) => {
+test.serial('writeExecutionRecordFromMessage() successfully publishes an SNS message with a collection and cmr provider', async (t) => {
   const {
     cumulusMessage,
     executionArn,
