@@ -152,7 +152,7 @@ const writeRecords = async ({
       knex
     ),
   ]);
-  
+
   const {
     cumulus_id: parentExecutionCumulusId,
     created_at: parentExecutionCreatedAt,
