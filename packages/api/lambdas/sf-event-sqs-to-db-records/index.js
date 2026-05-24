@@ -171,7 +171,10 @@ const writeRecords = async ({
     log.debug(`Could not satisfy requirements for writing records, fieldsToMeetRequirements: ${JSON.stringify(fieldsToMeetRequirements)}`);
     throw new UnmetRequirementsError('Could not satisfy requirements for writing records to PostgreSQL. No records written to the database.');
   }
-  let missionAndCmrProvider = null;
+  let missionAndCmrProvider = {
+    mission: '',
+    cmrProvider: '',
+  };
   if (collectionCumulusId) {
     missionAndCmrProvider = await getCollectionMissionAndCmrProvider(
       collectionCumulusId,

@@ -161,7 +161,7 @@ const getCollectionMissionAndCmrProvider = async (
   knex,
   collectionPgModel = new CollectionPgModel()
 ) => {
-  const {
+  const a = {
     mission,
     cmr_provider: cmrProvider,
   } = await collectionPgModel.getMissionAndCmrProvider(knex, collectionCumulusId);
