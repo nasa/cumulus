@@ -96,7 +96,7 @@ export const deleteGranuleAndFiles = async (params: {
     const {
       mission,
       cmr_provider: cmrProvider,
-    } = await collectionPgModel.getMissionAndCmrProvider(knex, pgGranule.collection_cumulus_id)
+    } = await collectionPgModel.getMissionAndCmrProvider(knex, pgGranule.collection_cumulus_id);
     finalMissionAndCmrProvider = {
       mission,
       cmrProvider,

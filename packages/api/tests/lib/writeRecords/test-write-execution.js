@@ -609,6 +609,7 @@ test.serial('writeExecutionRecordFromMessage() successfully publishes an SNS mes
   t.deepEqual(executionRecord, {
     ...translatedExecution,
     mission: '',
+    cmrProvider: '',
   });
 });
 
@@ -644,6 +645,7 @@ test.serial('writeExecutionRecordFromApi() successfully publishes an SNS message
   t.deepEqual(executionRecord, {
     ...translatedExecution,
     mission: '',
+    cmrProvider: '',
   });
 });
 
@@ -655,7 +657,7 @@ test.serial('writeExecutionRecordFromMessage() successfully publishes an SNS mes
     knex,
     QueueUrl,
   } = t.context;
-  const collection = fakeCollectionRecordFactory({ mission: 'thisisamission' });
+  const collection = fakeCollectionRecordFactory({ mission: 'thisisamission', cmr_provider: 'thisisaprovider' });
   const collectionPgModel = new CollectionPgModel();
   const [collectionRecord] = await collectionPgModel.create(t.context.knex, collection);
   await writeExecutionRecordFromMessage({
@@ -681,5 +683,6 @@ test.serial('writeExecutionRecordFromMessage() successfully publishes an SNS mes
   t.deepEqual(executionRecord, {
     ...translatedExecution,
     mission: collection.mission,
+    cmrProvider: collection.cmr_provider,
   });
 });

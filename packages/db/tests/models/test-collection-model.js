@@ -98,7 +98,7 @@ test('CollectionPgModel.getMissionAndCmrProvider() gets a collection mission and
   });
   const collectionRecord2 = fakeCollectionRecordFactory({
     provider: 'adifferentprovider',
-    mission: 'anyotherstring'
+    mission: 'anyotherstring',
   });
 
   const [dbCollections] = await collectionPgModel.create(knex, collectionRecord2);

@@ -33,7 +33,6 @@ class CollectionPgModel extends BasePgModel<PostgresCollection, PostgresCollecti
     knexOrTransaction: Knex | Knex.Transaction,
     collectionCumulusId: number
   ): Promise<{ mission: string, cmr_provider: string }> {
-
     return super.get(
       knexOrTransaction,
       { cumulus_id: collectionCumulusId },

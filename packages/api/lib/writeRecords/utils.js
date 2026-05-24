@@ -167,7 +167,7 @@ const getCollectionMissionAndCmrProvider = async (
   } = await collectionPgModel.getMissionAndCmrProvider(knex, collectionCumulusId);
   return {
     mission,
-    cmrProvider
+    cmrProvider,
   };
 };
 
