@@ -302,6 +302,7 @@ describe('POST /granules/bulkDelete', () => {
         beginningDateTime: message.record.beginningDateTime,
         lastUpdateDateTime: message.record.lastUpdateDateTime,
         mission: get(collection, 'mission'),
+        cmrProvider: get(collection, 'cmrProvider'),
       };
       delete expectedGranuleAfterDeletion.cmrLink;
 
