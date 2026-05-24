@@ -634,7 +634,7 @@ const _writeGranuleRecords = async (params) => {
  * @param {number}            params.executionCumulusId - Execution ID the granule was written from
  * @param {Date}              params.executionCreatedAt - EExecution record create time
  *                            was written from
- * @param {string | null}     [params.mission=null]
+ * @param {{ mission: string, cmrProvider: string } | null}     [params.missionAndCmrProvider=null]
  * @param {GranulePgModel}    params.granulePgModel - @cumulus/db compatible granule module instance
 
  * @returns {Promise<void>}
@@ -647,7 +647,7 @@ const _writeGranule = async ({
   granulePgModel,
   knex,
   snsEventType,
-  mission = null,
+  missionAndCmrProvider = null,
   writeConstraints = true,
   writeGranuleFilesMethod = _writeGranuleFiles,
 }) => {
@@ -680,7 +680,7 @@ const _writeGranule = async ({
     await _publishPostgresGranuleUpdateToSns({
       snsEventType,
       pgGranule,
-      mission,
+      missionAndCmrProvider,
       knex,
     });
   }
