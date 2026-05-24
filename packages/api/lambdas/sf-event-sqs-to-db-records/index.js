@@ -27,7 +27,7 @@ const { isEventBridgeEvent } = require('@cumulus/aws-client/Lambda');
 
 const {
   getCollectionCumulusId,
-  getCollectionMission,
+  getCollectionMissionAndCmrProvider,
   getMessageProviderCumulusId,
   getAsyncOperationCumulusId,
   getParentExecution,
@@ -152,14 +152,7 @@ const writeRecords = async ({
       knex
     ),
   ]);
-  let mission = '';
-  if (collectionCumulusId) {
-    mission = await getCollectionMission(
-      collectionCumulusId,
-      knex
-    );
-  }
-
+  
   const {
     cumulus_id: parentExecutionCumulusId,
     created_at: parentExecutionCreatedAt,
@@ -178,6 +171,13 @@ const writeRecords = async ({
     log.debug(`Could not satisfy requirements for writing records, fieldsToMeetRequirements: ${JSON.stringify(fieldsToMeetRequirements)}`);
     throw new UnmetRequirementsError('Could not satisfy requirements for writing records to PostgreSQL. No records written to the database.');
   }
+  let missionAndCmrProvider = null;
+  if (collectionCumulusId) {
+    missionAndCmrProvider = await getCollectionMissionAndCmrProvider(
+      collectionCumulusId,
+      knex
+    );
+  }
 
   let executionCumulusId;
   let executionCreatedAt;
@@ -188,7 +188,7 @@ const writeRecords = async ({
       asyncOperationCumulusId,
       parentExecutionCumulusId,
       parentExecutionCreatedAt,
-      mission,
+      missionAndCmrProvider,
       knex,
     });
 
@@ -207,7 +207,7 @@ const writeRecords = async ({
       providerCumulusId,
       executionCumulusId,
       executionCreatedAt,
-      mission,
+      missionAndCmrProvider,
       knex,
     });
   }
@@ -217,7 +217,7 @@ const writeRecords = async ({
       cumulusMessage,
       executionCumulusId,
       executionCreatedAt,
-      mission,
+      missionAndCmrProvider,
       knex,
       testOverrides,
     });

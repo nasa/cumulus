@@ -60,7 +60,7 @@ test.beforeEach(async (t) => {
   );
   t.context.collectionCumulusId = pgCollection.cumulus_id;
   t.context.mission = pgCollection.mission;
-  t.context.cmrProvider = pgCollection.cmrProvider;
+  t.context.cmrProvider = pgCollection.cmr_provider;
   const provider = fakeProviderRecordFactory();
   const providerPgModel = new ProviderPgModel();
   const [pgProvider] = await providerPgModel.create(t.context.knex, provider);

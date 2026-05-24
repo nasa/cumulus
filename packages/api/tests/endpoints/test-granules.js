@@ -2350,7 +2350,7 @@ test.serial('PATCH publishes an SNS message after a successful granule update', 
   t.deepEqual(publishedMessage.record, {
     ...translatedGranule,
     mission: t.context.testPgCollection.mission,
-    cmrProvider: t.context.testPgCollection.cmrProvider,
+    cmrProvider: t.context.testPgCollection.cmr_provider,
   });
   t.is(publishedMessage.event, 'Update');
 });
