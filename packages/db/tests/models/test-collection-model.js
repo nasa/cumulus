@@ -92,12 +92,12 @@ test('CollectionPgModel.getMissionAndCmrProvider() gets a collection mission and
     knex,
     dbCollection.cumulus_id
   );
-  t.is(missionAndCmrProvider, {
+  t.deepEqual(missionAndCmrProvider, {
     mission: collectionRecord.mission,
     cmr_provider: collectionRecord.cmr_provider,
   });
   const collectionRecord2 = fakeCollectionRecordFactory({
-    provider: 'adifferentprovider',
+    cmr_provider: 'adifferentprovider',
     mission: 'anyotherstring',
   });
 
@@ -106,7 +106,7 @@ test('CollectionPgModel.getMissionAndCmrProvider() gets a collection mission and
     knex,
     dbCollections.cumulus_id
   );
-  t.is(missionAndCmrProvider2, {
+  t.deepEqual(missionAndCmrProvider2, {
     mission: collectionRecord2.mission,
     cmr_provider: collectionRecord2.cmr_provider,
   });
