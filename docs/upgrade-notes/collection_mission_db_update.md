@@ -48,10 +48,10 @@ the mission field distinguishes the data mission which can be used to differenti
     #e.g. psql -h cumulus-dev-rds-cluster.cluster-xxx.us-east-1.rds.amazonaws.com -p 5432 -d cumulus_test_db -U cumulus_test -W
     ```
 
-    The following are the relevant SQL commands. no sql file is provided to prevent confusion as there's a value that must be configured and not confused. Replace <mission> with your stack's mission.
+    The following are the relevant SQL commands. no sql file is provided to prevent confusion as there's a value that must be configured and not confused. Replace <mission_name> with your stack's mission.
 
     ```sql
-    ALTER TABLE collections ADD COLUMN IF NOT EXISTS mission TEXT NOT NULL DEFAULT '<mission>';
+    ALTER TABLE collections ADD COLUMN IF NOT EXISTS mission TEXT NOT NULL DEFAULT '<mission_name>';
     CREATE INDEX CONCURRENTLY IF NOT EXISTS collections_cmr_provider ON collections (mission);
     ```
 
