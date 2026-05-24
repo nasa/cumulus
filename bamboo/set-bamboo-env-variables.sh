@@ -58,6 +58,7 @@ declare -a param_list=(
   "bamboo_USE_TERRAFORM_ZIPS"
   "bamboo_VERSION_FLAG"
   "bamboo_CUMULUS_BASE_IMAGE"
+  "bamboo_DEPLOY_ICEBERG_API"
 )
 
 ## Strip 'bamboo_SECRET_' from secret keys
@@ -202,3 +203,22 @@ else
 fi
 export CUMULUS_UNIT_TEST_DATA=/tmp/cumulus_unit_test_data
 export TS_BUILD_CACHE_FILE=ts-build-cache.tgz
+
+## Function to set ICEBERG_IMAGE_VERSION based on PUBLISH_FLAG
+set_iceberg_image_version() {
+  echo "***Bamboo plan revision: $bamboo_plan_revision"
+  if [[ $PUBLISH_FLAG == true ]]; then
+    ICEBERG_IMAGE_VERSION=$(jq --raw-output .version lerna.json)
+  else
+    ICEBERG_IMAGE_VERSION=$(echo $bamboo_plan_revision | cut -c1-7)
+  fi
+
+  echo "***ICEBERG_IMAGE_VERSION: $ICEBERG_IMAGE_VERSION"
+
+  if [[ -z $ICEBERG_IMAGE_VERSION ]]; then
+    echo "Error: ICEBERG_IMAGE_VERSION is not set (PUBLISH_FLAG=${PUBLISH_FLAG}). Expected bamboo_plan_revision." >&2
+    exit 1
+  fi
+
+  export ICEBERG_IMAGE_VERSION
+}

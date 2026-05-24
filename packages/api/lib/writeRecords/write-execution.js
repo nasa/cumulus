@@ -205,7 +205,7 @@ const _writeExecutionAndPublishSnsMessage = async ({
       cmr_provider: cmrProvider,
     } = await collectionPgModel.getMissionAndCmrProvider(
       knex,
-      postgresRecord.collection_cumulus_id
+      collectionCumulusId
     );
     finalMissionAndCmrProvider = {
       mission,
