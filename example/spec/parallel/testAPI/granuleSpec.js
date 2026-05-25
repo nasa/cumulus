@@ -352,7 +352,7 @@ describe('The Granules API', () => {
         expect(message.record).toEqual({
           ...updatedGranuleFromApi,
           mission: collection1.mission,
-          cmrProvider: collection2.cmrProvider,
+          cmrProvider: collection1.cmrProvider,
         });
         expect(message.deletedAt).toBeGreaterThan(timestamp);
       }
