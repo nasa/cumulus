@@ -37,40 +37,6 @@ const getTokenFileKey = () => `${getEnvVar('stackName')}/launchpad/token.json`;
 const LOCK_TTL_MS = 15 * 1000;
 
 /**
- * Poll S3 until the launchpad token lock file is NotFound or times out with exponential backoff
- *
- * @param retries - number of poll attempts before timing out, defaults to 5
- *
- */
-async function waitForLockFileRelease(
-  retries: number = 5
-) {
-  await pRetry(
-    async () => {
-      try {
-        await headObject(getSystemBucket(), getLockFileKey());
-      } catch (error) {
-        if (error instanceof Error && ['NoSuchKey', 'NotFound'].includes(error.name)) {
-          return;
-        }
-        log.debug('Error in waitForLockFileRelease', error);
-        throw new pRetry.AbortError(error);
-      }
-      throw new Error('Timed out waiting for launchpad token lock file removal');
-    },
-    {
-      retries,
-      maxTimeout: 5000,
-      onFailedAttempt: (error) => {
-        log.debug(
-          `Waiting for launchpad token lock file release: attempt ${error.attemptNumber} failed, ${error.retriesLeft} retries left`, error
-        );
-      },
-    }
-  );
-}
-
-/**
  * Remove the launchpad token lock file from S3.
  *
  * @returns - S3 delete response
@@ -93,6 +59,47 @@ async function removeLockFile(): Promise<Object | undefined> {
     { retries: 5 }
   );
   return response;
+}
+
+/**
+ * Poll S3 until the launchpad token lock file is NotFound or times out with exponential backoff
+ *
+ * @param retries - number of poll attempts before timing out, defaults to 5
+ *
+ */
+async function waitForLockFileRelease(
+  retries: number = 5
+) {
+  await pRetry(
+    async () => {
+      let head;
+      try {
+        head = await headObject(getSystemBucket(), getLockFileKey());
+      } catch (error) {
+        if (error instanceof Error && ['NoSuchKey', 'NotFound'].includes(error.name)) {
+          return;
+        }
+        log.debug('Error in waitForLockFileRelease', error);
+        throw new pRetry.AbortError(error);
+      }
+      if (head.LastModified && (Date.now() - head.LastModified.getTime() > LOCK_TTL_MS)) {
+        log.warn('waitForLockFileRelease found a stale lock file; removing it');
+        await removeLockFile();
+        return;
+      }
+
+      throw new Error('Timed out waiting for launchpad token lock file removal');
+    },
+    {
+      retries,
+      maxTimeout: 5000,
+      onFailedAttempt: (error) => {
+        log.debug(
+          `Waiting for launchpad token lock file release: attempt ${error.attemptNumber} failed, ${error.retriesLeft} retries left`, error
+        );
+      },
+    }
+  );
 }
 
 /**
