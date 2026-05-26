@@ -169,7 +169,7 @@ fi
 
 # Create source connector
 echo "Creating source connector $CONNECTOR_NAME..."
-envsubst < ./resources/source_connector.json | curl -i -X POST \
+envsubst < ./resources/source_connector.json.template | curl -i -X POST \
   -H "Accept:application/json" \
   -H "Content-Type:application/json" \
   "$API_URL" \
