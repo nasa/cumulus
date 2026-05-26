@@ -18,6 +18,10 @@ fi
 
 set_iceberg_image_version
 
+echo "CURRENT DIRECTORY:"
+pwd
+ls
+
 ./packages/iceberg-replication/build_bootstrap_image.sh $ICEBERG_IMAGE_VERSION
 ./packages/push_bootstrap_image.sh $ICEBERG_IMAGE_VERSION
 ./packages/push_kafka_image.sh $DEBEZIUM_VERSION
