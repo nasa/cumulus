@@ -5,7 +5,7 @@ set -ex
 . ./bamboo/abort-if-not-pr-or-redeployment.sh
 . ./bamboo/abort-if-skip-integration-tests.sh
 
-if [[ "DEPLOY_ICEBERG_REPLICATION" != "true" ]]; then
+if [[ "$DEPLOY_ICEBERG_REPLICATION" != "true" ]]; then
   echo "Skipping deploy Iceberg replication images step (DEPLOY_ICEBERG_REPLICATION=$DEPLOY_ICEBERG_REPLICATION)" >&2
   exit 0
 fi
