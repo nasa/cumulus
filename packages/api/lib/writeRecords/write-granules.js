@@ -300,23 +300,23 @@ const _publishPostgresGranuleUpdateToSns = async ({
     granulePgRecord: pgGranule,
     knexOrTransaction: knex,
   });
-  let finalMissionAndCmrProvider = missionAndCmrProvider;
-  if (!missionAndCmrProvider) {
+  let mission;
+  let cmrProvider;
+  if (missionAndCmrProvider) {
+    ({ mission, cmrProvider } = missionAndCmrProvider);
+  } else {
     const collectionPgModel = new CollectionPgModel();
-    const {
+    ({
       mission,
       cmr_provider: cmrProvider,
     } = await collectionPgModel.getMissionAndCmrProvider(
       knex,
       pgGranule.collection_cumulus_id
-    );
-    finalMissionAndCmrProvider = {
-      mission,
-      cmrProvider,
-    };
+    ));
   }
   const metricsGranule = {
-    ...finalMissionAndCmrProvider,
+    mission,
+    cmrProvider,
     ...translatedGranule,
   };
   await publishGranuleSnsMessageByEventType(metricsGranule, snsEventType);

@@ -90,24 +90,23 @@ export const deleteGranuleAndFiles = async (params: {
     pdrPgModel: new PdrPgModel(),
     providerPgModel: new ProviderPgModel(),
   });
-
-  let finalMissionAndCmrProvider = missionAndCmrProvider;
-  if (!missionAndCmrProvider) {
-    const {
+  let mission;
+  let cmrProvider;
+  if (missionAndCmrProvider) {
+    ({ mission, cmrProvider } = missionAndCmrProvider);
+  } else {
+    ({
       mission,
       cmr_provider: cmrProvider,
-    } = await collectionPgModel.getMissionAndCmrProvider(knex, pgGranule.collection_cumulus_id);
-    finalMissionAndCmrProvider = {
-      mission,
-      cmrProvider,
-    };
+    } = await collectionPgModel.getMissionAndCmrProvider(knex, pgGranule.collection_cumulus_id));
   }
   try {
     await granulePgModel.delete(knex, {
       cumulus_id: pgGranule.cumulus_id,
     });
     const metricsGranule = {
-      ...finalMissionAndCmrProvider,
+      mission,
+      cmrProvider,
       ...apiGranule,
     };
     await publishGranuleDeleteSnsMessage(metricsGranule);

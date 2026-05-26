@@ -135,21 +135,21 @@ const writePdr = async ({
     return pgPdr.cumulus_id;
   });
   const translatedPdr = await translatePostgresPdrToApiPdr(pgPdr, knex);
-  let finalMissionAndCmrProvider = missionAndCmrProvider;
-  if (!missionAndCmrProvider) {
+  let mission;
+  let cmrProvider;
+  if (missionAndCmrProvider) {
+    ({ mission, cmrProvider } = missionAndCmrProvider);
+  } else {
     const collectionPgModel = new CollectionPgModel();
-    const {
+    ({
       mission,
       cmr_provider: cmrProvider,
-    } = await collectionPgModel.getMissionAndCmrProvider(knex, pgPdr.collection_cumulus_id);
-    finalMissionAndCmrProvider = {
-      mission,
-      cmrProvider,
-    };
+    } = await collectionPgModel.getMissionAndCmrProvider(knex, pgPdr.collection_cumulus_id));
   }
 
   const metricsPdr = {
-    ...finalMissionAndCmrProvider,
+    mission,
+    cmrProvider,
     ...translatedPdr,
   };
 
