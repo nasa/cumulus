@@ -228,7 +228,7 @@ const _writeExecutionAndPublishSnsMessage = async ({
  * @param {number} [params.asyncOperationCumulusId] - Identifier for the associated async operation
  * @param {number} [params.parentExecutionCumulusId] - Identifier for the parent execution
  * @param {Date} [params.parentExecutionCreatedAt] - Creation timestamp of the parent execution
- * @param {string | null} params.mission - collectionMission
+ * @param {{mission: string, cmrProvider: string} | null} params.missionAndCmrProvider - collectionMission
  * @param {number} [params.updatedAt=Date.now()] - Timestamp (in ms) used for record updateAt field
  * @returns {Promise<PostgresExecutionRecord>} - write message response
  */
@@ -239,7 +239,7 @@ const writeExecutionRecordFromMessage = async ({
   asyncOperationCumulusId,
   parentExecutionCumulusId,
   parentExecutionCreatedAt,
-  mission = null,
+  missionAndCmrProvider = null,
   updatedAt = Date.now(),
 }) => {
   const postgresRecord = buildExecutionRecord({
@@ -253,7 +253,7 @@ const writeExecutionRecordFromMessage = async ({
   const writeExecutionResponse = await _writeExecutionAndPublishSnsMessage({
     // Re-add arn to satisfy TS type checking
     postgresRecord: { ...omitBy(postgresRecord, isUndefined), arn: postgresRecord.arn },
-    mission,
+    missionAndCmrProvider,
     knex,
   });
   return writeExecutionResponse;
