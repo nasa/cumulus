@@ -161,7 +161,7 @@ test.serial('Should update existing etag on CMR metadata file', async (t) => {
   t.false([previousEtag, undefined].includes(newEtag));
 });
 
-test.serial('update-granules-cmr-metadata-file-links throws an error when cmr file type is both and no distribution endpoint is set', async (t) => {
+test.serial('update-granules-cmr-metadata-file-links throws an error when no distribution endpoint and no per-cmr-provider map is configured', async (t) => {
   const newPayload = buildPayload(t);
   await validateConfig(t, newPayload.config);
   await validateInput(t, newPayload.input);
@@ -172,8 +172,53 @@ test.serial('update-granules-cmr-metadata-file-links throws an error when cmr fi
 
   await t.throwsAsync(
     () => updateGranulesCmrMetadata(newPayload),
-    { message: 'cmrGranuleUrlType is both, but no distribution endpoint is configured.' }
+    { message: /Cannot resolve distribution endpoint/ }
   );
+});
+
+test.serial('update-granules-cmr-metadata-file-links uses per-cmr-provider distribution endpoint when cmr_provider matches map entry', async (t) => {
+  const newPayload = buildPayload(t);
+  newPayload.config.cmr_provider = 'PROV1';
+  newPayload.config.distribution_endpoint_per_cmr_provider = {
+    PROV1: 'https://prov1.example.com/',
+    PROV2: 'https://prov2.example.com/',
+  };
+  await validateConfig(t, newPayload.config);
+  await validateInput(t, newPayload.input);
+
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+
+  const output = await updateGranulesCmrMetadata(newPayload);
+  await validateOutput(t, output);
+
+  const cmrFile = output.granules[0].files.find(isCMRFile);
+  const cmrBody = await getCMRFileBodyContent(cmrFile);
+  const urls = JSON.stringify(cmrBody);
+  t.true(urls.includes('https://prov1.example.com'), 'CMR metadata should reference per-provider URL');
+  t.false(urls.includes('something.api.us-east-1'), 'CMR metadata should not reference fallback URL');
+});
+
+test.serial('update-granules-cmr-metadata-file-links falls back to distribution_endpoint when cmr_provider has no map entry', async (t) => {
+  const newPayload = buildPayload(t);
+  newPayload.config.cmr_provider = 'UNKNOWN_PROV';
+  newPayload.config.distribution_endpoint_per_cmr_provider = {
+    PROV1: 'https://prov1.example.com/',
+  };
+  await validateConfig(t, newPayload.config);
+  await validateInput(t, newPayload.input);
+
+  const filesToUpload = cloneDeep(t.context.filesToUpload);
+  await uploadFiles(filesToUpload, t.context.stagingBucket);
+
+  const output = await updateGranulesCmrMetadata(newPayload);
+  await validateOutput(t, output);
+
+  const cmrFile = output.granules[0].files.find(isCMRFile);
+  const cmrBody = await getCMRFileBodyContent(cmrFile);
+  const urls = JSON.stringify(cmrBody);
+  t.true(urls.includes('something.api.us-east-1'), 'CMR metadata should fall back to distribution_endpoint host');
+  t.false(urls.includes('prov1.example.com'), 'CMR metadata should not include unrelated provider URL');
 });
 
 test.serial('update-granules-cmr-metadata-file-links does not throw error if no etags config is provided', async (t) => {

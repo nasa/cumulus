@@ -17,6 +17,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4866**
+  - Add cmrProvider to sns output granules, executions, pdrs
+- **CUMULUS-4883**
+  - Add script to build Iceberg API docker image and push it to ECR as part of the build process
+- **CUMULUS-4705**
+  - Add Fargate task to cleanup old Iceberg table snapshots on a schedule
+- **CUMULUS-4711**
+  - Add integration tests for iceberg API
 - **CUMULUS-4829**
   - Add background job to refresh stale DuckDB connections for iceberg API
 - **CUMULUS-4815**
@@ -51,8 +59,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4839**
   - Updated `@cumulus/db/search` `GranuleSearch` query builder to prepend the partition key
     `collection_cumulus_id` to sort orders when collection filters are present.
+- **CUMULUS-4664**
+  - A single Cumulus deployment can now serve granule data download links across multiple TEA hosts,
+    choosing the correct host per granule based on the collection's CMR provider. This makes it possible to
+    consolidate several Cumulus deployments into one while preserving the public download URLs that end users
+    and CMR records already depend on.
+  - Operators configure routing with a new `tea_distribution_url_per_cmr_provider` terraform variable,
+    which is a map from CMR provider to TEA base URL. Collections whose CMR provider is not in the map fall
+    back to the existing single `tea_distribution_url`, so single-deployment configurations continue to work unchanged.
+  - One precondition for consolidating deployments is that every S3 bucket name in the merged bucket map must be globally unique.
 
 ### Changed
+- **CUMULUS-4776** Split iceberg replication into separate services and add support for partitioned tables
+
 - **CUMULUS-4789** Update Docusaurus to latest version - 3.10
 
 - **CSD-104**

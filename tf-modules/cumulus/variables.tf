@@ -128,6 +128,12 @@ variable "tea_internal_api_endpoint" {
   default     = null
 }
 
+variable "tea_distribution_url_per_cmr_provider" {
+  description = "Map of CMR provider short_name to TEA external endpoint URL. Used in consolidated deployments to route distribution URLs per Collection.cmrProvider. Falls back to tea_external_api_endpoint for any provider not listed."
+  type        = map(string)
+  default     = {}
+}
+
 variable "token_secret" {
   description = "A string value used for signing and verifying JSON Web Tokens (JWTs) issued by the archive API. Should be a 32-character string for security"
   type        = string
@@ -706,6 +712,18 @@ variable "iceberg_api_memory" {
   description = "Memory allocation for Iceberg API ECS task"
   type        = number
   default     = 512
+}
+
+variable "duckdb_max_pool_size" {
+  description = "Maximum number of DuckDB connections in the connection pool"
+  type        = number
+  default     = 3
+}
+
+variable "duckdb_pool_rebuild_interval_seconds" {
+  description = "Seconds between preemptive DuckDB idle-pool rebuilds"
+  type        = number
+  default     = 18000
 }
 
 variable "cumulus_iceberg_api_image_version" {

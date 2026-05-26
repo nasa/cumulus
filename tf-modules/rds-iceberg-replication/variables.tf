@@ -20,15 +20,9 @@ variable "rds_port" {
   default     = "5432"
 }
 
-variable "db_admin_username" {
-  description = "Username for RDS database administrator authentication"
+variable "admin_db_login_secret_arn" {
+  description = "Arn for AWS Secrets Manager secret for database administrator credentials"
   type        = string
-  default     = "postgres"
-}
-
-variable "db_admin_password" {
-  description = "Password for RDS database administrator authentication"
-  type = string
 }
 
 variable "region" {
@@ -44,7 +38,7 @@ variable "rds_security_group" {
 
 variable "subnet" {
   description = "Subnet for Fargate tasks"
-  type    = string
+  type        = string
 }
 
 variable "tags" {
@@ -60,14 +54,8 @@ variable "vpc_id" {
 
 variable "force_new_deployment" {
   description = "Enable to force a new task deployment of the service. See https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service#force_new_deployment"
-  type = bool
-  default = false
-}
-
-variable "cpu" {
-  description = "The number of CPU units the Amazon ECS container agent will reserve for the task"
-  type    = number
-  default = 4096 # 4 CPUs
+  type        = bool
+  default     = false
 }
 
 variable "cpu_architecture" {
@@ -76,10 +64,87 @@ variable "cpu_architecture" {
   default     = "ARM64"
 }
 
-variable "memory" {
-  description = "The amount of memory (in MB) that the ECS container agent reserves for a task."
+variable "small_tables_cpu" {
+  description = "The number of CPU units the Amazon ECS container agent will reserve for the small_tables task"
   type        = number
-  default     = 16384 # 16GB
+  default     = 2048 # 2 CPUs
+}
+
+variable "small_tables_memory" {
+  description = "The amount of memory (in MB) that the ECS container agent reserves for the small_tables task."
+  type        = number
+  default     = 2048 # 2GB
+}
+
+variable "small_tables_batch_size" {
+  description = "The maximum number of replication messages that will be written to Iceberg at once"
+  type        = number
+  default     = 20000
+}
+
+variable "granules_table_cpu" {
+  description = "The number of CPU units the Amazon ECS container agent will reserve for the granules table task"
+  type        = number
+  default     = 2048 # 2 CPUs
+}
+variable "granules_table_memory" {
+  description = "The amount of memory (in MB) that the ECS container agent reserves for the granules table task."
+  type        = number
+  default     = 2048 # 2GB
+}
+
+variable "granules_table_batch_size" {
+  description = "The maximum number of replication messages that will be written to Iceberg at once"
+  type        = number
+  default     = 20000
+}
+
+variable "executions_table_cpu" {
+  description = "The number of CPU units the Amazon ECS container agent will reserve for the executions table task"
+  type        = number
+  default     = 2048 # 2 CPUs
+}
+
+variable "executions_table_memory" {
+  description = "The amount of memory (in MB) that the ECS container agent reserves for the executions table task."
+  type        = number
+  default     = 4096 # 4GB
+}
+
+variable "executions_table_batch_size" {
+  description = "The maximum number of replication messages that will be written to Iceberg at once"
+  type        = number
+  default     = 20000
+}
+
+variable "files_table_cpu" {
+  description = "The number of CPU units the Amazon ECS container agent will reserve for the files table task"
+  type        = number
+  default     = 2048 # 2 CPUs
+}
+
+variable "files_table_memory" {
+  description = "The amount of memory (in MB) that the ECS container agent reserves for the files table task."
+  type        = number
+  default     = 4096 # 4GB
+}
+
+variable "files_table_batch_size" {
+  description = "The maximum number of replication messages that will be written to Iceberg at once"
+  type        = number
+  default     = 20000
+}
+
+variable "snapshot_cleanup_cpu" {
+  description = "The number of CPU units the Amazon ECS container agent will reserve for the snapshot cleanup task"
+  type        = number
+  default     = 2048 # 2 CPUs
+}
+
+variable "snapshot_cleanup_memory" {
+  description = "The amount of memory (in MB) that the ECS container agent reserves for the snapshot cleanup task."
+  type        = number
+  default     = 4096 # 4GB
 }
 
 variable "volume_size_in_gb" {
@@ -90,36 +155,71 @@ variable "volume_size_in_gb" {
 
 variable "kafka_image" {
   description = "Image used to start the kafka container. See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-image"
-  type = string
+  type        = string
 }
 
 variable "connect_image" {
   description = "Image used to start the kafka-connect container. See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-image"
-  type = string
+  type        = string
 }
 
 variable "bootstrap_image" {
   description = "Image used to start the bootstrap container. See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-image"
-  type = string
+  type        = string
 }
 
 variable "iceberg_s3_bucket" {
   description = "S3 bucket where iceberg tables are stored"
-  type = string
+  type        = string
 }
 
 variable "iceberg_namespace" {
   description = "iceberg namespace (same as glue database)"
-  type = string
+  type        = string
 }
 
 variable "pg_db" {
   description = "postgres database"
-  type = string
+  type        = string
 }
 
 variable "pg_schema" {
   description = "The name of the schema in the postgres database that contains the tables"
-  type = string
-  default = "public"
+  type        = string
+  default     = "public"
+}
+
+variable "compaction_interval_sec" {
+  description = "The period in seconds between compactions"
+  type        = string
+  default     = "30"
+}
+
+variable "iceberg_cleanup_image" {
+  description = "Image used to start the Iceberg cleanup task."
+  type        = string
+}
+
+variable "snapshot_table_include_list" {
+  description = "comma-separated list of Iceberg tables to have snapshots cleaned up"
+  type        = string
+  default     = "async_operations,collections,executions,files_table,granules,granules_executions,pdrs,providers,reconciliation_reports,rules"
+}
+
+variable "snapshot_older_than_minutes" {
+  description = "Expire snapshots older than this many minutes"
+  type        = number
+  default     = 120
+}
+
+variable "snapshot_retain_last" {
+  description = "Minimum number of snapshots to retain regardless of age"
+  type        = number
+  default     = 2
+}
+
+variable "snapshot_cleanup_interval_minutes" {
+  description = "How often to run the snapshot cleanup task"
+  type        = number
+  default     = 60
 }
