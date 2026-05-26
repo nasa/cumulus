@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-CDC Kafka to Iceberg Sink — equality-delete edition.
+"""CDC Kafka to Iceberg Sink — equality-delete edition.
 
 Reads CDC messages from Kafka topics (Debezium format) and writes them to
 Iceberg V2 tables using REAL EQUALITY DELETES via the Iceberg Java API,
@@ -34,7 +33,7 @@ import signal
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from confluent_kafka import Consumer, KafkaError, TopicPartition
 from pyspark.sql import SparkSession
@@ -51,12 +50,15 @@ log = logging.getLogger(__name__)
 # Config helpers
 # ---------------------------------------------------------------------------
 
-def load_config(path: str) -> Dict[str, str]:
+
+def load_config(path: str) -> dict[str, str]:
+    """Load the configuration for the sink process."""
     with open(path) as f:
         return json.load(f)
 
 
-def parse_topic_table_map(config: Dict[str, str]) -> List[Tuple[str, str, List[str]]]:
+def parse_topic_table_map(config: dict[str, str]) -> list[tuple[str, str, list[str]]]:
+    """Get the topic to table map that provides ID columns."""
     topics = [t.strip() for t in config["topics"].split(",") if t.strip()]
     tables = [t.strip() for t in config["iceberg.tables"].split(",") if t.strip()]
     id_col_entries = [t.strip() for t in config["iceberg.tables.id-columns"].split(",")]
@@ -64,7 +66,9 @@ def parse_topic_table_map(config: Dict[str, str]) -> List[Tuple[str, str, List[s
     if len(topics) != len(tables):
         raise ValueError("Number of topics must match number of iceberg.tables entries")
     if len(id_col_entries) != len(tables):
-        raise ValueError("Number of id-column entries must match number of iceberg.tables entries")
+        raise ValueError(
+            "Number of id-column entries must match number of iceberg.tables entries"
+        )
 
     result = []
     for topic, table, id_cols_raw in zip(topics, tables, id_col_entries):
@@ -77,20 +81,23 @@ def parse_topic_table_map(config: Dict[str, str]) -> List[Tuple[str, str, List[s
 # Offset persistence
 # ---------------------------------------------------------------------------
 
+
 class OffsetStore:
-    """
-    Persists Kafka topic/partition offsets to a local JSON file so the sink
+    """Persists Kafka topic/partition offsets to a local JSON file so the sink
     can resume after a restart without replaying already-processed messages.
 
     Offset format: { "topic:partition": next_offset_to_consume }
     """
+
     def __init__(self, path: str):
+        """Initialize the offset store."""
         self.path = path
-        self._offsets: Dict[str, int] = {}
+        self._offsets: dict[str, int] = {}
         os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
         self._load()
 
     def _load(self):
+        """Load the offsets from the store."""
         log.info(f"Attempting to load offsets from {self.path}")
         if os.path.exists(self.path):
             try:
@@ -98,31 +105,39 @@ class OffsetStore:
                     self._offsets = json.load(f)
                 log.info(f"Loaded offsets from {self.path}: {self._offsets}")
             except Exception as e:
-                log.warning(f"Could not load offsets from {self.path}: {e} — starting fresh")
+                log.warning(
+                    f"Could not load offsets from {self.path}: {e} — starting fresh"
+                )
                 self._offsets = {}
         else:
             log.warning(f"Offset file {self.path} does not exist")
 
     def _save(self):
+        """Write the offsets to the store."""
         tmp = self.path + ".tmp"
         with open(tmp, "w") as f:
             json.dump(self._offsets, f)
         os.replace(tmp, self.path)
 
     def key(self, topic: str, partition: int) -> str:
+        """Get the key for retrieving an offset for a given topic/partition."""
         return f"{topic}:{partition}"
 
-    def get(self, topic: str, partition: int) -> Optional[int]:
+    def get(self, topic: str, partition: int) -> int | None:
+        """Get the offset for the given topic/partition."""
         return self._offsets.get(self.key(topic, partition))
 
     def set(self, topic: str, partition: int, offset: int):
+        """Set the offset for the given topic/partition."""
         self._offsets[self.key(topic, partition)] = offset
 
     def commit(self):
+        """Save the offsets and provide a log message."""
         self._save()
         log.info(f"Offsets committed to {self.path}: {self._offsets}")
 
-    def to_topic_partitions(self, topics: List[str]) -> List[TopicPartition]:
+    def to_topic_partitions(self, topics: list[str]) -> list[TopicPartition]:
+        """Get a list of topic/partition/offset structures."""
         tps = []
         for key, offset in self._offsets.items():
             topic, partition = key.rsplit(":", 1)
@@ -135,14 +150,19 @@ class OffsetStore:
 # HTTP control server
 # ---------------------------------------------------------------------------
 
+
 class ControlServer:
+    """HTTP server to listen for pause/resume requests."""
+
     def __init__(self, sink: "CDCIcebergSink", port: int = 8080):
+        """Set the parameters for the server."""
         self.sink = sink
         self.port = port
-        self._server: Optional[HTTPServer] = None
-        self._thread: Optional[threading.Thread] = None
+        self._server: HTTPServer | None = None
+        self._thread: threading.Thread | None = None
 
     def start(self):
+        """Start the http server."""
         sink = self.sink
 
         class Handler(BaseHTTPRequestHandler):
@@ -166,7 +186,9 @@ class ControlServer:
             def do_POST(self):
                 if self.path == "/pause":
                     if sink.state == "PAUSED":
-                        self.send_json(200, {"state": "PAUSED", "note": "already paused"})
+                        self.send_json(
+                            200, {"state": "PAUSED", "note": "already paused"}
+                        )
                         return
                     log.info("HTTP /pause received — waiting for in-progress flush...")
                     with sink._flush_lock:
@@ -175,7 +197,9 @@ class ControlServer:
                     self.send_json(200, {"state": "PAUSED"})
                 elif self.path == "/resume":
                     if sink.state == "RUNNING":
-                        self.send_json(200, {"state": "RUNNING", "note": "already running"})
+                        self.send_json(
+                            200, {"state": "RUNNING", "note": "already running"}
+                        )
                         return
                     sink._paused = False
                     log.info("Sink resumed")
@@ -183,12 +207,13 @@ class ControlServer:
                 else:
                     self.send_json(404, {"error": "not found"})
 
-        self._server = HTTPServer(("0.0.0.0", self.port), Handler)
+        self._server = HTTPServer(("0.0.0.0", self.port), Handler)  # noqa: S104
         self._thread = threading.Thread(target=self._server.serve_forever, daemon=True)
         self._thread.start()
         log.info(f"Control server listening on port {self.port}")
 
     def stop(self):
+        """Stop the HTTP server."""
         if self._server:
             self._server.shutdown()
 
@@ -197,9 +222,9 @@ class ControlServer:
 # Iceberg writer — calls the Java helper via the Spark JVM gateway
 # ---------------------------------------------------------------------------
 
+
 class IcebergCDCWriter:
-    """
-    Thin Python wrapper around gov.nasa.cumulus.IcebergCDCWriter.
+    """Thin Python wrapper around gov.nasa.cumulus.IcebergCDCWriter.
 
     Each Python instance owns one long-lived Java helper (one per table).
     We accumulate CDC events in a Python buffer, then on `flush()` we
@@ -212,15 +237,16 @@ class IcebergCDCWriter:
     only after the entire buffer is written.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         spark: SparkSession,
         table_id: str,
         catalog_name: str,
-        id_columns: List[str],
+        id_columns: list[str],
         branch: str,
         batch_size: int = 20000,
     ):
+        """Set the parameters."""
         self.spark = spark
         self.jvm = spark._jvm
         self.table_id = table_id
@@ -228,13 +254,11 @@ class IcebergCDCWriter:
         self.id_columns = id_columns
         self.branch = branch or "main"
         self.batch_size = batch_size
-        self._buffer: List[Dict[str, Any]] = []
+        self._buffer: list[dict[str, Any]] = []
 
         parts = table_id.split(".")
-        if len(parts) < 2:
-            raise ValueError(
-                f"table_id must be 'namespace.table' (got {table_id!r})"
-            )
+        if len(parts) < 2:  # noqa: PLR2004
+            raise ValueError(f"table_id must be 'namespace.table' (got {table_id!r})")
         self._namespace = ".".join(parts[:-1])
         self._table_name = parts[-1]
 
@@ -255,31 +279,41 @@ class IcebergCDCWriter:
         )
 
     def _resolve_iceberg_catalog(self):
-        catalog_manager = (
-            self.spark._jsparkSession.sessionState().catalogManager()
-        )
+        catalog_manager = self.spark._jsparkSession.sessionState().catalogManager()
         spark_catalog = catalog_manager.catalog(self.catalog_name)
         return spark_catalog.icebergCatalog()
 
     def name(self) -> str:
+        """Get the name of the table."""
         return self.table_id
 
-    def add(self, op: str, row: Dict[str, Any], topic: str = "", partition: int = 0, offset: int = 0):
-        """Buffer a CDC record along with its Kafka position for accurate offset tracking."""
-        self._buffer.append({
-            "op": op,
-            "row": row,
-            "topic": topic,
-            "partition": partition,
-            "offset": offset,
-        })
+    def add(
+        self,
+        op: str,
+        row: dict[str, Any],
+        topic: str = "",
+        partition: int = 0,
+        offset: int = 0,
+    ):
+        """Buffer a CDC record along with its Kafka position for accurate offset
+        tracking.
+        """
+        self._buffer.append(
+            {
+                "op": op,
+                "row": row,
+                "topic": topic,
+                "partition": partition,
+                "offset": offset,
+            }
+        )
 
     def pending(self) -> int:
+        """Return the number of pending entries."""
         return len(self._buffer)
 
     def flush(self, on_sub_batch_written=None, max_retries: int = 3) -> int:
-        """
-        Write buffered records in sub-batches. After each successful sub-batch,
+        """Write buffered records in sub-batches. After each successful sub-batch,
         calls on_sub_batch_written(n, sub_batch_offsets) where sub_batch_offsets
         is a dict of {(topic, partition): max_offset} for just that sub-batch.
         This allows the caller to commit offsets incrementally, so a crash
@@ -300,7 +334,7 @@ class IcebergCDCWriter:
         batch_num = 0
 
         while self._buffer:
-            sub_batch = self._buffer[:self.batch_size]
+            sub_batch = self._buffer[: self.batch_size]
             batch_num += 1
 
             for attempt in range(1, max_retries + 1):
@@ -310,13 +344,12 @@ class IcebergCDCWriter:
                 except Exception as e:
                     msg = str(e)
                     is_conflict = (
-                        "CommitFailedException" in msg
-                        or "ValidationException" in msg
+                        "CommitFailedException" in msg or "ValidationException" in msg
                     )
                     if is_conflict and attempt < max_retries:
                         log.warning(
                             f"Commit conflict on {self.table_id} "
-                            f"(attempt {attempt}/{max_retries}), refreshing and retrying..."
+                            f"(attempt {attempt}/{max_retries}), refreshing and retrying..."  # noqa: E501
                         )
                         try:
                             self._helper.refresh()
@@ -326,15 +359,18 @@ class IcebergCDCWriter:
                     else:
                         log.error(
                             f"Error writing to {self.table_id}: {e}"
-                            + (f" (gave up after {max_retries} attempts)"
-                               if is_conflict else ""),
+                            + (
+                                f" (gave up after {max_retries} attempts)"
+                                if is_conflict
+                                else ""
+                            ),
                             exc_info=True,
                         )
                         raise
 
             # Sub-batch succeeded — collect the highest offset per
             # topic/partition seen in this sub-batch only
-            sub_batch_offsets: Dict[Tuple[str, int], int] = {}
+            sub_batch_offsets: dict[tuple[str, int], int] = {}
             for item in sub_batch:
                 tp_key = (item.get("topic", ""), item.get("partition", 0))
                 sub_batch_offsets[tp_key] = max(
@@ -342,7 +378,7 @@ class IcebergCDCWriter:
                     item.get("offset", 0),
                 )
 
-            self._buffer = self._buffer[self.batch_size:]
+            self._buffer = self._buffer[self.batch_size :]
             written += len(sub_batch)
 
             log.info(
@@ -355,13 +391,12 @@ class IcebergCDCWriter:
 
         return written
 
-    def _write_sub_batch(self, items: List[Dict[str, Any]]):
-        """
-        Split items into upserts (deduped, last-write-wins per id key) and
+    def _write_sub_batch(self, items: list[dict[str, Any]]):
+        """Split items into upserts (deduped, last-write-wins per id key) and
         pure deletes, hand both to the Java helper for one atomic commit.
         """
-        seen: Dict[tuple, Dict[str, Any]] = {}
-        delete_rows: Dict[tuple, Dict[str, Any]] = {}
+        seen: dict[tuple, dict[str, Any]] = {}
+        delete_rows: dict[tuple, dict[str, Any]] = {}
 
         for item in items:
             op = item["op"]
@@ -394,42 +429,51 @@ class IcebergCDCWriter:
 
 
 def _to_java_value(jvm, v):
+    result = str(v)
     if v is None:
-        return None
+        result = None
     if isinstance(v, bool):
-        return v
+        result = v
     if isinstance(v, int):
-        return v
+        result = v
     if isinstance(v, float):
-        return v
+        result = v
     if isinstance(v, str):
-        return v
+        result = v
     if isinstance(v, bytes):
-        return v
+        result = v
     try:
-        import datetime as _dt
+        import datetime as _dt  # noqa: PLC0415
+
         if isinstance(v, _dt.datetime):
             if v.tzinfo is None:
-                return v.isoformat() + "Z"
-            return v.isoformat()
+                result = v.isoformat() + "Z"
+            else:
+                result = v.isoformat()
         if isinstance(v, _dt.date):
-            return v.isoformat()
-    except Exception:
+            result = v.isoformat()
+    except Exception:  # noqa: S110
         pass
-    return str(v)
+    return result
 
 
 # ---------------------------------------------------------------------------
 # Main sink
 # ---------------------------------------------------------------------------
 
+
 class CDCIcebergSink:
-    def __init__(self, config: Dict[str, str]):
+    """The main sink class."""
+
+    def __init__(self, config: dict[str, str]):
+        """Set parameters."""
         self.config = config
         self.commit_interval_s = int(config.get("commit.interval-ms", "30000")) / 1000
         self.commit_timeout_s = int(config.get("commit.timeout-ms", "120000")) / 1000
         self.branch = config.get("iceberg.tables.commit-branch", "main")
-        self.offset_file = config.get("offset.file", "/kafka/data/cdc-sink/offsets.json")
+        self.offset_file = config.get(
+            "offset.file", "/kafka/data/cdc-sink/offsets.json"
+        )
         self.batch_size = int(config.get("batch.size", "20000"))
         self.catalog_name = config.get("iceberg.catalog.name", "glue")
         self.running = False
@@ -442,13 +486,11 @@ class CDCIcebergSink:
         self.offset_store = OffsetStore(self.offset_file)
 
         warehouse = config["iceberg.catalog.warehouse"]
-        region = (
-            config.get("iceberg.catalog.region")
-            or os.environ.get("AWS_DEFAULT_REGION")
+        region = config.get("iceberg.catalog.region") or os.environ.get(
+            "AWS_DEFAULT_REGION"
         )
-        jars_dir = (
-            config.get("spark.jars.dir")
-            or os.environ.get("SPARK_JARS_DIR", "./scripts/jars")
+        jars_dir = config.get("spark.jars.dir") or os.environ.get(
+            "SPARK_JARS_DIR", "./scripts/jars"
         )
         helper_jar = config.get(
             "iceberg.cdc.helper.jar",
@@ -456,9 +498,11 @@ class CDCIcebergSink:
         )
         self.spark = self._create_spark(warehouse, region, jars_dir, helper_jar)
 
-        self.writers: Dict[str, IcebergCDCWriter] = {}
+        self.writers: dict[str, IcebergCDCWriter] = {}
         for topic, table_id, id_cols in self.topic_table_map:
-            log.info(f"Initializing equality-delete writer for {table_id} (topic: {topic})")
+            log.info(
+                f"Initializing equality-delete writer for {table_id} (topic: {topic})"
+            )
             self.writers[topic] = IcebergCDCWriter(
                 spark=self.spark,
                 table_id=table_id,
@@ -469,7 +513,9 @@ class CDCIcebergSink:
             )
 
         kafka_conf = {
-            "bootstrap.servers": config.get("kafka.bootstrap.servers", "localhost:9092"),
+            "bootstrap.servers": config.get(
+                "kafka.bootstrap.servers", "localhost:9092"
+            ),
             "group.id": config.get("kafka.group.id", "cdc-iceberg-sink"),
             "enable.auto.commit": False,
             "auto.offset.reset": "earliest",
@@ -487,10 +533,12 @@ class CDCIcebergSink:
 
     @property
     def state(self) -> str:
+        """Return the state of the sink process."""
         return "PAUSED" if self._paused else "RUNNING"
 
-    def _create_spark(self, warehouse: str, region: Optional[str],
-                      jars_dir: str, helper_jar: str) -> SparkSession:
+    def _create_spark(
+        self, warehouse: str, region: str | None, jars_dir: str, helper_jar: str
+    ) -> SparkSession:
         log.info("Starting Spark session...")
 
         classpath_jars = [
@@ -506,20 +554,27 @@ class CDCIcebergSink:
         log.info(f"Spark classpath jars: {classpath_jars}")
 
         builder = (
-            SparkSession.builder
-            .master("local[*]")
+            SparkSession.builder.master("local[*]")
             .appName("cdc-iceberg-sink")
             .config("spark.driver.extraClassPath", classpath)
             .config("spark.executor.extraClassPath", classpath)
-            .config("spark.sql.extensions",
-                    "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
-            .config(f"spark.sql.catalog.{self.catalog_name}",
-                    "org.apache.iceberg.spark.SparkCatalog")
-            .config(f"spark.sql.catalog.{self.catalog_name}.catalog-impl",
-                    "org.apache.iceberg.aws.glue.GlueCatalog")
+            .config(
+                "spark.sql.extensions",
+                "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
+            )
+            .config(
+                f"spark.sql.catalog.{self.catalog_name}",
+                "org.apache.iceberg.spark.SparkCatalog",
+            )
+            .config(
+                f"spark.sql.catalog.{self.catalog_name}.catalog-impl",
+                "org.apache.iceberg.aws.glue.GlueCatalog",
+            )
             .config(f"spark.sql.catalog.{self.catalog_name}.warehouse", warehouse)
-            .config(f"spark.sql.catalog.{self.catalog_name}.io-impl",
-                    "org.apache.iceberg.aws.s3.S3FileIO")
+            .config(
+                f"spark.sql.catalog.{self.catalog_name}.io-impl",
+                "org.apache.iceberg.aws.s3.S3FileIO",
+            )
             .config("spark.driver.memory", "4g")
             .config("spark.local.dir", "./spark-tmp")
         )
@@ -540,13 +595,15 @@ class CDCIcebergSink:
             for tp in partitions:
                 stored_offset = stored_map.get((tp.topic, tp.partition))
                 if stored_offset is not None:
-                    log.info(f"Seeking {tp.topic}[{tp.partition}] to stored offset {stored_offset}")
+                    log.info(
+                        f"Seeking {tp.topic}[{tp.partition}] to stored offset {stored_offset}"  # noqa: E501
+                    )
                     tp.offset = stored_offset
             consumer.assign(partitions)
 
         self.consumer.subscribe(self.topics, on_assign=on_assign)
 
-    def _process_message(self, msg) -> bool:
+    def _process_message(self, msg) -> bool:  # noqa: PLR0911
         topic = msg.topic()
         value = msg.value()
 
@@ -582,7 +639,9 @@ class CDCIcebergSink:
             return False
 
         # Pass Kafka position so each buffered item tracks its own offset
-        writer.add(op, row, topic=topic, partition=msg.partition(), offset=msg.offset() + 1)
+        writer.add(
+            op, row, topic=topic, partition=msg.partition(), offset=msg.offset() + 1
+        )
         return True
 
     def _flush_all(self) -> int:
@@ -593,13 +652,15 @@ class CDCIcebergSink:
                     try:
                         start = time.time()
 
-                        def on_sub_batch(n: int, sub_offsets: Dict[Tuple[str, int], int]):
+                        def on_sub_batch(
+                            n: int, sub_offsets: dict[tuple[str, int], int]
+                        ):
                             # Only advance offsets to the boundary of the completed
                             # sub-batch — not the end of the entire buffer
                             for (t, p), off in sub_offsets.items():
                                 if t:
                                     log.info(
-                                        f"Writing new starting offset {off} for topic {t}, partition {p} after writing {n} records"
+                                        f"Writing new starting offset {off} for topic {t}, partition {p} after writing {n} records"  # noqa: E501
                                     )
                                     self.offset_store.set(t, p, off)
                             self.offset_store.commit()
@@ -621,7 +682,8 @@ class CDCIcebergSink:
                         log.error(f"Flush failed for {topic}: {e}", exc_info=True)
         return total
 
-    def run(self):
+    def run(self):  # noqa: PLR0912
+        """Start the sink process."""
         self.running = True
         self._assign_with_stored_offsets()
         log.info(
@@ -649,7 +711,9 @@ class CDCIcebergSink:
                         )
                         total = self._flush_all()
                         if total > 0:
-                            log.info(f"Committed {total} record(s) to Iceberg and saved offsets")
+                            log.info(
+                                f"Committed {total} record(s) to Iceberg and saved offsets"  # noqa: E501
+                            )
                     else:
                         log.debug("Commit interval reached, nothing to flush")
 
@@ -692,6 +756,7 @@ class CDCIcebergSink:
             log.info("Sink stopped.")
 
     def stop(self):
+        """Tell the sink process it is not running."""
         self.running = False
 
 
@@ -699,7 +764,9 @@ class CDCIcebergSink:
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main():
+    """Run the sink process."""
     parser = argparse.ArgumentParser(
         description="CDC Kafka to Iceberg Sink with REAL equality deletes"
     )

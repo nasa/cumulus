@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Iceberg equality-delete compaction via PySpark + PyIceberg.
+"""Iceberg equality-delete compaction via PySpark + PyIceberg.
 
 Compaction can be run in two ways - fully overwrite tables or only overwrite
 the partitions that differ between the staging and main branches.
@@ -24,7 +23,8 @@ Full table overwrite flow:
 
 Run modes:
   One-shot:  omit --interval  (default)
-  Server:    --interval N     (runs compaction in a loop, sleeping N seconds between runs)
+  Server:    --interval N     (runs compaction in a loop, sleeping N seconds between
+  runs)
 """
 
 import argparse
@@ -48,13 +48,20 @@ RESERVED_TABLES = {
     "files": "files_table",
 }
 
+
 def resolve_table_name(table_name: str) -> str:
+    """Return the iceberg table name for a given postgres table name."""
     return RESERVED_TABLES.get(table_name, table_name)
+
 
 # -- Kafka Connect helpers -----------------------------------------------------
 
+
 class KafkaConnectClient:
+    """Client used to connect to the Kafka Connect service."""
+
     def __init__(self, base_url: str, connector_name: str, timeout: int = 60):
+        """Initialize a KafkaConnectClient."""
         self.base_url = base_url.rstrip("/")
         self.connector_name = connector_name
         self.timeout = timeout
@@ -63,11 +70,13 @@ class KafkaConnectClient:
         return f"{self.base_url}/{path}"
 
     def status(self) -> str:
+        """Get the status of this connection."""
         r = requests.get(self._url("/status"), timeout=self.timeout)
         r.raise_for_status()
         return r.json()["state"]
 
     def pause(self, wait_secs: int = 30):
+        """Pause the sink process."""
         log.info(f"Pausing sink '{self.connector_name}'...")
         r = requests.post(self._url("/pause"), timeout=self.timeout)
         r.raise_for_status()
@@ -79,6 +88,7 @@ class KafkaConnectClient:
         raise TimeoutError(f"Sink did not reach PAUSED in {wait_secs}s")
 
     def resume(self, wait_secs: int = 30):
+        """Resume the sink process."""
         log.info(f"Resuming sink '{self.connector_name}'...")
         r = requests.post(self._url("/resume"), timeout=self.timeout)
         r.raise_for_status()
@@ -92,7 +102,9 @@ class KafkaConnectClient:
 
 # -- Spark session + PyIceberg catalog ----------------------------------------
 
+
 def get_spark(jars_dir: str, warehouse: str, region: str) -> SparkSession:
+    """Start a spark session."""
     log.info("Starting Spark session...")
     jars = (
         f"{jars_dir}/iceberg-spark-runtime-3.5_2.12-1.7.1.jar"
@@ -100,20 +112,21 @@ def get_spark(jars_dir: str, warehouse: str, region: str) -> SparkSession:
     )
 
     spark = (
-        SparkSession.builder
-        .master("local[*]")
+        SparkSession.builder.master("local[*]")
         .appName("iceberg-compaction")
         .config("spark.driver.extraClassPath", jars)
         .config("spark.executor.extraClassPath", jars)
-        .config("spark.sql.extensions",
-                "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
-        .config("spark.sql.catalog.glue",
-                "org.apache.iceberg.spark.SparkCatalog")
-        .config("spark.sql.catalog.glue.catalog-impl",
-                "org.apache.iceberg.aws.glue.GlueCatalog")
+        .config(
+            "spark.sql.extensions",
+            "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
+        )
+        .config("spark.sql.catalog.glue", "org.apache.iceberg.spark.SparkCatalog")
+        .config(
+            "spark.sql.catalog.glue.catalog-impl",
+            "org.apache.iceberg.aws.glue.GlueCatalog",
+        )
         .config("spark.sql.catalog.glue.warehouse", warehouse)
-        .config("spark.sql.catalog.glue.io-impl",
-                "org.apache.iceberg.aws.s3.S3FileIO")
+        .config("spark.sql.catalog.glue.io-impl", "org.apache.iceberg.aws.s3.S3FileIO")
         .config("spark.sql.catalog.glue.client.region", region)
         .config("spark.sql.parquet.enableVectorizedReader", "false")
         .config("spark.sql.iceberg.vectorization.enabled", "false")
@@ -128,6 +141,7 @@ def get_spark(jars_dir: str, warehouse: str, region: str) -> SparkSession:
 
 
 def get_catalog(region: str, warehouse: str):
+    """Get the spark catalog."""
     return load_catalog(
         "glue",
         **{
@@ -140,12 +154,14 @@ def get_catalog(region: str, warehouse: str):
 
 # -- PyIceberg branch helpers -------------------------------------------------
 
+
 def get_snapshot_id(spark: SparkSession, table_id: str, branch: str) -> int:
+    """Get the snapshot ID for a given table and branch."""
     df = spark.sql(f"""
         SELECT snapshot_id
         FROM glue.{table_id}.refs
         WHERE name = '{branch}'
-    """)
+    """)  # noqa: S608
 
     if df.count() == 0:
         raise ValueError(f"Branch '{branch}' not found.")
@@ -154,6 +170,7 @@ def get_snapshot_id(spark: SparkSession, table_id: str, branch: str) -> int:
 
 
 def replace_branch(spark: SparkSession, table_id: str, branch: str, snapshot_id: int):
+    """Replace an iceberg table branch with the given snapshot."""
     log.info(f"  replace_branch('{branch}' -> snapshot {snapshot_id})")
     spark.sql(f"""
         ALTER TABLE glue.{table_id}
@@ -163,28 +180,33 @@ def replace_branch(spark: SparkSession, table_id: str, branch: str, snapshot_id:
 
 
 def count_equality_deletes(spark: SparkSession, table_id: str, snapshot_id: int) -> int:
+    """Get the number of equality deletes for the given table and snapshot."""
     df = spark.sql(f"""
         SELECT count(*) as delete_files
         FROM glue.{table_id}.files VERSION AS OF {snapshot_id}
         WHERE content = 2
-    """)
+    """)  # noqa: S608
 
     return df.collect()[0]["delete_files"]
 
 
 def is_partitioned(catalog, table_id: str) -> bool:
-    """Checks partitioning via PyIceberg catalog (no Spark SQL required)."""
+    """Check partitioning via PyIceberg catalog (no Spark SQL required)."""
     table = catalog.load_table(table_id)
     return len(table.spec().fields) > 0
 
+
 def has_sort_order(catalog, table_id: str) -> bool:
+    """Return True if the table has a sort oder, False otherwise."""
     table = catalog.load_table(table_id)
     try:
         return table.sort_order() is not None and len(table.sort_order().fields) > 0
     except Exception:
         return False
 
+
 def log_table_summary(spark: SparkSession, catalog, table_id: str, branches: list):
+    """Print a summary of the table."""
     table = catalog.load_table(table_id)
     refs = table.refs()
     log.info(f"-- Branch summary for {table_id} --")
@@ -200,7 +222,7 @@ def log_table_summary(spark: SparkSession, catalog, table_id: str, branches: lis
 
 
 # -- Core compaction ----------------------------------------------------------
-def full_rewrite_single_table(
+def full_rewrite_single_table(  # noqa: PLR0913
     namespace: str,
     table_name: str,
     catalog,
@@ -209,19 +231,18 @@ def full_rewrite_single_table(
     main_branch: str = "main",
     dry_run: bool = False,
 ) -> bool:
-    """
-    Fully compact a single table using the rewrite_data_files procedure for optimal
+    """Fully compact a single table using the rewrite_data_files procedure for optimal
     compaction. The current version of Iceberg libraries does not support branches for
-    rewrite_data_files, so this should only be used for the initial table load file compaction
-    and should not be used as part of replication file compaction.
+    rewrite_data_files, so this should only be used for the initial table load file
+    compaction and should not be used as part of replication file compaction.
 
     Returns True on success, False on skipped/failure.
     Raises on unexpected errors.
     """
     table_id = f"{namespace}.{table_name}"
-    log.info(f"{'='*60}")
+    log.info(f"{'=' * 60}")
     log.info(f"Fully compacting table: {table_id}")
-    log.info(f"{'='*60}")
+    log.info(f"{'=' * 60}")
 
     starting_staging_snapshot_id = get_snapshot_id(spark, table_id, staging_branch)
     starting_main_snapshot_id = get_snapshot_id(spark, table_id, main_branch)
@@ -231,7 +252,7 @@ def full_rewrite_single_table(
 
     if starting_staging_snapshot_id != starting_main_snapshot_id:
         raise RuntimeError(
-            f"'{staging_branch}' and {main_branch} are not in sync - will not perform compaction."
+            f"'{staging_branch}' and {main_branch} are not in sync - will not perform compaction."  # noqa: E501
         )
 
     log.info(f"Rewriting data files on {namespace}.{table_name} on {main_branch}")
@@ -240,9 +261,9 @@ def full_rewrite_single_table(
     table_has_sort_order = has_sort_order(catalog, table_id)
 
     if not dry_run:
-        # Using rewrite_data_files because it is faster than an INSERT OVERWRITE command and
-        # uses table properties to determine optimal sizes. The command does not support
-        # branches and will perform the overwrite on main.
+        # Using rewrite_data_files because it is faster than an INSERT OVERWRITE command
+        # and uses table properties to determine optimal sizes. The command does not
+        # support branches and will perform the overwrite on main.
         if table_has_sort_order:
             log.info("Using sort strategy for rewrite_data_files")
             spark.sql(f"""
@@ -258,7 +279,9 @@ def full_rewrite_single_table(
                     table => '{namespace}.{table_name}'
                 )
             """)
-        log.info(f"Rewriting data files for {namespace}.{table_name} complete in {time.time() - start:.1f}s")
+        log.info(
+            f"Rewriting data files for {namespace}.{table_name} complete in {time.time() - start:.1f}s"  # noqa: E501
+        )
     else:
         log.info(f"[DRY RUN] Would rewrite {namespace}.{table_name} ")
 
@@ -268,7 +291,9 @@ def full_rewrite_single_table(
         log.info(f"main snapshot prior to promotion: {main_snapshot_id}")
 
         if starting_main_snapshot_id != main_snapshot_id:
-            log.info(f"Replace staging snapshot {staging_snapshot_id} -> main {main_snapshot_id}...")
+            log.info(
+                f"Replace staging snapshot {staging_snapshot_id} -> main {main_snapshot_id}..."  # noqa: E501
+            )
             replace_branch(spark, table_id, staging_branch, main_snapshot_id)
 
             log_table_summary(spark, catalog, table_id, [main_branch, staging_branch])
@@ -280,7 +305,7 @@ def full_rewrite_single_table(
     return True
 
 
-def insert_overwrite_single_table(
+def insert_overwrite_single_table(  # noqa: PLR0913
     namespace: str,
     table_name: str,
     catalog,
@@ -289,17 +314,18 @@ def insert_overwrite_single_table(
     main_branch: str = "main",
     dry_run: bool = False,
 ) -> bool:
-    """
-    Fully compact a single table using INSERT OVERWRITE. This function should be used as
-    part of replication file compaction for any tables that are not partitioned.
+    """Fully compact a single table using INSERT OVERWRITE. This function should be used
+    as part of replication file compaction for any tables that are not partitioned.
 
     Returns True on success, False on skipped/failure.
     Raises on unexpected errors.
     """
     table_id = f"{namespace}.{table_name}"
-    log.info(f"{'='*60}")
-    log.info(f"Fully compacting table: {table_id} using INSERT OVERWRITE on {staging_branch}")
-    log.info(f"{'='*60}")
+    log.info(f"{'=' * 60}")
+    log.info(
+        f"Fully compacting table: {table_id} using INSERT OVERWRITE on {staging_branch}"
+    )
+    log.info(f"{'=' * 60}")
 
     start = time.time()
 
@@ -307,17 +333,21 @@ def insert_overwrite_single_table(
         spark.sql(f"""
             INSERT OVERWRITE glue.{namespace}.{table_name}.branch_{staging_branch}
             SELECT * FROM glue.{namespace}.{table_name}.branch_{staging_branch}
-        """)
+        """)  # noqa: S608
         log.info(f"INSERT OVERWRITE complete in {time.time() - start:.1f}s")
     else:
-        log.info(f"[DRY RUN] Would INSERT OVERWRITE "
-                 f"glue.{namespace}.{table_name}.branch_{staging_branch} "
-                 f"SELECT * FROM glue.{namespace}.{table_name}.branch_{staging_branch}")
+        log.info(
+            f"[DRY RUN] Would INSERT OVERWRITE "  # noqa: S608
+            f"glue.{namespace}.{table_name}.branch_{staging_branch} "
+            f"SELECT * FROM glue.{namespace}.{table_name}.branch_{staging_branch}"
+        )
 
     if not dry_run:
         staging_snapshot_id = get_snapshot_id(spark, table_id, staging_branch)
         remaining = count_equality_deletes(spark, table_id, staging_snapshot_id)
-        log.info(f"staging snapshot: {staging_snapshot_id}  eq_delete_files={remaining}")
+        log.info(
+            f"staging snapshot: {staging_snapshot_id}  eq_delete_files={remaining}"
+        )
 
         if remaining > 0:
             raise RuntimeError(
@@ -334,7 +364,8 @@ def insert_overwrite_single_table(
 
     return True
 
-def partition_rewrite_single_table(
+
+def partition_rewrite_single_table(  # noqa: PLR0912, PLR0913, PLR0915
     namespace: str,
     table_name: str,
     catalog,
@@ -343,14 +374,13 @@ def partition_rewrite_single_table(
     main_branch: str = "main",
     dry_run: bool = False,
 ) -> bool:
-    """
-    Compact a single table by only rewriting modified partitions. Returns True on success,
-    False on skipped/failure. Raises on unexpected errors.
+    """Compact a single table by only rewriting modified partitions. Returns True on
+    success, False on skipped/failure. Raises on unexpected errors.
     """
     table_id = f"{namespace}.{table_name}"
-    log.info(f"{'='*60}")
+    log.info(f"{'=' * 60}")
     log.info(f"Compacting modified partitions on table: {table_id}")
-    log.info(f"{'='*60}")
+    log.info(f"{'=' * 60}")
 
     # ------------------------------------------------------------------
     # 1. Get latest staging and main snapshots
@@ -366,7 +396,9 @@ def partition_rewrite_single_table(
         return False
 
     if not is_partitioned(catalog, table_id):
-        log.warning(f"Table {table_id} is NOT partitioned. Using insert overwrite on full table.")
+        log.warning(
+            f"Table {table_id} is NOT partitioned. Using insert overwrite on full table."  # noqa: E501
+        )
         return insert_overwrite_single_table(
             namespace, table_name, catalog, spark, staging_branch, main_branch, dry_run
         )
@@ -387,11 +419,11 @@ def partition_rewrite_single_table(
         SELECT DISTINCT partition
         FROM glue.{table_id}.files VERSION AS OF {staging_snapshot_id}
         WHERE content = 2
-    """)
+    """)  # noqa: S608
 
-    partition_count = spark.sql(
-        "SELECT COUNT(*) FROM changed_partitions"
-    ).collect()[0][0]
+    partition_count = spark.sql("SELECT COUNT(*) FROM changed_partitions").collect()[0][
+        0
+    ]
 
     log.info(f"Partitions to compact: {partition_count}")
 
@@ -403,9 +435,7 @@ def partition_rewrite_single_table(
         log.info("Rewriting changed partitions on staging branch...")
 
         if not dry_run:
-            partition_rows = spark.sql(
-                "SELECT * FROM changed_partitions"
-            ).collect()
+            partition_rows = spark.sql("SELECT * FROM changed_partitions").collect()
 
             # Dynamically read truncate width and partition column from DESCRIBE
             describe_rows = spark.sql(f"DESCRIBE glue.{table_id}").collect()
@@ -420,10 +450,12 @@ def partition_rewrite_single_table(
 
             if truncate_width is None or partition_col is None:
                 raise RuntimeError(
-                    "Could not determine truncate width and partition column from DESCRIBE output"
+                    "Could not determine truncate width and partition column from DESCRIBE output"  # noqa: E501
                 )
 
-            log.info(f"Partition column: {partition_col}, truncate width: {truncate_width}")
+            log.info(
+                f"Partition column: {partition_col}, truncate width: {truncate_width}"
+            )
 
             for row in partition_rows:
                 part_start = time.time()
@@ -436,11 +468,11 @@ def partition_rewrite_single_table(
                 partition_df = spark.sql(f"""
                     SELECT * FROM glue.{table_id}.branch_{staging_branch}
                     WHERE {where_clause}
-                """)
+                """)  # noqa: S608
 
-                partition_df.writeTo(f"glue.{table_id}.branch_{staging_branch}") \
-                    .option("write.target-file-size-bytes", "536870912") \
-                    .overwritePartitions()
+                partition_df.writeTo(f"glue.{table_id}.branch_{staging_branch}").option(
+                    "write.target-file-size-bytes", "536870912"
+                ).overwritePartitions()
                 duration = round(time.time() - part_start)
                 log.info(f"Partition rewrite completed in {duration}s")
 
@@ -448,14 +480,14 @@ def partition_rewrite_single_table(
             new_staging_snapshot_id = spark.sql(f"""
                 SELECT snapshot_id FROM glue.{table_id}.refs
                 WHERE name = '{staging_branch}'
-            """).collect()[0]["snapshot_id"]
+            """).collect()[0]["snapshot_id"]  # noqa: S608
 
             log.info(f"Staging snapshot before rewrite: {staging_snapshot_id}")
             log.info(f"Staging snapshot after rewrite:  {new_staging_snapshot_id}")
 
             if new_staging_snapshot_id == staging_snapshot_id:
                 raise RuntimeError(
-                    "Rewrite did not commit a new snapshot to staging — aborting before touching main"
+                    "Rewrite did not commit a new snapshot to staging — aborting before touching main"  # noqa: E501
                 )
 
             log.info("Rewrite complete.")
@@ -499,7 +531,8 @@ def partition_rewrite_single_table(
 
 # -- Compaction orchestration -------------------------------------------------
 
-def rewrite_tables(
+
+def rewrite_tables(  # noqa: PLR0912, PLR0913, PLR0915
     namespace: str,
     table_names: list,
     spark: SparkSession,
@@ -510,8 +543,7 @@ def rewrite_tables(
     dry_run: bool = False,
     full_overwrite: bool = False,
 ):
-    """
-    Run one compaction pass over all tables. spark and catalog are provided by
+    """Run one compaction pass over all tables. spark and catalog are provided by
     the caller so they can be reused across multiple passes in server mode.
     """
     results = {}  # table_name -> "ok" | "failed" | "skipped"
@@ -534,7 +566,7 @@ def rewrite_tables(
                 )
                 perform_compaction = True
                 if not sink_paused:
-                    # -- Pause connector once before all tables --------------------------------
+                    # -- Pause connector once before all tables ------------------------
                     if kafka_client:
                         if not dry_run:
                             kafka_client.pause()
@@ -543,7 +575,9 @@ def rewrite_tables(
                             log.info("[DRY RUN] Would pause Kafka connector here")
                     else:
                         log.warning("No Kafka connector configured -- skipping pause.")
-                log_table_summary(spark, catalog, table_id, [main_branch, staging_branch])
+                log_table_summary(
+                    spark, catalog, table_id, [main_branch, staging_branch]
+                )
                 break
 
     if not perform_compaction:
@@ -612,48 +646,69 @@ def rewrite_tables(
 
 # -- CLI ----------------------------------------------------------------------
 
-def main():
+
+def main():  # noqa: PLR0915
+    """Compact the iceberg tables."""
     parser = argparse.ArgumentParser(
         description="Compact Iceberg equality deletes via PySpark INSERT OVERWRITE. "
-                    "Pass a comma-separated list to --table to compact multiple tables. "
-                    "Supply --interval <seconds> to run continuously as a server."
+        "Pass a comma-separated list to --table to compact multiple tables. "
+        "Supply --interval <seconds> to run continuously as a server."
     )
-    parser.add_argument("--namespace",         required=True)
-    parser.add_argument("--table",             required=True,
-                        help="Comma-separated table name(s), e.g. files,executions,granules")
-    parser.add_argument("--warehouse",         required=True)
-    parser.add_argument("--region",            default="us-east-1")
-    parser.add_argument("--jars-dir",          required=True)
-    parser.add_argument("--staging-branch",    default="staging")
-    parser.add_argument("--main-branch",       default="main")
+    parser.add_argument("--namespace", required=True)
+    parser.add_argument(
+        "--table",
+        required=True,
+        help="Comma-separated table name(s), e.g. files,executions,granules",
+    )
+    parser.add_argument("--warehouse", required=True)
+    parser.add_argument("--region", default="us-east-1")
+    parser.add_argument("--jars-dir", required=True)
+    parser.add_argument("--staging-branch", default="staging")
+    parser.add_argument("--main-branch", default="main")
     parser.add_argument("--kafka-connect-url", default=None)
-    parser.add_argument("--connector-name",    default=None)
-    parser.add_argument("--dry-run",           action="store_true")
-    parser.add_argument("--full-overwrite",    action="store_true",
-                        help="Perform a full rewrite of the entire table instead of "
-                             "rewriting only modified partitions.")
-    parser.add_argument("--interval",          type=int, default=None,
-                        help="When set, run compaction in a continuous loop sleeping "
-                             "this many seconds between runs (server mode). "
-                             "Omit for a one-shot run.")
+    parser.add_argument("--connector-name", default=None)
+    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--full-overwrite",
+        action="store_true",
+        help="Perform a full rewrite of the entire table instead of "
+        "rewriting only modified partitions.",
+    )
+    parser.add_argument(
+        "--interval",
+        type=int,
+        default=None,
+        help="When set, run compaction in a continuous loop sleeping "
+        "this many seconds between runs (server mode). "
+        "Omit for a one-shot run.",
+    )
     args = parser.parse_args()
 
     # strip schema from table names
-    table_names = [resolve_table_name(t.strip().split(".")[-1]) for t in args.table.split(",") if t.strip()]
+    table_names = [
+        resolve_table_name(t.strip().split(".")[-1])
+        for t in args.table.split(",")
+        if t.strip()
+    ]
     if not table_names:
         parser.error("--table must contain at least one table name")
 
     if args.dry_run:
         log.info("=== DRY RUN MODE -- no changes will be committed ===")
 
-    log.info("Performing full overwrite of tables" if args.full_overwrite
-             else "Performing rewrite of modified partitions")
+    log.info(
+        "Performing full overwrite of tables"
+        if args.full_overwrite
+        else "Performing rewrite of modified partitions"
+    )
     log.info(f"Tables to compact ({len(table_names)}): {', '.join(table_names)}")
 
     kafka_client = None
     if args.kafka_connect_url and args.connector_name:
         kafka_client = KafkaConnectClient(args.kafka_connect_url, args.connector_name)
-        log.info(f"Kafka Connect: {args.kafka_connect_url}  connector: {args.connector_name}")
+        log.info(
+            f"Kafka Connect: {args.kafka_connect_url}  connector: {args.connector_name}"
+        )
         if not args.dry_run:
             log.info(f"Connector current state: {kafka_client.status()}")
     else:
@@ -688,7 +743,9 @@ def main():
             # compaction runs. A failed run is logged but does NOT stop the loop
             # so that a transient error doesn't take down the service.
             # ----------------------------------------------------------------
-            log.info(f"=== SERVER MODE -- interval={args.interval}s (Ctrl-C to stop) ===")
+            log.info(
+                f"=== SERVER MODE -- interval={args.interval}s (Ctrl-C to stop) ==="
+            )
             run_number = 0
             while True:
                 run_number += 1
@@ -701,7 +758,9 @@ def main():
                     rewrite_tables(**shared_kwargs)
                 except Exception as e:
                     # Log but keep looping; a single bad run shouldn't crash the server.
-                    log.error(f"Compaction run #{run_number} failed: {e}", exc_info=True)
+                    log.error(
+                        f"Compaction run #{run_number} failed: {e}", exc_info=True
+                    )
 
                 run_duration = time.time() - run_start
 

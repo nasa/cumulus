@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-from pyiceberg.catalog import load_catalog
+"""Create a staging branch for a table."""
+
+import argparse
 import os
 import sys
-import argparse
+
+from pyiceberg.catalog import load_catalog
 
 REQUIRED_ENVS = [
     "AWS_DEFAULT_REGION",
@@ -10,7 +13,9 @@ REQUIRED_ENVS = [
     "ICEBERG_S3_BUCKET",
 ]
 
+
 def get_required_envs():
+    """Validate that all required env vars are set and return their values in a map."""
     missing = []
     values = {}
 
@@ -31,6 +36,7 @@ def get_required_envs():
 
 
 def create_staging_branches(cat, namespace, tables):
+    """Create the staging branch for a table."""
     for table_name in tables:
         full_name = f"{namespace}.{table_name}"
         print(f"Processing table: {full_name}")
@@ -46,26 +52,31 @@ def create_staging_branches(cat, namespace, tables):
             # Table has no snapshots yet (empty table) — create an empty snapshot
             # so that main branch exists and staging branch can be created from it
             print(f"  No snapshots found for {full_name} — creating empty snapshot")
-            import pyarrow as pa
-            from pyiceberg.io.pyarrow import schema_to_pyarrow
-            empty = pa.table({
-                f.name: pa.array([], type=schema_to_pyarrow(table.schema()).field(f.name).type)
-                for f in table.schema().fields
-            })
+            import pyarrow as pa  # noqa: PLC0415
+            from pyiceberg.io.pyarrow import schema_to_pyarrow  # noqa: PLC0415
+
+            empty = pa.table(
+                {
+                    f.name: pa.array(
+                        [], type=schema_to_pyarrow(table.schema()).field(f.name).type
+                    )
+                    for f in table.schema().fields
+                }
+            )
             table.append(empty)
             # Reload to get updated refs
             table = cat.load_table(full_name)
             refs = table.refs()
 
         if "main" not in refs:
-            print(f"  ERROR: 'main' branch still not found for {full_name} after empty snapshot")
+            print(
+                f"  ERROR: 'main' branch still not found for {full_name} after empty snapshot"  # noqa: E501
+            )
             continue
 
         main_snapshot_id = refs["main"].snapshot_id
 
-        table.manage_snapshots() \
-            .create_branch(main_snapshot_id, "staging") \
-            .commit()
+        table.manage_snapshots().create_branch(main_snapshot_id, "staging").commit()
 
         print(f"  Created staging branch at snapshot {main_snapshot_id}")
 
@@ -73,11 +84,14 @@ def create_staging_branches(cat, namespace, tables):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Create staging branches for Iceberg tables")
+    """Create the staging branch for one or more tables."""
+    parser = argparse.ArgumentParser(
+        description="Create staging branches for Iceberg tables"
+    )
     parser.add_argument(
         "--tables",
         required=True,
-        help="Comma-separated list of tables (e.g. files,executions,granules)"
+        help="Comma-separated list of tables (e.g. files,executions,granules)",
     )
 
     args = parser.parse_args()

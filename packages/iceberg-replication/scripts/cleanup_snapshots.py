@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
+"""Clean up old snapshots."""
 
 import argparse
 import os
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
+
 from pyspark.sql import SparkSession
 
 
 def log(msg):
+    """Log a message with a formatted header."""
     print(f"[{time.strftime('%H:%M:%S')}] {msg}", flush=True)
 
 
 def get_jars(jars_dir):
+    """Get the list of jars in the jars directory."""
     jars = [
-        os.path.join(jars_dir, f)
-        for f in os.listdir(jars_dir)
-        if f.endswith(".jar")
+        os.path.join(jars_dir, f) for f in os.listdir(jars_dir) if f.endswith(".jar")
     ]
     if not jars:
         raise RuntimeError(f"No JAR files found in {jars_dir}")
@@ -23,16 +25,22 @@ def get_jars(jars_dir):
 
 
 def create_spark(warehouse, region, jars_dir):
+    """Create a spark session."""
     jars = get_jars(jars_dir)
 
     spark = (
-        SparkSession.builder
-        .appName("Iceberg Snapshot Expiration")
+        SparkSession.builder.appName("Iceberg Snapshot Expiration")
         .config("spark.jars", jars)
-        .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
+        .config(
+            "spark.sql.extensions",
+            "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
+        )
         .config("spark.sql.catalog.glue", "org.apache.iceberg.spark.SparkCatalog")
         .config("spark.sql.catalog.glue.warehouse", warehouse)
-        .config("spark.sql.catalog.glue.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog")
+        .config(
+            "spark.sql.catalog.glue.catalog-impl",
+            "org.apache.iceberg.aws.glue.GlueCatalog",
+        )
         .config("spark.sql.catalog.glue.io-impl", "org.apache.iceberg.aws.s3.S3FileIO")
         .config("spark.sql.catalog.glue.client.region", region)
         .getOrCreate()
@@ -42,11 +50,12 @@ def create_spark(warehouse, region, jars_dir):
 
 
 def expire_table(spark, namespace, table, older_than_minutes, retain_last):
+    """Expire the snapshots for a table."""
     full_table = f"{namespace}.{table}"
 
     log(f"Expiring snapshots for {full_table}")
 
-    cutoff = datetime.now(timezone.utc) - timedelta(minutes=older_than_minutes)
+    cutoff = datetime.now(UTC) - timedelta(minutes=older_than_minutes)
     cutoff_str = cutoff.strftime("%Y-%m-%d %H:%M:%S.%f")
 
     spark.sql(f"""
@@ -61,6 +70,7 @@ def expire_table(spark, namespace, table, older_than_minutes, retain_last):
 
 
 def main():
+    """Run the script to cleanup old snapshots."""
     parser = argparse.ArgumentParser(description="Expire Iceberg snapshots")
     parser.add_argument("--namespace", required=True)
     parser.add_argument("--tables", required=True)
