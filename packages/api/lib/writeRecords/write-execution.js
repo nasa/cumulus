@@ -228,7 +228,7 @@ const _writeExecutionAndPublishSnsMessage = async ({
  * @param {number} [params.asyncOperationCumulusId] - Identifier for the associated async operation
  * @param {number} [params.parentExecutionCumulusId] - Identifier for the parent execution
  * @param {Date} [params.parentExecutionCreatedAt] - Creation timestamp of the parent execution
- * @param {{mission: string, cmrProvider: string} | null} params.missionAndCmrProvider - collectionMission
+ * @param {{mission: string, cmrProvider: string} | null} params.missionAndCmrProvider
  * @param {number} [params.updatedAt=Date.now()] - Timestamp (in ms) used for record updateAt field
  * @returns {Promise<PostgresExecutionRecord>} - write message response
  */
