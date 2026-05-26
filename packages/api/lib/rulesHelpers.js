@@ -10,6 +10,7 @@ const set = require('lodash/set');
 const {
   AddPermissionCommand,
   DeleteEventSourceMappingCommand,
+  GetPolicyCommand,
   RemovePermissionCommand,
   ListEventSourceMappingsCommand,
   UpdateEventSourceMappingCommand,
@@ -492,6 +493,7 @@ async function addKinesisEventSources(rule) {
  * @returns {Promise<Object>}
  *  subExists - boolean
  *  existingSubscriptionArn - ARN of subscription
+ *  hasLambdaPermission - boolean
  */
 async function checkForSnsSubscriptions(ruleItem) {
   let token;
@@ -517,9 +519,28 @@ async function checkForSnsSubscriptions(ruleItem) {
     if (subExists) break;
   }
   while (token);
+
+  let hasLambdaPermission = false;
+  try {
+    const policy = await lambda().send(
+      new GetPolicyCommand({ FunctionName: process.env.messageConsumer })
+    );
+    const statement = JSON.parse(policy.Policy).Statement;
+    hasLambdaPermission = statement.some(
+      (stmt) => stmt.Sid === getSnsTriggerPermissionId(ruleItem)
+    );
+  } catch (error) {
+    // Ignore ResourceNotFoundException which means the Lambda has NO resource policy at all
+    if (!isResourceNotFoundException(error)) {
+      log.info(`Error attempting to get permission statement ${JSON.stringify(error)}`);
+      throw error;
+    }
+  }
+
   return {
     subExists,
     existingSubscriptionArn: subscriptionArn,
+    hasLambdaPermission,
   };
 }
 
@@ -533,6 +554,7 @@ async function addSnsTrigger(item) {
   const {
     subExists,
     existingSubscriptionArn,
+    hasLambdaPermission,
   } = await checkForSnsSubscriptions(item);
   let subscriptionArn = existingSubscriptionArn;
 
@@ -547,6 +569,9 @@ async function addSnsTrigger(item) {
     };
     const r = await awsServices.sns().send(new SubscribeCommand(subscriptionParams));
     subscriptionArn = r.SubscriptionArn;
+  }
+
+  if (!hasLambdaPermission) {
     // create permission to invoke lambda
     const permissionParams = {
       Action: 'lambda:InvokeFunction',
