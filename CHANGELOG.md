@@ -13,6 +13,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `cumulus.allow_collection_update` setting to authorize cross-collection shifts.
   - Cross-collection collision checks are now executed only when an actual unique constraint
     conflict occurs during ingest.
+- **CUMULUS-4894**
+  - Added a test to the db-migration lambda to validate that schemas generated via the bootstrap
+    migration and standard migrations are consistent and produce identical database schemas.
+  - Updated the `db_partition_config` variable in `tf-modules/data-persistence` to accept null
+    values and automatically fall back to defaults.
 
 ### Breaking Changes
 

@@ -289,9 +289,7 @@ export const getGranulesByGranuleId = async (
  * Update a list of granuleIds to a new collection_cumulus_id in postgres
  *
  * Sets a local transaction session flag ('cumulus.allow_collection_update')
- * to 'true'. This instructs the database trigger to suppress global unique
- * tracking record deletions, and use fast 'ON CONFLICT DO NOTHING' upserts
- * on the 'granules_global_unique' table during batch updates.
+ * to 'true'. This instructs the database trigger to allow collection updates.
  *
  * @param {Knex} knex - DB client or transaction
  * @param {Array<String>} granuleIds - list of Granule IDs

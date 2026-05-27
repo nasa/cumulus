@@ -1,11 +1,9 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const { execFile } = require('node:child_process');
-const { promisify } = require('node:util');
+const { promisify } = require('util');
+const execFileAsync = promisify(require('child_process').execFile);
 const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 const { handler } = require('../dist/lambda');
-
-const execFileAsync = promisify(execFile);
 
 const normalizeDump = (schema) =>
   schema
