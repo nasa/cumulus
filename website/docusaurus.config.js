@@ -76,6 +76,11 @@ module.exports = {
           position: 'left',
         },
         {
+          to: '/docs/next/deployment/iceberg-api',
+          label: 'Iceberg API',
+          position: 'left',
+        },
+        {
           type: 'doc',
           position: 'left',
           docId: 'cumulus-docs-readme',
