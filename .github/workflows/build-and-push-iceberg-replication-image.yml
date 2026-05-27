@@ -3,12 +3,12 @@ name: Build and Push Bootstrap Image
 on:
   push:
     branches:
-      - main
+      - master
     paths:
       - 'packages/iceberg-replication/**'
   pull_request:
     branches:
-      - main
+      - master
     paths:
       - 'packages/iceberg-replication/**'
       - '.github/workflows/build-bootstrap.yml'
