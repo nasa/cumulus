@@ -152,6 +152,13 @@ const writeRecords = async ({
       knex
     ),
   ]);
+  let cmrProvider = '';
+  if (collectionCumulusId) {
+    cmrProvider = await getCollectionCmrProvider(
+      collectionCumulusId,
+      knex
+    );
+  }
 
   const {
     cumulus_id: parentExecutionCumulusId,
