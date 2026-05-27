@@ -11,6 +11,7 @@ on:
       - main
     paths:
       - 'packages/iceberg-replication/**'
+      - '.github/workflows/build-bootstrap.yml'
   workflow_dispatch:
     inputs:
       tag:
