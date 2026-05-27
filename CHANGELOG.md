@@ -121,6 +121,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated package overrides to address CVEs GHSA-43fc-jf86-j433 and GHSA-r5fr-rjxr-66jc.
   - added a `webpack` override to `/website/package.json` due to docusaurus conflicts
   - Upgraded package `uuid` to version ^11.1.1.
+  - Upgraded package `tmp` to address https://github.com/advisories/GHSA-ph9p-34f9-6g65
 - **CSD-100**
   - made changes to the `PrivateApiLambda` and `ApiEndpoints` lambdas to ensure the environment variables
     are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported
