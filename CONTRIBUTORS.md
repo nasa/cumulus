@@ -14,6 +14,7 @@
 * Brian Tennity
 * Bryan Wexler
 * Charles Huang
+* Chris Durbin
 * Chuck Daniels
 * Curtis Banh
 * Dan Pilone
