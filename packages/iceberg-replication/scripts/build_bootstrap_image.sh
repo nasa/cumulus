@@ -55,6 +55,6 @@ echo "Building image for $platform"
 
 cd ./packages/iceberg-replication
 
-docker build --platform="$platform" -t "$image:$tag" -f "./Dockerfile.bootstrap"  .
+docker build --network=host --platform="$platform" -t "$image:$tag" -f "./Dockerfile.bootstrap"  .
 
 cd ../..
