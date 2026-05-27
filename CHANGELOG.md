@@ -23,6 +23,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4866**
+  - Add cmrProvider to sns output granules, executions, pdrs
 - **CUMULUS-4883**
   - Add script to build Iceberg API docker image and push it to ECR as part of the build process
 - **CUMULUS-4705**
@@ -72,6 +74,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     which is a map from CMR provider to TEA base URL. Collections whose CMR provider is not in the map fall
     back to the existing single `tea_distribution_url`, so single-deployment configurations continue to work unchanged.
   - One precondition for consolidating deployments is that every S3 bucket name in the merged bucket map must be globally unique.
+- **CUMULUS-4873**
+  - Set max_locks_per_transaction database parameter to 256 to support better performance with new partitioning setup.
 
 ### Changed
 - **CUMULUS-4776** Split iceberg replication into separate services and add support for partitioned tables

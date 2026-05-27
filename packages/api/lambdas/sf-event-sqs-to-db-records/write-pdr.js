@@ -2,6 +2,7 @@
 
 const {
   createRejectableTransaction,
+  CollectionPgModel,
   PdrPgModel,
   translatePostgresPdrToApiPdr,
 } = require('@cumulus/db');
@@ -88,6 +89,18 @@ const writePdrViaTransaction = async ({
   return pdr;
 };
 
+/**
+ * @param {Object} params
+ * @param {Object} params.cumulusMessage
+ * @param {number | undefined} params.collectionCumulusId
+ * @param {number} params.providerCumulusId
+ * @param {number | undefined} params.executionCumulusId
+ * @param {Date | undefined} params.executionCreatedAt
+ * @param {string | null} [params.cmrProvider=null]
+ * @param {Knex} params.knex
+ * @param {Date} [params.updatedAt=Date.now]
+ * @returns {Promise<number>}
+ */
 const writePdr = async ({
   cumulusMessage,
   collectionCumulusId,
@@ -95,6 +108,7 @@ const writePdr = async ({
   executionCumulusId,
   executionCreatedAt,
   knex,
+  cmrProvider = null,
   updatedAt = Date.now(),
 }) => {
   let pgPdr;
@@ -120,8 +134,19 @@ const writePdr = async ({
     });
     return pgPdr.cumulus_id;
   });
-  const pdrToPublish = await translatePostgresPdrToApiPdr(pgPdr, knex);
-  await publishPdrSnsMessage(pdrToPublish);
+  const translatedPdr = await translatePostgresPdrToApiPdr(pgPdr, knex);
+  let finalCmrProvider = cmrProvider;
+  if (!cmrProvider) {
+    const collectionPgModel = new CollectionPgModel();
+    finalCmrProvider = await collectionPgModel.getCmrProvider(knex, pgPdr.collection_cumulus_id);
+  }
+
+  const metricsPdr = {
+    cmrProvider: finalCmrProvider,
+    ...translatedPdr,
+  };
+
+  await publishPdrSnsMessage(metricsPdr);
   return pdrCumulusId;
 };
 

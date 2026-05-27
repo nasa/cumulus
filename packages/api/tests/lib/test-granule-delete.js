@@ -310,3 +310,46 @@ test.serial('deleteGranuleAndFiles() will not delete S3 Files if the PostgreSQL 
     s3Buckets.public.name,
   ]));
 });
+
+test('deleteGranuleAndFiles() publishes SNS message', async (t) => {
+  const { collectionId, collectionCumulusId, QueueUrl, testCollection, knex } = t.context;
+
+  const {
+    apiGranule,
+    newPgGranule,
+    files,
+  } = await createGranuleAndFiles({
+    dbClient: knex,
+    collectionId,
+    collectionCumulusId,
+    granuleParams: { published: false },
+  });
+
+  t.true(await granulePgModel.exists(knex, {
+    granule_id: newPgGranule.granule_id,
+    collection_cumulus_id: collectionCumulusId,
+  }));
+  await Promise.all(
+    files.map(async (file) => {
+      t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+      t.true(await filePgModel.exists(knex, { bucket: file.bucket, key: file.key }));
+    })
+  );
+  await deleteGranuleAndFiles({
+    knex: knex,
+    pgGranule: newPgGranule,
+  });
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl,
+    MaxNumberOfMessages: 1,
+    WaitTimeSeconds: 20,
+  });
+  const snsMessageBody = JSON.parse(Messages[0].Body);
+  const publishedMessage = JSON.parse(snsMessageBody.Message);
+  t.is(Messages.length, 1);
+  t.deepEqual(publishedMessage.record, {
+    ...apiGranule,
+    cmrProvider: testCollection.cmrProvider,
+  });
+  t.is(publishedMessage.event, 'Delete');
+});
