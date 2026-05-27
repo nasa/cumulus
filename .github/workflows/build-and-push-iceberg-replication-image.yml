@@ -61,7 +61,7 @@ jobs:
           context: ./packages/iceberg-replication
           file: ./packages/iceberg-replication/Dockerfile.bootstrap
           platforms: linux/arm64
-          push: true
+          push: ${{ github.event_name != 'pull_request' }} # change to `true` to always push
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
