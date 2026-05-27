@@ -33,6 +33,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-4776** Split iceberg replication into separate services and add support for partitioned tables
+- **async-operations-update**
+  - Update Async Operation container to new version 57, `cumuluss/async-operation:57`. Users should update their references to `async-operation` with the new version.
 
 ## [v22.0.0] 2026-05-12
 
