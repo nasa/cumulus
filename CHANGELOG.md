@@ -25,6 +25,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     which is a map from CMR provider to TEA base URL. Collections whose CMR provider is not in the map fall
     back to the existing single `tea_distribution_url`, so single-deployment configurations continue to work unchanged.
   - One precondition for consolidating deployments is that every S3 bucket name in the merged bucket map must be globally unique.
+- **CUMULUS-4873**
+  - Set max_locks_per_transaction database parameter to 256 to support better performance with new partitioning setup.
 
 ### Changed
 
