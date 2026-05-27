@@ -4,7 +4,7 @@ RUN apt update &&\
     apt install -y netcat-traditional zip jq rsync zip
 RUN apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev \
 libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev \
-xz-utils tk-dev libffi-dev liblzma-dev python3-pip
+xz-utils tk-dev libffi-dev liblzma-dev python3-pip postgresql-client
 # install python
 WORKDIR /opt
 ARG PYTHON_VERSION=3.12
