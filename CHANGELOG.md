@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **CUMULUS-4882**
+  - Updated the trigger on the granules table to track collection updates and introduced a
+    `cumulus.allow_collection_update` setting to authorize cross-collection shifts.
+  - Cross-collection collision checks are now executed only when an actual unique constraint
+    conflict occurs during ingest.
+
 ### Breaking Changes
 
 - **CUMULUS-4780**

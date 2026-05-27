@@ -1,7 +1,48 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const { execFile } = require('node:child_process');
+const { promisify } = require('node:util');
 const { getKnexClient, localStackConnectionEnv } = require('@cumulus/db');
 const { handler } = require('../dist/lambda');
+
+const execFileAsync = promisify(execFile);
+
+const normalizeDump = (schema) =>
+  schema
+    .split('\n')
+    .filter((line) => !line.startsWith('--'))
+    .filter((line) => !line.startsWith('SET '))
+    .filter((line) => !line.includes('pg_catalog.'))
+    .filter((line) => !line.startsWith('\\restrict'))
+    .filter((line) => !line.startsWith('\\unrestrict'))
+    .filter((line) => !line.includes('knex_migrations'))
+    .filter((line) => !line.includes('knex_migrations_lock'))
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join('\n');
+
+const dumpSchema = async (env) => {
+  const { stdout } = await execFileAsync(
+    'pg_dump',
+    [
+      '--schema-only',
+      '--no-owner',
+      '--no-privileges',
+      '--host', env.PG_HOST,
+      '--port', env.PG_PORT,
+      '--username', env.PG_USER,
+      env.PG_DATABASE,
+    ],
+    {
+      env: {
+        ...process.env,
+        PGPASSWORD: env.PG_PASSWORD,
+      },
+    }
+  );
+
+  return normalizeDump(stdout);
+};
 
 test.before(async (t) => {
   // Master connection used to manage dynamic test databases
@@ -156,10 +197,6 @@ test.serial('handler can apply standard patches to a database previously created
 test.serial('handler creates correct granules and files partitions based on env', async (t) => {
   const { testEnv } = t.context;
 
-  // Save original env variables to restore later
-  const originalGranules = process.env.GRANULES_PARTITION_COUNT;
-  const originalFiles = process.env.FILES_PARTITION_COUNT;
-
   // Set environment variables for this test
   process.env.GRANULES_PARTITION_COUNT = '16';
   process.env.FILES_PARTITION_COUNT = '32';
@@ -195,7 +232,58 @@ test.serial('handler creates correct granules and files partitions based on env'
       `Should have ${process.env.FILES_PARTITION_COUNT} file partitions`
     );
   } finally {
-    process.env.GRANULES_PARTITION_COUNT = originalGranules;
-    process.env.FILES_PARTITION_COUNT = originalFiles;
+    delete process.env.GRANULES_PARTITION_COUNT;
+    delete process.env.FILES_PARTITION_COUNT;
+  }
+});
+
+test.serial('bootstrap schema matches standard migration schema', async (t) => {
+  const { testEnv } = t.context;
+  const standardDb = `std_${cryptoRandomString({ length: 8 })}`;
+  const bootstrapDb = `boot_${cryptoRandomString({ length: 8 })}`;
+
+  await t.context.masterKnex.raw(`CREATE DATABASE ${standardDb}`);
+  await t.context.masterKnex.raw(`CREATE DATABASE ${bootstrapDb}`);
+
+  const standardEnv = {
+    ...testEnv,
+    PG_DATABASE: standardDb,
+  };
+
+  const bootstrapEnv = {
+    ...testEnv,
+    PG_DATABASE: bootstrapDb,
+    USE_BOOTSTRAP: 'true',
+  };
+
+  try {
+    await handler({ command: 'latest', env: standardEnv });
+    await handler({ command: 'latest', env: bootstrapEnv });
+
+    const standardSchema = await dumpSchema(standardEnv);
+    const bootstrapSchema = await dumpSchema(bootstrapEnv);
+
+    const standardLines = standardSchema.split('\n');
+    const bootstrapLines = bootstrapSchema.split('\n');
+
+    const onlyInStandard = standardLines.filter(
+      (line) => !bootstrapLines.includes(line)
+    );
+
+    const onlyInBootstrap = bootstrapLines.filter(
+      (line) => !standardLines.includes(line)
+    );
+
+    if (onlyInStandard.length > 0 || onlyInBootstrap.length > 0) {
+      console.log('Only in standard schema:\n', onlyInStandard.join('\n'));
+      console.log('Only in bootstrap schema:\n', onlyInBootstrap.join('\n'));
+
+      t.fail('Bootstrap schema does not match standard schema');
+    }
+
+    t.pass();
+  } finally {
+    await t.context.masterKnex.raw(`DROP DATABASE IF EXISTS ${standardDb}`);
+    await t.context.masterKnex.raw(`DROP DATABASE IF EXISTS ${bootstrapDb}`);
   }
 });

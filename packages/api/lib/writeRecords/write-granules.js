@@ -22,7 +22,6 @@ const {
   FilePgModel,
   GranulePgModel,
   GranulesExecutionsPgModel,
-  getGranulesByGranuleId,
   translateApiFiletoPostgresFile,
   upsertGranuleWithExecutionJoinRecord,
   translateApiGranuleToPostgresGranuleWithoutNilsRemoved,
@@ -168,12 +167,17 @@ const _writeFiles = async ({
  * database result is returned, so no cumulus ID will be returned. In those
  * cases, this function will lookup the granule cumulus ID from the record.
  *
+ * Enforces a strict collection scope validation: if a matching granule is found
+ * but its collection_cumulus_id differs from the target record, it throws an error
+ * to block cross-collection granule ID duplicates.
+ *
  * @param {Object} params
  * @param {KnexTransaction} params.trx - A Knex transaction
  * @param {PostgresGranuleRecord[]} params.queryResult - Query result
  * @param {PostgresGranuleRecord} params.granuleRecord - A postgres granule record
  * @param {GranulePgModel} [params.granulePgModel] - PG Database model for granule data
  * @returns {Promise<PostgresGranuleRecord>} - PG Granule record
+ * @throws {Error} If a granule with the same ID exists in a different collection
  */
 const getGranuleFromQueryResultOrLookup = async ({
   queryResult = [],
@@ -187,10 +191,13 @@ const getGranuleFromQueryResultOrLookup = async ({
       trx,
       {
         granule_id: granuleRecord.granule_id,
-        collection_cumulus_id: granuleRecord.collection_cumulus_id,
       }
     );
+    if (granule.collection_cumulus_id !== granuleRecord.collection_cumulus_id) {
+      throw new Error(`A granule already exists for granuleId: ${granuleRecord.granule_id} in a different collection ${granuleRecord.collection_cumulus_id}`);
+    }
   }
+
   return granule;
 };
 
@@ -1132,20 +1139,6 @@ const writeGranulesFromMessage = async ({
         dynamoRecord: apiGranuleRecord,
         knexOrTransaction: knex,
       });
-
-      // TODO: CUMULUS-3017 - Remove this unique collectionId condition
-      // Check if granuleId exists across another collection
-      const granulesByGranuleId = await getGranulesByGranuleId(knex, apiGranuleRecord.granuleId);
-      const granuleExistsAcrossCollection = granulesByGranuleId.some(
-        (g) => g.collection_cumulus_id !== postgresGranuleRecord.collection_cumulus_id
-      );
-      if (granuleExistsAcrossCollection) {
-        log.error('Could not write granule. It already exists across another collection');
-        const conflictError = new Error(
-          `A granule already exists for granuleId: ${apiGranuleRecord.granuleId} with collectionId: ${apiGranuleRecord.collectionId}`
-        );
-        throw conflictError;
-      }
 
       return _writeGranule({
         apiGranuleRecord,
