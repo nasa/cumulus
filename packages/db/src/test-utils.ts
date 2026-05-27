@@ -97,7 +97,7 @@ export const fakeCollectionRecordFactory = (
   created_at: new Date(),
   updated_at: new Date(),
   cmr_provider: 'provider',
-  mission: 'mission',
+  metrics_provider: 'metrics_provider',
   ...params,
 });
 

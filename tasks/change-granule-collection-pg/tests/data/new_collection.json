@@ -42,5 +42,5 @@
   "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
   "id": "MOD11A2",
   "cmrProvider": "test",
-  "mission": "mission"
+  "metrics_provider": "metrics_provider"
 }

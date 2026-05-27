@@ -77,5 +77,5 @@ export type ApiGranule = {
 
 export type MetricsGranule = {
   cmrProvider: string
-  mission: string
+  metrics_provider: string
 } & ApiGranule;

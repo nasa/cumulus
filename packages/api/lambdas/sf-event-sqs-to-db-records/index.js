@@ -172,7 +172,7 @@ const writeRecords = async ({
     throw new UnmetRequirementsError('Could not satisfy requirements for writing records to PostgreSQL. No records written to the database.');
   }
   let missionAndCmrProvider = {
-    mission: '',
+    metrics_provider: '',
     cmrProvider: '',
   };
   if (collectionCumulusId) {

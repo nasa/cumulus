@@ -105,7 +105,7 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
         },
       ],
       cmrProvider: 'CUMULUS',
-      mission: 'CUMULUS',
+      metrics_provider: 'CUMULUS',
     };
 
     await createCollection({ prefix: config.stackName,

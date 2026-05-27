@@ -608,7 +608,7 @@ test.serial('writeExecutionRecordFromMessage() successfully publishes an SNS mes
   t.is(executionRecord.status, cumulusMessage.meta.status);
   t.deepEqual(executionRecord, {
     ...translatedExecution,
-    mission: '',
+    metrics_provider: '',
     cmrProvider: '',
   });
 });
@@ -644,12 +644,12 @@ test.serial('writeExecutionRecordFromApi() successfully publishes an SNS message
   t.is(executionRecord.status, cumulusMessage.meta.status);
   t.deepEqual(executionRecord, {
     ...translatedExecution,
-    mission: '',
+    metrics_provider: '',
     cmrProvider: '',
   });
 });
 
-test.serial('writeExecutionRecordFromMessage() successfully publishes an SNS message with a collection and mission', async (t) => {
+test.serial('writeExecutionRecordFromMessage() successfully publishes an SNS message with a collection and metrics_provider', async (t) => {
   const {
     cumulusMessage,
     executionArn,
@@ -657,7 +657,7 @@ test.serial('writeExecutionRecordFromMessage() successfully publishes an SNS mes
     knex,
     QueueUrl,
   } = t.context;
-  const collection = fakeCollectionRecordFactory({ mission: 'thisisamission', cmr_provider: 'thisisaprovider' });
+  const collection = fakeCollectionRecordFactory({ metrics_provider: 'thisisamission', cmr_provider: 'thisisaprovider' });
   const collectionPgModel = new CollectionPgModel();
   const [collectionRecord] = await collectionPgModel.create(t.context.knex, collection);
   await writeExecutionRecordFromMessage({
@@ -682,7 +682,7 @@ test.serial('writeExecutionRecordFromMessage() successfully publishes an SNS mes
   t.is(executionRecord.status, cumulusMessage.meta.status);
   t.deepEqual(executionRecord, {
     ...translatedExecution,
-    mission: collection.mission,
+    metrics_provider: collection.metrics_provider,
     cmrProvider: collection.cmr_provider,
   });
 });

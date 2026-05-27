@@ -98,9 +98,9 @@ module.exports.collection = {
       description: 'cmr provider corresponding to this collection',
       type: 'string',
     },
-    mission: {
-      title: 'mission',
-      description: 'mission corresponding to this collection',
+    metrics_provider: {
+      title: 'metrics_provider',
+      description: 'metrics_provider disambiguating which metrics index this is routed to',
       type: 'string',
     },
     name: {

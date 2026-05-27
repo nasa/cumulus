@@ -95,7 +95,7 @@ const buildRandomizedCollection = (overrides = {}) => ({
     },
   ],
   cmrProvider: 'CUMULUS',
-  mission: 'CUMULUS',
+  metrics_provider: 'CUMULUS',
   ...overrides,
 });
 

@@ -15,7 +15,7 @@ export interface CollectionFile {
 }
 
 export interface PartialCollectionRecord {
-  mission?: string,
+  metrics_provider?: string,
   cmrProvider?: string,
   createdAt?: number,
   duplicateHandling?: DuplicateHandling,
@@ -35,7 +35,7 @@ export interface PartialCollectionRecord {
 }
 
 export interface NewCollectionRecord extends PartialCollectionRecord {
-  mission: string,
+  metrics_provider: string,
   cmrProvider: string,
   files: CollectionFile[],
   granuleId: string,

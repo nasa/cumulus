@@ -41,5 +41,5 @@
     }
   ],
   "cmrProvider": "CUMULUS",
-  "mission": "CUMULUS"
+  "metrics_provider": "CUMULUS"
 }

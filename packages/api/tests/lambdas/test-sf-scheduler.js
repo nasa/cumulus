@@ -41,7 +41,7 @@ const fakeCollection = {
   name: 'fakeCollection',
   version: '000',
   cmrProvider: 'provider',
-  mission: 'mission',
+  metrics_provider: 'metrics_provider',
 };
 const fakeCollectionWithoutProvider = {
   name: 'fakeCollection',

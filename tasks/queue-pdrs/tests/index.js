@@ -61,7 +61,7 @@ test.beforeEach(async (t) => {
 
   t.context.event = {
     config: {
-      collection: { name: 'collection-name', mission: 'mission', cmrProvider: 'provider' },
+      collection: { name: 'collection-name', metrics_provider: 'metrics_provider', cmrProvider: 'provider' },
       provider: { name: 'provider-name' },
       queueUrl: t.context.queueUrl,
       parsePdrWorkflow: t.context.workflow,
@@ -193,7 +193,7 @@ test.serial('The correct message is enqueued', async (t) => {
         queueExecutionLimits,
       },
       meta: {
-        collection: { name: 'collection-name', mission: 'mission', cmrProvider: 'provider' },
+        collection: { name: 'collection-name', metrics_provider: 'metrics_provider', cmrProvider: 'provider' },
         cmr: { provider: 'provider' },
         provider: { name: 'provider-name' },
         workflow_name: workflow,

@@ -283,11 +283,11 @@ const _removeExcessFiles = async ({
 };
 
 /**
-* add mission and publish granule to sns
+* add metrics_provider and publish granule to sns
 * @param {Object} params
 * @param {string} params.snsEventType
 * @param {PostgresGranuleRecord} params.pgGranule
-* @param {{mission: string, cmrProvider: string} | null} [params.missionAndCmrProvider=null]
+* @param {{metrics_provider: string, cmrProvider: string} | null} [params.missionAndCmrProvider=null]
 * @param {Knex} params.knex - Instance of a Knex client
 */
 const _publishPostgresGranuleUpdateToSns = async ({
@@ -300,14 +300,14 @@ const _publishPostgresGranuleUpdateToSns = async ({
     granulePgRecord: pgGranule,
     knexOrTransaction: knex,
   });
-  let mission;
+  let metrics_provider;
   let cmrProvider;
   if (missionAndCmrProvider) {
-    ({ mission, cmrProvider } = missionAndCmrProvider);
+    ({ metrics_provider, cmrProvider } = missionAndCmrProvider);
   } else {
     const collectionPgModel = new CollectionPgModel();
     ({
-      mission,
+      metrics_provider,
       cmr_provider: cmrProvider,
     } = await collectionPgModel.getMissionAndCmrProvider(
       knex,
@@ -315,7 +315,7 @@ const _publishPostgresGranuleUpdateToSns = async ({
     ));
   }
   const metricsGranule = {
-    mission,
+    metrics_provider,
     cmrProvider,
     ...translatedGranule,
   };
@@ -634,7 +634,7 @@ const _writeGranuleRecords = async (params) => {
  * @param {number}            params.executionCumulusId - Execution ID the granule was written from
  * @param {Date}              params.executionCreatedAt - EExecution record create time
  *                            was written from
- * @param {{ mission: string, cmrProvider: string } | null}     [params.missionAndCmrProvider=null]
+ * @param {{ metrics_provider: string, cmrProvider: string } | null}     [params.missionAndCmrProvider=null]
  * @param {GranulePgModel}    params.granulePgModel - @cumulus/db compatible granule module instance
 
  * @returns {Promise<void>}
@@ -1035,7 +1035,7 @@ const writeGranulesFromMessage = async ({
   cumulusMessage,
   executionCumulusId,
   executionCreatedAt,
-  mission,
+  metrics_provider,
   knex,
   granulePgModel = new GranulePgModel(),
   testOverrides = {}, // Used only for test mocks
@@ -1186,7 +1186,7 @@ const writeGranulesFromMessage = async ({
         executionCumulusId,
         executionCreatedAt,
         granulePgModel,
-        mission,
+        metrics_provider,
         knex,
         postgresGranuleRecord: omitBy(postgresGranuleRecord, isUndefined),
         snsEventType: 'Update',

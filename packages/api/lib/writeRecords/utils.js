@@ -148,7 +148,7 @@ const getCollectionCumulusId = async (
  * @param {Knex} knex - An instance of a Knex database client.
  * @param {CollectionPgModel} [collectionPgModel=new CollectionPgModel()] - An instance of the
  *  CollectionPgModel class.
- * @returns {Promise<{mission: string, cmrProvider: string}>} - A promise that resolves
+ * @returns {Promise<{metrics_provider: string, cmrProvider: string}>} - A promise that resolves
  *  to the Cumulus ID of the collection, or undefined if the collection name/version
  *  is not provided or if the lookup fails.
  *
@@ -162,11 +162,11 @@ const getCollectionMissionAndCmrProvider = async (
   collectionPgModel = new CollectionPgModel()
 ) => {
   const {
-    mission,
+    metrics_provider,
     cmr_provider: cmrProvider,
   } = await collectionPgModel.getMissionAndCmrProvider(knex, collectionCumulusId);
   return {
-    mission,
+    metrics_provider,
     cmrProvider,
   };
 };

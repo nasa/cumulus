@@ -28,7 +28,7 @@ test('translatePostgresCollectionToApiCollection converts Postgres collection to
 
   const expected = {
     cmrProvider: 'provider',
-    mission: 'mission',
+    metrics_provider: 'metrics_provider',
     createdAt: collectionRecord.created_at.getTime(),
     updatedAt: collectionRecord.updated_at.getTime(),
     files: JSON.parse(collectionRecord.files),

@@ -32,11 +32,11 @@ class CollectionPgModel extends BasePgModel<PostgresCollection, PostgresCollecti
   async getMissionAndCmrProvider(
     knexOrTransaction: Knex | Knex.Transaction,
     collectionCumulusId: number
-  ): Promise<{ mission: string, cmr_provider: string }> {
+  ): Promise<{ metrics_provider: string, cmr_provider: string }> {
     return super.get(
       knexOrTransaction,
       { cumulus_id: collectionCumulusId },
-      ['mission', 'cmr_provider']
+      ['metrics_provider', 'cmr_provider']
     );
   }
 }

@@ -194,7 +194,7 @@ async function generateRandomGranules(t, {
     name: randomId('name'),
     version: randomId('vers'),
     cmrProvider: randomId('prov'),
-    mission: randomId('mission'),
+    metrics_provider: randomId('metrics_provider'),
   }));
   const { collections: postgresCollections } =
     await storeCollectionsWithGranuleToPostgres(matchingColls, t.context);
@@ -308,7 +308,7 @@ const setupDatabaseAndCMRForTests = async ({ t, params = {} }) => {
     name: randomId(`name${r}-`),
     version: randomId('vers'),
     cmrProvider: randomId('prov'),
-    mission: randomId('mission'),
+    metrics_provider: randomId('metrics_provider'),
     updatedAt: randomTimeBetween(startTimestamp, endTimestamp),
   }));
   // Create collections in sync pg/CMR outside of the timestamps range
@@ -317,7 +317,7 @@ const setupDatabaseAndCMRForTests = async ({ t, params = {} }) => {
     name: randomId(`name${r}-`),
     version: randomId('vers'),
     cmrProvider: randomId('prov'),
-    mission: randomId('mission'),
+    metrics_provider: randomId('metrics_provider'),
     updatedAt: randomTimeBetween(monthEarlier, startTimestamp - 1),
   }));
   // Create collections in pg only within the timestamp range
@@ -326,7 +326,7 @@ const setupDatabaseAndCMRForTests = async ({ t, params = {} }) => {
     name: randomId(`extraPg${r}-`),
     version: randomId('vers'),
     cmrProvider: randomId('prov'),
-    mission: randomId('mission'),
+    metrics_provider: randomId('metrics_provider'),
     updatedAt: randomTimeBetween(startTimestamp, endTimestamp),
   }));
   // Create collections in pg only outside of the timestamp range
@@ -335,7 +335,7 @@ const setupDatabaseAndCMRForTests = async ({ t, params = {} }) => {
     name: randomId(`extraPg${r}-`),
     version: randomId('vers'),
     cmrProvider: randomId('prov'),
-    mission: randomId('mission'),
+    metrics_provider: randomId('metrics_provider'),
     updatedAt: randomTimeBetween(endTimestamp + 1, monthLater),
   }));
   // create extra cmr collections that fall inside of the range.
@@ -344,7 +344,7 @@ const setupDatabaseAndCMRForTests = async ({ t, params = {} }) => {
     name: randomId(`extraCmr${r}-`),
     version: randomId('vers'),
     cmrProvider: randomId('prov'),
-    mission: randomId('mission'),
+    metrics_provider: randomId('metrics_provider'),
     updatedAt: randomTimeBetween(startTimestamp, endTimestamp),
   }));
 
@@ -1948,7 +1948,7 @@ test.serial('Inventory reconciliation report JSON is formatted', async (t) => {
     name: randomId('name'),
     version: randomId('vers'),
     cmrProvider: randomId('prov'),
-    mission: randomId('mission'),
+    metrics_provider: randomId('metrics_provider'),
   }));
 
   const cmrCollections = sortBy(matchingColls, ['name', 'version'])
