@@ -73,7 +73,7 @@ echo "terraform {
 
 cd ../..
 set_iceberg_image_version
-cd example/culumus-tf
+cd example/cumulus-tf
 
 DEPLOY_ICEBERG_API="${DEPLOY_ICEBERG_API:-false}"
 echo "Deploy Iceberg API: ${DEPLOY_ICEBERG_API}"
