@@ -62,13 +62,8 @@ const s3JitterMaxMs = Number(process.env.S3_JITTER_MAX_MS || 0);
 export type GetObjectMethod = (params: GetObjectCommandInput) => Promise<GetObjectOutput>;
 
 const parseRequesterPays = (
-  requesterPays? : boolean | 'requester'
-): 'requester' | undefined => {
-  if (requesterPays === 'requester' || requesterPays === undefined) {
-    return requesterPays;
-  }
-  return requesterPays ? 'requester' : undefined;
-};
+  requesterPays?: Boolean
+): 'requester' | undefined => requesterPays ? 'requester' : undefined;
 
 const buildDeprecationMessage = (
   name: string,
@@ -214,7 +209,11 @@ export const headObject = (
  * @returns {Promise<boolean>} a Promise that will resolve to a boolean indicating
  *                             if the object exists
  */
-export const s3ObjectExists = (params: { Bucket: string, Key: string, requesterPays?: boolean }) =>
+export const s3ObjectExists = (params: {
+  Bucket: string,
+  Key: string,
+  requesterPays: boolean
+}) =>
   headObject(params.Bucket, params.Key, params.requesterPays)
     .then(() => true)
     .catch((error) => {
@@ -276,10 +275,14 @@ export const waitForObjectToExist = async (params: {
 * @param params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
 **/
 export const s3PutObject = async (
-  params: PutObjectCommandInput
+  params: Omit<PutObjectCommandInput, 'RequestPayer'>,
+  requesterPays: boolean = true
 ): Promise<PutObjectCommandOutput> => {
+  const RequestPayer = parseRequesterPays(
+    requesterPays,
+  )
   await applyS3Jitter(s3JitterMaxMs, `putObject(${params.Bucket}/${params.Key})`);
-  return s3().putObject(params);
+  return s3().putObject({ ...params, RequestPayer});
 };
 
 /**
@@ -290,23 +293,27 @@ export const putFile = (
   bucket: string,
   key: string,
   filename: string,
-  requesterPays?: boolean
-): Promise<PutObjectCommandOutput> => s3PutObject({
-  Bucket: bucket,
-  Key: key,
-  Body: fs.createReadStream(filename),
-  RequestPayer: parseRequesterPays(requesterPays || true),
-});
+  requesterPays: boolean = true
+): Promise<PutObjectCommandOutput> => s3PutObject(
+  {
+    Bucket: bucket,
+    Key: key,
+    Body: fs.createReadStream(filename),
+  },
+  requesterPays
+);
 
 /**
 * Copy an object from one location on S3 to another
 **/
 export const s3CopyObject = async (
-  params: CopyObjectCommandInput
+  params: Omit<CopyObjectCommandInput, 'RequestPayer'>,
+  requesterPays: boolean = true
 ): Promise<CopyObjectCommandOutput> => {
   await applyS3Jitter(s3JitterMaxMs, `copyObject(${params.Bucket}/${params.Key})`);
   return s3().copyObject({
     TaggingDirective: 'COPY',
+    RequestPayer: parseRequesterPays(requesterPays),
     ...params,
   });
 };
@@ -317,10 +324,9 @@ export const s3CopyObject = async (
  * see https://github.com/aws/aws-sdk-js-v3/tree/main/lib/lib-storage
  */
 export const promiseS3Upload = async (
-  params: Omit<UploadOptions, 'client'>
+  params: Omit<UploadOptions, 'client' | 'RequestPayer'>,
 ): Promise<{ ETag?: string, [key: string]: any }> => {
   await applyS3Jitter(s3JitterMaxMs, `upload(${params.params?.Bucket}/${params.params?.Key})`);
-
   const parallelUploads = new Upload({
     ...params,
     client: s3(),
@@ -330,8 +336,7 @@ export const promiseS3Upload = async (
     log.info(progress);
   });
 
-  const result = await parallelUploads.done();
-  return result;
+  return parallelUploads.done();
 };
 
 /**
@@ -388,9 +393,9 @@ export const getObjectReadStream = async (params: {
  * Downloads the given s3Obj to the given filename in a streaming manner
  */
 export const downloadS3File = async (
-  s3Obj: GetObjectCommandInput,
+  s3Obj: Omit<GetObjectCommandInput, 'RequestPayer'>,
   filepath: string,
-  requestPayer?: boolean
+  requesterPays?: boolean
 ): Promise<string> => {
   if (!s3Obj.Bucket || !s3Obj.Key) {
     throw new Error('Bucket and Key are required');
@@ -404,7 +409,7 @@ export const downloadS3File = async (
     bucket: s3Obj.Bucket,
     key: s3Obj.Key,
     s3: s3(),
-    requesterPays: s3Obj.RequestPayer || requestPayer,
+    requesterPays: requesterPays,
   });
 
   return new Promise(
@@ -497,10 +502,12 @@ export const s3PutObjectTagging = (
  */
 export const getObject = async (
   s3Client: S3,
-  params: GetObjectCommandInput
+  params: Omit<GetObjectCommandInput, 'RequestPayer'>,
+  requesterPays: boolean = true
 ): Promise<GetObjectOutput> => {
+  const RequestPayer = parseRequesterPays(requesterPays);
   await applyS3Jitter(s3JitterMaxMs, `getObject(${params.Bucket}/${params.Key})`);
-  return s3Client.getObject(params);
+  return s3Client.getObject({ ...params, RequestPayer });
 };
 
 /**
@@ -509,13 +516,14 @@ export const getObject = async (
  */
 export const waitForObject = (
   s3Client: S3,
-  params: GetObjectCommandInput,
+  params: Omit<GetObjectCommandInput, 'RequestPayer'>,
+  requesterPays: boolean = true,
   retryOptions: pRetry.Options = {}
 ): Promise<GetObjectOutput> =>
   pRetry(
     async () => {
       try {
-        return await getObject(s3Client, params);
+        return await getObject(s3Client, params, requesterPays);
       } catch (error) {
         // Retry if the object does not exist
         if (error.name === 'NoSuchKey') throw error;
@@ -543,7 +551,8 @@ export const getS3Object = deprecate(
   ) =>
     waitForObject(
       s3(),
-      { Bucket, Key, RequestPayer: parseRequesterPays(requesterPays) },
+      { Bucket, Key },
+      requesterPays,
       {
         maxTimeout: 10000,
         onFailedAttempt: (err) => log.debug(`getS3Object('${Bucket}', '${Key}') failed with ${err.retriesLeft} retries left: ${err.message}`),
@@ -612,12 +621,14 @@ export const putJsonS3Object = (
   key: string,
   data: any,
   requesterPays: boolean = true
-): Promise<PutObjectCommandOutput> => s3PutObject({
-  Bucket: bucket,
-  Key: key,
-  Body: JSON.stringify(data),
-  RequestPayer: parseRequesterPays(requesterPays),
-});
+): Promise<PutObjectCommandOutput> => s3PutObject(
+  {
+    Bucket: bucket,
+    Key: key,
+    Body: JSON.stringify(data),
+  },
+  requesterPays,
+);
 
 /**
 * Check if a file exists in an S3 object
@@ -648,10 +659,11 @@ export const fileExists = async (
  * @param s3Objs - An array of objects containing keys 'Bucket' and 'Key'
  */
 export const deleteS3Files = async (
-  s3Objs: DeleteObjectRequest[]
+  s3Objs: Omit<DeleteObjectRequest, 'RequestPayer'>[],
+  requesterPays: boolean = true
 ): Promise<DeleteObjectCommandOutput[]> => await pMap(
   s3Objs,
-  (s3Obj) => s3().deleteObject(s3Obj),
+  (s3Obj) => s3().deleteObject({ ...s3Obj, RequestPayer: parseRequesterPays(requesterPays) }),
   { concurrency: S3_RATE_LIMIT }
 );
 
@@ -784,11 +796,12 @@ export const listS3Objects = async (
  * @static
  */
 export const listS3ObjectsV2 = async (
-  params: ListObjectsV2Request,
+  params: Omit<ListObjectsV2Request, 'RequestPayer'>,
   requesterPays: boolean = true
 ): Promise<ListObjectsCommandOutput['Contents']> => {
   // Fetch the first list of objects from S3
-  let listObjectsResponse = await s3().listObjectsV2(params);
+  const RequestPayer = parseRequesterPays(requesterPays);
+  let listObjectsResponse = await s3().listObjectsV2({ ...params, RequestPayer });
 
   let discoveredObjects = listObjectsResponse.Contents ?? [];
 
@@ -800,7 +813,7 @@ export const listS3ObjectsV2 = async (
       {
 
         ...params,
-        RequestPayer: parseRequesterPays(requesterPays),
+        RequestPayer,
         ContinuationToken: listObjectsResponse.NextContinuationToken,
       }
     ));
@@ -828,10 +841,11 @@ export const listS3ObjectsV2 = async (
  * @static
  */
 export async function* listS3ObjectsV2Batch(
-  params: ListObjectsV2Request,
+  params: Omit<ListObjectsV2Request, 'RequestPayer'>,
   requesterPays: boolean = true
 ): AsyncIterable<ListObjectsCommandOutput['Contents']> {
-  let listObjectsResponse = await s3().listObjectsV2(params);
+  const RequestPayer = parseRequesterPays(requesterPays);
+  let listObjectsResponse = await s3().listObjectsV2({ ...params, RequestPayer });
 
   let discoveredObjects = listObjectsResponse.Contents ?? [];
   yield discoveredObjects.filter((obj) => 'Key' in obj);
@@ -843,7 +857,7 @@ export async function* listS3ObjectsV2Batch(
       {
 
         ...params,
-        RequestPayer: parseRequesterPays(requesterPays),
+        RequestPayer,
         ContinuationToken: listObjectsResponse.NextContinuationToken,
       }
     ));
@@ -859,18 +873,19 @@ export async function* listS3ObjectsV2Batch(
 **/
 export const recursivelyDeleteS3Bucket = improveStackTrace(
   async (bucket: string, requesterPays: boolean = true): Promise<DeleteBucketCommandOutput> => {
-    const RequestPayer = parseRequesterPays(requesterPays);
     for await (
-      const objectBatch of listS3ObjectsV2Batch({
-        Bucket: bucket,
-        RequestPayer
-      })
+      const objectBatch of listS3ObjectsV2Batch(
+        {
+          Bucket: bucket,
+        },
+        requesterPays
+      )
     ) {
       if (objectBatch) {
         const deleteRequests = objectBatch.filter(
           (obj) => obj.Key
-        ).map((obj) => ({ Bucket: bucket, Key: obj.Key, RequestPayer}));
-        await deleteS3Files(deleteRequests);
+        ).map((obj) => ({ Bucket: bucket, Key: obj.Key}));
+        await deleteS3Files(deleteRequests, requesterPays);
       }
     }
     return await s3().deleteBucket({ Bucket: bucket });
@@ -1217,12 +1232,14 @@ export const copyObject = async ({
     // so use a regular S3 PUT
     const s3uri = buildS3Uri(destinationBucket, destinationKey);
 
-    const { CopyObjectResult } = await s3CopyObject({
-      CopySource: path.join(sourceBucket, sourceKey),
-      Bucket: destinationBucket,
-      Key: destinationKey,
-      RequestPayer: parseRequesterPays(requesterPays || true),
-    });
+    const { CopyObjectResult } = await s3CopyObject(
+      {
+        CopySource: path.join(sourceBucket, sourceKey),
+        Bucket: destinationBucket,
+        Key: destinationKey,
+      },
+      requesterPays
+  );
     // This error should never actually be reached in practice. It's a
     // necessary workaround for bad typings in the AWS SDK.
     // https://github.com/aws/aws-sdk-js/issues/1719
