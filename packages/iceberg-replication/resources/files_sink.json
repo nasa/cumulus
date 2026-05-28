@@ -1,0 +1,11 @@
+{
+  "name": "ice-files",
+  "topics": "dbserver1.${PG_SCHEMA}.files",
+  "iceberg.tables": "${ICEBERG_NAMESPACE}.files_table",
+  "commit.interval-ms": "30000",
+  "commit.timeout-ms": "60000",
+  "iceberg.tables.id-columns": "cumulus_id",
+  "iceberg.tables.commit-branch": "staging",
+  "iceberg.catalog.warehouse": "s3a://${ICEBERG_S3_BUCKET}/warehouse",
+  "batch.size": "$BATCH_SIZE"
+}

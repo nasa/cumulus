@@ -1,0 +1,49 @@
+name: Mirror Debezium Images to GHCR
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Debezium image tag to mirror (e.g. 3.4)'
+        required: true
+        default: '3.4'
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        image:
+          - source: quay.io/debezium/connect
+            target: ${{ github.repository_owner }}/debezium-connect
+          - source: quay.io/debezium/kafka
+            target: ${{ github.repository_owner }}/debezium-kafka
+
+    steps:
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull from quay.io
+        run: docker pull ${{ matrix.image.source }}:${{ github.event.inputs.tag }}
+
+      - name: Retag for GHCR
+        run: |
+          docker tag \
+            ${{ matrix.image.source }}:${{ github.event.inputs.tag }} \
+            ${{ env.REGISTRY }}/${{ matrix.image.target }}:${{ github.event.inputs.tag }}
+
+      - name: Push to GHCR
+        run: |
+          docker push \
+            ${{ env.REGISTRY }}/${{ matrix.image.target }}:${{ github.event.inputs.tag }}
