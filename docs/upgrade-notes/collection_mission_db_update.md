@@ -1,6 +1,6 @@
 ---
-id: collection-mission-db-update
-title: Update collection schema to include mission
+id: collection-metrics_provider-db-update
+title: Update collection schema to include metrics_provider
 hide_title: false
 ---
 
@@ -8,7 +8,7 @@ hide_title: false
 
 the updated Collection db model can be found [here](https://github.com/nasa/cumulus/blob/master/packages/db/src/types/collection.ts)
 
-the mission field distinguishes the data mission which can be used to differentiate metrics stack on a per-collection basis. This field cannot be null, but this presents a problem for existing databases, where collections already exist. as a result an update must be run manually.
+the metrics_provider field distinguishes the data metrics_provider which can be used to differentiate metrics stack on a per-collection basis. This field cannot be null, but this presents a problem for existing databases, where collections already exist. as a result an update must be run manually.
 
 ## Upgrade Steps
 
@@ -48,11 +48,10 @@ the mission field distinguishes the data mission which can be used to differenti
     #e.g. psql -h cumulus-dev-rds-cluster.cluster-xxx.us-east-1.rds.amazonaws.com -p 5432 -d cumulus_test_db -U cumulus_test -W
     ```
 
-    The following are the relevant SQL commands. no sql file is provided to prevent confusion as there's a value that must be configured and not confused. Replace <mission_name> with your stack's mission.
+    The following are the relevant SQL commands. no sql file is provided to prevent confusion as there's a value that must be configured and not confused. Replace <mission_name> with your stack's metrics_provider.
 
     ```sql
-    ALTER TABLE collections ADD COLUMN IF NOT EXISTS mission TEXT NOT NULL DEFAULT '<mission_name>';
-    CREATE INDEX CONCURRENTLY IF NOT EXISTS collections_cmr_provider ON collections (mission);
+    ALTER TABLE collections ADD COLUMN IF NOT EXISTS metrics_provider TEXT NOT NULL DEFAULT '<metrics_provider>';
     ```
 
 4. Monitor the running command
@@ -70,7 +69,7 @@ the mission field distinguishes the data mission which can be used to differenti
 
 5. Verify the updates
 
-     We can verify that the tables are updated successfully by checking the `\d collections` results from psql, the column "mission" should now appear.
+     We can verify that the tables are updated successfully by checking the `\d collections` results from psql, the column "metrics_provider" should now appear.
 
      If the concurrent index query fails for any reason, you may have an `invalid` index - if this occurs,
      make sure to drop and create the index again to avoid resources being used for the invalid index.
@@ -81,4 +80,4 @@ the mission field distinguishes the data mission which can be used to differenti
 
 ## DB Migration notes
 
-During migration of collections over to the consolidated db, or any other migration from a db without this column over to a db with this column, there will need to be a mission added.
+During migration of collections over to the consolidated db, or any other migration from a db without this column over to a db with this column, there will need to be a metrics_provider added.

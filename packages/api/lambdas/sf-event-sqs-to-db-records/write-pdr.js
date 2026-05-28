@@ -96,7 +96,10 @@ const writePdrViaTransaction = async ({
  * @param {number} params.providerCumulusId
  * @param {number | undefined} params.executionCumulusId
  * @param {Date | undefined} params.executionCreatedAt
- * @param {{metrics_provider: string, cmrProvider: string} | null} [params.metricsAndCmrProvider=null]
+ * @param {{
+ *   metricsProvider: string,
+ *   cmrProvider: string
+ * } | null} [params.metricsAndCmrProvider=null]
  * @param {Knex} params.knex
  * @param {Date} [params.updatedAt=Date.now]
  * @returns {Promise<number>}
@@ -135,20 +138,20 @@ const writePdr = async ({
     return pgPdr.cumulus_id;
   });
   const translatedPdr = await translatePostgresPdrToApiPdr(pgPdr, knex);
-  let metrics_provider;
+  let metricsProvider;
   let cmrProvider;
   if (metricsAndCmrProvider) {
-    ({ metrics_provider, cmrProvider } = metricsAndCmrProvider);
+    ({ metricsProvider, cmrProvider } = metricsAndCmrProvider);
   } else {
     const collectionPgModel = new CollectionPgModel();
     ({
-      metrics_provider,
+      metricsProvider,
       cmr_provider: cmrProvider,
     } = await collectionPgModel.getMetricsAndCmrProvider(knex, pgPdr.collection_cumulus_id));
   }
 
   const metricsPdr = {
-    metrics_provider,
+    metricsProvider,
     cmrProvider,
     ...translatedPdr,
   };

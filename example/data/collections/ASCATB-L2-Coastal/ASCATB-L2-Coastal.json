@@ -30,5 +30,5 @@
   "url_path": "{cmrMetadata.CollectionReference.ShortName}",
   "version": "Operational/Near-Real-Time",
   "cmrProvider": "CUMULUS",
-  "metrics_provider": "CUMULUS"
+  "metricsProvider": "CUMULUS"
 }

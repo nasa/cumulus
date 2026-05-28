@@ -350,7 +350,7 @@ test('deleteGranuleAndFiles() publishes SNS message', async (t) => {
   t.deepEqual(publishedMessage.record, {
     ...apiGranule,
     cmrProvider: testCollection.cmrProvider,
-    metrics_provider: testCollection.metrics_provider,
+    metricsProvider: testCollection.metricsProvider,
   });
   t.is(publishedMessage.event, 'Delete');
 });

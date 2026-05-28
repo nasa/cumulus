@@ -59,7 +59,7 @@ test.beforeEach(async (t) => {
     collection
   );
   t.context.collectionCumulusId = pgCollection.cumulus_id;
-  t.context.metrics_provider = pgCollection.metrics_provider;
+  t.context.metricsProvider = pgCollection.metrics_provider;
   t.context.cmrProvider = pgCollection.cmr_provider;
   const provider = fakeProviderRecordFactory();
   const providerPgModel = new ProviderPgModel();
@@ -438,7 +438,7 @@ test.serial('writePdr() successfully publishes an SNS message', async (t) => {
   t.is(pdrRecord.status, cumulusMessage.meta.status);
   t.deepEqual(pdrRecord, {
     ...translatedRecord,
-    metrics_provider: t.context.metrics_provider,
+    metricsProvider: t.context.metricsProvider,
     cmrProvider: t.context.cmrProvider,
   });
 });

@@ -50,7 +50,7 @@ describe('The granule-invalidator deployed within a Cumulus workflow', () => {
         },
       ],
       cmrProvider: 'CUMULUS',
-      metrics_provider: 'CUMULUS',
+      metricsProvider: 'CUMULUS',
     };
 
     await createCollection({ prefix: config.stackName,

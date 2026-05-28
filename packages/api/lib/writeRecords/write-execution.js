@@ -165,8 +165,8 @@ const _writeExecutionRecord = async ({
  * @param {PostgresExecution} params.postgresRecord - Execution PostgreSQL record to be written
  * @param {Knex} params.knex - Knex client
  * @param {ExecutionPgModelType} [params.executionPgModel] - PostgreSQL execution model
- * @param {{metrics_provider: string, cmrProvider: string} | null} params.metricsAndCmrProvider - collection
- * metrics_provider and cmr provider inherited from calling function. will be determined if left null
+ * @param {{metricsProvider: string, cmrProvider: string} | null} params.metricsAndCmrProvider
+ * metricsProvider and cmrProvider inherited from calling function. will be determined if left null
  * @param {boolean} [params.writeConstraints] - Boolean flag to set if record write constraints
  *   apply
  * @returns {Promise<PostgresExecutionRecord>} - PostgreSQL execution record that was written
@@ -193,14 +193,14 @@ const _writeExecutionAndPublishSnsMessage = async ({
     knex
   );
   const collectionCumulusId = postgresRecord.collection_cumulus_id;
-  let metrics_provider = '';
+  let metricsProvider = '';
   let cmrProvider = '';
   if (metricsAndCmrProvider) {
-    ({ metrics_provider, cmrProvider } = metricsAndCmrProvider);
+    ({ metricsProvider, cmrProvider } = metricsAndCmrProvider);
   } else if (collectionCumulusId) {
     const collectionPgModel = new CollectionPgModel();
     ({
-      metrics_provider,
+      metrics_provider: metricsProvider,
       cmr_provider: cmrProvider,
     } = await collectionPgModel.getMetricsAndCmrProvider(
       knex,
@@ -208,7 +208,7 @@ const _writeExecutionAndPublishSnsMessage = async ({
     ));
   }
   const metricsExecution = {
-    metrics_provider,
+    metricsProvider,
     cmrProvider,
     ...translatedExecution,
   };
@@ -228,7 +228,7 @@ const _writeExecutionAndPublishSnsMessage = async ({
  * @param {number} [params.asyncOperationCumulusId] - Identifier for the associated async operation
  * @param {number} [params.parentExecutionCumulusId] - Identifier for the parent execution
  * @param {Date} [params.parentExecutionCreatedAt] - Creation timestamp of the parent execution
- * @param {{metrics_provider: string, cmrProvider: string} | null} params.metricsAndCmrProvider
+ * @param {{metricsProvider: string, cmrProvider: string} | null} params.metricsAndCmrProvider
  * @param {number} [params.updatedAt=Date.now()] - Timestamp (in ms) used for record updateAt field
  * @returns {Promise<PostgresExecutionRecord>} - write message response
  */

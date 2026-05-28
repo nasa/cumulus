@@ -608,7 +608,7 @@ test.serial('writeExecutionRecordFromMessage() successfully publishes an SNS mes
   t.is(executionRecord.status, cumulusMessage.meta.status);
   t.deepEqual(executionRecord, {
     ...translatedExecution,
-    metrics_provider: '',
+    metricsProvider: '',
     cmrProvider: '',
   });
 });
@@ -644,12 +644,12 @@ test.serial('writeExecutionRecordFromApi() successfully publishes an SNS message
   t.is(executionRecord.status, cumulusMessage.meta.status);
   t.deepEqual(executionRecord, {
     ...translatedExecution,
-    metrics_provider: '',
+    metricsProvider: '',
     cmrProvider: '',
   });
 });
 
-test.serial('writeExecutionRecordFromMessage() successfully publishes an SNS message with a collection and metrics_provider', async (t) => {
+test.serial('writeExecutionRecordFromMessage() successfully publishes an SNS message with a collection and metricsProvider', async (t) => {
   const {
     cumulusMessage,
     executionArn,
@@ -682,7 +682,7 @@ test.serial('writeExecutionRecordFromMessage() successfully publishes an SNS mes
   t.is(executionRecord.status, cumulusMessage.meta.status);
   t.deepEqual(executionRecord, {
     ...translatedExecution,
-    metrics_provider: collection.metrics_provider,
+    metricsProvider: collection.metrics_provider,
     cmrProvider: collection.cmr_provider,
   });
 });

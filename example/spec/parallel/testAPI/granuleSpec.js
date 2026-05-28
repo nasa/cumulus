@@ -307,7 +307,7 @@ describe('The Granules API', () => {
         expect(message.event).toEqual('Create');
         expect(message.record).toEqual({
           ...discoveredGranule,
-          metrics_provider: collection1.metrics_provider,
+          metricsProvider: collection1.metricsProvider,
           cmrProvider: collection1.cmrProvider,
         });
       }
@@ -327,7 +327,7 @@ describe('The Granules API', () => {
         expect(message.event).toEqual('Update');
         expect(message.record).toEqual({
           ...updatedGranuleFromApi,
-          metrics_provider: collection1.metrics_provider,
+          metricsProvider: collection1.metricsProvider,
           cmrProvider: collection1.cmrProvider,
         });
       }
@@ -351,7 +351,7 @@ describe('The Granules API', () => {
         expect(message.event).toEqual('Delete');
         expect(message.record).toEqual({
           ...updatedGranuleFromApi,
-          metrics_provider: collection1.metrics_provider,
+          metricsProvider: collection1.metricsProvider,
           cmrProvider: collection1.cmrProvider,
         });
         expect(message.deletedAt).toBeGreaterThan(timestamp);
