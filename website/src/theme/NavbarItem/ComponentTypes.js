@@ -1,11 +1,11 @@
 const ComponentTypesModule = require('@theme-original/NavbarItem/ComponentTypes');
-const IcebergVersionedNavbarItemModule = require('@site/src/components/IcebergVersionedNavbarItem');
+const VersionedNavbarItemModule = require('@site/src/components/VersionedNavbarItem');
 
 const ComponentTypes = ComponentTypesModule.default || ComponentTypesModule;
-const icebergNavbarItemModule = IcebergVersionedNavbarItemModule;
-const IcebergVersionedNavbarItem = icebergNavbarItemModule.default || icebergNavbarItemModule;
+const versionedNavbarItemModule = VersionedNavbarItemModule;
+const VersionedNavbarItem = versionedNavbarItemModule.default || versionedNavbarItemModule;
 
 // eslint-disable-next-line prefer-object-spread
 module.exports = Object.assign({}, ComponentTypes, {
-  'custom-icebergVersioned': IcebergVersionedNavbarItem,
+  'custom-versionedNavbarItem': VersionedNavbarItem,
 });

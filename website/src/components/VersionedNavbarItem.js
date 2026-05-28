@@ -82,19 +82,19 @@ function shouldRenderForVersion(activeVersion, minVersion) {
  * @param {string} docPath
  * @returns {string}
  */
-function getVersionedIcebergPath(activeVersion, docPath) {
+function getVersionedDocsPath(activeVersion, docPath) {
   if (activeVersion === 'next') return `/docs/next/${docPath}`;
   if (activeVersion === 'current') return `/docs/${docPath}`;
   return `/docs/${activeVersion}/${docPath}`;
 }
 
 /**
- * Render a navbar item only for docs versions that support the Iceberg docs.
+ * Render a navbar item only for docs versions that support the target doc path.
  *
  * @param {object} props
  * @returns {React.ReactNode|undefined}
  */
-function IcebergVersionedNavbarItem(props) {
+function VersionedNavbarItem(props) {
   const location = useLocation();
   const minVersion = props.minVersion || 'v22.0.0';
   const docPath = props.docPath || 'deployment/iceberg-api';
@@ -113,10 +113,10 @@ function IcebergVersionedNavbarItem(props) {
 
   // eslint-disable-next-line prefer-object-spread
   const finalNavbarItemProps = Object.assign({}, navbarItemProps, {
-    to: getVersionedIcebergPath(activeVersion, docPath),
+    to: getVersionedDocsPath(activeVersion, docPath),
   });
 
   return React.createElement(DefaultNavbarItem, finalNavbarItemProps);
 }
 
-module.exports = IcebergVersionedNavbarItem;
+module.exports = VersionedNavbarItem;

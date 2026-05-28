@@ -76,9 +76,9 @@ module.exports = {
           position: 'left',
         },
         {
-          type: 'custom-icebergVersioned',
+          type: 'custom-versionedNavbarItem',
           docPath: 'deployment/iceberg-api',
-          minVersion: 'v22.1.1',
+          minVersion: 'v22.1.0',
           label: 'Iceberg API',
           position: 'left',
         },
