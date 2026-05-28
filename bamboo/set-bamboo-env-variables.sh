@@ -213,12 +213,13 @@ set_iceberg_image_version() {
     ICEBERG_IMAGE_VERSION=$(echo $bamboo_plan_revision | cut -c1-7)
   fi
 
-  echo "***ICEBERG_IMAGE_VERSION: $ICEBERG_IMAGE_VERSION"
-
+  # Fallback is used when other CI steps not necessarily setting the $bamboo_plan_revision env variable
+  # and also we may want to be able to run the deploy script locally with a default image version
   if [[ -z $ICEBERG_IMAGE_VERSION ]]; then
-    echo "Error: ICEBERG_IMAGE_VERSION is not set (PUBLISH_FLAG=${PUBLISH_FLAG}). Expected bamboo_plan_revision." >&2
-    exit 1
+    echo "Warning: ICEBERG_IMAGE_VERSION is not set (PUBLISH_FLAG=${PUBLISH_FLAG}). Falling back to 'latest'." >&2
+    ICEBERG_IMAGE_VERSION='latest'
   fi
 
+  echo "***ICEBERG_IMAGE_VERSION: $ICEBERG_IMAGE_VERSION"
   export ICEBERG_IMAGE_VERSION
 }
