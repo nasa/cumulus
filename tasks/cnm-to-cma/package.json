@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/cnm-to-cma",
-  "version": "22.0.0",
+  "version": "22.1.0",
   "description": "CNM to CMA task",
   "main": "index.js",
   "directories": {
@@ -27,6 +27,6 @@
   "author": "Cumulus Author : Cumulus Coreification Team",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@cumulus/schemas": "22.0.0"
+    "@cumulus/schemas": "22.1.0"
   }
 }

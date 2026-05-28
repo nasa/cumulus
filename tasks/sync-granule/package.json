@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/sync-granule",
-  "version": "22.0.0",
+  "version": "22.1.0",
   "description": "Download a given granule",
   "main": "index.js",
   "directories": {
@@ -40,21 +40,21 @@
     "failFast": true
   },
   "dependencies": {
-    "@cumulus/aws-client": "22.0.0",
-    "@cumulus/collection-config-store": "22.0.0",
-    "@cumulus/common": "22.0.0",
+    "@cumulus/aws-client": "22.1.0",
+    "@cumulus/collection-config-store": "22.1.0",
+    "@cumulus/common": "22.1.0",
     "@cumulus/cumulus-message-adapter-js": "2.4.0",
-    "@cumulus/errors": "22.0.0",
-    "@cumulus/ingest": "22.0.0",
-    "@cumulus/message": "22.0.0",
-    "@cumulus/types": "22.0.0",
+    "@cumulus/errors": "22.1.0",
+    "@cumulus/ingest": "22.1.0",
+    "@cumulus/message": "22.1.0",
+    "@cumulus/types": "22.1.0",
     "lodash": "^4.18.1",
     "p-map": "^2.1.0",
     "uuid": "^11.1.1"
   },
   "devDependencies": {
-    "@cumulus/schemas": "22.0.0",
-    "@cumulus/sftp-client": "22.0.0",
-    "@cumulus/test-data": "22.0.0"
+    "@cumulus/schemas": "22.1.0",
+    "@cumulus/sftp-client": "22.1.0",
+    "@cumulus/test-data": "22.1.0"
   }
 }

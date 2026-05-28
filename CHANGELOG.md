@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v22.1.0] 2026-05-27
+
 ### Added
 
 - **CUMULUS-4866**
@@ -31,6 +33,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-4776** Split iceberg replication into separate services and add support for partitioned tables
+- **async-operations-update**
+  - Update Async Operation container to new version 57, `cumuluss/async-operation:57`. Users should update their references to `async-operation` with the new version.
 
 ## [v22.0.0] 2026-05-12
 
@@ -9800,7 +9804,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v22.0.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v22.1.0...HEAD
+[v22.1.0]: https://github.com/nasa/cumulus/compare/v22.0.0...v22.1.0
 [v22.0.0]: https://github.com/nasa/cumulus/compare/v21.3.3...v22.0.0
 [v21.3.3]: https://github.com/nasa/cumulus/compare/v21.3.2...v21.3.3
 [v21.3.2]: https://github.com/nasa/cumulus/compare/v21.3.1...v21.3.2
