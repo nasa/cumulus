@@ -96,8 +96,8 @@ function getVersionedDocsPath(activeVersion, docPath) {
  */
 function VersionedNavbarItem(props) {
   const location = useLocation();
-  const minVersion = props.minVersion || 'v22.0.0';
-  const docPath = props.docPath || 'deployment/iceberg-api';
+  const minVersion = props.minVersion;
+  const docPath = props.docPath;
   // eslint-disable-next-line prefer-object-spread
   const navbarItemProps = Object.assign({}, props);
 
