@@ -63,7 +63,12 @@ export type GetObjectMethod = (params: GetObjectCommandInput) => Promise<GetObje
 
 const parseRequesterPays = (
   requesterPays? : boolean | 'requester'
-): 'requester' | undefined => requesterPays === true || requesterPays === 'requester' ? 'requester' : undefined;
+): 'requester' | undefined => {
+  if (requesterPays === 'requester' || requesterPays === undefined) {
+    return requesterPays;
+  }
+  return requesterPays ? 'requester' : undefined;
+};
 
 const buildDeprecationMessage = (
   name: string,
@@ -150,7 +155,7 @@ export const s3TagSetToQueryString = (tagset: Tagging['TagSet']) =>
  * @returns {Promise} promise of the object being deleted
  */
 export const deleteS3Object = (bucket: string, key: string, requesterPays: boolean = true) =>
-  s3().deleteObject({ Bucket: bucket, Key: key , RequestPayer: parseRequesterPays(requesterPays)});
+  s3().deleteObject({ Bucket: bucket, Key: key, RequestPayer: parseRequesterPays(requesterPays) });
 
 export const deleteS3Objects = (params: {
   client: S3,
@@ -164,7 +169,7 @@ export const deleteS3Objects = (params: {
     Delete: {
       Objects: keys.map((key) => ({ Key: key })),
     },
-    RequestPayer: parseRequesterPays(requesterPays) // ?
+    RequestPayer: parseRequesterPays(requesterPays),
   };
   return client.deleteObjects(objects);
 };
@@ -182,8 +187,8 @@ export const deleteS3Objects = (params: {
 export const headObject = (
   Bucket: string,
   Key: string,
-  requesterPays: boolean = true,
-  retryOptions: pRetry.Options = { retries: 0 }
+  retryOptions: pRetry.Options = { retries: 0 },
+  requesterPays: boolean = true
 ): Promise<HeadObjectOutput> =>
   pRetry(
     async () => {
@@ -192,7 +197,7 @@ export const headObject = (
         return await s3().headObject({
           Bucket,
           Key,
-          RequestPayer: parseRequesterPays(requesterPays)
+          RequestPayer: parseRequesterPays(requesterPays),
         });
       } catch (error) {
         if (error.name === 'NotFound') throw error;
@@ -238,16 +243,16 @@ export const s3ObjectExists = (params: { Bucket: string, Key: string, requesterP
 export const waitForObjectToExist = async (params: {
   bucket: string,
   key: string,
-  requesterPays?: boolean
   interval?: number,
-  timeout?: number
+  timeout?: number,
+  requesterPays?: boolean
 }) => {
   const {
     bucket,
     key,
     interval = 1000,
     timeout = 30 * 1000,
-    requesterPays = true
+    requesterPays = true,
   } = params;
 
   try {
@@ -363,7 +368,11 @@ export const getObjectReadStream = async (params: {
 }): Promise<Readable> => {
   // eslint-disable-next-line no-shadow
   const { s3: s3Client, bucket, key, requesterPays = true } = params;
-  const response = await s3Client.getObject({ Bucket: bucket, Key: key, RequestPayer: parseRequesterPays(requesterPays) });
+  const response = await s3Client.getObject({
+    Bucket: bucket,
+    Key: key,
+    RequestPayer: parseRequesterPays(requesterPays),
+  });
   if (!response.Body) {
     throw new Error(`Could not get object for bucket ${bucket} and key ${key}`);
   }
@@ -440,7 +449,7 @@ export const s3GetObjectTagging = (
 ): Promise<GetObjectTaggingCommandOutput> => s3().getObjectTagging({
   Bucket: bucket,
   Key: key,
-  RequestPayer: parseRequesterPays(requesterPays)
+  RequestPayer: parseRequesterPays(requesterPays),
 });
 
 const getObjectTags = async (bucket: string, key: string, requesterPays?: boolean) => {
@@ -457,7 +466,10 @@ const getObjectTags = async (bucket: string, key: string, requesterPays?: boolea
   );
 };
 
-const getObjectTaggingString = async (bucket: string, key: string, requesterPays?: boolean): Promise<string> => {
+const getObjectTaggingString = async (
+  bucket: string,
+  key: string, requesterPays?: boolean
+): Promise<string> => {
   const tags = await getObjectTags(bucket, key, requesterPays);
 
   return new URLSearchParams(tags).toString();
@@ -477,7 +489,7 @@ export const s3PutObjectTagging = (
     Bucket,
     Key,
     Tagging: ObjectTagging,
-    RequestPayer: parseRequesterPays(requesterPays)
+    RequestPayer: parseRequesterPays(requesterPays),
   });
 
 /**
@@ -527,7 +539,7 @@ export const getS3Object = deprecate(
     Bucket: string,
     Key: string,
     retryOptions: pRetry.Options = { retries: 0 },
-    requesterPays: boolean = true,
+    requesterPays: boolean = true
   ) =>
     waitForObject(
       s3(),
@@ -577,7 +589,11 @@ export const getObjectStreamContents = async (
 /**
  * Fetch the contents of an S3 object
  */
-export const getTextObject = (bucket: string, key: string, requesterPays?: boolean): Promise<string> =>
+export const getTextObject = (
+  bucket: string,
+  key: string,
+  requesterPays?: boolean
+): Promise<string> =>
   getObjectReadStream({ s3: s3(), bucket, key, requesterPays })
     .then((objectReadStream) => getObjectStreamContents(objectReadStream));
 
@@ -612,7 +628,11 @@ export const fileExists = async (
   requesterPays: boolean = true
 ): Promise<HeadObjectOutput | false> => {
   try {
-    return await s3().headObject({ Key: key, Bucket: bucket, RequestPayer: parseRequesterPays(requesterPays) });
+    return await s3().headObject({
+      Key: key,
+      Bucket: bucket,
+      RequestPayer: parseRequesterPays(requesterPays),
+    });
   } catch (error) {
     // if file is not return false
     if (error.stack.match(/(NotFound)/) || error.stack.match(/(NoSuchBucket)/)) {
@@ -645,8 +665,8 @@ export const uploadS3Files = async (
   files: Array<string | FileInfo>,
   defaultBucket: string,
   keyPath: string | ((x: string) => string),
-  requesterPays: boolean = true,
-  s3opts: Partial<PutObjectRequest> = {}
+  s3opts: Partial<PutObjectRequest> = {},
+  requesterPays: boolean = true
 ) => {
   let i = 0;
   const n = files.length;
@@ -679,7 +699,7 @@ export const uploadS3Files = async (
         Bucket: bucket,
         Key: key,
         Body: fs.createReadStream(filename),
-        RequestPayer: parseRequesterPays(requesterPays)
+        RequestPayer: parseRequesterPays(requesterPays),
       },
     });
 
@@ -706,8 +726,8 @@ export const uploadS3FileStream = (
   fileStream: Readable,
   bucket: string,
   key: string,
-  requesterPays?: boolean,
-  s3opts: Partial<PutObjectRequest> = {}
+  s3opts: Partial<PutObjectRequest> = {},
+  requesterPays?: boolean
 ) =>
   promiseS3Upload({
     params: {
@@ -715,7 +735,7 @@ export const uploadS3FileStream = (
       Bucket: bucket,
       Key: key,
       Body: fileStream,
-      RequestPayer: parseRequesterPays(requesterPays || true)
+      RequestPayer: parseRequesterPays(requesterPays || true),
     },
   });
 
@@ -836,7 +856,10 @@ export async function* listS3ObjectsV2Batch(
 export const recursivelyDeleteS3Bucket = improveStackTrace(
   async (bucket: string, requesterPays: boolean = true): Promise<DeleteBucketCommandOutput> => {
     for await (
-      const objectBatch of listS3ObjectsV2Batch({ Bucket: bucket, RequestPayer: parseRequesterPays(requesterPays) })
+      const objectBatch of listS3ObjectsV2Batch({
+        Bucket: bucket,
+        RequestPayer: parseRequesterPays(requesterPays)
+      })
     ) {
       if (objectBatch) {
         const deleteRequests = objectBatch.filter(
@@ -979,7 +1002,7 @@ const createMultipartUpload = async (
     Key: params.destinationKey,
     ACL: params.ACL,
     ContentType: params.contentType,
-    RequestPayer: parseRequesterPays(params.requesterPays || true)
+    RequestPayer: parseRequesterPays(params.requesterPays || true),
   };
 
   if (params.copyTags) {
@@ -1084,7 +1107,12 @@ export const multipartCopyObject = async (
 
   await applyS3Jitter(s3JitterMaxMs, `multipartCopyObject(${destinationBucket}/${destinationKey})`);
 
-  const sourceObject = params.sourceObject ?? await headObject(sourceBucket, sourceKey, requesterPays);
+  const sourceObject = params.sourceObject ?? await headObject(
+    sourceBucket,
+    sourceKey,
+    undefined,
+    requesterPays
+  );
 
   // Create a multi-part upload (copy) and get its UploadId
   const uploadId = await createMultipartUpload({
@@ -1095,7 +1123,7 @@ export const multipartCopyObject = async (
     ACL: <ObjectCannedACL>ACL,
     copyTags,
     contentType: sourceObject.ContentType,
-    requesterPays
+    requesterPays,
   });
 
   try {
@@ -1230,14 +1258,14 @@ export const moveObject = async (
     destinationKey: string,
     ACL?: string,
     copyTags?: boolean,
-    chunkSize?: number
+    chunkSize?: number,
     requesterPays?: boolean
   }
 ): Promise<DeleteObjectCommandOutput> => {
   const {
     sourceBucket,
     sourceKey,
-    requesterPays = true
+    requesterPays = true,
   } = params;
 
   await copyObject(params);

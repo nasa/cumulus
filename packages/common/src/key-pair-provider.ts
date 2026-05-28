@@ -7,7 +7,6 @@ import forge from 'node-forge';
 import { Readable } from 'stream';
 import { getTextObject } from '@cumulus/aws-client/S3';
 
-
 import { deprecate } from './util';
 import { inTestMode } from './test-utils';
 
@@ -31,7 +30,6 @@ export const getObjectStreamContents = (
     }
   }
 );
-
 
 export const retrieveKey = async (
   keyId: string,
