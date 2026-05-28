@@ -5,24 +5,6 @@ resource "aws_kms_key" "bignbit_parameter_key" {
 }
 
 data "aws_iam_policy_document" "bignbit_parameter_key_policy" {
-  # Allow IAM users in this account to manage the key
-  statement {
-    effect    = "Allow"
-    actions   = [
-      "kms:*"
-    ]
-    resources = [
-      aws_kms_key.bignbit_parameter_key.arn
-    ]
-
-    principals {
-      type        = "AWS"
-      identifiers = [
-        "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
-      ]
-    }
-  }
-
   # Allow deployment users to manage the key
   statement {
     effect    = "Allow"
