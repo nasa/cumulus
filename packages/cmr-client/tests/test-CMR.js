@@ -17,6 +17,7 @@ test.before(() => {
 });
 
 test.afterEach.always(() => {
+  CMR.resetInstance();
   nock.cleanAll();
 });
 
@@ -58,7 +59,7 @@ test.serial('CMR.searchCollection handles paging correctly.', async (t) => {
   ];
   process.env.CMR_ENVIRONMENT = 'UAT';
 
-  const cmrSearch = new CMR({
+  const cmrSearch = CMR.getInstance({
     provider: 'CUMULUS',
     clientId: 'clientId',
     username: 'username',
@@ -75,7 +76,7 @@ test.serial('CMR.searchCollection handles paging correctly.', async (t) => {
 });
 
 test.serial('getWriteHeaders returns correct Content-type for UMMG metadata', (t) => {
-  const cmrInstance = new CMR({
+  const cmrInstance = CMR.getInstance({
     provider: 'provider',
     clientId: 'clientID',
     username: 'username',
@@ -88,7 +89,7 @@ test.serial('getWriteHeaders returns correct Content-type for UMMG metadata', (t
 });
 
 test.serial('getWriteHeaders returns correct Content-type for xml metadata by default', (t) => {
-  const cmrInstance = new CMR({
+  const cmrInstance = CMR.getInstance({
     provider: 'provider',
     clientId: 'clientID',
     username: 'username',
@@ -101,7 +102,7 @@ test.serial('getWriteHeaders returns correct Content-type for xml metadata by de
 });
 
 test.serial('getWriteHeaders returns Cmr-Revision-Id when provided', (t) => {
-  const cmrInstance = new CMR({
+  const cmrInstance = CMR.getInstance({
     provider: 'provider',
     clientId: 'clientID',
     username: 'username',
@@ -113,7 +114,7 @@ test.serial('getWriteHeaders returns Cmr-Revision-Id when provided', (t) => {
 });
 
 test.serial('getWriteHeaders returns token for earthdata', (t) => {
-  const cmrInstance = new CMR({
+  const cmrInstance = CMR.getInstance({
     provider: 'provider',
     clientId: 'test-client-id',
     username: 'username',
@@ -126,7 +127,7 @@ test.serial('getWriteHeaders returns token for earthdata', (t) => {
 });
 
 test.serial('getWriteHeaders returns token for launchpad', (t) => {
-  const cmrInstance = new CMR({
+  const cmrInstance = CMR.getInstance({
     provider: 'provider',
     clientId: 'test-client-id',
     username: 'username',
@@ -140,7 +141,7 @@ test.serial('getWriteHeaders returns token for launchpad', (t) => {
 });
 
 test.serial('getReadHeaders returns clientId and token for earthdata', (t) => {
-  const cmrInstance = new CMR({
+  const cmrInstance = CMR.getInstance({
     provider: 'provider',
     clientId: 'test-client-id',
     username: 'username',
@@ -154,7 +155,7 @@ test.serial('getReadHeaders returns clientId and token for earthdata', (t) => {
 });
 
 test.serial('getReadHeaders returns clientId and token for launchpad', (t) => {
-  const cmrInstance = new CMR({
+  const cmrInstance = CMR.getInstance({
     provider: 'provider',
     clientId: 'test-client-id',
     username: 'username',
@@ -168,7 +169,7 @@ test.serial('getReadHeaders returns clientId and token for launchpad', (t) => {
 });
 
 test.serial('ingestUMMGranule() returns CMRInternalError when CMR is down', async (t) => {
-  const cmrSearch = new CMR({ oauthProvider: 'launchpad', token: 'abc', clientId: 'client' });
+  const cmrSearch = CMR.getInstance({ oauthProvider: 'launchpad', token: 'abc', clientId: 'client' });
 
   const ummgMetadata = { GranuleUR: 'asdf' };
 
@@ -194,7 +195,7 @@ test.serial('ingestUMMGranule() returns CMRInternalError when CMR is down', asyn
 });
 
 test.serial('ingestUMMGranule() throws an exception if the input fails validation', async (t) => {
-  const cmrSearch = new CMR({ oauthProvider: 'launchpad', token: 'abc', clientId: 'client' });
+  const cmrSearch = CMR.getInstance({ oauthProvider: 'launchpad', token: 'abc', clientId: 'client' });
 
   const ummgMetadata = { GranuleUR: 'asdf' };
 
@@ -223,7 +224,7 @@ test.serial('ingestUMMGranule() throws an exception if the input fails validatio
 });
 
 test.serial('ingestUMMGranule refreshes launchpad token on 401 and retries successfully', async (t) => {
-  const cmrSearch = new CMR({
+  const cmrSearch = CMR.getInstance({
     oauthProvider: 'launchpad',
     token: 'invalid-token',
     clientId: 'client',
@@ -259,7 +260,7 @@ test.serial('ingestUMMGranule refreshes launchpad token on 401 and retries succe
 });
 
 test.serial('getCmrPassword returns the set password if no secret exists', async (t) => {
-  const cmr = new CMR({ password: 'test-password' });
+  const cmr = CMR.getInstance({ password: 'test-password' });
 
   t.is(await cmr.getCmrPassword(), 'test-password');
 });
@@ -273,7 +274,7 @@ test.serial('getCmrPassword returns password from AWS secret when set', async (t
   });
 
   try {
-    const cmr = new CMR({ passwordSecretName: secretName, password: 'cmr-password' });
+    const cmr = CMR.getInstance({ passwordSecretName: secretName, password: 'cmr-password' });
 
     t.is(await cmr.getCmrPassword(), 'secretString');
   } finally {
@@ -285,7 +286,7 @@ test.serial('getCmrPassword returns password from AWS secret when set', async (t
 });
 
 test.serial('getToken returns a token when the user\'s token is provided', async (t) => {
-  const cmrObj = new CMR({
+  const cmrObj = CMR.getInstance({
     provider: 'CUMULUS',
     clientId: 'clientId',
     username: 'username',
@@ -297,7 +298,7 @@ test.serial('getToken returns a token when the user\'s token is provided', async
 });
 
 test.serial('getToken throws if no username is provided when using Earthdata Login', async (t) => {
-  const cmrObj = new CMR({
+  const cmrObj = CMR.getInstance({
     provider: 'CUMULUS',
     clientId: 'clientId',
     password: 'password',
@@ -311,7 +312,7 @@ test.serial('getToken throws if no username is provided when using Earthdata Log
 });
 
 test.serial('withCmrLaunchpadTokenRefreshRetry does not retry for non-launchpad clients', async (t) => {
-  const cmr = new CMR({
+  const cmr = CMR.getInstance({
     provider: 'CUMULUS',
     clientId: 'clientId',
     oauthProvider: 'earthdata',
@@ -332,7 +333,7 @@ test.serial('withCmrLaunchpadTokenRefreshRetry does not retry for non-launchpad 
 });
 
 test.serial('withCmrLaunchpadTokenRefreshRetry passes through non-401 errors without retry', async (t) => {
-  const cmr = new CMR({
+  const cmr = CMR.getInstance({
     provider: 'CUMULUS',
     clientId: 'clientId',
     oauthProvider: 'launchpad',
@@ -359,7 +360,7 @@ test.serial('withCmrLaunchpadTokenRefreshRetry passes through non-401 errors wit
 });
 
 test.serial('withCmrLaunchpadTokenRefreshRetry refreshes launchpad token on 401 and retries successfully', async (t) => {
-  const cmr = new CMR({
+  const cmr = CMR.getInstance({
     provider: 'CUMULUS',
     clientId: 'clientId',
     oauthProvider: 'launchpad',
@@ -388,7 +389,7 @@ test.serial('withCmrLaunchpadTokenRefreshRetry refreshes launchpad token on 401 
 });
 
 test.serial('withCmrLaunchpadTokenRefreshRetry exhausts retries and throws an error with preserved statusCode and cause', async (t) => {
-  const cmr = new CMR({
+  const cmr = CMR.getInstance({
     provider: 'CUMULUS',
     clientId: 'clientId',
     oauthProvider: 'launchpad',
@@ -421,7 +422,7 @@ test.serial('refreshLaunchpadToken updates the CMR token with getValidLaunchpadT
   const stub = sinon.stub(launchpad, 'getValidLaunchpadToken').resolves(validToken);
   t.teardown(() => stub.restore());
 
-  const cmr = new CMR({
+  const cmr = CMR.getInstance({
     provider: 'CUMULUS',
     clientId: 'clientId',
     oauthProvider: 'launchpad',
@@ -446,7 +447,7 @@ test.serial('refreshLaunchpadToken throws when passphrase, api, or certificate i
   const stub = sinon.stub(launchpad, 'getValidLaunchpadToken').resolves('Error');
   t.teardown(() => stub.restore());
 
-  const cmr = new CMR({
+  const cmr = CMR.getInstance({
     provider: 'CUMULUS',
     clientId: 'clientId',
     oauthProvider: 'launchpad',
@@ -472,7 +473,7 @@ test.serial('checkRefreshLaunchpadToken handles concurrent refresh calls correct
   const stub = sinon.stub(launchpad, 'getValidLaunchpadToken').returns(refreshPromise);
   t.teardown(() => stub.restore());
 
-  const cmr = new CMR({
+  const cmr = CMR.getInstance({
     provider: 'CUMULUS',
     clientId: 'clientId',
     oauthProvider: 'launchpad',
@@ -507,26 +508,34 @@ test.serial('getInstance creates a new CMR instance if one does not already exis
     oauthProvider: 'launchpad',
   });
 
-  const secondCMR = CMR.getInstance();
+  const secondCMR = CMR.getInstance({
+    provider: 'NOT-CUMULUS',
+    clientId: 'not-clientId',
+    oauthProvider: 'earthdata',
+  });
   t.is(firstCMR, secondCMR);
 });
 
 test.serial('getInstance returns the latest created CMR instance', (t) => {
-  const firstCMR = new CMR({
+  const firstCMR = CMR.getInstance({
     provider: 'CUMULUS',
     clientId: 'clientId',
     oauthProvider: 'launchpad',
   });
 
-  const secondCMR = new CMR({
+  const secondCMR = CMR.getInstance({
     provider: 'CMR',
     clientId: 'clientId2',
     oauthProvider: 'earthdata',
   });
 
-  const thirdCMR = CMR.getInstance();
+  const thirdCMR = CMR.getInstance({
+    provider: 'not-CMR-or-CUMULUS',
+    clientId: 'clientId3',
+    oauthProvider: 'earthdata',
+  });
   t.is(secondCMR, thirdCMR);
-  t.not(firstCMR, thirdCMR);
+  t.is(firstCMR, thirdCMR);
 });
 
 test.serial('resetInstance properly reverts the CMR singleton to undefined', (t) => {

@@ -49,10 +49,8 @@ async function removeLockFile(): Promise<Object | undefined> {
         response = await deleteS3Object(getSystemBucket(), getLockFileKey());
       } catch (error) {
         if (error instanceof Error && ['NoSuchKey', 'NotFound'].includes(error.name)) {
-          log.debug(`Launchpad token lock file already absent: ${error.name}`, error);
           return;
         }
-        log.debug(`Error in removeLockFile: ${error.name}`, error);
         throw error;
       }
     },
@@ -79,11 +77,9 @@ async function waitForLockFileRelease(
         if (error instanceof Error && ['NoSuchKey', 'NotFound'].includes(error.name)) {
           return;
         }
-        log.debug('Error in waitForLockFileRelease', error);
         throw new pRetry.AbortError(error);
       }
       if (head.LastModified && (Date.now() - head.LastModified.getTime() > LOCK_TTL_MS)) {
-        log.warn('waitForLockFileRelease found a stale lock file; removing it');
         await removeLockFile();
         return;
       }
@@ -134,7 +130,6 @@ async function isLockStale(): Promise<boolean> {
     if (error instanceof Error && ['NoSuchKey', 'NotFound'].includes(error.name)) {
       return false;
     }
-    log.debug('Error in isLockStale', error);
     throw error;
   }
 }
@@ -307,7 +302,6 @@ async function generateNewLaunchpadToken(config: LaunchpadTokenParams): Promise<
     await deleteS3Object(getSystemBucket(), getTokenFileKey());
   } catch (error) {
     if (!(error instanceof Error && ['NoSuchKey', 'NotFound'].includes(error.name))) {
-      log.debug('Error in generateNewLaunchpadToken', error);
       throw error;
     }
   }
@@ -329,7 +323,6 @@ async function acquireLock(): Promise<boolean> {
     if (error instanceof Error && error.name === 'PreconditionFailed') {
       return false;
     }
-    log.debug('Error in acquireLock', error);
     throw error;
   }
 }
@@ -349,27 +342,18 @@ export async function getValidLaunchpadToken(params: LaunchpadTokenParams): Prom
   try {
     // try to acquire the lock so the token can be created
     createdLock = await acquireLock();
-    log.debug(`getValidLaunchpadToken acquireLock result: ${createdLock}`);
     // some other process created the lock, but we need to check if its stale
     if (!createdLock && await isLockStale()) {
-      log.warn('Found stale launchpad token lock file: removing it and retrying');
       await removeLockFile();
       createdLock = await acquireLock();
-      log.debug(`getValidLaunchpadToken second acquireLock result: ${createdLock}`);
     }
     // lost the token-creating race, so we wait and read like before
     if (!createdLock) {
-      log.debug('getValidLaunchpadToken taking wait-and-read path');
       return await getLaunchpadToken(params);
     }
-    log.debug('getValidLaunchpadToken taking generate-new-token path');
     return await generateNewLaunchpadToken(params);
-  } catch (error) {
-    log.error('Error during Launchpad token generation:', error);
-    throw error;
   } finally {
     if (createdLock) {
-      log.debug('getValidLaunchpadToken removing lock file in finally');
       try {
         await removeLockFile();
       } catch (error) {

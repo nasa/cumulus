@@ -106,19 +106,24 @@ export class CMR {
     this.passphrase = params.passphrase;
     this.api = params.api;
     this.certificate = params.certificate;
-
-    CMR.instance = this;
   }
 
   /**
    * Creates a new CMR singleton instance of one does not already exist,
    * if one does, returns it
+   * @returns {CMR} - the existing or newly made CMR instance
    */
-  static getInstance(params: CMRConstructorParams) {
+  static getInstance(params: CMRConstructorParams): CMR {
     if (!CMR.instance) {
       CMR.instance = new CMR(params);
     } else {
-      log.warn('Returning existing CMR configuration. If you are attempting to use different parameters to create a new instance, please add them and restart the lambda');
+      const { clientId, provider, username, oauthProvider, api } = CMR.instance;
+      log.info(`Returning existing CMR configuration: {
+        clientId: ${clientId},
+        provider: ${provider},
+        username: ${username},
+        oauthProvider: ${oauthProvider},
+        api: ${api}}`);
     }
     return CMR.instance;
   }
@@ -245,10 +250,6 @@ export class CMR {
           retries,
           onFailedAttempt: async (error) => {
             if (error.retriesLeft > 0) {
-              log.warn(
-                `CMR call failed with 401 on attempt ${error.attemptNumber}, `
-                + 'refreshing launchpad token and retrying', error
-              );
               await this.checkRefreshLaunchpadToken();
             }
           },
@@ -256,9 +257,6 @@ export class CMR {
       );
     } catch (error) {
       if (error.statusCode === 401) {
-        log.error(
-          `CMR call failed with 401 after ${retries + 1} attempts; exhausted retries`, error
-        );
         throw Object.assign(
           new Error(
             `CMR launchpad authentication failed after ${retries + 1} attempts: ${error.message}`
