@@ -35,7 +35,6 @@ import {
   CopyObjectCommandOutput,
   CompleteMultipartUploadCommandOutput,
   GetObjectTaggingCommandOutput,
-  RequestPayer,
 } from '@aws-sdk/client-s3';
 import { Upload, Options as UploadOptions } from '@aws-sdk/lib-storage';
 
@@ -150,7 +149,7 @@ export const s3TagSetToQueryString = (tagset: Tagging['TagSet']) =>
  * @param {string} key - key of the object to be deleted
  * @returns {Promise} promise of the object being deleted
  */
-export const deleteS3Object = (bucket: string, key: string, requesterPays: boolean) =>
+export const deleteS3Object = (bucket: string, key: string, requesterPays: boolean = true) =>
   s3().deleteObject({ Bucket: bucket, Key: key , RequestPayer: parseRequesterPays(requesterPays)});
 
 export const deleteS3Objects = (params: {
