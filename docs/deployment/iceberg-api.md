@@ -10,7 +10,7 @@ It is separate from the main Cumulus API and provides read/list access for suppo
 
 ## When to use Iceberg API vs Cumulus API
 
-- Use Iceberg API for read-only list and aggregate queries on supported resources. It offers much better query performance than the Cumulus API, with results that may be delayed by approximately 1 minute.
+- Use Iceberg API for read-only list and aggregate queries on supported resources. It offers better query performance than the Cumulus API, with results that may be delayed by approximately 1 minute.
 - Use Cumulus API for write operations and management workflows (create, update, delete, and operational actions).
 - Use Cumulus API when you need endpoints that are not exposed by Iceberg API.
 

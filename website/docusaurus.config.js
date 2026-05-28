@@ -76,7 +76,9 @@ module.exports = {
           position: 'left',
         },
         {
-          to: '/docs/next/deployment/iceberg-api',
+          type: 'custom-icebergVersioned',
+          docPath: 'deployment/iceberg-api',
+          minVersion: 'v22.0.1',
           label: 'Iceberg API',
           position: 'left',
         },
