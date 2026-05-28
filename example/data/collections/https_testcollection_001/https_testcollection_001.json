@@ -22,5 +22,5 @@
     }
   ],
   "cmrProvider": "CUMULUS",
-  "metricsProviderMULUS"
+  "metricsProvider": "CUMULUS"
 }
