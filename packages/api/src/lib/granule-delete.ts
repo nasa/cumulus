@@ -59,12 +59,12 @@ export const deleteGranuleAndFiles = async (params: {
   granulePgModel?: GranulePgModel,
   collectionPgModel?: CollectionPgModel,
   collectionCumulusId?: number,
-  missionAndCmrProvider?: { metrics_provider: string, cmrProvider: string },
+  metricsAndCmrProvider?: { metrics_provider: string, cmrProvider: string },
 }) => {
   const {
     knex,
     pgGranule,
-    missionAndCmrProvider,
+    metricsAndCmrProvider,
     filePgModel = new FilePgModel(),
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
@@ -92,13 +92,13 @@ export const deleteGranuleAndFiles = async (params: {
   });
   let metrics_provider;
   let cmrProvider;
-  if (missionAndCmrProvider) {
-    ({ metrics_provider, cmrProvider } = missionAndCmrProvider);
+  if (metricsAndCmrProvider) {
+    ({ metrics_provider, cmrProvider } = metricsAndCmrProvider);
   } else {
     ({
       metrics_provider,
       cmr_provider: cmrProvider,
-    } = await collectionPgModel.getMissionAndCmrProvider(knex, pgGranule.collection_cumulus_id));
+    } = await collectionPgModel.getMetricsAndCmrProvider(knex, pgGranule.collection_cumulus_id));
   }
   try {
     await granulePgModel.delete(knex, {

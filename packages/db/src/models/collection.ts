@@ -29,7 +29,7 @@ class CollectionPgModel extends BasePgModel<PostgresCollection, PostgresCollecti
       .merge()
       .returning('*');
   }
-  async getMissionAndCmrProvider(
+  async getMetricsAndCmrProvider(
     knexOrTransaction: Knex | Knex.Transaction,
     collectionCumulusId: number
   ): Promise<{ metrics_provider: string, cmr_provider: string }> {

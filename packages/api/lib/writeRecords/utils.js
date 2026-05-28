@@ -156,7 +156,7 @@ const getCollectionCumulusId = async (
  * @throws {Error} Throws an error if there is a problem with the database lookup
  * that is not a failed lookup.
  */
-const getCollectionMissionAndCmrProvider = async (
+const getCollectionMetricsAndCmrProvider = async (
   collectionCumulusId,
   knex,
   collectionPgModel = new CollectionPgModel()
@@ -164,7 +164,7 @@ const getCollectionMissionAndCmrProvider = async (
   const {
     metrics_provider,
     cmr_provider: cmrProvider,
-  } = await collectionPgModel.getMissionAndCmrProvider(knex, collectionCumulusId);
+  } = await collectionPgModel.getMetricsAndCmrProvider(knex, collectionCumulusId);
   return {
     metrics_provider,
     cmrProvider,
@@ -268,7 +268,7 @@ module.exports = {
   getParentExecution,
   getProviderCumulusId,
   getCollectionCumulusId,
-  getCollectionMissionAndCmrProvider,
+  getCollectionMetricsAndCmrProvider,
   getMessageProviderCumulusId,
   isStatusFinalState,
   isStatusActiveState,

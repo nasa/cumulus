@@ -287,13 +287,13 @@ const _removeExcessFiles = async ({
 * @param {Object} params
 * @param {string} params.snsEventType
 * @param {PostgresGranuleRecord} params.pgGranule
-* @param {{metrics_provider: string, cmrProvider: string} | null} [params.missionAndCmrProvider=null]
+* @param {{metrics_provider: string, cmrProvider: string} | null} [params.metricsAndCmrProvider=null]
 * @param {Knex} params.knex - Instance of a Knex client
 */
 const _publishPostgresGranuleUpdateToSns = async ({
   snsEventType,
   pgGranule,
-  missionAndCmrProvider = null,
+  metricsAndCmrProvider = null,
   knex,
 }) => {
   const translatedGranule = await translatePostgresGranuleToApiGranule({
@@ -302,14 +302,14 @@ const _publishPostgresGranuleUpdateToSns = async ({
   });
   let metrics_provider;
   let cmrProvider;
-  if (missionAndCmrProvider) {
-    ({ metrics_provider, cmrProvider } = missionAndCmrProvider);
+  if (metricsAndCmrProvider) {
+    ({ metrics_provider, cmrProvider } = metricsAndCmrProvider);
   } else {
     const collectionPgModel = new CollectionPgModel();
     ({
       metrics_provider,
       cmr_provider: cmrProvider,
-    } = await collectionPgModel.getMissionAndCmrProvider(
+    } = await collectionPgModel.getMetricsAndCmrProvider(
       knex,
       pgGranule.collection_cumulus_id
     ));

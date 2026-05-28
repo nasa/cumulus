@@ -165,7 +165,7 @@ const _writeExecutionRecord = async ({
  * @param {PostgresExecution} params.postgresRecord - Execution PostgreSQL record to be written
  * @param {Knex} params.knex - Knex client
  * @param {ExecutionPgModelType} [params.executionPgModel] - PostgreSQL execution model
- * @param {{metrics_provider: string, cmrProvider: string} | null} params.missionAndCmrProvider - collection
+ * @param {{metrics_provider: string, cmrProvider: string} | null} params.metricsAndCmrProvider - collection
  * metrics_provider and cmr provider inherited from calling function. will be determined if left null
  * @param {boolean} [params.writeConstraints] - Boolean flag to set if record write constraints
  *   apply
@@ -176,7 +176,7 @@ const _writeExecutionAndPublishSnsMessage = async ({
   postgresRecord,
   knex,
   executionPgModel,
-  missionAndCmrProvider = null,
+  metricsAndCmrProvider = null,
   writeConstraints = true,
 }) => {
   const writeExecutionResponse = await _writeExecutionRecord(
@@ -195,14 +195,14 @@ const _writeExecutionAndPublishSnsMessage = async ({
   const collectionCumulusId = postgresRecord.collection_cumulus_id;
   let metrics_provider = '';
   let cmrProvider = '';
-  if (missionAndCmrProvider) {
-    ({ metrics_provider, cmrProvider } = missionAndCmrProvider);
+  if (metricsAndCmrProvider) {
+    ({ metrics_provider, cmrProvider } = metricsAndCmrProvider);
   } else if (collectionCumulusId) {
     const collectionPgModel = new CollectionPgModel();
     ({
       metrics_provider,
       cmr_provider: cmrProvider,
-    } = await collectionPgModel.getMissionAndCmrProvider(
+    } = await collectionPgModel.getMetricsAndCmrProvider(
       knex,
       collectionCumulusId
     ));
@@ -228,7 +228,7 @@ const _writeExecutionAndPublishSnsMessage = async ({
  * @param {number} [params.asyncOperationCumulusId] - Identifier for the associated async operation
  * @param {number} [params.parentExecutionCumulusId] - Identifier for the parent execution
  * @param {Date} [params.parentExecutionCreatedAt] - Creation timestamp of the parent execution
- * @param {{metrics_provider: string, cmrProvider: string} | null} params.missionAndCmrProvider
+ * @param {{metrics_provider: string, cmrProvider: string} | null} params.metricsAndCmrProvider
  * @param {number} [params.updatedAt=Date.now()] - Timestamp (in ms) used for record updateAt field
  * @returns {Promise<PostgresExecutionRecord>} - write message response
  */
@@ -239,7 +239,7 @@ const writeExecutionRecordFromMessage = async ({
   asyncOperationCumulusId,
   parentExecutionCumulusId,
   parentExecutionCreatedAt,
-  missionAndCmrProvider = null,
+  metricsAndCmrProvider = null,
   updatedAt = Date.now(),
 }) => {
   const postgresRecord = buildExecutionRecord({
@@ -253,7 +253,7 @@ const writeExecutionRecordFromMessage = async ({
   const writeExecutionResponse = await _writeExecutionAndPublishSnsMessage({
     // Re-add arn to satisfy TS type checking
     postgresRecord: { ...omitBy(postgresRecord, isUndefined), arn: postgresRecord.arn },
-    missionAndCmrProvider,
+    metricsAndCmrProvider,
     knex,
   });
   return writeExecutionResponse;

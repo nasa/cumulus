@@ -81,18 +81,18 @@ test('CollectionPgModel.upsert() overwrites a collection record', async (t) => {
   );
 });
 
-test('CollectionPgModel.getMissionAndCmrProvider() gets a collection metrics_provider and cmr provider', async (t) => {
+test('CollectionPgModel.getMetricsAndCmrProvider() gets a collection metrics_provider and cmr provider', async (t) => {
   const {
     knex,
     collectionPgModel,
     collectionRecord,
   } = t.context;
   const [dbCollection] = await collectionPgModel.create(knex, collectionRecord);
-  const missionAndCmrProvider = await collectionPgModel.getMissionAndCmrProvider(
+  const metricsAndCmrProvider = await collectionPgModel.getMetricsAndCmrProvider(
     knex,
     dbCollection.cumulus_id
   );
-  t.deepEqual(missionAndCmrProvider, {
+  t.deepEqual(metricsAndCmrProvider, {
     metrics_provider: collectionRecord.metrics_provider,
     cmr_provider: collectionRecord.cmr_provider,
   });
@@ -102,11 +102,11 @@ test('CollectionPgModel.getMissionAndCmrProvider() gets a collection metrics_pro
   });
 
   const [dbCollections] = await collectionPgModel.create(knex, collectionRecord2);
-  const missionAndCmrProvider2 = await collectionPgModel.getMissionAndCmrProvider(
+  const metricsAndCmrProvider2 = await collectionPgModel.getMetricsAndCmrProvider(
     knex,
     dbCollections.cumulus_id
   );
-  t.deepEqual(missionAndCmrProvider2, {
+  t.deepEqual(metricsAndCmrProvider2, {
     metrics_provider: collectionRecord2.metrics_provider,
     cmr_provider: collectionRecord2.cmr_provider,
   });
