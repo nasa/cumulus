@@ -55,13 +55,27 @@ jobs:
             echo "tag=latest" >> $GITHUB_OUTPUT
           fi
 
-      - name: Build and push
+      - name: Build (PR check)
+        if: github.event_name == 'pull_request'
         uses: docker/build-push-action@v5
         with:
           context: ./packages/iceberg-replication
           file: ./packages/iceberg-replication/Dockerfile.bootstrap
           platforms: linux/arm64
-          push: ${{ github.event_name != 'pull_request' }} # change to `true` to always push
+          push: false
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push
+        if: github.event_name != 'pull_request' # remove this to force PR pushes as well
+        uses: docker/build-push-action@v5
+        with:
+          context: ./packages/iceberg-replication
+          file: ./packages/iceberg-replication/Dockerfile.bootstrap
+          platforms: linux/arm64
+          push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
