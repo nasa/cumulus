@@ -206,6 +206,7 @@ export TS_BUILD_CACHE_FILE=ts-build-cache.tgz
 
 ## Function to set ICEBERG_IMAGE_VERSION based on PUBLISH_FLAG
 set_iceberg_image_version() {
+  # Must be run from the Cumulus source root so relative paths like lerna.json resolve correctly.
   echo "***Bamboo plan revision: $bamboo_plan_revision"
   if [[ $PUBLISH_FLAG == true ]]; then
     ICEBERG_IMAGE_VERSION=$(jq --raw-output .version lerna.json)
