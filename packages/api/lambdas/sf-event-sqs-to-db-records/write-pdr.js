@@ -145,7 +145,7 @@ const writePdr = async ({
   } else {
     const collectionPgModel = new CollectionPgModel();
     ({
-      metricsProvider,
+      metrics_provider: metricsProvider,
       cmr_provider: cmrProvider,
     } = await collectionPgModel.getMetricsAndCmrProvider(knex, pgPdr.collection_cumulus_id));
   }
@@ -155,6 +155,7 @@ const writePdr = async ({
     cmrProvider,
     ...translatedPdr,
   };
+  console.log(metricsPdr);
 
   await publishPdrSnsMessage(metricsPdr);
   return pdrCumulusId;

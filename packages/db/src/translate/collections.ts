@@ -26,7 +26,7 @@ export const translatePostgresCollectionToApiCollection = (
   meta: parseIfJson(collectionRecord.meta),
   tags: parseIfJson(collectionRecord.tags),
   cmrProvider: collectionRecord.cmr_provider,
-  metrics_provider: collectionRecord.metrics_provider,
+  metricsProvider: collectionRecord.metrics_provider,
 }));
 
 /**
@@ -53,7 +53,7 @@ export const translateApiCollectionToPostgresCollection = (
     ignore_files_config_for_discovery: record.ignoreFilesConfigForDiscovery,
     meta: record.meta,
     cmr_provider: record.cmrProvider,
-    metrics_provider: record.metrics_provider,
+    metrics_provider: record.metricsProvider,
     // have to stringify on an array of values
     tags: (record.tags ? JSON.stringify(record.tags) : undefined),
   };
