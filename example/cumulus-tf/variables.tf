@@ -211,6 +211,12 @@ variable "tea_distribution_url" {
   default = null
 }
 
+variable "tea_distribution_url_per_cmr_provider" {
+  description = "Map of CMR provider short_name to TEA external endpoint URL. Used in consolidated deployments to route distribution URLs per Collection.cmrProvider. Falls back to tea_distribution_url for any provider not listed."
+  type        = map(string)
+  default     = {}
+}
+
 variable "sync_granule_s3_jitter_max_ms" {
   description = "Maximum random jitter in milliseconds for SyncGranule S3 operations (0-59000). Set to 0 to disable."
   type        = number
@@ -291,6 +297,18 @@ variable "iceberg_api_memory" {
   type        = number
   default     = 1024
   description = "The amount of memory in MB to reserve for the Iceberg API Fargate Task"
+}
+
+variable "duckdb_max_pool_size" {
+  type        = number
+  default     = 3
+  description = "Maximum number of DuckDB connections in the connection pool"
+}
+
+variable "duckdb_pool_rebuild_interval_seconds" {
+  type        = number
+  default     = 18000
+  description = "Seconds between preemptive DuckDB idle-pool rebuilds"
 }
 
 variable "api_service_autoscaling_min_capacity" {

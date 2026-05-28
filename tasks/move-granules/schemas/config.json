@@ -4,7 +4,6 @@
   "type": "object",
   "required": [
     "bucket",
-    "distribution_endpoint",
     "collection",
     "buckets"
   ],
@@ -35,7 +34,7 @@
     },
     "distribution_endpoint": {
       "type": "string",
-      "description": "The api distribution endpoint"
+      "description": "The api distribution endpoint. No longer consumed by this task; URL construction occurs in update-granules-cmr-metadata-file-links."
     },
     "collection": {
       "type": "object",

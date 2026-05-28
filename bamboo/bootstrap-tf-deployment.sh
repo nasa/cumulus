@@ -53,7 +53,7 @@ echo "Deploying Cumulus data-persistence module to $DEPLOYMENT"
   -var "subnet_ids=[\"$AWS_SUBNET\"]" \
   -var "vpc_id=$VPC_ID" \
   -var "rds_admin_access_secret_arn=$RDS_ADMIN_ACCESS_SECRET_ARN" \
-  -var "rds_security_group=$RDS_SECURITY_GROUP"\
+  -var "rds_security_group=$RDS_SECURITY_GROUP" \
   -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/$ROLE_BOUNDARY"
 
 cd ../cumulus-tf
@@ -70,6 +70,12 @@ echo "terraform {
 # Initialize deployment
 ../terraform init \
   -input=false
+
+set_iceberg_image_version
+
+DEPLOY_ICEBERG_API="${DEPLOY_ICEBERG_API:-false}"
+echo "Deploy Iceberg API: ${DEPLOY_ICEBERG_API}"
+echo "Using Iceberg API image version ${ICEBERG_IMAGE_VERSION}"
 
 # Deploy cumulus-tf via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
@@ -101,3 +107,5 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -var "metrics_es_host=$METRICS_ES_HOST" \
   -var "metrics_es_username=$METRICS_ES_USER" \
   -var "metrics_es_password=$METRICS_ES_PASS" \
+  -var "cumulus_iceberg_api_image_version=$ICEBERG_IMAGE_VERSION" \
+  -var "deploy_iceberg_api=$DEPLOY_ICEBERG_API"

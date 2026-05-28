@@ -26,3 +26,7 @@ export interface ApiPdr {
 export interface ApiPdrRecord extends ApiPdr {
   updatedAt: number
 }
+
+export interface MetricsPdrRecord extends ApiPdrRecord {
+  cmrProvider: string
+}

@@ -1496,6 +1496,7 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
     granuleInCmr,
     bucketsConfig,
     distributionBucketMap,
+    distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
   });
   t.is(report.okCount, matchingFilesInDb.length + privateFilesInDb.length);
 
@@ -1610,6 +1611,7 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
     granuleInCmr,
     bucketsConfig,
     distributionBucketMap,
+    distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
   });
 
   t.is(report.okCount, matchingFilesInDb.length + privateFilesInDb.length);
@@ -1713,7 +1715,11 @@ test.serial('reconciliationReportForGranuleFiles does not fail if no distributio
   };
 
   const report = await reconciliationReportForGranuleFiles({
-    granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap,
+    granuleInDb,
+    granuleInCmr,
+    bucketsConfig,
+    distributionBucketMap,
+    distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
   });
   t.is(report.okCount, matchingFilesInDb.length + privateFilesInDb.length);
 

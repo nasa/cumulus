@@ -248,9 +248,14 @@ variable "db_parameters" {
       apply_method = "pending-reboot"
     },
     {
-      name  = "rds.logical_replication"
-      value = "1"
-      apply_method = "pending-reboot"  # Requires restart
+      name         = "rds.logical_replication"
+      value        = "1"
+      apply_method = "pending-reboot" # Requires restart
+    },
+    {
+      name         = "max_locks_per_transaction"
+      value        = "256"
+      apply_method = "pending-reboot" # Requires restart
     },
   ]
 }

@@ -36,3 +36,13 @@ resource "aws_ecs_cluster" "default" {
 data "aws_iam_policy" "ECSInfrastructure" {
   arn = "arn:aws:iam::aws:policy/service-role/AmazonECSInfrastructureRolePolicyForVolumes"
 }
+
+resource "aws_security_group_rule" "efs_nfs_inbound" {
+  type                     = "ingress"
+  from_port                = 2049
+  to_port                  = 2049
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.no_ingress_all_egress.id
+  security_group_id        = aws_security_group.no_ingress_all_egress.id
+  description              = "Allow NFS traffic for EFS"
+}

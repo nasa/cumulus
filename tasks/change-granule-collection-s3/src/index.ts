@@ -31,7 +31,7 @@ import { CumulusMessage } from '@cumulus/types/message';
 import { getRequiredEnvVar } from '@cumulus/common/env';
 import { calculateObjectHash, copyObject, s3Join, s3ObjectExists } from '@cumulus/aws-client/S3';
 import { listGranules } from '@cumulus/api-client/granules';
-import { fetchDistributionBucketMap } from '@cumulus/distribution-utils';
+import { fetchDistributionBucketMap, resolveDistributionEndpoint } from '@cumulus/distribution-utils';
 import { getCMRCollectionId } from '@cumulus/cmrjs/cmr-utils';
 import {
   MB,
@@ -453,6 +453,22 @@ function updateGranuleMetadata(
   };
 }
 
+function parseDistributionEndpointMap(): Record<string, string> | undefined {
+  const raw = process.env.DISTRIBUTION_ENDPOINT_PER_CMR_PROVIDER;
+  if (!raw) return undefined;
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed;
+    }
+    log.warn(`DISTRIBUTION_ENDPOINT_PER_CMR_PROVIDER did not parse to a map; ignoring: ${raw}`);
+    return undefined;
+  } catch (error) {
+    log.warn(`Failed to parse DISTRIBUTION_ENDPOINT_PER_CMR_PROVIDER as JSON; ignoring. Error: ${(error as Error).message}`);
+    return undefined;
+  }
+}
+
 /**
  * Update the cmr objects to contain data adherent to the target granules they reflect
  */
@@ -462,7 +478,11 @@ export async function updateCMRData(
   cmrFilesByGranuleId: { [granuleId: string]: ValidApiFile },
   config: MassagedEventConfig
 ): Promise<{ [granuleId: string]: Object }> {
-  const distEndpoint = config.distribution_endpoint || getRequiredEnvVar('DISTRIBUTION_ENDPOINT');
+  const distEndpoint = resolveDistributionEndpoint(
+    config.targetCollection.cmrProvider,
+    parseDistributionEndpointMap(),
+    config.distribution_endpoint || process.env.DISTRIBUTION_ENDPOINT
+  );
   const bucketTypes = Object.fromEntries(Object.values(config.buckets)
     .map(({ name, type }) => [name, type]));
   const distributionBucketMap = await fetchDistributionBucketMap();

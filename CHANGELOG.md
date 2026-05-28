@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-4866**
+  - Add cmrProvider to sns output granules, executions, pdrs
+- **CUMULUS-4883**
+  - Add script to build Iceberg API docker image and push it to ECR as part of the build process
+- **CUMULUS-4705**
+  - Add Fargate task to cleanup old Iceberg table snapshots on a schedule
+- **CUMULUS-4711**
+  - Add integration tests for iceberg API
+- **CUMULUS-4664**
+  - A single Cumulus deployment can now serve granule data download links across multiple TEA hosts,
+    choosing the correct host per granule based on the collection's CMR provider. This makes it possible to
+    consolidate several Cumulus deployments into one while preserving the public download URLs that end users
+    and CMR records already depend on.
+  - Operators configure routing with a new `tea_distribution_url_per_cmr_provider` terraform variable,
+    which is a map from CMR provider to TEA base URL. Collections whose CMR provider is not in the map fall
+    back to the existing single `tea_distribution_url`, so single-deployment configurations continue to work unchanged.
+  - One precondition for consolidating deployments is that every S3 bucket name in the merged bucket map must be globally unique.
+- **CUMULUS-4873**
+  - Set max_locks_per_transaction database parameter to 256 to support better performance with new partitioning setup.
+
+### Changed
+
+- **CUMULUS-4776** Split iceberg replication into separate services and add support for partitioned tables
+
+## [v22.0.0] 2026-05-12
+
 ### Breaking Changes
 
 - **CUMULUS-4780**
@@ -100,6 +128,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated package overrides to address CVEs GHSA-43fc-jf86-j433 and GHSA-r5fr-rjxr-66jc.
   - added a `webpack` override to `/website/package.json` due to docusaurus conflicts
   - Upgraded package `uuid` to version ^11.1.1.
+  - Upgraded package `tmp` to address https://github.com/advisories/GHSA-ph9p-34f9-6g65
 - **CSD-100**
   - made changes to the `PrivateApiLambda` and `ApiEndpoints` lambdas to ensure the environment variables
     are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported
@@ -108,6 +137,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4844**
   - Fixed `@cumulus/db` `BaseSearch.shouldEstimateRowcount()` to compare against SQL generated
     by `baseCountQuery()` instead of a hardcoded query string, ensuring accurate detection of table count queries.
+- **CUMULUS-4874**
+  - Fixed `@cumulus/api` `endpoints/rules/patchRule` to delete old Kinesis and SNS resources prior
+    to allocating new resources.
+  - Refactored `@cumulus/api` `addSnsTrigger` to verify active Lambda permissions before adding permission.
+  - Updated snsRuleSpec.js integration test to verify that the updated rule with an existing
+    subscription topic correctly triggers workflows.
+  - Updated `packages/test-data` .nc mock granule files to match the checksums defined in their
+    signal validation files.
 
 ## [v21.3.3] 2026-04-10
 
@@ -9763,7 +9800,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v21.3.3...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v22.0.0...HEAD
+[v22.0.0]: https://github.com/nasa/cumulus/compare/v21.3.3...v22.0.0
 [v21.3.3]: https://github.com/nasa/cumulus/compare/v21.3.2...v21.3.3
 [v21.3.2]: https://github.com/nasa/cumulus/compare/v21.3.1...v21.3.2
 [v21.3.1]: https://github.com/nasa/cumulus/compare/v21.3.0...v21.3.1
