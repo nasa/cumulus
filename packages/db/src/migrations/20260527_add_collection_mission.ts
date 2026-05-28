@@ -7,7 +7,9 @@ export const up = async (knex: Knex): Promise<void> => {
 };
 
 export const down = async (knex: Knex): Promise<void> => {
-  await knex.schema.alterTable('collections', (table) => {
-    table.dropColumn('metrics_provider');
-  });
+  if (await knex.schema.hasColumn('collections', 'metrics_provider')) {
+    await knex.schema.alterTable('collections', (table) => {
+      table.dropColumn('metrics_provider');
+    });
+  }
 };
