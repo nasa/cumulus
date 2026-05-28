@@ -120,7 +120,7 @@ test.serial('isLockStale returns false when no lock file exists', async (t) => {
 test.serial('isLockStale returns true when lock file is older than TTL', async (t) => {
   const isLockStale = launchpad.__get__('isLockStale');
   const headObjectStub = sinon.stub(S3, 'headObject').resolves({
-    LastModified: new Date(Date.now() - 120 * 1000),
+    LastModified: new Date(Date.now() - 16 * 60 * 1000),
   });
   t.teardown(() => headObjectStub.restore());
 
@@ -150,6 +150,19 @@ test.serial('waitForLockFileRelease propagates non-NotFound S3 errors without re
 
   await t.throwsAsync(waitForLockFileRelease(5), { message: 'access denied' });
   t.is(headObjectStub.callCount, 1);
+});
+
+test.serial('waitForLockFileRelease removes a stale lock file and resolves', async (t) => {
+  const headObjectStub = sinon.stub(S3, 'headObject').resolves({
+    LastModified: new Date(Date.now() - 20 * 60 * 1000),
+  });
+  const removeLockFileStub = sinon.stub().resolves();
+
+  t.teardown(() => headObjectStub.restore());
+  t.teardown(launchpad.__set__('removeLockFile', removeLockFileStub));
+
+  await t.notThrowsAsync(waitForLockFileRelease(2));
+  t.true(removeLockFileStub.calledOnce);
 });
 
 test.serial('generateNewLaunchpadToken issues a valid token even when a cached token exists', async (t) => {

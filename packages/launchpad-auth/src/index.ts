@@ -34,7 +34,7 @@ const log = new Logger({ sender: '@cumulus/launchpad-auth' });
 const getSystemBucket = () => getEnvVar('system_bucket');
 const getLockFileKey = () => `${getEnvVar('stackName')}/launchpad/token-lock.json`;
 const getTokenFileKey = () => `${getEnvVar('stackName')}/launchpad/token.json`;
-const LOCK_TTL_MS = 15 * 1000;
+const LOCK_TTL_MS = 15 * 60 * 1000; // 15 min: max runtime of lambda
 
 /**
  * Remove the launchpad token lock file from S3.
