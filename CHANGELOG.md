@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4898**
+  - Add Iceberg API documentation page to Cumulus Documentation
+    Once released, the Iceberg API doc should be at: https://nasa.github.io/cumulus/docs/next/deployment/iceberg-api
 - **CUMULUS-4891**
   - Add scripts to build Iceberg replication docker images and push them to ECR as part of the build process
 - **CUMULUS-4866**
