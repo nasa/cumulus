@@ -187,8 +187,8 @@ export const deleteS3Objects = (params: {
 export const headObject = (
   Bucket: string,
   Key: string,
-  retryOptions: pRetry.Options = { retries: 0 },
-  requesterPays: boolean = true
+  requesterPays: boolean = true,
+  retryOptions: pRetry.Options = { retries: 0 }
 ): Promise<HeadObjectOutput> =>
   pRetry(
     async () => {
@@ -215,7 +215,7 @@ export const headObject = (
  *                             if the object exists
  */
 export const s3ObjectExists = (params: { Bucket: string, Key: string, requesterPays?: boolean }) =>
-  headObject(params.Bucket, params.Key, params.requesterPays || true)
+  headObject(params.Bucket, params.Key, params.requesterPays)
     .then(() => true)
     .catch((error) => {
       if (error.name === 'NotFound') return false;
@@ -364,7 +364,7 @@ export const getObjectReadStream = async (params: {
   s3: { getObject: GetObjectMethod },
   bucket: string,
   key: string,
-  requesterPays?: boolean | 'requester',
+  requesterPays?: boolean,
 }): Promise<Readable> => {
   // eslint-disable-next-line no-shadow
   const { s3: s3Client, bucket, key, requesterPays = true } = params;
@@ -651,7 +651,7 @@ export const deleteS3Files = async (
   s3Objs: DeleteObjectRequest[]
 ): Promise<DeleteObjectCommandOutput[]> => await pMap(
   s3Objs,
-  (s3Obj) => s3().deleteObject(s3Obj), // no clear way to pass requesterPays here?
+  (s3Obj) => s3().deleteObject(s3Obj),
   { concurrency: S3_RATE_LIMIT }
 );
 
@@ -784,7 +784,8 @@ export const listS3Objects = async (
  * @static
  */
 export const listS3ObjectsV2 = async (
-  params: ListObjectsV2Request
+  params: ListObjectsV2Request,
+  requesterPays: boolean = true
 ): Promise<ListObjectsCommandOutput['Contents']> => {
   // Fetch the first list of objects from S3
   let listObjectsResponse = await s3().listObjectsV2(params);
@@ -799,6 +800,7 @@ export const listS3ObjectsV2 = async (
       {
 
         ...params,
+        RequestPayer: parseRequesterPays(requesterPays),
         ContinuationToken: listObjectsResponse.NextContinuationToken,
       }
     ));
@@ -826,7 +828,8 @@ export const listS3ObjectsV2 = async (
  * @static
  */
 export async function* listS3ObjectsV2Batch(
-  params: ListObjectsV2Request
+  params: ListObjectsV2Request,
+  requesterPays: boolean = true
 ): AsyncIterable<ListObjectsCommandOutput['Contents']> {
   let listObjectsResponse = await s3().listObjectsV2(params);
 
@@ -840,6 +843,7 @@ export async function* listS3ObjectsV2Batch(
       {
 
         ...params,
+        RequestPayer: parseRequesterPays(requesterPays),
         ContinuationToken: listObjectsResponse.NextContinuationToken,
       }
     ));
@@ -855,16 +859,17 @@ export async function* listS3ObjectsV2Batch(
 **/
 export const recursivelyDeleteS3Bucket = improveStackTrace(
   async (bucket: string, requesterPays: boolean = true): Promise<DeleteBucketCommandOutput> => {
+    const RequestPayer = parseRequesterPays(requesterPays);
     for await (
       const objectBatch of listS3ObjectsV2Batch({
         Bucket: bucket,
-        RequestPayer: parseRequesterPays(requesterPays)
+        RequestPayer
       })
     ) {
       if (objectBatch) {
         const deleteRequests = objectBatch.filter(
           (obj) => obj.Key
-        ).map((obj) => ({ Bucket: bucket, Key: obj.Key }));
+        ).map((obj) => ({ Bucket: bucket, Key: obj.Key, RequestPayer}));
         await deleteS3Files(deleteRequests);
       }
     }
@@ -1110,7 +1115,6 @@ export const multipartCopyObject = async (
   const sourceObject = params.sourceObject ?? await headObject(
     sourceBucket,
     sourceKey,
-    undefined,
     requesterPays
   );
 
