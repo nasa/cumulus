@@ -76,7 +76,7 @@ test.serial('the queue receives a correctly formatted workflow message without a
     templateBucket,
     stackName,
   } = t.context;
-  const collection = { name: 'test-collection', version: '0.0.0', cmrProvider: 'provider' };
+  const collection = { name: 'test-collection', version: '0.0.0', metricsProvider: 'metricsProvider', cmrProvider: 'provider' };
   const provider = { id: 'test-provider' };
 
   let output;
@@ -145,7 +145,7 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
     templateBucket,
     stackName,
   } = t.context;
-  const collection = { name: 'test-collection', version: '0.0.0', cmrProvider: 'provider' };
+  const collection = { name: 'test-collection', version: '0.0.0', metricsProvider: 'metricsProvider', cmrProvider: 'provider' };
   const provider = { id: 'test-provider' };
   const pdr = { name: randomString(), path: randomString() };
   const arn = randomString();
@@ -219,7 +219,7 @@ test.serial('enqueueGranuleIngestMessage does not transform granule objects ', a
     foo: 'bar', // should not be removed or altered
   };
   const { queueUrl } = t.context;
-  const collection = { name: 'test-collection', version: '0.0.0', cmrProvider: 'provider' };
+  const collection = { name: 'test-collection', version: '0.0.0', metricsProvider: 'metricsProvider', cmrProvider: 'provider' };
   const provider = { id: 'test-provider' };
 
   const {
@@ -277,7 +277,7 @@ test.serial('enqueueGranuleIngestMessage uses the executionNamePrefix if specifi
     workflow,
   } = t.context;
 
-  const collection = { name: 'test-collection', version: '0.0.0', cmrProvider: 'provider' };
+  const collection = { name: 'test-collection', version: '0.0.0', metricsProvider: 'metricsProvider', cmrProvider: 'provider' };
   const provider = { id: 'test-provider' };
 
   const granule = {
@@ -370,6 +370,7 @@ test.serial('enqueueParsePdrMessage does not overwrite the collection or provide
     name: 'ABC123',
     version: '001',
     cmrProvider: 'provider',
+    metricsProvider: 'metricsProvider',
   };
 
   const provider = {
@@ -423,6 +424,7 @@ test.serial('enqueueGranuleIngestMessage does not overwrite the collection or pr
     name: 'ABC123',
     version: '001',
     cmrProvider: 'provider',
+    metricsProvider: 'metricsProvider',
   };
 
   const provider = {

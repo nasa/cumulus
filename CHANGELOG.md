@@ -17,6 +17,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add Iceberg API documentation page to Cumulus Documentation
     Once released, the Iceberg API doc should be at: https://nasa.github.io/cumulus/docs/next/deployment/iceberg-api
 - **CUMULUS-4866**
+  - Add metrics_provider to pg database collection model
+  - Add metrics_provider to iceberg schema
+  - Add metrics_provider to sns outputs to creation/update/delete executions, granules, pdrs
+- **CUMULUS-4866**
   - Add cmrProvider to sns output granules, executions, pdrs
 - **CUMULUS-4883**
   - Add script to build Iceberg API docker image and push it to ECR as part of the build process

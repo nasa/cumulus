@@ -113,6 +113,7 @@ const generateRDSCollectionRecord = (params) => ({
   files: JSON.stringify([{ regex: '^.*\\.txt$', sampleFileName: 'file.txt', bucket: 'bucket' }]),
   created_at: new Date(),
   cmr_provider: 'provider',
+  metrics_provider: 'metricsProvider',
   updated_at: new Date(),
   ...params,
 });
