@@ -35,10 +35,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-4776** Split iceberg replication into separate services and add support for partitioned tables
 - **CUMULUS-4882**
-  - Updated the trigger on the granules table to track collection updates and introduced a
+  - Updated the triggers on the granules table to track collection updates and introduced a
     `cumulus.allow_collection_update` setting to authorize cross-collection shifts.
-  - Cross-collection collision checks are now executed only when an actual unique constraint
-    conflict occurs during ingest.
+  - Modified `@cumulus/api` `granule.updateBatchGranulesCollection` method to use a transaction-scoped
+    `SET LOCAL cumulus.allow_collection_update = 'true'` flag to safely authorize bulk collection updates.
+  - Optimized `@cumulus/db` `granule.upsert` and `@cumulus/api/lib` `write-granule` to perform
+    cross-collection collision checks only on actual unique constraint conflicts during ingest.
   - Updated the `db_partition_config` variable in `tf-modules/data-persistence` to accept null
     values and automatically fall back to defaults.
 

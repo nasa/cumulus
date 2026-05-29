@@ -60,8 +60,8 @@ it can be updated with Standard Migrations later as new patches are released.
   npx knex migrate:make migration_name
 ```
 
-This will create a new migration file under migrations/. Please do not modify the existing files in
-migrations/ directory.
+This will create a new migration file under `migrations`. Please do not modify the existing files in
+migrations directory.
 
 **Important: Schema Synchronization**
 Because `Standard Migrations` uses patches and the `Bootstrap Mode` uses a "clean slate" model,
