@@ -1,9 +1,8 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const { s3 } = require('@cumulus/aws-client/services')
+const { s3 } = require('@cumulus/aws-client/services');
 
 const {
-  buildS3Client,
   retrieveKey,
 } = require('../key-pair-provider');
 

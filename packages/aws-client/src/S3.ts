@@ -63,7 +63,12 @@ export type GetObjectMethod = (params: GetObjectCommandInput) => Promise<GetObje
 
 const parseRequesterPays = (
   requesterPays?: Boolean
-): 'requester' | undefined => requesterPays ? 'requester' : undefined;
+): 'requester' | undefined => {
+  if (requesterPays) {
+    return 'requester';
+  }
+  return undefined;
+};
 
 const buildDeprecationMessage = (
   name: string,
@@ -279,10 +284,10 @@ export const s3PutObject = async (
   requesterPays: boolean = true
 ): Promise<PutObjectCommandOutput> => {
   const RequestPayer = parseRequesterPays(
-    requesterPays,
-  )
+    requesterPays
+  );
   await applyS3Jitter(s3JitterMaxMs, `putObject(${params.Bucket}/${params.Key})`);
-  return s3().putObject({ ...params, RequestPayer});
+  return s3().putObject({ ...params, RequestPayer });
 };
 
 /**
@@ -324,7 +329,7 @@ export const s3CopyObject = async (
  * see https://github.com/aws/aws-sdk-js-v3/tree/main/lib/lib-storage
  */
 export const promiseS3Upload = async (
-  params: Omit<UploadOptions, 'client' | 'RequestPayer'>,
+  params: Omit<UploadOptions, 'client' | 'RequestPayer'>
 ): Promise<{ ETag?: string, [key: string]: any }> => {
   await applyS3Jitter(s3JitterMaxMs, `upload(${params.params?.Bucket}/${params.params?.Key})`);
   const parallelUploads = new Upload({
@@ -627,7 +632,7 @@ export const putJsonS3Object = (
     Key: key,
     Body: JSON.stringify(data),
   },
-  requesterPays,
+  requesterPays
 );
 
 /**
@@ -884,7 +889,7 @@ export const recursivelyDeleteS3Bucket = improveStackTrace(
       if (objectBatch) {
         const deleteRequests = objectBatch.filter(
           (obj) => obj.Key
-        ).map((obj) => ({ Bucket: bucket, Key: obj.Key}));
+        ).map((obj) => ({ Bucket: bucket, Key: obj.Key }));
         await deleteS3Files(deleteRequests, requesterPays);
       }
     }
@@ -1239,7 +1244,7 @@ export const copyObject = async ({
         Key: destinationKey,
       },
       requesterPays
-  );
+    );
     // This error should never actually be reached in practice. It's a
     // necessary workaround for bad typings in the AWS SDK.
     // https://github.com/aws/aws-sdk-js/issues/1719
