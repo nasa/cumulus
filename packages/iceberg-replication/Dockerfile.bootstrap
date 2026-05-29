@@ -1,0 +1,32 @@
+FROM python:3.12
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  postgresql-client \
+  unzip \
+  gettext \
+  jq \
+  vim \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    default-jdk maven \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV JAVA_HOME=/usr/lib/jvm/default-java
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
+
+COPY ./java ./java
+RUN cd java && mvn clean package && cd ..
+
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
+RUN unzip awscliv2.zip
+RUN ./aws/install
+ENV PATH="/usr/local/aws-cli/v2/current/bin:${PATH}"
+COPY ./scripts/requirements.txt ./scripts/requirements.txt
+RUN pip install -r ./scripts/requirements.txt
+COPY ./scripts ./scripts
+RUN ./scripts/download_jars.sh
+RUN cp java/target/iceberg-cdc-helper-1.0.0.jar ./scripts/jars
+COPY ./resources ./resources
+RUN mkdir -p ./spark-tmp
+CMD ["./scripts/bootstrap.sh"]
