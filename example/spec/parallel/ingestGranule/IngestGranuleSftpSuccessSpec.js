@@ -130,7 +130,7 @@ describe('The SFTP Ingest Granules workflow', () => {
         testGranule.files,
         async ({ bucket, key }) => {
           const headObjectResponse = await headObject(
-            bucket, key, { retries: 5 }
+            bucket, key, true, { retries: 5 }
           );
 
           return [

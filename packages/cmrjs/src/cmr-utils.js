@@ -357,7 +357,7 @@ async function getObjectByFilename(filename, etag) {
     ? { Bucket, Key, IfMatch: etag }
     : { Bucket, Key };
 
-  return await waitForObject(s3(), params, { retries: 5 });
+  return await waitForObject(s3(), params, true, { retries: 5 });
 }
 
 /**

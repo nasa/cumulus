@@ -62,7 +62,7 @@ const s3JitterMaxMs = Number(process.env.S3_JITTER_MAX_MS || 0);
 export type GetObjectMethod = (params: GetObjectCommandInput) => Promise<GetObjectOutput>;
 
 const parseRequesterPays = (
-  requesterPays?: Boolean
+  requesterPays?: boolean
 ): 'requester' | undefined => {
   if (requesterPays) {
     return 'requester';
@@ -329,11 +329,16 @@ export const s3CopyObject = async (
  * see https://github.com/aws/aws-sdk-js-v3/tree/main/lib/lib-storage
  */
 export const promiseS3Upload = async (
-  params: Omit<UploadOptions, 'client' | 'RequestPayer'>
+  params: Omit<UploadOptions, 'client'>,
+  requesterPays: boolean = true
 ): Promise<{ ETag?: string, [key: string]: any }> => {
   await applyS3Jitter(s3JitterMaxMs, `upload(${params.params?.Bucket}/${params.params?.Key})`);
   const parallelUploads = new Upload({
     ...params,
+    params: {
+      ...params.params,
+      RequestPayer: parseRequesterPays(requesterPays),
+    },
     client: s3(),
   });
 
@@ -400,7 +405,7 @@ export const getObjectReadStream = async (params: {
 export const downloadS3File = async (
   s3Obj: Omit<GetObjectCommandInput, 'RequestPayer'>,
   filepath: string,
-  requesterPays?: boolean
+  requesterPays: boolean = true
 ): Promise<string> => {
   if (!s3Obj.Bucket || !s3Obj.Key) {
     throw new Error('Bucket and Key are required');
@@ -455,14 +460,18 @@ export const getObjectSize = async (
 * Get object Tagging from S3
 **/
 export const s3GetObjectTagging = (
-  bucket: string, key: string, requesterPays?: boolean
+  bucket: string, key: string, requesterPays: boolean = true
 ): Promise<GetObjectTaggingCommandOutput> => s3().getObjectTagging({
   Bucket: bucket,
   Key: key,
   RequestPayer: parseRequesterPays(requesterPays),
 });
 
-const getObjectTags = async (bucket: string, key: string, requesterPays?: boolean) => {
+const getObjectTags = async (
+  bucket: string,
+  key: string,
+  requesterPays: boolean = true
+) => {
   const taggingResponse = await s3GetObjectTagging(bucket, key, requesterPays);
 
   return taggingResponse?.TagSet?.reduce(
@@ -478,7 +487,8 @@ const getObjectTags = async (bucket: string, key: string, requesterPays?: boolea
 
 const getObjectTaggingString = async (
   bucket: string,
-  key: string, requesterPays?: boolean
+  key: string,
+  requesterPays: boolean = true
 ): Promise<string> => {
   const tags = await getObjectTags(bucket, key, requesterPays);
 
@@ -606,7 +616,7 @@ export const getObjectStreamContents = async (
 export const getTextObject = (
   bucket: string,
   key: string,
-  requesterPays?: boolean
+  requesterPays: boolean = true
 ): Promise<string> =>
   getObjectReadStream({ s3: s3(), bucket, key, requesterPays })
     .then((objectReadStream) => getObjectStreamContents(objectReadStream));
@@ -744,7 +754,7 @@ export const uploadS3FileStream = (
   bucket: string,
   key: string,
   s3opts: Partial<PutObjectRequest> = {},
-  requesterPays?: boolean
+  requesterPays: boolean = true
 ) =>
   promiseS3Upload({
     params: {
@@ -752,7 +762,7 @@ export const uploadS3FileStream = (
       Bucket: bucket,
       Key: key,
       Body: fileStream,
-      RequestPayer: parseRequesterPays(requesterPays || true),
+      RequestPayer: parseRequesterPays(requesterPays),
     },
   });
 
@@ -1022,12 +1032,13 @@ const createMultipartUpload = async (
     requesterPays?: boolean
   }
 ) => {
+  const { requesterPays = true } = params;
   const uploadParams: CreateMultipartUploadRequest = {
     Bucket: params.destinationBucket,
     Key: params.destinationKey,
     ACL: params.ACL,
     ContentType: params.contentType,
-    RequestPayer: parseRequesterPays(params.requesterPays || true),
+    RequestPayer: parseRequesterPays(requesterPays),
   };
 
   if (params.copyTags) {
@@ -1068,6 +1079,7 @@ const uploadPartCopy = async (
     requesterPays?: boolean,
   }
 ) => {
+  const { requesterPays = true } = params;
   const response = await S3MultipartUploads.uploadPartCopy({
     UploadId: params.uploadId,
     Bucket: params.destinationBucket,
@@ -1075,7 +1087,7 @@ const uploadPartCopy = async (
     PartNumber: params.partNumber,
     CopySource: `/${params.sourceBucket}/${params.sourceKey}`,
     CopySourceRange: `bytes=${params.start}-${params.end}`,
-    RequestPayer: parseRequesterPays(params.requesterPays || true),
+    RequestPayer: parseRequesterPays(requesterPays),
   });
 
   if (response.CopyPartResult === undefined) {
