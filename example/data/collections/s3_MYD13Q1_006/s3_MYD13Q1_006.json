@@ -49,5 +49,6 @@
             "reportToEms": false
         }
     ],
-    "cmrProvider": "CUMULUS"
+    "cmrProvider": "CUMULUS",
+    "metricsProvider": "CUMULUS"
 }

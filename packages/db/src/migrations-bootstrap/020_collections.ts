@@ -29,10 +29,12 @@ export const up = async (knex: Knex): Promise<void> => {
     table.timestamp('updated_at', { useTz: true, precision: TIMESTAMP_PRECISION }).defaultTo(knex.fn.now(TIMESTAMP_PRECISION));
 
     table.text('cmr_provider').notNullable();
+    table.text('metrics_provider').notNullable();
 
     table.unique(['name', 'version']);
 
     table.index(['cmr_provider'], 'collection_cmr_provider_index');
+    table.index(['metrics_provider'], 'collection_metrics_provider_index');
     table.index(['updated_at'], 'collections_updated_at_index');
   });
 
@@ -63,6 +65,7 @@ export const up = async (knex: Knex): Promise<void> => {
     COMMENT ON COLUMN collections.meta IS 'Collection meta object';
     COMMENT ON COLUMN collections.tags IS 'JSON encoded array of collection tags';
     COMMENT ON COLUMN collections.cmr_provider IS 'CMR Provider for this collection';
+    COMMENT ON COLUMN collections.metrics_provider IS 'metrics provider for this collection, disambiguating for metrics routing purposes';
   `);
 };
 
