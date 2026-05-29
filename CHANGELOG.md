@@ -39,6 +39,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - One precondition for consolidating deployments is that every S3 bucket name in the merged bucket map must be globally unique.
 - **CUMULUS-4873**
   - Set max_locks_per_transaction database parameter to 256 to support better performance with new partitioning setup.
+- **CUMULUS-4873**
+  - Add initial module for BigNBit.
 
 ### Changed
 
