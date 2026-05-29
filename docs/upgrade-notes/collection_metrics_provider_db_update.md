@@ -48,10 +48,18 @@ the metrics_provider field distinguishes the data metrics_provider which can be 
     #e.g. psql -h cumulus-dev-rds-cluster.cluster-xxx.us-east-1.rds.amazonaws.com -p 5432 -d cumulus_test_db -U cumulus_test -W
     ```
 
-    The following are the relevant SQL commands. no sql file is provided to prevent confusion as there's a value that must be configured and not confused. Replace <mission_name> with your stack's metrics_provider.
+    The following are the relevant SQL commands.
 
     ```sql
-    ALTER TABLE collections ADD COLUMN IF NOT EXISTS metrics_provider TEXT NOT NULL DEFAULT '<metrics_provider>';
+    ALTER TABLE collections ADD COLUMN IF NOT EXISTS metrics_provider TEXT;
+    ```
+
+    This is not the correct final state of the database, as metrics_provider should not be nullable. from here the table should be updated to set the metrics_provider value to the correct value. correct values will need to be understood by talking to DAACS and metrics, but in all but PODAAC and ASF, the collections relevant to those daacs should have metrics_provider=cmr_provider
+
+    once this value is set across the board:
+
+    ```sql
+    ALTER TABLE collections ALTER COLUMN metrics_provider SET NOT NULL;
     ```
 
 4. Monitor the running command
