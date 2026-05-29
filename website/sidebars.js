@@ -67,6 +67,7 @@ const sidebars = {
           items: [
             'deployment/thin_egress_app',
             'deployment/cumulus_distribution',
+            'deployment/iceberg-api',
           ],
         },
         {
