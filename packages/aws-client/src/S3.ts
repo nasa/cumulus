@@ -212,7 +212,7 @@ export const headObject = (
 export const s3ObjectExists = (params: {
   Bucket: string,
   Key: string,
-  requesterPays: boolean
+  requesterPays?: boolean
 }) =>
   headObject(params.Bucket, params.Key, params.requesterPays)
     .then(() => true)

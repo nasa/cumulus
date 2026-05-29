@@ -341,7 +341,7 @@ test('headObject() will retry if the requested key does not exist', async (t) =>
   const { Bucket } = t.context;
   const Key = randomString();
 
-  const promisedHeadObject = headObject(Bucket, Key, { retries: 5 });
+  const promisedHeadObject = headObject(Bucket, Key, true, { retries: 5 });
   await sleep(3000)
     .then(() => awsServices.s3().putObject({ Bucket, Key, Body: 'asdf' }));
 
