@@ -6,7 +6,7 @@ export const up = async (knex: Knex): Promise<void> => {
     table.index(['metrics_provider'], 'collection_metrics_provider_index');
   });
   await knex.raw(`  
-    COMMENT ON COLUMN collections.metrics_provider IS 'Value is used to differentiate metrics stack on a per-collection basis.';  
+    COMMENT ON COLUMN collections.metrics_provider IS 'metrics provider for this collection, disambiguating for metrics routing purposes';
   `);
 
 };
