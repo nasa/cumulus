@@ -27,5 +27,5 @@
     "hashLength": 6
   },
   "cmrProvider": "CUMULUS",
-  "metricsProvider "CUMULUS"
+  "metricsProvider": "CUMULUS"
 }
