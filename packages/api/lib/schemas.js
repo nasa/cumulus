@@ -98,6 +98,11 @@ module.exports.collection = {
       description: 'cmr provider corresponding to this collection',
       type: 'string',
     },
+    metricsProvider: {
+      title: 'metricsProvider',
+      description: 'metricsProvider disambiguating which metrics index this is routed to',
+      type: 'string',
+    },
     name: {
       title: 'Name',
       description: 'Collection short_name registered with the CMR',
