@@ -5,7 +5,7 @@ export const up = async (knex: Knex): Promise<void> => {
     table.text('metrics_provider').notNullable();
     table.index(['metrics_provider'], 'collection_metrics_provider_index');
   });
-  await knex.raw(`  
+  await knex.raw(`
     COMMENT ON COLUMN collections.metrics_provider IS 'metrics provider for this collection, disambiguating for metrics routing purposes';
   `);
 };
