@@ -187,8 +187,8 @@ export const deleteS3Objects = (params: {
 export const headObject = (
   Bucket: string,
   Key: string,
-  requesterPays: boolean = true,
-  retryOptions: pRetry.Options = { retries: 0 }
+  retryOptions: pRetry.Options = { retries: 0 },
+  requesterPays: boolean = true
 ): Promise<HeadObjectOutput> =>
   pRetry(
     async () => {
@@ -219,7 +219,7 @@ export const s3ObjectExists = (params: {
   Key: string,
   requesterPays?: boolean
 }) =>
-  headObject(params.Bucket, params.Key, params.requesterPays)
+  headObject(params.Bucket, params.Key, {}, params.requesterPays)
     .then(() => true)
     .catch((error) => {
       if (error.name === 'NotFound') return false;
@@ -532,8 +532,8 @@ export const getObject = async (
 export const waitForObject = (
   s3Client: S3,
   params: Omit<GetObjectCommandInput, 'RequestPayer'>,
-  requesterPays: boolean = true,
-  retryOptions: pRetry.Options = {}
+  retryOptions: pRetry.Options = {},
+  requesterPays: boolean = true
 ): Promise<GetObjectOutput> =>
   pRetry(
     async () => {
@@ -567,12 +567,12 @@ export const getS3Object = deprecate(
     waitForObject(
       s3(),
       { Bucket, Key },
-      requesterPays,
       {
         maxTimeout: 10000,
         onFailedAttempt: (err) => log.debug(`getS3Object('${Bucket}', '${Key}') failed with ${err.retriesLeft} retries left: ${err.message}`),
         ...retryOptions,
-      }
+      },
+      requesterPays
     ),
   buildDeprecationMessage(
     '@cumulus/aws-client/S3.getS3Object',
@@ -1147,6 +1147,7 @@ export const multipartCopyObject = async (
   const sourceObject = params.sourceObject ?? await headObject(
     sourceBucket,
     sourceKey,
+    {},
     requesterPays
   );
 
