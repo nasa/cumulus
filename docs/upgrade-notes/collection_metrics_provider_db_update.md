@@ -42,7 +42,7 @@ the metrics_provider field distinguishes the data metrics_provider which can be 
     When the SQL commands are running, perform step 5 to monitor the commands.
 
     ```sh
-    tmux new-session -s CumulusUpgrade -n CMRProvider
+    tmux new-session -s CumulusUpgrade -n metricsProvider
 
     psql -h <Endpoint for writer instance> -p <Port for database or 5432> -d <cumulus database name> -U <database admin user> -W
     #e.g. psql -h cumulus-dev-rds-cluster.cluster-xxx.us-east-1.rds.amazonaws.com -p 5432 -d cumulus_test_db -U cumulus_test -W
