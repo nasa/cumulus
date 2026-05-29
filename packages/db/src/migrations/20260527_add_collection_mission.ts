@@ -8,7 +8,6 @@ export const up = async (knex: Knex): Promise<void> => {
   await knex.raw(`  
     COMMENT ON COLUMN collections.metrics_provider IS 'metrics provider for this collection, disambiguating for metrics routing purposes';
   `);
-
 };
 
 export const down = async (knex: Knex): Promise<void> => {
