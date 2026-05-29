@@ -76,6 +76,13 @@ module.exports = {
           position: 'left',
         },
         {
+          type: 'custom-versionedNavbarItem',
+          docPath: 'deployment/iceberg-api',
+          minVersion: 'v22.1.0',
+          label: 'Iceberg API',
+          position: 'left',
+        },
+        {
           type: 'doc',
           position: 'left',
           docId: 'cumulus-docs-readme',
