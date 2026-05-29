@@ -1,12 +1,12 @@
 import { Knex } from 'knex';
 
-const FUNCTION_NAME = 'granules_enforce_global_uniqueness';
-const TRIGGER_NAME = 'granules_enforce_unique_granule_id_trigger';
+const FUNCTION_NAME_PREFIX = 'granules_enforce_global_uniqueness';
+const TRIGGER_NAME_PREFIX = 'granules_enforce_unique_granule_id_trigger';
 
 export const up = async (knex: Knex): Promise<void> => {
   // DELETE FUNCTION & TRIGGER
   await knex.raw(`
-    CREATE OR REPLACE FUNCTION ${FUNCTION_NAME}_delete() RETURNS trigger AS $$
+    CREATE OR REPLACE FUNCTION ${FUNCTION_NAME_PREFIX}_delete() RETURNS trigger AS $$
     BEGIN
       DELETE FROM granules_global_unique WHERE granule_id = OLD.granule_id;
       RETURN OLD;
@@ -15,15 +15,15 @@ export const up = async (knex: Knex): Promise<void> => {
   `);
 
   await knex.raw(`
-    CREATE TRIGGER ${TRIGGER_NAME}_delete
+    CREATE TRIGGER ${TRIGGER_NAME_PREFIX}_delete
     BEFORE DELETE ON granules
     FOR EACH ROW
-    EXECUTE FUNCTION ${FUNCTION_NAME}_delete();
+    EXECUTE FUNCTION ${FUNCTION_NAME_PREFIX}_delete();
   `);
 
   // INSERT FUNCTION & TRIGGER
   await knex.raw(`
-    CREATE OR REPLACE FUNCTION ${FUNCTION_NAME}_insert() RETURNS trigger AS $$
+    CREATE OR REPLACE FUNCTION ${FUNCTION_NAME_PREFIX}_insert() RETURNS trigger AS $$
     BEGIN
       BEGIN
         INSERT INTO granules_global_unique (granule_id)
@@ -42,15 +42,15 @@ export const up = async (knex: Knex): Promise<void> => {
   `);
 
   await knex.raw(`
-    CREATE TRIGGER ${TRIGGER_NAME}_insert
+    CREATE TRIGGER ${TRIGGER_NAME_PREFIX}_insert
     BEFORE INSERT ON granules
     FOR EACH ROW
-    EXECUTE FUNCTION ${FUNCTION_NAME}_insert();
+    EXECUTE FUNCTION ${FUNCTION_NAME_PREFIX}_insert();
   `);
 
   // UPDATE FUNCTION & TRIGGER
   await knex.raw(`
-    CREATE OR REPLACE FUNCTION ${FUNCTION_NAME}_update() RETURNS trigger AS $$
+    CREATE OR REPLACE FUNCTION ${FUNCTION_NAME_PREFIX}_update() RETURNS trigger AS $$
     DECLARE
       allow_collection_update text;
     BEGIN
@@ -86,19 +86,19 @@ export const up = async (knex: Knex): Promise<void> => {
   `);
 
   await knex.raw(`
-    CREATE TRIGGER ${TRIGGER_NAME}_update
+    CREATE TRIGGER ${TRIGGER_NAME_PREFIX}_update
     BEFORE UPDATE OF granule_id, collection_cumulus_id ON granules
     FOR EACH ROW
-    EXECUTE FUNCTION ${FUNCTION_NAME}_update();
+    EXECUTE FUNCTION ${FUNCTION_NAME_PREFIX}_update();
   `);
 };
 
 export const down = async (knex: Knex): Promise<void> => {
-  await knex.raw(`DROP TRIGGER IF EXISTS ${TRIGGER_NAME}_delete ON granules;`);
-  await knex.raw(`DROP TRIGGER IF EXISTS ${TRIGGER_NAME}_insert ON granules;`);
-  await knex.raw(`DROP TRIGGER IF EXISTS ${TRIGGER_NAME}_update ON granules;`);
+  await knex.raw(`DROP TRIGGER IF EXISTS ${TRIGGER_NAME_PREFIX}_delete ON granules;`);
+  await knex.raw(`DROP TRIGGER IF EXISTS ${TRIGGER_NAME_PREFIX}_insert ON granules;`);
+  await knex.raw(`DROP TRIGGER IF EXISTS ${TRIGGER_NAME_PREFIX}_update ON granules;`);
 
-  await knex.raw(`DROP FUNCTION IF EXISTS ${FUNCTION_NAME}_delete();`);
-  await knex.raw(`DROP FUNCTION IF EXISTS ${FUNCTION_NAME}_insert();`);
-  await knex.raw(`DROP FUNCTION IF EXISTS ${FUNCTION_NAME}_update();`);
+  await knex.raw(`DROP FUNCTION IF EXISTS ${FUNCTION_NAME_PREFIX}_delete();`);
+  await knex.raw(`DROP FUNCTION IF EXISTS ${FUNCTION_NAME_PREFIX}_insert();`);
+  await knex.raw(`DROP FUNCTION IF EXISTS ${FUNCTION_NAME_PREFIX}_update();`);
 };
