@@ -39,3 +39,25 @@ For corresponding list endpoints, Iceberg API supports the same query parameters
 Use the matching Cumulus API endpoint documentation for parameter details:
 
 - Cumulus API docs: <https://nasa.github.io/cumulus-api>
+
+## Deployment configuration
+
+When deploying with Terraform, you can configure the Iceberg API container image using:
+
+- `cumulus_iceberg_api_image_version` (tag)
+- `cumulus_iceberg_api_image_repository_url` (repository URL)
+
+In Bamboo deployments (`bamboo/bootstrap-tf-deployment.sh`), the repository URL defaults to:
+
+- `ghcr.io/nasa/cumulus-iceberg-api`
+
+To override in Bamboo, set:
+
+- `bamboo_ICEBERG_IMAGE_REPOSITORY_URL`
+
+When `DEPLOY_ICEBERG_API=true` and the repository URL starts with `ghcr.io/`, Bamboo waits for the image tag to exist in GHCR before running `terraform apply`.
+
+Optional Bamboo wait controls:
+
+- `bamboo_ICEBERG_IMAGE_WAIT_TIMEOUT_SECONDS` (default: `1800`)
+- `bamboo_ICEBERG_IMAGE_WAIT_INTERVAL_SECONDS` (default: `15`)

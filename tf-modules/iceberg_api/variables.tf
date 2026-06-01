@@ -46,6 +46,12 @@ variable "cumulus_iceberg_api_image_version" {
   type        = string
 }
 
+variable "cumulus_iceberg_api_image_repository_url" {
+  description = "Repository URL of the Cumulus Iceberg API image"
+  type        = string
+  default     = null
+}
+
 variable "ecs_execution_role_arn" {
   description = "ARN of the ECS execution role"
   type        = string

@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4912**
+  - Move Iceberg API image build from Bamboo to github workflow
 - **CUMULUS-4898**
   - Add Iceberg API documentation page to Cumulus Documentation
     Once released, the Iceberg API doc should be at: https://nasa.github.io/cumulus/docs/next/deployment/iceberg-api

@@ -76,8 +76,68 @@ set_iceberg_image_version
 cd example/cumulus-tf
 
 DEPLOY_ICEBERG_API="${DEPLOY_ICEBERG_API:-false}"
+ICEBERG_IMAGE_REPOSITORY_URL="${ICEBERG_IMAGE_REPOSITORY_URL:-ghcr.io/nasa/cumulus-iceberg-api}"
+ICEBERG_IMAGE_WAIT_TIMEOUT_SECONDS="${ICEBERG_IMAGE_WAIT_TIMEOUT_SECONDS:-1800}"
+ICEBERG_IMAGE_WAIT_INTERVAL_SECONDS="${ICEBERG_IMAGE_WAIT_INTERVAL_SECONDS:-15}"
+
+wait_for_ghcr_image() {
+  local image_repository_url="$1"
+  local image_version="$2"
+  local timeout_seconds="$3"
+  local interval_seconds="$4"
+  local manifest_url="https://ghcr.io/v2/${image_repository_url#ghcr.io/}/manifests/${image_version}"
+  local accept_manifest="application/vnd.oci.image.index.v1+json, application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json"
+  local start_time
+  local current_time
+  local elapsed
+  local http_code
+
+  start_time=$(date +%s)
+  echo "Waiting up to ${timeout_seconds}s for image ${image_repository_url}:${image_version} to be available in GHCR"
+
+  while true; do
+    if [[ -n "$GITHUB_USER" && -n "$GITHUB_TOKEN" ]]; then
+      set +x
+      http_code=$(curl --silent --show-error --location --output /dev/null --write-out "%{http_code}" \
+        --user "$GITHUB_USER:$GITHUB_TOKEN" \
+        --header "Accept: ${accept_manifest}" \
+        "$manifest_url" || true)
+      set -x
+    else
+      http_code=$(curl --silent --show-error --location --output /dev/null --write-out "%{http_code}" \
+        --header "Accept: ${accept_manifest}" \
+        "$manifest_url" || true)
+    fi
+
+    if [[ "$http_code" == "200" ]]; then
+      echo "Image is available in GHCR: ${image_repository_url}:${image_version}"
+      return 0
+    fi
+
+    current_time=$(date +%s)
+    elapsed=$((current_time - start_time))
+
+    if (( elapsed >= timeout_seconds )); then
+      echo "Timed out after ${timeout_seconds}s waiting for image ${image_repository_url}:${image_version}. Last HTTP status: ${http_code}" >&2
+      return 1
+    fi
+
+    echo "Image not available yet (HTTP ${http_code}). Retrying in ${interval_seconds}s..."
+    sleep "$interval_seconds"
+  done
+}
+
+if [[ "$DEPLOY_ICEBERG_API" == "true" && "$ICEBERG_IMAGE_REPOSITORY_URL" == ghcr.io/* ]]; then
+  wait_for_ghcr_image \
+    "$ICEBERG_IMAGE_REPOSITORY_URL" \
+    "$ICEBERG_IMAGE_VERSION" \
+    "$ICEBERG_IMAGE_WAIT_TIMEOUT_SECONDS" \
+    "$ICEBERG_IMAGE_WAIT_INTERVAL_SECONDS"
+fi
+
 echo "Deploy Iceberg API: ${DEPLOY_ICEBERG_API}"
 echo "Using Iceberg API image version ${ICEBERG_IMAGE_VERSION}"
+echo "Using Iceberg API image repository URL ${ICEBERG_IMAGE_REPOSITORY_URL}"
 
 # Deploy cumulus-tf via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
@@ -110,4 +170,5 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -var "metrics_es_username=$METRICS_ES_USER" \
   -var "metrics_es_password=$METRICS_ES_PASS" \
   -var "cumulus_iceberg_api_image_version=$ICEBERG_IMAGE_VERSION" \
+  -var "cumulus_iceberg_api_image_repository_url=$ICEBERG_IMAGE_REPOSITORY_URL" \
   -var "deploy_iceberg_api=$DEPLOY_ICEBERG_API"
