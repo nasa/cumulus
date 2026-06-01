@@ -52,5 +52,6 @@
       "sampleFileName": "MOD09GQ.A2017025.h21v00.006.2017034065104.hdf.md5"
     }
   ],
-  "cmrProvider": "CUMULUS"
+  "cmrProvider": "CUMULUS",
+  "metricsProvider": "CUMULUS"
 }
