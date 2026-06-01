@@ -42,30 +42,26 @@ export const up = async (knex: Knex): Promise<void> => {
   // UPDATE FUNCTION & TRIGGER
   await knex.raw(`
     CREATE OR REPLACE FUNCTION ${FUNCTION_NAME_PREFIX}_update() RETURNS trigger AS $$
-    DECLARE
-      allow_collection_update text;
     BEGIN
-      -- Only fetch run-time configuration setting if it might actually be evaluated
-      SELECT current_setting('cumulus.allow_collection_update', true) INTO allow_collection_update;
-
       -- If granule_id changed, remove tracking row for the old ID to prevent orphaned records
       IF (OLD.granule_id IS DISTINCT FROM NEW.granule_id) THEN
         DELETE FROM granules_global_unique WHERE granule_id = OLD.granule_id;
       END IF;
 
-      BEGIN
-        INSERT INTO granules_global_unique (granule_id)
-        VALUES (NEW.granule_id);
-      EXCEPTION WHEN unique_violation THEN
-        -- Allow update if granule_id didn't change AND (collection matches OR override permission is true)
-        IF (OLD.granule_id = NEW.granule_id) THEN
-          IF (OLD.collection_cumulus_id = NEW.collection_cumulus_id OR allow_collection_update = 'true') THEN
-            RETURN NEW;
-          END IF;
-        END IF;
+      -- Allow update if granule_id is unchanged and collection matches
+      IF OLD.granule_id = NEW.granule_id AND OLD.collection_cumulus_id = NEW.collection_cumulus_id THEN
+        RETURN NEW;
 
-        RAISE;
-      END;
+      -- Allow update if granule_id is unchanged and allow_collection_update is set to true
+      ELSIF OLD.granule_id = NEW.granule_id
+        -- Fetch run-time configuration; missing_ok is true, returns NULL if missing
+        AND current_setting('cumulus.allow_collection_update', true) = 'true'
+      THEN
+        RETURN NEW;
+      END IF;
+
+      INSERT INTO granules_global_unique (granule_id)
+      VALUES (NEW.granule_id);
 
       RETURN NEW;
     END;
