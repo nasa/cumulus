@@ -30,17 +30,8 @@ export const up = async (knex: Knex): Promise<void> => {
   await knex.raw(`
     CREATE OR REPLACE FUNCTION ${FUNCTION_NAME_PREFIX}_insert() RETURNS trigger AS $$
     BEGIN
-      BEGIN
-        INSERT INTO granules_global_unique (granule_id)
-        VALUES (NEW.granule_id);
-      EXCEPTION WHEN unique_violation THEN
-        RAISE UNIQUE_VIOLATION USING MESSAGE = format(
-          'duplicate key value violates unique constraint on granule_id "%s" in collection "%s"',
-          NEW.granule_id,
-          NEW.collection_cumulus_id
-        );
-      END;
-
+      INSERT INTO granules_global_unique (granule_id)
+      VALUES (NEW.granule_id);
       RETURN NEW;
     END;
     $$ LANGUAGE plpgsql;
@@ -78,11 +69,7 @@ export const up = async (knex: Knex): Promise<void> => {
           END IF;
         END IF;
 
-        RAISE UNIQUE_VIOLATION USING MESSAGE = format(
-          'duplicate key value violates unique constraint on granule_id "%s" in collection "%s"',
-          NEW.granule_id,
-          NEW.collection_cumulus_id
-        );
+        RAISE;
       END;
 
       RETURN NEW;
