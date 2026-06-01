@@ -5,6 +5,12 @@ RUN apt update &&\
 RUN apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev \
 libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev \
 xz-utils tk-dev libffi-dev liblzma-dev python3-pip
+
+RUN apt-get update && apt-get install -y postgresql-common \
+    && YES=1 /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh \
+    && apt-get update && apt-get install -y postgresql-client-17 \
+    && rm -rf /var/lib/apt/lists/*
+
 # install python
 WORKDIR /opt
 ARG PYTHON_VERSION=3.12

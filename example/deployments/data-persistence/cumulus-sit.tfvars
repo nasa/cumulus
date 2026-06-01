@@ -1,2 +1,3 @@
-prefix        = "cumulus-sit"
-use_bootstrap = true
+prefix              = "cumulus-sit"
+db_partition_config = null
+use_bootstrap       = true
