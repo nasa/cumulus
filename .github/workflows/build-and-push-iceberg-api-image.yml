@@ -17,6 +17,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/cumulus-iceberg-api
+  ACTUAL_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
 jobs:
   build-and-push:
@@ -44,12 +45,10 @@ jobs:
       - name: Determine tag
         id: tag
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "tag=$(echo '${{ github.sha }}' | cut -c1-7)" >> $GITHUB_OUTPUT
-          elif git diff --name-only HEAD^ HEAD | grep -q '^lerna\.json$'; then
+          if git diff --name-only HEAD^ HEAD | grep -q '^lerna\.json$'; then
             echo "tag=$(jq --raw-output .version lerna.json)" >> $GITHUB_OUTPUT
           else
-            echo "tag=$(echo '${{ github.sha }}' | cut -c1-7)" >> $GITHUB_OUTPUT
+            echo "tag=$(echo '${{ env.ACTUAL_SHA }}' | cut -c1-7)" >> $GITHUB_OUTPUT
           fi
 
       - name: Build (PR check)
@@ -75,6 +74,6 @@ jobs:
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.ACTUAL_SHA }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
