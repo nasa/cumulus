@@ -288,6 +288,9 @@ export const getGranulesByGranuleId = async (
 /**
  * Update a list of granuleIds to a new collection_cumulus_id in postgres
  *
+ * Sets a local transaction session flag ('cumulus.allow_collection_update')
+ * to 'true'. This instructs the database trigger to allow collection updates.
+ *
  * @param {Knex} knex - DB client or transaction
  * @param {Array<String>} granuleIds - list of Granule IDs
  * @param {number} collectionCumulusId - collection_cumulus_id to update to
@@ -302,7 +305,13 @@ export const updateBatchGranulesCollection = async (
     granules: granulesTable,
   } = TableNames;
   try {
-    await knex(granulesTable).whereIn('granule_id', granuleIds).update({ collection_cumulus_id: collectionCumulusId });
+    await knex.transaction(async (trx) => {
+      await trx.raw("SET LOCAL cumulus.allow_collection_update = 'true';");
+
+      await trx(granulesTable)
+        .whereIn('granule_id', granuleIds)
+        .update({ collection_cumulus_id: collectionCumulusId });
+    });
   } catch (thrownError) {
     log.error(`Write Granules failed: ${JSON.stringify(thrownError)}`);
     throw thrownError;

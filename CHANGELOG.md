@@ -6,8 +6,25 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
 - **CUMULUS-4891**
   - Add scripts to build Iceberg replication docker images and push them to ECR as part of the build process
+- **CUMULUS-4894**
+  - Added a test to the db-migration lambda to validate that schemas generated via the bootstrap
+    migration and standard migrations are consistent and produce identical database schemas.
+
+### Changed
+
+- **CUMULUS-4882**
+  - Updated the triggers on the granules table to track collection updates and introduced a
+    `cumulus.allow_collection_update` setting to authorize cross-collection shifts.
+  - Modified `@cumulus/api` `granule.updateBatchGranulesCollection` method to use a transaction-scoped
+    `SET LOCAL cumulus.allow_collection_update = 'true'` flag to safely authorize bulk collection updates.
+  - Optimized `@cumulus/db` `granule.upsert` and `@cumulus/api/lib` `write-granule` to perform
+    cross-collection collision checks only on actual unique constraint conflicts during ingest.
+  - Updated the `db_partition_config` variable in `tf-modules/data-persistence` to accept null
+    values and automatically fall back to defaults.
 
 ## [v22.1.1] 2026-05-28
 
