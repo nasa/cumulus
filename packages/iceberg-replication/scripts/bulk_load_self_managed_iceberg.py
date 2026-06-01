@@ -763,7 +763,7 @@ def main():
     cfg = init_config()
 
     catalog = load_catalog(
-        cfg.namespace, **{"type": "glue", "client.region": "us-east-1"}
+        cfg.namespace, **{"type": "glue", "client.region": cfg.region}
     )
     ensure_glue_database(cfg.namespace, cfg.warehouse)
 

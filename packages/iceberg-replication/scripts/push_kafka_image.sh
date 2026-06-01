@@ -7,7 +7,7 @@ original_repo="quay.io/debezium"
 ecr_repo="cumulus/debezium"
 tag=${1:-3.4}
 
-region=${AWS_DEFAULT_REGION-"us-east-1"}
+region=${AWS_DEFAULT_REGION-"us-west-2"}
 
 # pull the original image
 docker pull "$original_repo/$image:$tag"
