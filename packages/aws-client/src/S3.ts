@@ -219,7 +219,7 @@ export const s3ObjectExists = (params: {
   Key: string,
   requesterPays?: boolean
 }) =>
-  headObject(params.Bucket, params.Key, {}, params.requesterPays)
+  headObject(params.Bucket, params.Key, { retries: 0 }, params.requesterPays)
     .then(() => true)
     .catch((error) => {
       if (error.name === 'NotFound') return false;
@@ -1147,7 +1147,7 @@ export const multipartCopyObject = async (
   const sourceObject = params.sourceObject ?? await headObject(
     sourceBucket,
     sourceKey,
-    {},
+    { retries: 0 },
     requesterPays
   );
 
