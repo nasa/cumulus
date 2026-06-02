@@ -10,7 +10,6 @@
 * Anthony Lukach
 * Anthony Ortega
 * Bradley J. Hazuka
-* Brandon Lokey
 * Brian Tennity
 * Bryan Wexler
 * Charles Huang
@@ -42,6 +41,7 @@
 * Michael Dorfman
 * Mike Dorfman
 * Naga Nages
+* Nagavenkata Nageswaran
 * Nate Pauzenga
 * Pat Cappelaere
 * Patrick Quinn

@@ -222,7 +222,7 @@ export class CMR {
   * Runs a CMR operation with retry logic for launchpad failures. If the operation fails with a
   * 401, refresh the Launchpad token and retry.
   *
-  * @param {() => Promise} operation - the CMR function with args to execute
+  * @param {Function} operation - the CMR function with args to execute
   * @param {number} [retries=5] - number of retry attempts on 401
   * @returns {Promise} - result of CMR function call
   */
