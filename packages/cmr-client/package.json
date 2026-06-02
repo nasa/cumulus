@@ -39,6 +39,7 @@
     "@cumulus/aws-client": "21.3.4",
     "@cumulus/common": "21.3.4",
     "@cumulus/errors": "21.3.4",
+    "@cumulus/launchpad-auth": "21.3.4",
     "@cumulus/logger": "21.3.4",
     "got": "^11.8.5",
     "jsonwebtoken": "^9.0.0",
@@ -48,6 +49,7 @@
     "zod": "^3.20.2"
   },
   "devDependencies": {
-    "moment": "^2.30.1"
+    "moment": "^2.30.1",
+    "p-retry": "^4.2.0"
   }
 }
