@@ -24,7 +24,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Optimized `@cumulus/db` `granule.upsert` and `@cumulus/api/lib` `write-granule` to perform
     cross-collection collision checks only on actual unique constraint conflicts during ingest.
   - Updated the `db_partition_config` variable in `tf-modules/data-persistence` to accept null
-    values and automatically fall back to defaults.
+    values, automatically fall back to defaults, and pass resolved fallback values to the child module.
 
 ## [v22.1.1] 2026-05-28
 

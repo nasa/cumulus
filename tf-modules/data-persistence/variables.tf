@@ -78,6 +78,9 @@ variable "db_partition_config" {
     - files_count: The number of hash/bigint-based partitions to create for the 'files' table.
   EOT
 
+  # Force Terraform to drop incoming null values and use the default block instead
+  nullable = false
+
   # Fallback if the user completely omits the db_partition_config block
   default = {
     executions_total_years = 2
