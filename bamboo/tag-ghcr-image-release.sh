@@ -67,9 +67,12 @@ if [[ "$GET_STATUS" != "200" ]]; then
   exit 1
 fi
 
-MANIFEST_CONTENT_TYPE=$(awk 'BEGIN{IGNORECASE=1} /^Content-Type:/ {print $2}' "$tmp_headers" | tr -d '\r' | tail -1)
+MANIFEST_CONTENT_TYPE=$(jq -r '.mediaType // empty' "$tmp_manifest")
 if [[ -z "$MANIFEST_CONTENT_TYPE" ]]; then
-  echo "Error: could not determine source manifest content type." >&2
+  MANIFEST_CONTENT_TYPE=$(awk 'BEGIN{IGNORECASE=1} /^Content-Type:/ {print $2}' "$tmp_headers" | tr -d '\r' | tail -1)
+fi
+if [[ -z "$MANIFEST_CONTENT_TYPE" ]]; then
+  echo "Error: could not determine source manifest content type from manifest body or response headers." >&2
   exit 1
 fi
 
