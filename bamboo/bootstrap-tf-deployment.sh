@@ -78,6 +78,14 @@ ICEBERG_IMAGE_REPOSITORY_URL="${ICEBERG_IMAGE_REPOSITORY_URL:-ghcr.io/nasa/cumul
 ICEBERG_IMAGE_WAIT_TIMEOUT_SECONDS="${ICEBERG_IMAGE_WAIT_TIMEOUT_SECONDS:-1800}"
 ICEBERG_IMAGE_WAIT_INTERVAL_SECONDS="${ICEBERG_IMAGE_WAIT_INTERVAL_SECONDS:-15}"
 
+branch_name="${bamboo_planRepository_branchName:-$(printenv "bamboo.planRepository.branchName" || true)}"
+if [[ "$branch_name" != "master" ]]; then
+  image="cumulus-iceberg-api"
+  registry_host="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+  ICEBERG_IMAGE_REPOSITORY_URL="${registry_host}/${image}"
+  ICEBERG_IMAGE_VERSION="latest"
+fi
+
 wait_for_ghcr_image() {
   local image_repository_url="$1"
   local image_version="$2"
