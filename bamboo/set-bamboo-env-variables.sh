@@ -209,20 +209,15 @@ fi
 export CUMULUS_UNIT_TEST_DATA=/tmp/cumulus_unit_test_data
 export TS_BUILD_CACHE_FILE=ts-build-cache.tgz
 
-## Function to set ICEBERG_IMAGE_VERSION based on PUBLISH_FLAG
+## Function to set ICEBERG_IMAGE_VERSION
 set_iceberg_image_version() {
-  # Must be run from the Cumulus source root so relative paths like lerna.json resolve correctly.
   echo "***Bamboo plan revision: $bamboo_plan_revision"
-  if [[ $PUBLISH_FLAG == true ]]; then
-    ICEBERG_IMAGE_VERSION=$(jq --raw-output .version lerna.json)
-  else
-    ICEBERG_IMAGE_VERSION=$(echo $bamboo_plan_revision | cut -c1-7)
-  fi
+  ICEBERG_IMAGE_VERSION=$(echo $bamboo_plan_revision | cut -c1-7)
 
   # Fallback is used when other CI steps not necessarily setting the $bamboo_plan_revision env variable
   # and also we may want to be able to run the deploy script locally with a default image version
   if [[ -z $ICEBERG_IMAGE_VERSION ]]; then
-    echo "Warning: ICEBERG_IMAGE_VERSION is not set (PUBLISH_FLAG=${PUBLISH_FLAG}). Falling back to 'latest'." >&2
+    echo "Warning: ICEBERG_IMAGE_VERSION is not set. Falling back to 'latest'." >&2
     ICEBERG_IMAGE_VERSION='latest'
   fi
 

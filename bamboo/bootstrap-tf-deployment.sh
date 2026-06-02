@@ -71,9 +71,7 @@ echo "terraform {
 ../terraform init \
   -input=false
 
-cd ../..
 set_iceberg_image_version
-cd example/cumulus-tf
 
 DEPLOY_ICEBERG_API="${DEPLOY_ICEBERG_API:-false}"
 ICEBERG_IMAGE_REPOSITORY_URL="${ICEBERG_IMAGE_REPOSITORY_URL:-ghcr.io/nasa/cumulus-iceberg-api}"
