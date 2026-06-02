@@ -85,29 +85,35 @@ wait_for_ghcr_image() {
   local image_version="$2"
   local timeout_seconds="$3"
   local interval_seconds="$4"
-  local manifest_url="https://ghcr.io/v2/${image_repository_url#ghcr.io/}/manifests/${image_version}"
+
+  # Extract the image name (e.g., nasa/cumulus-iceberg-api)
+  local repo_path="${image_repository_url#ghcr.io/}"
+  local manifest_url="https://ghcr.io/v2/${repo_path}/manifests/${image_version}"
   local accept_manifest="application/vnd.oci.image.index.v1+json, application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json"
+
   local start_time
   local current_time
   local elapsed
   local http_code
+  local token
 
   start_time=$(date +%s)
   echo "Waiting up to ${timeout_seconds}s for image ${image_repository_url}:${image_version} to be available in GHCR"
 
+  # Fetch an anonymous authentication token for GHCR
+  token=$(curl --silent "https://ghcr.io/token?scope=repository:${repo_path}:pull" | grep -o '"token":"[^"]*' | grep -o '[^"]*$')
+
+  if [[ -z "$token" ]]; then
+    echo "ERROR: Failed to fetch auth token from GHCR." >&2
+    return 1
+  fi
+
   while true; do
-    if [[ -n "$GITHUB_USER" && -n "$GITHUB_TOKEN" ]]; then
-      set +x
-      http_code=$(curl --silent --show-error --location --output /dev/null --write-out "%{http_code}" \
-        --user "$GITHUB_USER:$GITHUB_TOKEN" \
-        --header "Accept: ${accept_manifest}" \
-        "$manifest_url" || true)
-      set -x
-    else
-      http_code=$(curl --silent --show-error --location --output /dev/null --write-out "%{http_code}" \
-        --header "Accept: ${accept_manifest}" \
-        "$manifest_url" || true)
-    fi
+    # Pass the bearer token in the Authorization header
+    http_code=$(curl --silent --show-error --location --output /dev/null --write-out "%{http_code}" \
+      --header "Accept: ${accept_manifest}" \
+      --header "Authorization: Bearer ${token}" \
+      "$manifest_url" || true)
 
     if [[ "$http_code" == "200" ]]; then
       echo "Image is available in GHCR: ${image_repository_url}:${image_version}"
