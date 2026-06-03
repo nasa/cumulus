@@ -641,3 +641,9 @@ variable "cumulus_iceberg_api_image_version" {
   type        = string
   default     = "latest"
 }
+
+variable "cumulus_iceberg_api_image_repository_url" {
+  description = "The repository URL of the Cumulus Iceberg API image to use"
+  type        = string
+  default     = null
+}

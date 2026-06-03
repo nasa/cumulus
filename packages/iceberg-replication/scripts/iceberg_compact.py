@@ -661,7 +661,7 @@ def main():  # noqa: PLR0915
         help="Comma-separated table name(s), e.g. files,executions,granules",
     )
     parser.add_argument("--warehouse", required=True)
-    parser.add_argument("--region", default="us-east-1")
+    parser.add_argument("--region", default="us-west-2")
     parser.add_argument("--jars-dir", required=True)
     parser.add_argument("--staging-branch", default="staging")
     parser.add_argument("--main-branch", default="main")

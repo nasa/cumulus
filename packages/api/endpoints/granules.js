@@ -28,7 +28,6 @@ const {
   getGranulesByGranuleId,
   getKnexClient,
   GranulePgModel,
-  translateApiGranuleToPostgresGranule,
   translatePostgresCollectionToApiCollection,
   translatePostgresGranuleToApiGranule,
   updateBatchGranulesCollection,
@@ -194,28 +193,18 @@ const create = async (req, res) => {
 
   const granule = req.body || {};
 
-  try {
-    const pgGranule = await translateApiGranuleToPostgresGranule({
-      dynamoRecord: granule,
-      knexOrTransaction: knex,
-    });
-
-    // TODO: CUMULUS-3017 - Remove this unique collectionId condition
-    //  and only check for granule existence
-    // Check if granule already exists across all collections
-    const granulesByGranuleId = await getGranulesByGranuleId(
-      knex,
-      pgGranule.granule_id
+  // Check if granule already exists across all collections
+  const granulesByGranuleId = await getGranulesByGranuleId(
+    knex,
+    granule.granuleId
+  );
+  if (granulesByGranuleId.length > 0) {
+    log.error('Could not write granule. It already exists.');
+    return res.boom.conflict(
+      `A granule already exists for granuleId: ${granule.granuleId}`
     );
-    if (granulesByGranuleId.length > 0) {
-      log.error('Could not write granule. It already exists.');
-      return res.boom.conflict(
-        `A granule already exists for granuleId: ${pgGranule.granule_id}`
-      );
-    }
-  } catch (error) {
-    return res.boom.badRequest(errorify(error));
   }
+
   try {
     await createGranuleFromApiMethod(
       _setNewGranuleDefaults(granule, true),
@@ -274,7 +263,6 @@ const patchGranule = async (req, res) => {
     }
   }
 
-  // TODO: CUMULUS-3017 - Remove this unique collectionId condition
   // Check if granuleId exists across another collection
   const granulesByGranuleId = await getGranulesByGranuleId(
     knex,

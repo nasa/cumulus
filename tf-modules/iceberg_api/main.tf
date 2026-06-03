@@ -1,12 +1,12 @@
 locals {
   api_env_variables = {
-    "OAUTH_PROVIDER"       = var.oauth_provider
-    "api_config_secret_id" = var.api_config_secret_arn
-    "AWS_ACCOUNT_ID"       = var.aws_account_id
-    "ICEBERG_NAMESPACE"    = var.iceberg_namespace
-    "ECS_TASK_MEMORY"      = tostring(var.iceberg_api_memory)
-    "ECS_TASK_CPU"         = tostring(var.iceberg_api_cpu)
-    "DUCKDB_MAX_POOL_SIZE" = tostring(var.duckdb_max_pool_size)
+    "OAUTH_PROVIDER"                       = var.oauth_provider
+    "api_config_secret_id"                 = var.api_config_secret_arn
+    "AWS_ACCOUNT_ID"                       = var.aws_account_id
+    "ICEBERG_NAMESPACE"                    = var.iceberg_namespace
+    "ECS_TASK_MEMORY"                      = tostring(var.iceberg_api_memory)
+    "ECS_TASK_CPU"                         = tostring(var.iceberg_api_cpu)
+    "DUCKDB_MAX_POOL_SIZE"                 = tostring(var.duckdb_max_pool_size)
     "DUCKDB_POOL_REBUILD_INTERVAL_SECONDS" = tostring(var.duckdb_pool_rebuild_interval_seconds)
   }
 }
@@ -41,7 +41,7 @@ resource "aws_ecs_task_definition" "iceberg_api" {
   container_definitions = jsonencode([
     {
       name      = "iceberg-api-container"
-      image     = "${data.aws_ecr_repository.cumulus_iceberg_api.repository_url}:${var.cumulus_iceberg_api_image_version}"
+      image     = "${coalesce(var.cumulus_iceberg_api_image_repository_url, data.aws_ecr_repository.cumulus_iceberg_api.repository_url)}:${var.cumulus_iceberg_api_image_version}"
       essential = true
       portMappings = [
         {
@@ -76,7 +76,7 @@ resource "aws_ecs_service" "iceberg_api" {
   launch_type                       = "FARGATE"
 
   network_configuration {
-    subnets = var.ecs_cluster_instance_subnet_ids
+    subnets          = var.ecs_cluster_instance_subnet_ids
     security_groups  = [aws_security_group.iceberg_ecs_task_sg.id]
     assign_public_ip = false
   }

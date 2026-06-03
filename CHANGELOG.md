@@ -6,13 +6,32 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
 - **CUMULUS-4891**
   - Add scripts to build Iceberg replication docker images and push them to ECR as part of the build process
+- **CUMULUS-4894**
+  - Added a test to the db-migration lambda to validate that schemas generated via the bootstrap
+    migration and standard migrations are consistent and produce identical database schemas.
+
+### Changed
+
+- **CUMULUS-4882**
+  - Updated the triggers on the granules table to track collection updates and introduced a
+    `cumulus.allow_collection_update` setting to authorize cross-collection shifts.
+  - Modified `@cumulus/api` `granule.updateBatchGranulesCollection` method to use a transaction-scoped
+    `SET LOCAL cumulus.allow_collection_update = 'true'` flag to safely authorize bulk collection updates.
+  - Optimized `@cumulus/db` `granule.upsert` and `@cumulus/api/lib` `write-granule` to perform
+    cross-collection collision checks only on actual unique constraint conflicts during ingest.
+  - Updated the `db_partition_config` variable in `tf-modules/data-persistence` to accept null
+    values, automatically fall back to defaults, and pass resolved fallback values to the child module.
 
 ## [v22.1.1] 2026-05-28
 
 ### Added
 
+- **CUMULUS-4912**
+  - Move Iceberg API image build from Bamboo to github workflow
 - **CUMULUS-4898**
   - Add Iceberg API documentation page to Cumulus Documentation
     Once released, the Iceberg API doc should be at: https://nasa.github.io/cumulus/docs/next/deployment/iceberg-api
@@ -39,11 +58,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - One precondition for consolidating deployments is that every S3 bucket name in the merged bucket map must be globally unique.
 - **CUMULUS-4873**
   - Set max_locks_per_transaction database parameter to 256 to support better performance with new partitioning setup.
+- **CUMULUS-4873**
+  - Add initial module for BigNBit.
 
 ### Changed
 
+- **CUMULUS-4694** Change replication tasks to use proper region
 - **CUMULUS-4891** Force build/push of iceberg replication images when merging to master
-
 - **CUMULUS-4776** Split iceberg replication into separate services and add support for partitioned tables
 - **async-operations-update**
   - Update Async Operation container to new version 57, `cumuluss/async-operation:57`. Users should update their references to `async-operation` with the new version.
@@ -161,6 +182,55 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     subscription topic correctly triggers workflows.
   - Updated `packages/test-data` .nc mock granule files to match the checksums defined in their
     signal validation files.
+
+## [v21.3.5] 2026-06-02
+
+Please note changes in 21.3.5 may not yet be released in future versions, as this is a backport and patch release on the 21.3.x series of releases. Updates that are included in the future will have a corresponding CHANGELOG entry in future releases..
+
+### Changed
+
+- **CSD-99**
+  - Changed the `CMR` class to a singleton
+  - Changed `cmr-utils` functions that call the `CMR` class functions to retry upon 401 authentication failures
+  - Added functions `checkRefreshLaunchpadToken` and `refreshLaunchpadToken` to the `CMR` class to be invoked upon a 401 authentication failure which removes and/or retrieves a valid launchpad token
+  - Added functions to the `launchpad-auth` package which adds a lock file for token creation, removes an invalid token, and checks s3 for the token and lock file
+
+### Fixed
+
+- **CUMULUS-4874**
+  - Fixed `@cumulus/api` `endpoints/rules/patchRule` to delete old Kinesis and SNS resources prior
+    to allocating new resources.
+  - Refactored `@cumulus/api` `addSnsTrigger` to verify active Lambda permissions before adding permission.
+  - Updated snsRuleSpec.js integration test to verify that the updated rule with an existing
+    subscription topic correctly triggers workflows.
+  - Updated `packages/test-data` .nc mock granule files to match the checksums defined in their
+    signal validation files.
+
+## [v21.3.4] 2026-05-12
+
+Please note changes in 21.3.4 may not yet be released in future versions, as this is a backport and patch release on the 21.3.x series of releases. Updates that are included in the future will have a corresponding CHANGELOG entry in future releases..
+
+- **CSD-102**
+  - Refactored `aws_s3_bucket_lifecycle_configuration` to support user-defined rules via Terraform variables.
+  - Included configuration examples for `aws_s3_bucket_lifecycle_configuration` in the [documentation](https://nasa.github.io/cumulus/docs/configuration/lifecycle-policies).
+- **CSD-104**
+  - `PVLNumeric` now stores the original string value as `rawValue` before converting to `Number()`, preserving precision for large numeric strings.
+  - Fixed `PDRParsingError` when a PDR contains an MD5 `FILE_CKSUM_VALUE` that is an unquoted all-decimal string (e.g. `73806951753129206387143405718909`). The PVL parser previously classified such values as numeric, causing precision loss via JavaScript's `Number()` conversion. The original string is now preserved via `PVLNumeric.rawValue` and used for MD5 checksum validation.
+  - MD5 checksum values are now validated as 32-character hex strings, providing a clearer error message for values that are not valid MD5 hashes.
+- **CUMULUS-4566**
+  - Added logging for failed granules with granules writes vs just having an aggregate error, for better tracking of failures
+- **CUMULUS-4789**
+  - Update Docusaurus to latest version - 3.10
+- **async-operations-update**
+  - Updated Async Operation container to new version 57, `cumuluss/async-operation:57`. Users should update their references to `async-operation` with the new version.
+
+### Fixed
+
+- **Security Vulnerabilities**
+  - Upgraded package `uuid` to version ^11.1.1.
+- **CUMULUS-4844**
+  - Fixed `@cumulus/db` `BaseSearch.shouldEstimateRowcount()` to compare against SQL generated
+    by `baseCountQuery()` instead of a hardcoded query string, ensuring accurate detection of table count queries.
 
 ## [v21.3.3] 2026-04-10
 
@@ -9818,7 +9888,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 [Unreleased]: https://github.com/nasa/cumulus/compare/v22.1.1...HEAD
 [v22.1.1]: https://github.com/nasa/cumulus/compare/v22.0.0...v22.1.1
-[v22.0.0]: https://github.com/nasa/cumulus/compare/v21.3.3...v22.0.0
+[v22.0.0]: https://github.com/nasa/cumulus/compare/v21.3.5...v22.0.0
+[v21.3.5]: https://github.com/nasa/cumulus/compare/v21.3.4...v21.3.5
+[v21.3.4]: https://github.com/nasa/cumulus/compare/v21.3.3...v21.3.4
 [v21.3.3]: https://github.com/nasa/cumulus/compare/v21.3.2...v21.3.3
 [v21.3.2]: https://github.com/nasa/cumulus/compare/v21.3.1...v21.3.2
 [v21.3.1]: https://github.com/nasa/cumulus/compare/v21.3.0...v21.3.1

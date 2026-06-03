@@ -28,7 +28,7 @@ variable "admin_db_login_secret_arn" {
 variable "region" {
   description = "Region to deploy module to"
   type        = string
-  default     = "us-east-1"
+  default     = "us-west-2"
 }
 
 variable "rds_security_group" {
