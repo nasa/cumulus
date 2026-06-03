@@ -732,6 +732,12 @@ variable "cumulus_iceberg_api_image_version" {
   default     = "latest"
 }
 
+variable "cumulus_iceberg_api_image_repository_url" {
+  description = "Repository URL of the Cumulus Iceberg API image"
+  type        = string
+  default     = null
+}
+
 variable "api_service_autoscaling_min_capacity" {
   description = "Minimum capacity for API service autoscaling"
   type        = number
