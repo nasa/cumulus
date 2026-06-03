@@ -180,7 +180,7 @@ async function getDuckDbVersion(conn: DuckDBConnection): Promise<string> {
  * @param conn - active DuckDB connection used to install/load extensions
  */
 async function loadDuckDbExtensions(conn: DuckDBConnection): Promise<void> {
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
     await conn.run('INSTALL httpfs; LOAD httpfs;');
     await conn.run('INSTALL iceberg; LOAD iceberg;');
     await conn.run('INSTALL aws; LOAD aws;');

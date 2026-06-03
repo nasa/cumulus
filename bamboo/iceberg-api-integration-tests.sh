@@ -14,7 +14,7 @@ npm run ci:bootstrap
 export PORT=5001
 export FAKE_AUTH=true
 export TOKEN_SECRET=test-secret-12345
-export NODE_ENV=development
+export NODE_ENV=test
 
 echo "*** Starting Server"
 node packages/api/app/iceberg-index.js > iceberg-server-debug.log 2>&1 &
