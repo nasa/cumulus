@@ -239,7 +239,7 @@ const createCmrClient = async (config) => {
     process.env[key] = value;
   });
   const cmrSettings = await getCmrSettings();
-  return new CMR(cmrSettings);
+  return CMR.getInstance(cmrSettings);
 };
 
 // ingest a granule xml to CMR

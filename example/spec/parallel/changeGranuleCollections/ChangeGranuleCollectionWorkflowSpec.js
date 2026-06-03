@@ -1,12 +1,9 @@
-const { deleteExecution } = require('@cumulus/api-client/executions');
-const { deleteCollection } = require('@cumulus/api-client/collections');
 const fs = require('fs');
 const { addCollections, addProviders } = require('@cumulus/integration-tests');
 const { deleteS3Object, s3ObjectExists } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   getGranule,
-  removePublishedGranule,
   bulkChangeCollection,
 } = require('@cumulus/api-client/granules');
 const { getExecution } = require('@cumulus/api-client/executions');
@@ -26,7 +23,7 @@ const {
 } = require('../../helpers/testUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
-const { collectionExists } = require('../../helpers/Collections');
+const { collectionExists, removeCollectionAndAllDependencies } = require('../../helpers/Collections');
 const workflowName = 'IngestAndPublishGranule';
 
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
@@ -51,7 +48,7 @@ async function getCMRClient(config) {
   Object.entries(lambdaConfig.Environment.Variables).forEach(([key, value]) => {
     process.env[key] = value;
   });
-  return new CMR(await getCmrSettings());
+  return CMR.getInstance(await getCmrSettings());
 }
 
 describe('The ChangeGranuleCollections workflow', () => {
@@ -63,7 +60,6 @@ describe('The ChangeGranuleCollections workflow', () => {
   let granuleId;
   let finalFiles;
   let beforeAllFailed = false;
-  let ingestExecutionArn;
   let moveExecutionArn;
   let collection;
   let sourceCollectionId;
@@ -128,7 +124,7 @@ describe('The ChangeGranuleCollections workflow', () => {
       testDataFolder
     );
     granuleId = inputPayload.granules[0].granuleId;
-    ingestExecutionArn = await buildAndStartWorkflow(
+    await buildAndStartWorkflow(
       stackName,
       config.bucket,
       workflowName,
@@ -205,21 +201,19 @@ describe('The ChangeGranuleCollections workflow', () => {
     }
     let cleanup = [];
     cleanup = cleanup.concat([
-      deleteExecution({ prefix: stackName, executionArn: ingestExecutionArn }),
-      deleteExecution({ prefix: stackName, executionArn: moveExecutionArn }),
-      deleteCollection({
+      removeCollectionAndAllDependencies({
         prefix: stackName,
-        collectionName: collection.name,
-        collectionVersion: collection.version,
+        collection: {
+          collectionName: collection.name,
+          collectionVersion: collection.version,
+        },
       }),
-      deleteCollection({
+      removeCollectionAndAllDependencies({
         prefix: stackName,
-        collectionName: targetCollection.name,
-        collectionVersion: targetCollection.version,
-      }),
-      removePublishedGranule({
-        prefix: stackName,
-        granuleId,
+        collection: {
+          collectionName: targetCollection.name,
+          collectionVersion: targetCollection.version,
+        },
       }),
     ]);
     await Promise.all(cleanup);
