@@ -66,9 +66,10 @@ variable "lambda_memory_sizes" {
 
 variable "db_partition_config" {
   type = object({
-    executions_total_years = number
-    granules_count         = number
-    files_count            = number
+    # By adding optional(type, default), Terraform handles the null fallback automatically
+    executions_total_years = optional(number, 2)
+    granules_count         = optional(number, 512)
+    files_count            = optional(number, 1024)
   })
   description = <<EOT
     Configuration for database table partitioning:
@@ -77,6 +78,10 @@ variable "db_partition_config" {
     - files_count: The number of hash/bigint-based partitions to create for the 'files' table.
   EOT
 
+  # Force Terraform to drop incoming null values and use the default block instead
+  nullable = false
+
+  # Fallback if the user completely omits the db_partition_config block
   default = {
     executions_total_years = 2
     granules_count         = 512

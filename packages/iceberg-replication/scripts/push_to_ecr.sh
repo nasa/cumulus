@@ -2,7 +2,7 @@ push_to_ecr() {
   local image=$1
   local tag=${2:-latest}
 
-  region=${AWS_DEFAULT_REGION:-"us-east-1"}
+  region=${AWS_DEFAULT_REGION:-"us-west-2"}
 
   account=$(aws sts get-caller-identity --output text --query 'Account')
   account=${account//$'\r'/}

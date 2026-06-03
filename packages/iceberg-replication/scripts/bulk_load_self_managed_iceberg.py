@@ -190,40 +190,44 @@ def fast_purge(catalog, identifier, location):
 
 def pg_to_pa_type(pg_type):
     """Map a Postgres type string to a PyArrow type."""
-    result = pa.string()
     pg_type = pg_type.lower()
     if "bool" in pg_type:
         result = pa.bool_()
-    if "int8" in pg_type or "bigint" in pg_type:
+    elif "int8" in pg_type or "bigint" in pg_type:
         result = pa.int64()
-    if "int" in pg_type:
+    elif "int" in pg_type:
         result = pa.int32()
-    if "double" in pg_type or "float8" in pg_type:
+    elif "double" in pg_type or "float8" in pg_type:
         result = pa.float64()
-    if "float" in pg_type or "real" in pg_type:
+    elif "float" in pg_type or "real" in pg_type:
         result = pa.float32()
-    if "numeric" in pg_type or "decimal" in pg_type:
+    elif "numeric" in pg_type or "decimal" in pg_type:
         result = pa.float64()
-    if "date" in pg_type:
+    elif "date" in pg_type:
         result = pa.date32()
+    else:
+        result = pa.string()
+
     return result
 
 
 def pa_to_iceberg_type(pa_type, is_tz_aware):
     """Map a PyArrow type to the corresponding Iceberg type."""
-    result = StringType()
     if pa.types.is_int64(pa_type):
         result = LongType()
-    if pa.types.is_int32(pa_type):
+    elif pa.types.is_int32(pa_type):
         result = IntegerType()
-    if pa.types.is_boolean(pa_type):
+    elif pa.types.is_boolean(pa_type):
         result = BooleanType()
-    if pa.types.is_floating(pa_type):
+    elif pa.types.is_floating(pa_type):
         result = DoubleType() if pa_type == pa.float64() else FloatType()
-    if pa.types.is_date(pa_type):
+    elif pa.types.is_date(pa_type):
         result = DateType()
-    if "timestamp" in str(pa_type).lower():
+    elif is_tz_aware is not None:
         result = TimestamptzType() if is_tz_aware else TimestampType()
+    else:
+        result = StringType()
+
     return result
 
 
@@ -763,7 +767,7 @@ def main():
     cfg = init_config()
 
     catalog = load_catalog(
-        cfg.namespace, **{"type": "glue", "client.region": "us-east-1"}
+        cfg.namespace, **{"type": "glue", "client.region": cfg.region}
     )
     ensure_glue_database(cfg.namespace, cfg.warehouse)
 

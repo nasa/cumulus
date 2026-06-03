@@ -40,6 +40,13 @@ test.before(async (t) => {
   );
   t.context.collectionCumulusId = pgCollection.cumulus_id;
 
+  // Set up an alternate collection for cross-collection unique key testing
+  const [altPgCollection] = await collectionPgModel.create(
+    t.context.knex,
+    fakeCollectionRecordFactory()
+  );
+  t.context.altCollectionCumulusId = altPgCollection.cumulus_id;
+
   t.context.executionPgModel = new ExecutionPgModel();
 });
 
@@ -1963,6 +1970,97 @@ test('GranulePgModel.upsert() succeeds without an execution for running granule'
 
   await granulePgModel.upsert({ knexOrTrx: knex, granule });
   t.true(await granulePgModel.exists(knex, granule));
+});
+
+test('GranulePgModel.upsert() throws cross-collection unique constraint conflict errors', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    altCollectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const initialGranule = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+  });
+
+  // Write original record under the main collection context
+  await granulePgModel.upsert({
+    knexOrTrx: knex,
+    granule: initialGranule,
+    executionCumulusId,
+  });
+
+  // Formulate target collision row sharing matching granule_id but assigned to
+  // alternative collection
+  const conflictingGranule = {
+    ...fakeGranuleRecordFactory({
+      collection_cumulus_id: altCollectionCumulusId,
+    }),
+    granule_id: initialGranule.granule_id,
+  };
+
+  // Uses a Regular Expression match to account for any linebreaks or whitespace formatting safely
+  const messagePattern = new RegExp(
+    `A granule already exists for granuleId: ${initialGranule.granule_id} in a different collection`
+  );
+
+  await t.throwsAsync(
+    async () => await granulePgModel.upsert({
+      knexOrTrx: knex,
+      granule: conflictingGranule,
+      executionCumulusId,
+    }),
+    { message: messagePattern }
+  );
+});
+
+test('GranulePgModel.upsert() with cross-collection collision returns empty array and does not throw if writeConstraints exclude the update', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    altCollectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const now = Date.now();
+  const aDayAgo = new Date(now - 24 * 60 * 60 * 1000);
+
+  // Establish initial record with a new timestamp (now)
+  const initialGranule = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+    created_at: new Date(now),
+  });
+
+  await granulePgModel.upsert({
+    knexOrTrx: knex,
+    granule: initialGranule,
+    executionCumulusId,
+  });
+
+  // Prepare an older payload in a different collection (now - 1 day)
+  // The update match 0 rows and exits cleanly.
+  const staleCrossCollectionGranule = {
+    ...fakeGranuleRecordFactory({
+      collection_cumulus_id: altCollectionCumulusId,
+    }),
+    granule_id: initialGranule.granule_id,
+    created_at: aDayAgo, // Older date violates writeConstraints
+  };
+
+  let result;
+  await t.notThrowsAsync(async () => {
+    result = await granulePgModel.upsert({
+      knexOrTrx: knex,
+      granule: staleCrossCollectionGranule,
+      executionCumulusId,
+      writeConstraints: true,
+    });
+  });
+
+  t.deepEqual(result, []);
 });
 
 test('GranulePgModel.deleteExcluding throws Error', async (t) => {
