@@ -55,13 +55,13 @@ def create_staging_branches(cat, namespace, tables):
             import pyarrow as pa  # noqa: PLC0415
             from pyiceberg.io.pyarrow import schema_to_pyarrow  # noqa: PLC0415
 
+            pa_schema = schema_to_pyarrow(table.schema())
             empty = pa.table(
                 {
-                    f.name: pa.array(
-                        [], type=schema_to_pyarrow(table.schema()).field(f.name).type
-                    )
+                    f.name: pa.array([], type=pa_schema.field(f.name).type)
                     for f in table.schema().fields
-                }
+                },
+                schema=pa_schema,  # <-- this enforces nullability on each field
             )
             table.append(empty)
             # Reload to get updated refs

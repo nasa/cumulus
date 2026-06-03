@@ -58,6 +58,7 @@ module "cluster" {
   vpc_id            = var.vpc_id
   iceberg_s3_bucket = var.iceberg_s3_bucket
   tags              = var.tags
+  region            = var.region
 }
 
 module "replication_services" {
@@ -92,6 +93,7 @@ module "replication_services" {
   task_security_group_id    = module.cluster.no_ingress_all_egress_security_group.id
   ecs_cluster               = module.cluster.replication_ecs_cluster
   compaction_interval_sec   = var.compaction_interval_sec
+  region                    = var.region
 }
 
 module "cleanup_service" {
@@ -111,4 +113,5 @@ module "cleanup_service" {
   cleanup_interval_minutes = var.snapshot_cleanup_interval_minutes
   older_than_minutes       = var.snapshot_older_than_minutes
   retain_last              = var.snapshot_retain_last
+  region                   = var.region
 }
