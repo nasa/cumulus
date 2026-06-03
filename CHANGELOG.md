@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-## [v21.3.4] 2026-05-12
+## [v21.3.5] 2026-06-02
 
 ### Changed
 
@@ -15,6 +15,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Changed `cmr-utils` functions that call the `CMR` class functions to retry upon 401 authentication failures
   - Added functions `checkRefreshLaunchpadToken` and `refreshLaunchpadToken` to the `CMR` class to be invoked upon a 401 authentication failure which removes and/or retrieves a valid launchpad token
   - Added functions to the `launchpad-auth` package which adds a lock file for token creation, removes an invalid token, and checks s3 for the token and lock file
+
+### Fixed
+
+- **CUMULUS-4874**
+  - Fixed `@cumulus/api` `endpoints/rules/patchRule` to delete old Kinesis and SNS resources prior
+    to allocating new resources.
+  - Refactored `@cumulus/api` `addSnsTrigger` to verify active Lambda permissions before adding permission.
+  - Updated snsRuleSpec.js integration test to verify that the updated rule with an existing
+    subscription topic correctly triggers workflows.
+  - Updated `packages/test-data` .nc mock granule files to match the checksums defined in their
+    signal validation files.
+
+## [v21.3.4] 2026-05-12
+
 - **CSD-102**
   - Refactored `aws_s3_bucket_lifecycle_configuration` to support user-defined rules via Terraform variables.
   - Included configuration examples for `aws_s3_bucket_lifecycle_configuration` in the [documentation](https://nasa.github.io/cumulus/docs/configuration/lifecycle-policies).
@@ -36,14 +50,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4844**
   - Fixed `@cumulus/db` `BaseSearch.shouldEstimateRowcount()` to compare against SQL generated
     by `baseCountQuery()` instead of a hardcoded query string, ensuring accurate detection of table count queries.
-- **CUMULUS-4874**
-  - Fixed `@cumulus/api` `endpoints/rules/patchRule` to delete old Kinesis and SNS resources prior
-    to allocating new resources.
-  - Refactored `@cumulus/api` `addSnsTrigger` to verify active Lambda permissions before adding permission.
-  - Updated snsRuleSpec.js integration test to verify that the updated rule with an existing
-    subscription topic correctly triggers workflows.
-  - Updated `packages/test-data` .nc mock granule files to match the checksums defined in their
-    signal validation files.
 
 ## [v21.3.3] 2026-04-10
 
@@ -9674,7 +9680,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v21.3.4...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v21.3.5...HEAD
+[v21.3.5]: https://github.com/nasa/cumulus/compare/v21.3.4...v21.3.5
 [v21.3.4]: https://github.com/nasa/cumulus/compare/v21.3.3...v21.3.4
 [v21.3.3]: https://github.com/nasa/cumulus/compare/v21.3.2...v21.3.3
 [v21.3.2]: https://github.com/nasa/cumulus/compare/v21.3.1...v21.3.2

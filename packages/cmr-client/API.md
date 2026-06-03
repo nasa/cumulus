@@ -34,6 +34,7 @@ A class to simplify requests to the CMR
         * [.getToken()](#CMR+getToken) ⇒ <code>Promise.&lt;(string\|undefined)&gt;</code>
         * [.checkRefreshLaunchpadToken()](#CMR+checkRefreshLaunchpadToken) ⇒ <code>Promise.&lt;void&gt;</code>
         * [.refreshLaunchpadToken()](#CMR+refreshLaunchpadToken) ⇒ <code>Promise.&lt;void&gt;</code>
+        * [.withCmrLaunchpadTokenRefreshRetry(operation, [retries])](#CMR+withCmrLaunchpadTokenRefreshRetry) ⇒ <code>Promise</code>
         * [.getWriteHeaders(params)](#CMR+getWriteHeaders) ⇒ <code>Object</code>
         * [.getReadHeaders(params)](#CMR+getReadHeaders) ⇒ <code>Object</code>
         * [.ingestCollection(xml)](#CMR+ingestCollection) ⇒ <code>Promise.&lt;Object&gt;</code>
@@ -45,6 +46,7 @@ A class to simplify requests to the CMR
         * [.searchGranules(params, [format])](#CMR+searchGranules) ⇒ <code>Promise.&lt;Object&gt;</code>
         * [.getGranuleMetadata(cmrLink)](#CMR+getGranuleMetadata) ⇒ <code>Object</code>
     * _static_
+        * [.getInstance()](#CMR.getInstance) ⇒ [<code>CMR</code>](#CMR)
         * [.resetInstance()](#CMR.resetInstance)
 
 <a name="new_CMR_new"></a>
@@ -107,6 +109,20 @@ stores it as a part of the CMR singleton class, and then uses that one for calls
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)
 **Returns**: <code>Promise.&lt;void&gt;</code> - refresh promise
+<a name="CMR+withCmrLaunchpadTokenRefreshRetry"></a>
+
+### cmrClient.withCmrLaunchpadTokenRefreshRetry(operation, [retries]) ⇒ <code>Promise</code>
+Runs a CMR operation with retry logic for launchpad failures. If the operation fails with a
+401, refresh the Launchpad token and retry.
+
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Promise</code> - - result of CMR function call
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| operation | <code>function</code> |  | the CMR function with args to execute |
+| [retries] | <code>number</code> | <code>5</code> | number of retry attempts on 401 |
+
 <a name="CMR+getWriteHeaders"></a>
 
 ### cmrClient.getWriteHeaders(params) ⇒ <code>Object</code>
@@ -235,6 +251,14 @@ Get the granule metadata from CMR using the cmrLink
 | --- | --- | --- |
 | cmrLink | <code>string</code> | URL to concept |
 
+<a name="CMR.getInstance"></a>
+
+### CMR.getInstance() ⇒ [<code>CMR</code>](#CMR)
+Creates a new CMR singleton instance of one does not already exist,
+if one does, returns it
+
+**Kind**: static method of [<code>CMR</code>](#CMR)
+**Returns**: [<code>CMR</code>](#CMR) - - the existing or newly made CMR instance
 <a name="CMR.resetInstance"></a>
 
 ### CMR.resetInstance()

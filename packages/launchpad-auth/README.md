@@ -33,43 +33,49 @@ Utility functions for generating, refreshing, and validating Launchpad tokens
 
 
 * [launchpad-auth](#module_launchpad-auth)
-    * [getLaunchpadToken(params)](#exp_module_launchpad-auth--getLaunchpadToken) ⇒ <code>Promise.&lt;string&gt;</code> ⏏
-    * [validateLaunchpadToken(params, token, [userGroup])](#exp_module_launchpad-auth--validateLaunchpadToken) ⇒ <code>Promise.&lt;ValidateTokenResult&gt;</code> ⏏
+    * [getLaunchpadToken(params, skipLockWait)](#exp_module_launchpad-auth--getLaunchpadToken) ⇒ ⏏
+    * [validateLaunchpadToken(params, token, [userGroup])](#exp_module_launchpad-auth--validateLaunchpadToken) ⇒ ⏏
 
 <a name="exp_module_launchpad-auth--getLaunchpadToken"></a>
 
-#### getLaunchpadToken(params) ⇒ <code>Promise.&lt;string&gt;</code> ⏏
-Get a Launchpad token
+#### getLaunchpadToken(params, skipLockWait) ⇒ ⏏
+Get a Launchpad token. There may be a lock file if the token is being recreated by
+a process due to a launchpad 401 auth error, so this function will check if there is one
+and wait until it's removed by the process creating the new token, and then will get the
+newly made valid token.
 
 **Kind**: Exported function
-**Returns**: <code>Promise.&lt;string&gt;</code> - - the Launchpad token
+**Returns**: - the Launchpad token
 
-| Param | Type | Description |
-| --- | --- | --- |
-| params | <code>Object</code> | the configuration parameters for creating LaunchpadToken object |
-| params.api | <code>string</code> | the Launchpad token service api endpoint |
-| params.passphrase | <code>string</code> | the passphrase of the Launchpad PKI certificate |
-| params.certificate | <code>string</code> | the name of the Launchpad PKI pfx certificate |
+| Param | Description |
+| --- | --- |
+| params | the configuration parameters for creating LaunchpadToken object |
+| params.api | the Launchpad token service api endpoint |
+| params.passphrase | the passphrase of the Launchpad PKI certificate |
+| params.certificate | the name of the Launchpad PKI pfx certificate |
+| skipLockWait | whether or not to skip waiting for the lock to release |
 
 <a name="exp_module_launchpad-auth--validateLaunchpadToken"></a>
 
-#### validateLaunchpadToken(params, token, [userGroup]) ⇒ <code>Promise.&lt;ValidateTokenResult&gt;</code> ⏏
+#### validateLaunchpadToken(params, token, [userGroup]) ⇒ ⏏
 Validate a Launchpad token
 
 **Kind**: Exported function
-**Returns**: <code>Promise.&lt;ValidateTokenResult&gt;</code> - - the validate result object with
-{ status: 'success or failed', message: 'reason for failure',
-session_maxtimeout: number second, session_starttime: number millisecond,
-owner_auid: string}
+**Returns**: - the validate result object with:
+  status (string) - 'success' or 'failed'
+  message (string) - reason for failure
+  session_maxtimeout (number) - seconds
+  session_starttime (number) - milliseconds
+  owner_auid (string)
 
-| Param | Type | Description |
-| --- | --- | --- |
-| params | <code>Object</code> | the configuration parameters for creating LaunchpadToken object |
-| params.api | <code>string</code> | the Launchpad token service api endpoint |
-| params.passphrase | <code>string</code> | the passphrase of the Launchpad PKI certificate |
-| params.certificate | <code>string</code> | the name of the Launchpad PKI pfx certificate |
-| token | <code>string</code> | the token to be validated |
-| [userGroup] | <code>string</code> | the cumulus user group that a valid user should belong to |
+| Param | Description |
+| --- | --- |
+| params | the configuration parameters for creating LaunchpadToken object |
+| params.api | the Launchpad token service api endpoint |
+| params.passphrase | the passphrase of the Launchpad PKI certificate |
+| params.certificate | the name of the Launchpad PKI pfx certificate |
+| token | the token to be validated |
+| [userGroup] | the cumulus user group that a valid user should belong to |
 
 <a name="LaunchpadToken"></a>
 
