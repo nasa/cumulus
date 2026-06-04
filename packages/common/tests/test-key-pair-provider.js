@@ -1,14 +1,14 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const { s3 } = require('@cumulus/aws-client/services');
 
 const {
-  buildS3Client,
   retrieveKey,
 } = require('../key-pair-provider');
 
 test.before(async (t) => {
   process.env.stackName = cryptoRandomString({ length: 10 });
-  t.context.s3Client = buildS3Client();
+  t.context.s3Client = s3();
   t.context.bucket = cryptoRandomString({ length: 10 });
 
   await t.context.s3Client.createBucket({ Bucket: t.context.bucket });
