@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v22.2.1] 2026-06-04
+
+- **CSD-111**
+  - Add requester-pays to all relevant aws-client S3 calls
+
 ## [v22.2.0] 2026-06-04
 
 ### Added
