@@ -25,6 +25,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     cross-collection collision checks only on actual unique constraint conflicts during ingest.
   - Updated the `db_partition_config` variable in `tf-modules/data-persistence` to accept null
     values, automatically fall back to defaults, and pass resolved fallback values to the child module.
+- **CUMULUS-4918**
+  - Add release number to Iceberg APi image if applicable
 
 ## [v22.1.1] 2026-05-28
 
