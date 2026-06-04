@@ -24,7 +24,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **CUMULUS-4694** 
+- **CUMULUS-4694**
   - Change replication tasks to use proper region
 - **CUMULUS-4882**
   - Updated the triggers on the granules table to track collection updates and introduced a
@@ -35,7 +35,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     cross-collection collision checks only on actual unique constraint conflicts during ingest.
   - Updated the `db_partition_config` variable in `tf-modules/data-persistence` to accept null
     values, automatically fall back to defaults, and pass resolved fallback values to the child module.
-- **CUMULUS-4891** 
+- **CUMULUS-4891**
   - Force build/push of iceberg replication images when merging to master
 - **CUMULUS-4912**
   - Move Iceberg API image build from Bamboo to github workflow
