@@ -6,16 +6,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v22.2.0] 2026-06-04
+
 ### Added
 
-- **CUMULUS-4891**
-  - Add scripts to build Iceberg replication docker images and push them to ECR as part of the build process
+- **CUMULUS-4866**
+  - Add metrics_provider to pg database collection model
+  - Add metrics_provider to iceberg schema
+  - Add metrics_provider to sns outputs to creation/update/delete executions, granules, pdrs
+- **CUMULUS-4866**
+  - Add cmrProvider to sns output granules, executions, pdrs
+- **CUMULUS-4873**
+  - Add initial module for BigNBit.
 - **CUMULUS-4894**
   - Added a test to the db-migration lambda to validate that schemas generated via the bootstrap
     migration and standard migrations are consistent and produce identical database schemas.
 
 ### Changed
 
+- **CUMULUS-4694** 
+  - Change replication tasks to use proper region
 - **CUMULUS-4882**
   - Updated the triggers on the granules table to track collection updates and introduced a
     `cumulus.allow_collection_update` setting to authorize cross-collection shifts.
@@ -25,22 +35,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     cross-collection collision checks only on actual unique constraint conflicts during ingest.
   - Updated the `db_partition_config` variable in `tf-modules/data-persistence` to accept null
     values, automatically fall back to defaults, and pass resolved fallback values to the child module.
+- **CUMULUS-4891** 
+  - Force build/push of iceberg replication images when merging to master
+- **CUMULUS-4912**
+  - Move Iceberg API image build from Bamboo to github workflow
 
 ## [v22.1.1] 2026-05-28
 
 ### Added
 
-- **CUMULUS-4912**
-  - Move Iceberg API image build from Bamboo to github workflow
+- **CUMULUS-4891**
+  - Add scripts to build Iceberg replication docker images and push them to ECR as part of the build process
 - **CUMULUS-4898**
   - Add Iceberg API documentation page to Cumulus Documentation
     Once released, the Iceberg API doc should be at: https://nasa.github.io/cumulus/docs/next/deployment/iceberg-api
-- **CUMULUS-4866**
-  - Add metrics_provider to pg database collection model
-  - Add metrics_provider to iceberg schema
-  - Add metrics_provider to sns outputs to creation/update/delete executions, granules, pdrs
-- **CUMULUS-4866**
-  - Add cmrProvider to sns output granules, executions, pdrs
 - **CUMULUS-4883**
   - Add script to build Iceberg API docker image and push it to ECR as part of the build process
 - **CUMULUS-4705**
@@ -63,8 +71,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **CUMULUS-4694** Change replication tasks to use proper region
-- **CUMULUS-4891** Force build/push of iceberg replication images when merging to master
 - **CUMULUS-4776** Split iceberg replication into separate services and add support for partitioned tables
 - **async-operations-update**
   - Update Async Operation container to new version 57, `cumuluss/async-operation:57`. Users should update their references to `async-operation` with the new version.
@@ -9886,7 +9892,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v22.1.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v22.2.0...HEAD
+[v22.2.0]: https://github.com/nasa/cumulus/compare/v22.1.1...v22.2.0
 [v22.1.1]: https://github.com/nasa/cumulus/compare/v22.0.0...v22.1.1
 [v22.0.0]: https://github.com/nasa/cumulus/compare/v21.3.5...v22.0.0
 [v21.3.5]: https://github.com/nasa/cumulus/compare/v21.3.4...v21.3.5
