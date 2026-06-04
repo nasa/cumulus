@@ -25,7 +25,7 @@ const { GranuleNotPublished } = require('@cumulus/errors');
  * @throws {GranuleNotPublished|Error}
  * @private
  */
-const _removeGranuleFromCmr = async (granule, collectionId) => {
+const _removeGranuleFromCmr = async (granule, collection_cmr_provider) => {
   let metadata;
   log.info(`granules.removeGranuleFromCmrByGranule granule_id: ${granule.granule_id}, colletion_id: ${collectionId}`);
   if (!granule.published || !granule.cmr_link) {
@@ -33,7 +33,7 @@ const _removeGranuleFromCmr = async (granule, collectionId) => {
     return;
   }
 
-  const cmrSettings = await cmrjsCmrUtils.getCmrSettings();
+  const cmrSettings = await cmrjsCmrUtils.getCmrSettings(provider: collection_cmr_provider);
   const cmr = new CMR(cmrSettings);
   try {
     metadata = await cmr.getGranuleMetadata(granule.cmr_link);
