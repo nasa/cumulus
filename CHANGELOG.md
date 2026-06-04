@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v22.2.1] 2026-06-04
+
+- **CSD-111**
+  - Add requester-pays to all relevant aws-client S3 calls
+
 ## [v22.2.0] 2026-06-04
 
 ### Added
@@ -9892,7 +9897,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v22.2.0...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v22.2.1...HEAD
+[v22.2.1]: https://github.com/nasa/cumulus/compare/v22.2.0...v22.2.1
 [v22.2.0]: https://github.com/nasa/cumulus/compare/v22.1.1...v22.2.0
 [v22.1.1]: https://github.com/nasa/cumulus/compare/v22.0.0...v22.1.1
 [v22.0.0]: https://github.com/nasa/cumulus/compare/v21.3.5...v22.0.0
