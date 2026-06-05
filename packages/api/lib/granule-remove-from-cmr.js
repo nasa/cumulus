@@ -30,8 +30,7 @@ const _removeGranuleFromCmr = async (granule, collectionId, collectionCmrProvide
   let metadata;
   log.info(`granules.removeGranuleFromCmrByGranule granule_id: ${granule.granule_id}, colletion_id: ${collectionId}`);
   if (!granule.published || !granule.cmr_link) {
-    log.warn(`Granule ${granule.granule
-      _id} in Collection ${collectionId} is not published to CMR, so cannot be removed from CMR`);
+    log.warn(`Granule ${granule.granule_id} in Collection ${collectionId} is not published to CMR, so cannot be removed from CMR`);
     return;
   }
 
