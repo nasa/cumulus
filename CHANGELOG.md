@@ -36,7 +36,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Move Iceberg API image build from Bamboo to github workflow
 - **CUMULUS-4898**
   - Add Iceberg API documentation page to Cumulus Documentation
-    Once released, the Iceberg API doc should be at: https://nasa.github.io/cumulus/docs/next/deployment/iceberg-api
+    Once released, the Iceberg API doc should be at: <https://nasa.github.io/cumulus/docs/next/deployment/iceberg-api>
 - **CUMULUS-4866**
   - Add metrics_provider to pg database collection model
   - Add metrics_provider to iceberg schema
@@ -118,6 +118,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `collection_cumulus_id` to sort orders when collection filters are present.
 
 ### Changed
+
 - **CUMULUS-4789** Update Docusaurus to latest version - 3.10
 
 - **CSD-104**
@@ -134,7 +135,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   All core tasks that enqueue messages to launch workflows are updated to use collection defined cmrProvider. Any daac/consolidation tasks which perform the same function need to ensure they do the same.
 
   Phase 1 — upload new S3 objects and update CF stack (keeps old S3 objects intact as rollback targets if the CF update fails):
-   ````
+
+   ````bash
    terraform apply \
      -target=module.thin_egress_app.aws_s3_object.cloudformation_template \
      -target=module.thin_egress_app.aws_s3_object.lambda_source \
@@ -143,8 +145,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
      -target=module.thin_egress_app.aws_cloudformation_stack.thin_egress_app \
      -var-file=env/sandbox.tfvars
    ````
+
   Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
-  ````
+
+  ````bash
   terraform apply -var-file=env/sandbox.tfvars
   ````
 
@@ -167,7 +171,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated package overrides to address CVEs GHSA-43fc-jf86-j433 and GHSA-r5fr-rjxr-66jc.
   - added a `webpack` override to `/website/package.json` due to docusaurus conflicts
   - Upgraded package `uuid` to version ^11.1.1.
-  - Upgraded package `tmp` to address https://github.com/advisories/GHSA-ph9p-34f9-6g65
+  - Upgraded package `tmp` to address <https://github.com/advisories/GHSA-ph9p-34f9-6g65>
 - **CSD-100**
   - made changes to the `PrivateApiLambda` and `ApiEndpoints` lambdas to ensure the environment variables
     are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported
@@ -243,6 +247,7 @@ Please note changes in 21.3.4 may not yet be released in future versions, as thi
   caused by Terraform destroying old lambda S3 objects before the CloudFormation stack update completes.
 
  Phase 1 — upload new S3 objects and update CF stack (keeps old S3 objects intact as rollback targets if the CF update fails):
+
    ````terraform apply \
      -target=module.thin_egress_app.aws_s3_object.cloudformation_template \
      -target=module.thin_egress_app.aws_s3_object.lambda_source \
@@ -251,6 +256,7 @@ Please note changes in 21.3.4 may not yet be released in future versions, as thi
      -target=module.thin_egress_app.aws_cloudformation_stack.thin_egress_app \
      -var-file=env/sandbox.tfvars
    ````
+
  Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
 ````terraform apply -var-file=env/sandbox.tfvars````
 
@@ -274,7 +280,8 @@ Please note changes in 21.3.4 may not yet be released in future versions, as thi
     - Delete the existing lambda and log group or
     - Import the existing lambda and/or log group to allow terraform to modify
     them.
-    ```
+
+    ```bash
     terraform import module.cumulus.module.ingest.module.cnm_response_task.aws_cloudwatch_log_group.cnm_response_task /aws/lambda/<prefix>-CnmResponse
     terraform import module.cumulus.module.ingest.module.cnm_response_task.aws_lambda_function.cnm_response_task arn:aws:lambda:us-east-1:<account-number>:function:<prefix>-CnmResponse
     ```
@@ -320,7 +327,7 @@ Please note changes in 21.3.4 may not yet be released in future versions, as thi
   - Added supporting Terraform for the granule-invalidator task that allows it to be included in the Cumulus terraform zipfile and deployed with Cumulus.
   - Hard-coded values for architecture and python version which will later be dynamically referenced by a top-level build config.
 - **CUMULUS-4394**
-  - Added python code for CnmResponse task adapted from https://github.com/podaac/cumulus-cnm-response-task
+  - Added python code for CnmResponse task adapted from <https://github.com/podaac/cumulus-cnm-response-task>
 - **CUMULUS-4395**
   - Added supporting Terraform for the CnmResponse task that allows it to be included in the Cumulus terraform zipfile and deployed with Cumulus.
 - **CUMULUS-4352**
@@ -377,11 +384,13 @@ Please note changes in 21.3.4 may not yet be released in future versions, as thi
 - **CUMULUS-4570**
   - Update corified tasks to use the common cumulus-task module
   - Rename tasks to use PascalCase and update casing of acronyms to match existing core tasks
+
     | old | new
     | --- | ---
     | aws-api-proxy | AwsApiProxy
     | CNMToCMA | CnmToCma
     | granule-invalidator-task | GranuleInvalidator
+
 - **CUMULUS-4599**
   - Added the ability to easily modify version numbers for all python packages in order to keep them in sync with the Cumulus version.
 - **CUMULUS-4562**
@@ -444,6 +453,7 @@ Please complete the following steps before upgrading Cumulus.
   ```text
   CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_collection_updated_idx ON granules (collection_cumulus_id, updated_at);
   ```
+
 - **CUMULUS-4313**
   - Update Async Operation container to new version 55, `cumuluss/async-operation:55`. Users should update their references to `async-operation` with the new version.
   - Updated lerna dev-dependency to v8
@@ -527,9 +537,6 @@ Please complete the following steps before upgrading Cumulus.
 
 As of version 21.3.x the CHANGELOG has been truncated.     For history prior to the release v22 series, please refer to the CHANGELOG referred to in the last Legacy Cumulus release: [CHANGELOG.md](https://github.com/nasa/cumulus/blob/v21.3.5/CHANGELOG.md)
 
-
 [Unreleased]: https://github.com/nasa/cumulus/compare/v22.1.1...HEAD
 [v22.1.1]: https://github.com/nasa/cumulus/compare/v22.0.0...v22.1.1
 [v22.0.0]: https://github.com/nasa/cumulus/compare/v21.3.5...v22.0.0
-
-[thin-egress-app]: <https://github.com/asfadmin/thin-egress-app> "Thin Egress App"
