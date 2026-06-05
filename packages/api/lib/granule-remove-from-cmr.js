@@ -22,18 +22,20 @@ const { GranuleNotPublished } = require('@cumulus/errors');
  *
  * @param {Object} granule - A postgres granule record
  * @param {string} collectionId - The CMR collection 'id' for the granule to be removed
+ * @param {string} collectionCmrProvider - The CMR provider to be used in delete operation
  * @throws {GranuleNotPublished|Error}
  * @private
  */
-const _removeGranuleFromCmr = async (granule, collection_cmr_provider) => {
+const _removeGranuleFromCmr = async (granule, collectionId, collectionCmrProvider) => {
   let metadata;
   log.info(`granules.removeGranuleFromCmrByGranule granule_id: ${granule.granule_id}, colletion_id: ${collectionId}`);
   if (!granule.published || !granule.cmr_link) {
-    log.warn(`Granule ${granule.granule_id} in Collection ${collectionId} is not published to CMR, so cannot be removed from CMR`);
+    log.warn(`Granule ${granule.granule
+      _id} in Collection ${collectionId} is not published to CMR, so cannot be removed from CMR`);
     return;
   }
 
-  const cmrSettings = await cmrjsCmrUtils.getCmrSettings({provider: collection_cmr_provider});
+  const cmrSettings = await cmrjsCmrUtils.getCmrSettings({provider: collectionCmrProvider});
   const cmr = new CMR(cmrSettings);
   try {
     metadata = await cmr.getGranuleMetadata(granule.cmr_link);
@@ -57,7 +59,7 @@ const _removeGranuleFromCmr = async (granule, collection_cmr_provider) => {
  * @param {Object} params
  * @param {Knex} params.knex - DB client
  * @param {PostgresGranuleRecord} params.pgGranuleRecord - A Postgres granule record
- * @param {PostgresCollectionRecord} [params.pgCollection] - A Postgres Collection record
+ * @param {PostgresCollectionRecord} [params.pgCollectionRecord] - A Postgres Collection record
  * @param {GranulePgModel} [params.granulePgModel=new GranulePgModel()]
  *  - Instance of granules model for PostgreSQL
  * @param {RemoveGranuleFromCmrFn} [params.removeGranuleFromCmrFunction]
@@ -68,14 +70,14 @@ const _removeGranuleFromCmr = async (granule, collection_cmr_provider) => {
 const unpublishGranule = async ({
   knex,
   pgGranuleRecord,
-  pgCollection,
+  pgCollectionRecord,
   granulePgModel = new GranulePgModel(),
   removeGranuleFromCmrFunction = _removeGranuleFromCmr,
 }) => {
   /** @type {string} */
   let collectionId;
-  if (pgCollection) {
-    collectionId = constructCollectionId(pgCollection.name, pgCollection.version);
+  if (pgCollectionRecord) {
+    collectionId = constructCollectionId(pgCollectionRecord.name, pgCollectionRecord.version);
   } else {
     collectionId = await getGranuleCollectionId(knex, pgGranuleRecord);
   }
@@ -99,7 +101,7 @@ const unpublishGranule = async ({
       ['*']
     );
 
-    await removeGranuleFromCmrFunction(pgGranuleRecord, collectionId);
+    await removeGranuleFromCmrFunction(pgGranuleRecord, collectionId, pgCollectionRecord.cmr_provider);
     return { pgGranule };
   });
 };

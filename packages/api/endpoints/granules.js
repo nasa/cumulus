@@ -481,7 +481,7 @@ const _handleUpdateAction = async (
     await unpublishGranule({
       knex,
       pgGranuleRecord: pgGranule,
-      pgCollection: pgCollection,
+      pgCollectionRecord: pgCollection,
     });
 
     return res.send({

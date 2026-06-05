@@ -312,7 +312,7 @@ test.serial('unpublishGranule() accepts an optional collection', async (t) => {
   } = await unpublishGranule({
     knex: t.context.knex,
     pgGranuleRecord: originalPgGranule,
-    pgCollection: fakeCollection,
+    pgCollectionRecord: fakeCollection,
   });
 
   t.is(cmrDeleteStub.calledOnceWith(
