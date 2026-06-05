@@ -34,7 +34,7 @@ const _removeGranuleFromCmr = async (granule, collectionId, collectionCmrProvide
     return;
   }
 
-  const cmrSettings = await cmrjsCmrUtils.getCmrSettings({provider: collectionCmrProvider});
+  const cmrSettings = await cmrjsCmrUtils.getCmrSettings({ provider: collectionCmrProvider });
   const cmr = new CMR(cmrSettings);
   try {
     metadata = await cmr.getGranuleMetadata(granule.cmr_link);
@@ -100,7 +100,11 @@ const unpublishGranule = async ({
       ['*']
     );
 
-    await removeGranuleFromCmrFunction(pgGranuleRecord, collectionId, pgCollectionRecord.cmr_provider);
+    await removeGranuleFromCmrFunction(
+      pgGranuleRecord,
+      collectionId,
+      pgCollectionRecord.cmr_provider
+    );
     return { pgGranule };
   });
 };
