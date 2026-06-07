@@ -64,7 +64,13 @@ data "aws_iam_policy_document" "lambda_processing_policy" {
       "states:SendTaskFailure",
       "states:SendTaskSuccess",
       "states:StartExecution",
-      "states:StopExecution"
+      "states:StopExecution",
+      "sqs:SendMessage",
+      "sqs:ReceiveMessage",
+      "sqs:ChangeMessageVisibility",
+      "sqs:DeleteMessage",
+      "sqs:GetQueueUrl",
+      "sqs:GetQueueAttributes",
     ]
     resources = ["*"]
   }
@@ -124,18 +130,6 @@ data "aws_iam_policy_document" "lambda_processing_policy" {
     ]
     resources = [for k, v in var.dynamo_tables : "${v.arn}/stream/*"]
 
-  }
-
-  statement {
-    actions = [
-      "sqs:SendMessage",
-      "sqs:ReceiveMessage",
-      "sqs:ChangeMessageVisibility",
-      "sqs:DeleteMessage",
-      "sqs:GetQueueUrl",
-      "sqs:GetQueueAttributes",
-    ]
-    resources = ["arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*"]
   }
 
   statement {
