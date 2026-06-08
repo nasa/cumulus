@@ -178,15 +178,15 @@ async function bulkGranuleDelete(
       async (granuleId) => {
         try {
           let pgGranule = await granulePgModel.get(knex, { granule_id: granuleId });
-          const pgCollection = await collectionPgModel.get(
-            knex, { cumulus_id: pgGranule.collection_cumulus_id }
-          );
 
           if (pgGranule.published && forceRemoveFromCmr) {
+            const pgCollection = await collectionPgModel.get(
+              knex, { cumulus_id: pgGranule.collection_cumulus_id }
+            );
             ({ pgGranule } = await unpublishGranuleFunc({
               knex,
               pgGranuleRecord: pgGranule,
-              pgCollectionRecord: pgCollection,
+              pgCollection: pgCollection,
               removeGranuleFromCmrFunction,
             }));
           }

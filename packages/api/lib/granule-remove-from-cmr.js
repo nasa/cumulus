@@ -62,7 +62,7 @@ const _removeGranuleFromCmr = async (granule, collectionId, collectionCmrProvide
  * @param {Object} params
  * @param {Knex} params.knex - DB client
  * @param {PostgresGranuleRecord} params.pgGranuleRecord - A Postgres granule record
- * @param {PostgresCollectionRecord} [params.pgCollection] - A Postgres Collection record
+ * @param {PostgresCollection} [params.pgCollection] - A Postgres Collection record
  * @param {GranulePgModel} [params.granulePgModel=new GranulePgModel()]
  *  - Instance of granules model for PostgreSQL
  * @param {RemoveGranuleFromCmrFn} [params.removeGranuleFromCmrFunction]
