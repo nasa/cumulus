@@ -8,6 +8,12 @@ on:
     branches:
       - master
   workflow_dispatch:
+    inputs:
+      push_image:
+        description: Push image to GHCR
+        required: true
+        type: boolean
+        default: false
 
 env:
   REGISTRY: ghcr.io
@@ -20,6 +26,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      pull-requests: read
 
     steps:
       - name: Checkout repository
@@ -37,10 +44,55 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Determine tag
+      - name: Determine tags
         id: tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "tag=${SOURCE_SHA:0:7}" >> "$GITHUB_OUTPUT"
+          short_sha="${SOURCE_SHA:0:7}"
+          source_branch="${GITHUB_HEAD_REF:-}"
+          target_branch="${GITHUB_BASE_REF:-${GITHUB_REF_NAME}}"
+
+          if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+            target_branch="${GITHUB_REF_NAME}"
+
+            if [[ "$target_branch" == "master" ]]; then
+              pr_response="$(curl --silent --show-error \
+                --header "Authorization: Bearer ${GITHUB_TOKEN}" \
+                --header "Accept: application/vnd.github+json" \
+                "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls")"
+
+              source_branch="$(echo "$pr_response" | jq --raw-output 'if type == "array" then .[0].head.ref // empty else empty end')"
+              pr_base_branch="$(echo "$pr_response" | jq --raw-output 'if type == "array" then .[0].base.ref // empty else empty end')"
+
+              if [[ -n "$pr_base_branch" ]]; then
+                target_branch="$pr_base_branch"
+              fi
+            fi
+          fi
+
+          {
+            echo "source_branch=${source_branch}"
+            echo "target_branch=${target_branch}"
+            echo "tags<<EOF"
+            echo "${REGISTRY}/${IMAGE_NAME}:${short_sha}"
+
+            if [[ "$target_branch" == "master" && "$source_branch" =~ ^release-[0-9]+\.[0-9]+\.x$ ]]; then
+              release_tag="$(jq --raw-output .version lerna.json)"
+              echo "${REGISTRY}/${IMAGE_NAME}:${release_tag}"
+            fi
+
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Debug tag decision
+        run: |
+          echo "event=${GITHUB_EVENT_NAME}"
+          echo "ref_name=${GITHUB_REF_NAME}"
+          echo "manual_push_input=${{ github.event.inputs.push_image || 'n/a' }}"
+          echo "resolved_source=${{ steps.tag.outputs.source_branch }}"
+          echo "resolved_target=${{ steps.tag.outputs.target_branch }}"
+          echo "tags=${{ steps.tag.outputs.tags }}"
 
       - name: Build image
         uses: docker/build-push-action@v5
@@ -48,8 +100,7 @@ jobs:
           context: .
           file: ./packages/api/app/Dockerfile
           platforms: linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
+          push: ${{ (github.event_name == 'push' && github.ref_name == 'master') || (github.event_name == 'workflow_dispatch' && github.event.inputs.push_image == 'true') }}
+          tags: ${{ steps.tag.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

@@ -5,45 +5,12 @@
 
 import forge from 'node-forge';
 import { Readable } from 'stream';
-import { S3, S3ClientConfig } from '@aws-sdk/client-s3';
+import { getTextObject } from '@cumulus/aws-client/S3';
 
 import { deprecate } from './util';
 import { inTestMode } from './test-utils';
 
 export { KMS } from './kms';
-
-const getLocalStackHost = () => {
-  if (process.env.LOCAL_S3_HOST) {
-    return process.env.LOCAL_S3_HOST;
-  }
-
-  if (!process.env.LOCALSTACK_HOST) {
-    throw new Error('The LOCALSTACK_HOST environment variable is not set.');
-  }
-
-  return process.env.LOCALSTACK_HOST;
-};
-
-export const buildS3Client = () => {
-  const region = process.env.AWS_DEFAULT_REGION ?? 'us-east-1';
-
-  const options: S3ClientConfig = {
-    apiVersion: '2006-03-01',
-    region,
-  };
-
-  if (inTestMode()) {
-    options.endpoint = `http://${getLocalStackHost()}:4566`;
-    options.region = 'us-east-1';
-    options.forcePathStyle = true;
-    options.credentials = {
-      accessKeyId: 'my-access-key-id',
-      secretAccessKey: 'my-secret-access-key',
-    };
-  }
-
-  return new S3(options);
-};
 
 export const getObjectStreamContents = (
   objectReadStream: Readable
@@ -64,22 +31,6 @@ export const getObjectStreamContents = (
   }
 );
 
-const getTextObject = async (bucket: string, key: string) => {
-  const s3 = buildS3Client();
-
-  const { Body } = await s3.getObject({
-    Bucket: bucket,
-    Key: key,
-  });
-
-  let data;
-  if (Body && Body instanceof Readable) {
-    data = await getObjectStreamContents(Body);
-  }
-
-  return data;
-};
-
 export const retrieveKey = async (
   keyId: string,
   bucket = process.env.system_bucket,
@@ -96,7 +47,7 @@ export const retrieveKey = async (
   const key = `${stack}/crypto/${keyId}`;
 
   try {
-    return await getTextObject(bucket, key);
+    return await getTextObject(bucket, key, !inTestMode());
   } catch (error) {
     throw new Error(`Failed to retrieve S3KeyPair key from s3://${bucket}/${key}: ${error.message}`);
   }

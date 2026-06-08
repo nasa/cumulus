@@ -117,6 +117,7 @@ test('addChecksumToGranuleFile() adds the checksumType and checksum to the file 
     fakeGetObject.calledOnceWithExactly({
       Bucket: 'bucket',
       Key: 'path/to/file.txt',
+      RequestPayer: 'requester',
     })
   );
 
