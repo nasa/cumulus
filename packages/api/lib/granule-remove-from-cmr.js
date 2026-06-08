@@ -14,7 +14,11 @@ const { GranuleNotPublished } = require('@cumulus/errors');
  * @typedef {import('@cumulus/db').PostgresGranuleRecord} PostgresGranuleRecord
  * @typedef {import('knex').Knex} Knex
  *
- * @typedef {(granule: unknown, collectionId: string, collectionCmrProvider: string) => Promise<void>} RemoveGranuleFromCmrFn
+ * @typedef {(
+ *   granule: unknown,
+ *   collectionId: string,
+ *   collectionCmrProvider: string
+ * ) => Promise<void>} RemoveGranuleFromCmrFn
  */
 
 /**
@@ -74,18 +78,20 @@ const unpublishGranule = async ({
   removeGranuleFromCmrFunction = _removeGranuleFromCmr,
 }) => {
   /** @type {string} */
-  let collectionId;
-  let collectionCmrProvider
+  let resolvedPgCollection = pgCollection;
+  let collectionCmrProvider;
   if (pgCollection) {
-    collectionCmrProvider = pgCollection.cmr_provider
+    collectionCmrProvider = pgCollection.cmr_provider;
   } else {
-    pgCollection = await new CollectionPgModel().get(
+    resolvedPgCollection = await new CollectionPgModel().get(
       knex, { cumulus_id: pgGranuleRecord.collection_cumulus_id }
-    )
-    collectionCmrProvider = pgCollection.cmr_provider
+    );
+    collectionCmrProvider = resolvedPgCollection.cmr_provider;
   }
-  collectionId = constructCollectionId(pgCollection.name, pgCollection.version);
-
+  const collectionId = constructCollectionId(
+    resolvedPgCollection.name,
+    resolvedPgCollection.version
+  );
 
   // If we cannot find a Postgres Collection or Postgres Granule,
   // don't update the Postgres Granule, continue to update the Dynamo granule
