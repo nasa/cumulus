@@ -271,12 +271,12 @@ export class CMR {
   /**
    * Deletes a granule record from the CMR
    *
-   * @param {string} granuleUID - the granule unique id
+   * @param {string} granuleUR - the granule unique id
    * @returns {Promise.<Object>} the CMR response
    */
-  async deleteGranule(granuleUID: string): Promise<unknown> {
+  async deleteGranule(granuleUR: string): Promise<unknown> {
     const headers = this.getWriteHeaders({ token: await this.getToken() });
-    return await deleteConcept('granules', granuleUID, this.provider, headers);
+    return await deleteConcept('granules', granuleUR, this.provider, headers);
   }
 
   async searchConcept(
