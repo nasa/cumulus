@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-4866**
+  - Add ifNotExists in db migration script to prevent breakage on update with pre-migration work
 - **CUMULUS-4882**
   - Updated the triggers on the granules table to track collection updates and introduced a
     `cumulus.allow_collection_update` setting to authorize cross-collection shifts.
