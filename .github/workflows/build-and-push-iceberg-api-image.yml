@@ -46,6 +46,8 @@ jobs:
 
       - name: Determine tags
         id: tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           short_sha="${SOURCE_SHA:0:7}"
           source_branch="${GITHUB_HEAD_REF:-}"
@@ -60,8 +62,8 @@ jobs:
                 --header "Accept: application/vnd.github+json" \
                 "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls")"
 
-              source_branch="$(echo "$pr_response" | jq --raw-output '.[0].head.ref // empty')"
-              pr_base_branch="$(echo "$pr_response" | jq --raw-output '.[0].base.ref // empty')"
+              source_branch="$(echo "$pr_response" | jq --raw-output 'if type == "array" then .[0].head.ref // empty else empty end')"
+              pr_base_branch="$(echo "$pr_response" | jq --raw-output 'if type == "array" then .[0].base.ref // empty else empty end')"
 
               if [[ -n "$pr_base_branch" ]]; then
                 target_branch="$pr_base_branch"
