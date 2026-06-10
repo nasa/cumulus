@@ -44,6 +44,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Force build/push of iceberg replication images when merging to master
 - **CUMULUS-4912**
   - Move Iceberg API image build from Bamboo to github workflow
+- **CUMULUS-4918**
+  - Add release number tag to Iceberg APi image if applicable
 
 ## [v22.1.1] 2026-05-28
 
