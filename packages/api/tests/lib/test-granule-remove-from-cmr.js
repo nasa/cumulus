@@ -231,8 +231,6 @@ test.serial('unpublishGranule does not throw an error on GranuleNotPublished err
   );
 });
 
-
-
 const createPublishedGranuleWithCollection = async (t) => {
   const { fakeCollection } = t.context;
   const collectionId = constructCollectionId(fakeCollection.name, fakeCollection.version);
@@ -247,7 +245,6 @@ test.serial('unpublishGranule() with no collection succeeds with PG granule and 
   const {
     originalPgGranule,
     pgGranuleCumulusId,
-    collectionId,
     fakeCollection,
   } = await createPublishedGranuleWithCollection(t);
 
@@ -297,7 +294,6 @@ test.serial('unpublishGranule() with no collection succeeds with PG granule and 
   const {
     originalPgGranule,
     pgGranuleCumulusId,
-    fakeCollection,
   } = await createPublishedGranuleWithCollection(t);
   t.like(
     await t.context.granulePgModel.get(t.context.knex, {
