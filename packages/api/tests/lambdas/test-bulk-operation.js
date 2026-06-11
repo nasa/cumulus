@@ -1045,7 +1045,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granules that do not
   );
 });
 
-test.serial('bulkGranuleDelete passes a pgCollection to unpublishGranule', async (t) => {
+test.serial('ensure bulkGranuleDelete passes correct cmr_provider to unpublishGranule', async (t) => {
   const Knex = t.context.knex;
   const [collectionPgRecord] = await new CollectionPgModel().create(
     Knex, fakeCollectionRecordFactory()
