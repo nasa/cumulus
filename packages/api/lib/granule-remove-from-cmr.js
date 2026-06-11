@@ -10,7 +10,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const { GranuleNotPublished } = require('@cumulus/errors');
 
 /**
- * @typedef {import('@cumulus/db').PostgresCollectionRecord} PostgresCollectionRecord
+ * @typedef {import('@cumulus/db').PostgresCollection} PostgresCollection
  * @typedef {import('@cumulus/db').PostgresGranuleRecord} PostgresGranuleRecord
  * @typedef {import('knex').Knex} Knex
  *
