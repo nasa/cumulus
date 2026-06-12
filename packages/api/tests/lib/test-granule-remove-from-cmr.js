@@ -9,6 +9,7 @@ const launchpad = require('@cumulus/launchpad-auth');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString } = require('@cumulus/common/test-utils');
 const { CMR } = require('@cumulus/cmr-client');
+const cmrjsCmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 const {
   generateLocalTestDb,
@@ -415,6 +416,71 @@ test.serial('unpublishGranule() with an optional collection succeeds with PG Gra
   t.is(cmrDeleteStub.calledOnceWith(
     metadataTitle
   ), true);
+});
+
+test.serial('unpublishGranule passes the collection cmr_provider to getCmrSettings', async (t) => {
+  const customProvider = `csd113-${cryptoRandomString({ length: 6 })}`; // Avoid using CMR default provider
+  const customCollection = fakeCollectionRecordFactory({ cmr_provider: customProvider });
+  const [pgCollection] = await t.context.collectionPgModel.create(
+    t.context.knex,
+    customCollection
+  );
+
+  const granule = fakeGranuleFactoryV2({
+    collectionId: constructCollectionId(customCollection.name, customCollection.version),
+    published: true,
+    cmrLink: 'https://cmr.example.com/granule/abc',
+  });
+  const translatedGranule = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: granule,
+    knexOrTransaction: t.context.knex,
+  });
+  const [createdPgGranule] = await t.context.granulePgModel.create(
+    t.context.knex,
+    { ...translatedGranule, collection_cumulus_id: pgCollection.cumulus_id }
+  );
+  const pgGranuleRecord = await t.context.granulePgModel.get(
+    t.context.knex,
+    { cumulus_id: createdPgGranule.cumulus_id }
+  );
+
+  // Ensure this isn't use in the function by setting a different value
+  const originalEnvProvider = process.env.cmr_provider;
+  process.env.cmr_provider = 'env-default-should-not-be-used';
+
+  const getCmrSettingsSpy = sinon.stub(cmrjsCmrUtils, 'getCmrSettings').resolves({
+    provider: customProvider,
+    clientId: 'test-client',
+    username: 'test-user',
+    password: 'test-pass',
+  });
+  const cmrMetadataStub = sinon.stub(CMR.prototype, 'getGranuleMetadata').resolves({
+    title: 'granule-ur',
+  });
+  const cmrDeleteStub = sinon.stub(CMR.prototype, 'deleteGranule').resolves();
+
+  t.teardown(() => {
+    getCmrSettingsSpy.restore();
+    cmrMetadataStub.restore();
+    cmrDeleteStub.restore();
+    process.env.cmr_provider = originalEnvProvider;
+  });
+
+  // Test publishgranule in both cases for the collection being passed in to
+  // ensure the provider is pulled from the collection
+  await unpublishGranule({
+    knex: t.context.knex,
+    pgGranuleRecord,
+  });
+  t.true(getCmrSettingsSpy.calledWith({ provider: customProvider }));
+
+  getCmrSettingsSpy.resetHistory();
+  await unpublishGranule({
+    knex: t.context.knex,
+    pgGranuleRecord,
+    pgCollection,
+  });
+  t.true(getCmrSettingsSpy.calledWith({ provider: customProvider }));
 });
 
 test.serial('unpublishGranule() does not update granule CMR status or delete from CMR if PG write fails', async (t) => {
