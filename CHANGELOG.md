@@ -31,6 +31,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     values, automatically fall back to defaults, and pass resolved fallback values to the child module.
 - **CUMULUS-4918**
   - Add release number tag to Iceberg APi image if applicable
+- **CUMULUS-4953**
+  - Shorten Iceberg API load balancer name suffix to accommodate a longer prefix
 
 ## [v22.1.1] 2026-05-28
 
