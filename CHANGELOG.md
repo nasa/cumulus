@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-4694**
   - Add flag to enable/disable iceberg replication
+- **CUMULUS-4953**
+  - Shorten Iceberg API load balancer name suffix to accommodate a longer prefix
 
 ## [v22.2.2] 2026-06-15
 
@@ -54,8 +56,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Move Iceberg API image build from Bamboo to github workflow
 - **CUMULUS-4918**
   - Add release number tag to Iceberg APi image if applicable
-- **CUMULUS-4953**
-  - Shorten Iceberg API load balancer name suffix to accommodate a longer prefix
 
 ## [v22.1.1] 2026-05-28
 
