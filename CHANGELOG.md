@@ -19,7 +19,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     migration and standard migrations are consistent and produce identical database schemas.
 
 ### Changed
-
+- **CUMULUS-4694**
+  - Add flag to enable/disable iceberg replication
 - **CUMULUS-4882**
   - Updated the triggers on the granules table to track collection updates and introduced a
     `cumulus.allow_collection_update` setting to authorize cross-collection shifts.

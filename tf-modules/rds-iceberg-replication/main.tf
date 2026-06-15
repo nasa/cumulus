@@ -16,7 +16,7 @@ provider "aws" {
 
 locals {
   underscore_prefix = replace(var.prefix, "-", "_")
-  replication_services = {
+  replication_services = var.enable_iceberg_replication ? {
     small-tables = {
       slot_name           = "${local.underscore_prefix}_small_tables"
       table_include_list  = "${var.pg_schema}.collections,${var.pg_schema}.async_operations,${var.pg_schema}.providers,${var.pg_schema}.pdrs,${var.pg_schema}.reconciliation_reports,${var.pg_schema}.rules,${var.pg_schema}.granules_executions"
@@ -49,10 +49,11 @@ locals {
       cpu                 = var.files_table_cpu
       batch_size          = var.files_table_batch_size
     }
-  }
+  } : {}
 }
 
 module "cluster" {
+  count             = var.enable_iceberg_replication == true ? 1 : 0
   source            = "./modules/cluster"
   prefix            = var.prefix
   vpc_id            = var.vpc_id
@@ -97,6 +98,7 @@ module "replication_services" {
 }
 
 module "cleanup_service" {
+  count                    = var.enable_iceberg_replication == true ? 1 : 0
   source                   = "./modules/cleanup-service"
   prefix                   = var.prefix
   subnet                   = var.subnet
