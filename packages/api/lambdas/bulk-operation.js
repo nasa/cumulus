@@ -5,6 +5,7 @@ const pMap = require('p-map');
 const Logger = require('@cumulus/logger');
 const {
   GranulePgModel,
+  CollectionPgModel,
   getKnexClient,
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
@@ -166,6 +167,8 @@ async function bulkGranuleDelete(
   const forceRemoveFromCmr = payload.forceRemoveFromCmr === true;
 
   const results = [];
+  const granulePgModel = new GranulePgModel();
+  const collectionPgModel = new CollectionPgModel();
   for await (
     const granuleBatch of getGranulesForPayload(payload)
   ) {
@@ -173,16 +176,17 @@ async function bulkGranuleDelete(
     const batchResults = await pMap(
       granuleBatch,
       async (granuleId) => {
-        let pgGranule;
-        const granulePgModel = new GranulePgModel();
-
         try {
-          pgGranule = await granulePgModel.get(knex, { granule_id: granuleId });
+          let pgGranule = await granulePgModel.get(knex, { granule_id: granuleId });
 
           if (pgGranule.published && forceRemoveFromCmr) {
+            const pgCollection = await collectionPgModel.get(
+              knex, { cumulus_id: pgGranule.collection_cumulus_id }
+            );
             ({ pgGranule } = await unpublishGranuleFunc({
               knex,
               pgGranuleRecord: pgGranule,
+              pgCollection: pgCollection,
               removeGranuleFromCmrFunction,
             }));
           }
