@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+- **CUMULUS-4694**
+  - Add flag to enable/disable iceberg replication
+
 ## [v22.2.2] 2026-06-15
 
 ### Fixed
