@@ -4,7 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [v22.2.2] 2026-06-15
+
+### Fixed
+
+- **CSD-113**
+  - Fixed issue with with bulk granule deletion where CMR records were not being removed
 
 ## [v22.2.1] 2026-06-04
 
@@ -46,6 +51,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Move Iceberg API image build from Bamboo to github workflow
 - **CUMULUS-4918**
   - Add release number tag to Iceberg APi image if applicable
+- **CUMULUS-4953**
+  - Shorten Iceberg API load balancer name suffix to accommodate a longer prefix
 
 ## [v22.1.1] 2026-05-28
 
