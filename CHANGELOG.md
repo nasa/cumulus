@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### FIXED
+- **CUMULUS-4694**
+  - Fixed issue with references to `module.cluster` in the Iceberg replication terraform code
 - **CSD-113**
   - Fixed issue with with bulk granule deletion where CMR records were not being removed
 
