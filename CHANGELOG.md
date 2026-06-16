@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [v22.2.3] 2026-06-15
+
+### Added
+
+- **CUMULUS-4694**
+  - Add flag to enable/disable iceberg replication
+
+### Changed
+
+- **CUMULUS-4918**
+  - Add release number tag to Iceberg APi image if applicable
+- **CUMULUS-4953**
+  - Shorten Iceberg API load balancer name suffix to accommodate a longer prefix
+
 ## [v22.2.2] 2026-06-15
 
 ### Fixed
@@ -49,10 +63,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Force build/push of iceberg replication images when merging to master
 - **CUMULUS-4912**
   - Move Iceberg API image build from Bamboo to github workflow
-- **CUMULUS-4918**
-  - Add release number tag to Iceberg APi image if applicable
-- **CUMULUS-4953**
-  - Shorten Iceberg API load balancer name suffix to accommodate a longer prefix
 
 ## [v22.1.1] 2026-05-28
 
@@ -9906,7 +9916,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v22.2.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v22.2.3...HEAD
+[v22.2.3]: https://github.com/nasa/cumulus/compare/v22.2.2...v22.2.3
+[v22.2.2]: https://github.com/nasa/cumulus/compare/v22.2.1...v22.2.2
 [v22.2.1]: https://github.com/nasa/cumulus/compare/v22.2.0...v22.2.1
 [v22.2.0]: https://github.com/nasa/cumulus/compare/v22.1.1...v22.2.0
 [v22.1.1]: https://github.com/nasa/cumulus/compare/v22.0.0...v22.1.1

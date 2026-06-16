@@ -43,7 +43,6 @@
 * Michael Dorfman
 * Mike Dorfman
 * Naga Nages
-* Nagavenkata Nageswaran
 * Nate Pauzenga
 * Pat Cappelaere
 * Patrick Quinn
@@ -56,6 +55,7 @@
 * Seth Vincent
 * Slav Korolev
 * Snyk bot
+* Theodore Reuter
 * Tim Clark
 * Tobias Nießen
 * Vanh Khuyen Nguyen
