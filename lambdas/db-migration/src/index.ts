@@ -1,6 +1,9 @@
 import path from 'path';
 import { getKnexClient } from '@cumulus/db';
+import Logger from '@cumulus/logger';
 import { inTestMode } from '@cumulus/common/test-utils';
+
+const logger = new Logger({ sender: '@cumulus/db-migration-lambda' });
 
 export type Command = 'latest' | 'rollback';
 
@@ -36,6 +39,18 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
           directory: selectedDir,
           loadExtensions: ['.js'],
         });
+
+        const totalYearsAhead = Number.parseInt(env.EXECUTIONS_PARTITION_TOTAL_YEARS || '2', 10);
+        const parsedRetention = Number.parseInt(env.EXECUTIONS_PARTITION_RETENTION_YEARS || '', 10);
+        const retentionYearsPast = Number.isInteger(parsedRetention) ? parsedRetention : null;
+
+        logger.debug(`Running post-migration task: manage_executions_partitions(${totalYearsAhead}, ${retentionYearsPast})`);
+
+        await knex.raw('CALL manage_executions_partitions(?, ?);', [
+          totalYearsAhead,
+          retentionYearsPast,
+        ]);
+
         break;
       }
       case 'rollback': {

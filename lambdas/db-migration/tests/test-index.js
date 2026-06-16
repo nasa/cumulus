@@ -42,6 +42,17 @@ const dumpSchema = async (env) => {
   return normalizeDump(stdout);
 };
 
+// Helper to fetch active partition tables from PostgreSQL catalog
+const getPartitionNames = async (tableName, knexClient) => {
+  const result = await knexClient
+    .select('child.relname as name')
+    .from('pg_inherits')
+    .join('pg_class as parent', 'pg_inherits.inhparent', 'parent.oid')
+    .join('pg_class as child', 'pg_inherits.inhrelid', 'child.oid')
+    .where('parent.relname', tableName);
+  return result.map((p) => p.name);
+};
+
 test.before(async (t) => {
   // Master connection used to manage dynamic test databases
   t.context.masterKnex = await getKnexClient({ env: localStackConnectionEnv });
@@ -204,12 +215,7 @@ test.serial('handler creates correct granules and files partitions based on env'
 
     t.context.testKnex = await getKnexClient({ env: testEnv });
 
-    const granulePartitions = await t.context.testKnex
-      .select('pg_class.relname as partition_name')
-      .from('pg_class')
-      .join('pg_inherits', 'pg_class.oid', 'pg_inherits.inhrelid')
-      .join('pg_class as parent', 'pg_inherits.inhparent', 'parent.oid')
-      .where('parent.relname', 'granules');
+    const granulePartitions = await getPartitionNames('granules', t.context.testKnex);
 
     t.is(
       granulePartitions.length,
@@ -217,12 +223,7 @@ test.serial('handler creates correct granules and files partitions based on env'
       `Should have ${process.env.GRANULES_PARTITION_COUNT} granule partitions`
     );
 
-    const filePartitions = await t.context.testKnex
-      .select('pg_class.relname as partition_name')
-      .from('pg_class')
-      .join('pg_inherits', 'pg_class.oid', 'pg_inherits.inhrelid')
-      .join('pg_class as parent', 'pg_inherits.inhparent', 'parent.oid')
-      .where('parent.relname', 'files');
+    const filePartitions = await getPartitionNames('files', t.context.testKnex);
 
     t.is(
       filePartitions.length,
@@ -284,4 +285,140 @@ test.serial('bootstrap schema matches standard migration schema', async (t) => {
     await t.context.masterKnex.raw(`DROP DATABASE IF EXISTS ${standardDb}`);
     await t.context.masterKnex.raw(`DROP DATABASE IF EXISTS ${bootstrapDb}`);
   }
+});
+
+test.serial('manage_executions_partitions provisions future partitions incrementally on subsequent runs', async (t) => {
+  const { testEnv } = t.context;
+  const currentYear = new Date().getFullYear();
+
+  // Initial Run: Provision 2 years ahead
+  await handler({ command: 'latest', env: { ...testEnv, EXECUTIONS_PARTITION_TOTAL_YEARS: '2' } });
+  t.context.testKnex = await getKnexClient({ env: testEnv });
+
+  let provisioned = await getPartitionNames('executions', t.context.testKnex);
+  t.true(provisioned.includes(`executions_${currentYear}_q1`), 'Current year partitions should exist');
+  t.true(provisioned.includes(`executions_${currentYear + 1}_q4`), 'Next year partitions should exist');
+  t.false(provisioned.includes(`executions_${currentYear + 2}_q1`), 'Year +2 partitions should not exist yet');
+
+  // Incremental Run: Expand to 4 years ahead
+  await t.context.testKnex.destroy(); // clear connections
+  await handler({ command: 'latest', env: { ...testEnv, EXECUTIONS_PARTITION_TOTAL_YEARS: '4' } });
+  t.context.testKnex = await getKnexClient({ env: testEnv });
+
+  // Final Validation: Verify all 4 years of partitions exist cleanly
+  provisioned = await getPartitionNames('executions', t.context.testKnex);
+  for (let year = currentYear; year < currentYear + 4; year += 1) {
+    for (let q = 1; q <= 4; q += 1) {
+      t.true(provisioned.includes(`executions_${year}_q${q}`), `executions_${year}_q${q} missing`);
+    }
+  }
+});
+
+test.serial('manage_executions_partitions purges expired partitions while explicitly keeping unexpired rows intact', async (t) => {
+  const { testEnv } = t.context;
+
+  // Initialize database schema
+  await handler({ command: 'latest', env: testEnv });
+  t.context.testKnex = await getKnexClient({ env: testEnv });
+  const knex = t.context.testKnex;
+
+  const currentYear = new Date().getFullYear();
+
+  // Define a mix of expired partitions and one explicit UNEXPIRED partition (e.g., 1 year ago)
+  const partitionsToSeed = [
+    { name: `executions_${currentYear - 4}_q1`, start: `${currentYear - 4}-01-01`, end: `${currentYear - 4}-04-01`, arn: 'arn:aws:states:us-east-1:123456789012:execution:expired-4years', isExpired: true },
+    { name: `executions_${currentYear - 3}_q2`, start: `${currentYear - 3}-04-01`, end: `${currentYear - 3}-07-01`, arn: 'arn:aws:states:us-east-1:123456789012:execution:expired-3years', isExpired: true },
+    { name: `executions_${currentYear - 1}_q3`, start: `${currentYear - 1}-07-01`, end: `${currentYear - 1}-10-01`, arn: 'arn:aws:states:us-east-1:123456789012:execution:keep-1year-old', isExpired: false },
+  ];
+
+  // Concurrently create tables and insert matching data
+  await Promise.all(
+    partitionsToSeed.map(async (part) => {
+      await knex.raw(`
+        CREATE TABLE IF NOT EXISTS public.${part.name} PARTITION OF executions
+        FOR VALUES FROM ('${part.start}') TO ('${part.end}');
+      `);
+
+      await knex('executions').insert({
+        arn: part.arn,
+        url: `https://example.com${part.name}`,
+        created_at: part.start,
+        status: 'failed',
+      });
+    })
+  );
+
+  // BEFORE CHECK: Verify all guard records exist before running cleaner
+  const allArns = partitionsToSeed.map((p) => p.arn);
+  const existingUniqueRows = await knex('executions_global_unique').whereIn('arn', allArns);
+  t.is(existingUniqueRows.length, partitionsToSeed.length, 'All unique guard keys must exist initially');
+
+  // Run handler again with specific retention environment overrides to invoke the procedure
+  const activeRetentionEnv = {
+    ...testEnv,
+    EXECUTIONS_PARTITION_TOTAL_YEARS: '2',
+    EXECUTIONS_PARTITION_RETENTION_YEARS: '2',
+  };
+  await handler({ command: 'latest', env: activeRetentionEnv });
+
+  // Concurrently verify partition existence states
+  await Promise.all(
+    partitionsToSeed.map(async (part) => {
+      const tableCheck = await knex.raw(`
+        SELECT to_regclass(?) as exists
+      `, [`public.${part.name}`]);
+
+      if (part.isExpired) {
+        t.falsy(tableCheck.rows[0].exists, `Expired partition ${part.name} should be dropped`);
+      } else {
+        t.truthy(tableCheck.rows[0].exists, `Unexpired partition ${part.name} must remain intact`);
+      }
+    })
+  );
+
+  // AFTER CHECK: Verify unique tracking states for both types of records
+  const expiredArns = partitionsToSeed.filter((p) => p.isExpired).map((p) => p.arn);
+  const keepArns = partitionsToSeed.filter((p) => !p.isExpired).map((p) => p.arn);
+
+  // Expired ARNs must be gone
+  const remainingExpiredRows = await knex('executions_global_unique').whereIn('arn', expiredArns);
+  t.is(remainingExpiredRows.length, 0, 'Expired keys must be cleanly removed from executions_global_unique');
+
+  // Unexpired ARNs must still be present
+  const remainingKeepRows = await knex('executions_global_unique').whereIn('arn', keepArns);
+  t.is(remainingKeepRows.length, keepArns.length, 'Unexpired guard keys must still remain inside executions_global_unique');
+});
+
+test.serial('manage_executions_partitions disables deletion by default when retention years is omitted', async (t) => {
+  const { testEnv } = t.context;
+
+  // Configure env with retention completely omitted to ensure baseline null behavior triggers
+  const baselineEnv = {
+    ...testEnv,
+    EXECUTIONS_PARTITION_TOTAL_YEARS: '1',
+  };
+  delete baselineEnv.EXECUTIONS_PARTITION_RETENTION_YEARS;
+
+  await handler({ command: 'latest', env: baselineEnv });
+  t.context.testKnex = await getKnexClient({ env: baselineEnv });
+  const knex = t.context.testKnex;
+
+  const currentYear = new Date().getFullYear();
+  const oldPartitionName = `executions_${currentYear - 5}_q3`;
+
+  // Seed historical partition
+  await knex.raw(`
+    CREATE TABLE IF NOT EXISTS public.${oldPartitionName} PARTITION OF executions
+    FOR VALUES FROM ('${currentYear - 5}-07-01') TO ('${currentYear - 5}-10-01');
+  `);
+
+  // Run migrations again, executing the procedure under baseline default variables
+  await handler({ command: 'latest', env: baselineEnv });
+
+  // Verify the old partition was NOT dropped because retention defaulted to null
+  const tableCheck = await knex.raw(`
+    SELECT to_regclass(?) as exists
+  `, [`public.${oldPartitionName}`]);
+
+  t.truthy(tableCheck.rows[0].exists, 'The old partition must be preserved when retention defaults to null baseline');
 });

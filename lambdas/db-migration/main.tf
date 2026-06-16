@@ -81,6 +81,8 @@ resource "aws_lambda_function" "db_migration" {
       GRANULES_PARTITION_COUNT         = var.db_partition_config.granules_count
       FILES_PARTITION_COUNT            = var.db_partition_config.files_count
 
+      EXECUTIONS_PARTITION_RETENTION_YEARS = var.db_partition_config.executions_retention_years
+
       USE_BOOTSTRAP = var.use_bootstrap
     }
   }

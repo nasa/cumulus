@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4842**
+  - Added `manage_executions_partitions` db procedure to provision future quarterly executions
+    partitions and selectively delete expired ones older than the retention window. This procedure
+    is automatically executed by the db-migration Lambda handler post-migration.
+  - Added optional `db_partition_config.executions_retention_years` variable to `tf-modules/data-persistence`.
+
+### Added
+
 - **CUMULUS-4891**
   - Add scripts to build Iceberg replication docker images and push them to ECR as part of the build process
 - **CUMULUS-4894**
