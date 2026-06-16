@@ -3,6 +3,12 @@ variable "prefix" {
   type        = string
 }
 
+variable "enable_iceberg_replication" {
+  description = "Create the Iceberg replication module when true"
+  type        = bool
+  default     = false
+}
+
 variable "aws_db_subnet_group_prefix" {
   description = "Prefix for RDS database cluster subnet group"
   type        = string

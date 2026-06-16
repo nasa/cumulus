@@ -36,6 +36,7 @@ const {
   createTestIndex,
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
+const { bulkGranuleDelete } = require('../../lambdas/bulk-operation');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
 
@@ -1042,4 +1043,50 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granules that do not
     errors.map((error) => error?.error),
     new Array(3).fill(`Error: ${errorMessage}`)
   );
+});
+
+test.serial('ensure bulkGranuleDelete passes correct cmr_provider to unpublishGranule', async (t) => {
+  const Knex = t.context.knex;
+  const [collectionPgRecord] = await new CollectionPgModel().create(
+    Knex, fakeCollectionRecordFactory()
+  );
+
+  const granule = await createGranuleAndFiles({
+    dbClient: Knex,
+    granuleParams: {
+      published: true,
+      collection_cumulus_id: collectionPgRecord.cumulus_id,
+    },
+    writeDynamo: false,
+  });
+
+  const removeGranuleFromCmrFunctionMock = sinon.stub().resolves();
+  const unpublishGranuleFuncStub = sinon.stub().callsFake(({
+    knex,
+    pgGranuleRecord,
+    pgCollection,
+    removeGranuleFromCmrFunction,
+  }) => {
+    t.truthy(knex);
+    t.truthy(pgGranuleRecord);
+    t.truthy(pgCollection);
+    t.truthy(pgCollection.cmr_provider);
+    t.is(removeGranuleFromCmrFunction, removeGranuleFromCmrFunctionMock);
+
+    return { pgGranule: pgGranuleRecord };
+  });
+
+  await bulkGranuleDelete(
+    {
+      granules: [granule.newPgGranule.granule_id],
+      forceRemoveFromCmr: true,
+    },
+    removeGranuleFromCmrFunctionMock,
+    unpublishGranuleFuncStub
+  );
+
+  t.true(unpublishGranuleFuncStub.called);
+  const firstCallArgs = unpublishGranuleFuncStub.firstCall.args[0];
+  t.truthy(firstCallArgs.pgCollection.cmr_provider);
+  t.is(firstCallArgs.pgCollection.cmr_provider, collectionPgRecord.cmr_provider);
 });
