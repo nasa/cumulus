@@ -365,6 +365,8 @@ Please note changes in 21.3.4 may not yet be released in future versions, as thi
   - Added pdr-cleanup task into cumulus core from ASDC
 - **CUMULUS-4563**
   - Added a Github action to generate requirements.txt files from coreified uv.lock files
+- **CUMULUS-4513**
+  - Added support for retries in PDR workflows
 
 ### Changed
 
