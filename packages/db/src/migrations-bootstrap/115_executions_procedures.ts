@@ -74,21 +74,19 @@ export const up = async (knex: Knex): Promise<void> => {
       LOOP
         -- convert the internal binary range expression to a readable string
         -- e.g., "FOR VALUES FROM ('2026-01-01 00:00:00+00') TO ('2026-04-01 00:00:00+00')"
+        -- or "DEFAULT" for a default partition table layout context
         v_range_expr := pg_get_expr(v_drop_record.relpartbound, v_drop_record.oid);
 
         -- extract the upper date boundary substring via regex pattern matching
         -- looking for the string within the second set of single quotes after 'TO'
         v_part_end_str := substring(v_range_expr from 'TO .''([0-9]{4}-[0-9]{2}-[0-9]{2})');
 
-        -- continue to next item safely if regex failed to extract a valid range format
         IF v_part_end_str IS NULL THEN
           CONTINUE;
         END IF;
 
-        -- cast the isolated string directly into a standard date object
         v_part_end_date := v_part_end_str::DATE;
 
-        -- debugging notice to evaluate ranges prior to execution checking
         RAISE NOTICE 'Evaluating partition: %, Range End: %, Cutoff Date: %',
           v_drop_record.tablename,
           v_part_end_date,
@@ -98,15 +96,15 @@ export const up = async (knex: Knex): Promise<void> => {
         IF v_part_end_date <= v_cutoff_date THEN
           RAISE NOTICE 'Processing expired partition for safe batch cleanup: %', v_drop_record.tablename;
 
-          -- BATCH CLEANUP: granules_executions (cte inner join delete)
+          -- BATCH CLEANUP: granules_executions
           LOOP
             EXECUTE format('
-              WITH batch AS (
-                SELECT cumulus_id FROM %I LIMIT %L
-              )
-              DELETE FROM granules_executions ge
-              USING batch b
-              WHERE ge.execution_cumulus_id = b.cumulus_id;',
+              DELETE FROM granules_executions
+              WHERE ctid IN (
+                SELECT ctid FROM granules_executions
+                WHERE execution_cumulus_id IN (SELECT cumulus_id FROM %I)
+                LIMIT %L
+              );',
               v_drop_record.tablename, p_batch_size
             );
             GET DIAGNOSTICS v_rows_deleted = ROW_COUNT;
@@ -114,15 +112,15 @@ export const up = async (knex: Knex): Promise<void> => {
             EXIT WHEN v_rows_deleted = 0;
           END LOOP;
 
-          -- BATCH CLEANUP: pdrs (cte inner join delete)
+          -- BATCH CLEANUP: pdrs
           LOOP
             EXECUTE format('
-              WITH batch AS (
-                SELECT cumulus_id FROM %I LIMIT %L
-              )
-              DELETE FROM pdrs p
-              USING batch b
-              WHERE p.execution_cumulus_id = b.cumulus_id;',
+              DELETE FROM pdrs
+              WHERE ctid IN (
+                SELECT ctid FROM pdrs
+                WHERE execution_cumulus_id IN (SELECT cumulus_id FROM %I)
+                LIMIT %L
+              );',
               v_drop_record.tablename, p_batch_size
             );
             GET DIAGNOSTICS v_rows_deleted = ROW_COUNT;
@@ -130,15 +128,15 @@ export const up = async (knex: Knex): Promise<void> => {
             EXIT WHEN v_rows_deleted = 0;
           END LOOP;
 
-          -- BATCH CLEANUP: executions_global_unique (cte inner join delete)
+          -- BATCH CLEANUP: executions_global_unique
           LOOP
             EXECUTE format('
-              WITH batch AS (
-                SELECT arn FROM %I LIMIT %L
-              )
-              DELETE FROM executions_global_unique gu
-              USING batch b
-              WHERE gu.arn = b.arn;',
+              DELETE FROM executions_global_unique
+              WHERE ctid IN (
+                SELECT ctid FROM executions_global_unique
+                WHERE arn IN (SELECT arn FROM %I)
+                LIMIT %L
+              );',
               v_drop_record.tablename, p_batch_size
             );
             GET DIAGNOSTICS v_rows_deleted = ROW_COUNT;

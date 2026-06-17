@@ -323,8 +323,9 @@ test.serial('expired execution partitions are purged while explicitly keeping un
   const knex = t.context.testKnex;
 
   const currentYear = new Date().getFullYear();
+  const defaultPartitionName = 'executions_default';
 
-  // Define a mix of expired partitions and one explicit UNEXPIRED partition (e.g., 1 year ago)
+  // Define a mix of expired partitions and one explicit UNEXPIRED partition
   const partitionsToSeed = [
     { name: 'executions_custom_old_data', start: `${currentYear - 5}-05-01`, end: `${currentYear - 5}-06-01`, arn: 'arn:aws:states:us-east-1:123456789012:execution:expired-5years', isExpired: true },
     { name: `executions_${currentYear - 4}_q1`, start: `${currentYear - 4}-01-01`, end: `${currentYear - 4}-04-01`, arn: 'arn:aws:states:us-east-1:123456789012:execution:expired-4years', isExpired: true },
@@ -333,6 +334,7 @@ test.serial('expired execution partitions are purged while explicitly keeping un
   ];
 
   // Concurrently create tables and insert matching data
+  const BATCH_SEED_SIZE = 25000;
   await Promise.all(
     partitionsToSeed.map(async (part) => {
       await knex.raw(`
@@ -340,19 +342,39 @@ test.serial('expired execution partitions are purged while explicitly keeping un
         FOR VALUES FROM ('${part.start}') TO ('${part.end}');
       `);
 
-      await knex('executions').insert({
-        arn: part.arn,
-        url: `https://example.com${part.name}`,
-        created_at: part.start,
-        status: 'failed',
-      });
+      if (part.isExpired) {
+        await knex.raw(`
+          INSERT INTO executions (arn, url, created_at, status)
+          SELECT
+            '${part.arn}-' || s.seq,
+            'https://example.com${part.name}/' || s.seq,
+            '${part.start}'::TIMESTAMP,
+            'failed'
+          FROM generate_series(1, ${BATCH_SEED_SIZE}) AS s(seq);
+        `);
+      } else {
+        await knex('executions').insert({
+          arn: part.arn,
+          url: `https://example.com${part.name}`,
+          created_at: part.start,
+          status: 'failed',
+        });
+      }
     })
   );
 
   // BEFORE CHECK: Verify all guard records exist before running cleaner
-  const allArns = partitionsToSeed.map((p) => p.arn);
-  const existingUniqueRows = await knex('executions_global_unique').whereIn('arn', allArns);
-  t.is(existingUniqueRows.length, partitionsToSeed.length, 'All unique guard keys must exist initially');
+  const totalExpiredPartitions = partitionsToSeed.filter((p) => p.isExpired).length;
+  const expectedTotalExpiredRows = totalExpiredPartitions * BATCH_SEED_SIZE;
+  const expectedTotalRows = expectedTotalExpiredRows + 1; // plus 1 for the unexpired row
+
+  const [[totalUniqueRowsBefore], [totalExecutionsBefore]] = await Promise.all([
+    knex('executions_global_unique').count('arn as count'),
+    knex('executions').count('cumulus_id as count'),
+  ]);
+
+  t.is(Number(totalUniqueRowsBefore.count), expectedTotalRows, 'All 75,001 unique tracking guard keys must exist initially');
+  t.is(Number(totalExecutionsBefore.count), expectedTotalRows, 'All 75,001 base executions records must exist initially');
 
   // Run handler again with specific retention environment overrides to invoke the procedure
   const activeRetentionEnv = {
@@ -377,13 +399,18 @@ test.serial('expired execution partitions are purged while explicitly keeping un
     })
   );
 
-  // AFTER CHECK: Verify unique tracking states for both types of records
-  const expiredArns = partitionsToSeed.filter((p) => p.isExpired).map((p) => p.arn);
-  const keepArns = partitionsToSeed.filter((p) => !p.isExpired).map((p) => p.arn);
+  const defaultCheck = await knex.raw(`
+    SELECT to_regclass(?) as exists
+  `, [`public.${defaultPartitionName}`]);
+  t.truthy(defaultCheck.rows[0].exists, 'The default fallback partition table layout must remain completely untouched');
 
-  // Expired ARNs must be gone
-  const remainingExpiredRows = await knex('executions_global_unique').whereIn('arn', expiredArns);
-  t.is(remainingExpiredRows.length, 0, 'Expired keys must be cleanly removed from executions_global_unique');
+  // AFTER CHECK: Verify arns are removed from global unique table for expired records
+  const [remainingExpiredUnique, keepArns] = await Promise.all([
+    knex('executions_global_unique').whereLike('arn', '%:expired-%'),
+    partitionsToSeed.filter((p) => !p.isExpired).map((p) => p.arn),
+  ]);
+
+  t.is(remainingExpiredUnique.length, 0, 'All 75,000 expired keys must be cleanly removed from executions_global_unique');
 
   // Unexpired ARNs must still be present
   const remainingKeepRows = await knex('executions_global_unique').whereIn('arn', keepArns);
