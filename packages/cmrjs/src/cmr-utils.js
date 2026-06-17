@@ -319,7 +319,7 @@ async function publishUMMGJSON2CMR(cmrFile, cmrClient, revisionId) {
  * if not provided, CMR username and password are used to get a cmr token
  */
 function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
-  const cmrClient = new CMR(creds);
+  const cmrClient = CMR.getInstance(creds);
   const cmrFileName = getFilename(cmrPublishObject);
   // choose xml or json and do the things.
   if (isECHO10Filename(cmrFileName)) {
@@ -338,7 +338,7 @@ function publish2CMR(cmrPublishObject, creds, cmrRevisionId) {
  * @param {CmrCredentials} creds - credentials needed to post to CMR service
  */
 async function removeFromCMR(granuleUR, creds) {
-  const cmrClient = new CMR(creds);
+  const cmrClient = CMR.getInstance(creds);
   return await cmrClient.deleteGranule(granuleUR);
 }
 
@@ -968,6 +968,7 @@ async function getCmrSettings(cmrConfig = {}) {
     const token = await launchpad.getLaunchpadToken(config);
     return {
       ...cmrCredentials,
+      ...config,
       token,
     };
   }
@@ -1360,20 +1361,23 @@ function buildCMRQuery(results) {
  */
 async function getCollectionsByShortNameAndVersion(results) {
   const query = buildCMRQuery(results);
-  const cmrClient = new CMR(await getCmrSettings());
-  const headers = cmrClient.getReadHeaders({ token: await cmrClient.getToken() });
+  const cmrClient = CMR.getInstance(await getCmrSettings());
 
-  const response = await got.post(
-    `${getSearchUrl()}collections.json`,
-    {
-      json: query,
-      responseType: 'json',
-      headers: {
-        Accept: 'application/json',
-        ...headers,
-      },
-    }
-  );
+  const response = await cmrClient.withCmrLaunchpadTokenRefreshRetry(async () => {
+    const headers = cmrClient.getReadHeaders({ token: await cmrClient.getToken() });
+    return await got.post(
+      `${getSearchUrl()}collections.json`,
+      {
+        json: query,
+        responseType: 'json',
+        headers: {
+          Accept: 'application/json',
+          ...headers,
+        },
+      }
+    );
+  });
+
   return response.body;
 }
 

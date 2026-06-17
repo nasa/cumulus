@@ -23,6 +23,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     migration and standard migrations are consistent and produce identical database schemas.
 
 ### Changed
+- **CSD-99**
+  - Changed the `CMR` class to a singleton
+  - Changed `cmr-utils` functions that call the `CMR` class functions to retry upon 401 authentication failures
+  - Added functions `checkRefreshLaunchpadToken` and `refreshLaunchpadToken` to the `CMR` class to be invoked upon a 401 authentication failure which removes and/or retrieves a valid launchpad token
+  - Added functions to the `launchpad-auth` package which adds a lock file for token creation, removes an invalid token, and checks s3 for the token and lock file
 - **CUMULUS-4694**
   - Add flag to enable/disable iceberg replication
 - **CUMULUS-4882**

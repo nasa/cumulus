@@ -136,7 +136,7 @@ async function getCollectionEntry(config, metadata, isUmmG) {
   });
 
   // Query CMR for collection and retrieve entry title
-  const cmrInstance = new CMR(cmrSettings);
+  const cmrInstance = CMR.getInstance(cmrSettings);
 
   const searchParams = getCmrSearchParams({
     datasetId,
