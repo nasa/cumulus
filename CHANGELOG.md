@@ -6,10 +6,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### FIXED
-- **CSD-113**
-  - Fixed issue with with bulk granule deletion where CMR records were not being removed
-
 ### Added
 
 - **CUMULUS-4842**
@@ -18,8 +14,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     db-migration Lambda handler post-migration.
   - Added optional `db_partition_config.executions_retention_years` variable to `tf-modules/data-persistence`.
 
+### FIXED
+- **CSD-113**
+  - Fixed issue with with bulk granule deletion where CMR records were not being removed
+
 ### Added
 
+- **CUMULUS-4520**
+  - Add Iceberg documentation
 - **CUMULUS-4891**
   - Add scripts to build Iceberg replication docker images and push them to ECR as part of the build process
 - **CUMULUS-4894**
