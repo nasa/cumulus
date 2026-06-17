@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Added
+
+- **CUMULUS-4520**
+  - Add Iceberg documentation
+
+### Changed
+
+- **CUMULUS-4694**
+  - Add flag to enable/disable iceberg replication
+
+### Fixed
+
+- **CUMULUS-4694**
+  - Fixed issue with references to `module.cluster` in the Iceberg replication terraform code
+
 ## [v22.2.3] 2026-06-15
 
 ### Added
@@ -38,10 +55,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add metrics_provider to pg database collection model
   - Add metrics_provider to iceberg schema
   - Add metrics_provider to sns outputs to creation/update/delete executions, granules, pdrs
-- **CUMULUS-4866**
-  - Add cmrProvider to sns output granules, executions, pdrs
 - **CUMULUS-4873**
   - Add initial module for BigNBit.
+- **CUMULUS-4891**
+  - Add scripts to build Iceberg replication docker images and push them to ECR as part of the build process
 - **CUMULUS-4894**
   - Added a test to the db-migration lambda to validate that schemas generated via the bootstrap
     migration and standard migrations are consistent and produce identical database schemas.
@@ -73,6 +90,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4898**
   - Add Iceberg API documentation page to Cumulus Documentation
     Once released, the Iceberg API doc should be at: https://nasa.github.io/cumulus/docs/next/deployment/iceberg-api
+- **CUMULUS-4866**
+  - Add cmrProvider to sns output granules, executions, pdrs
 - **CUMULUS-4883**
   - Add script to build Iceberg API docker image and push it to ECR as part of the build process
 - **CUMULUS-4705**
