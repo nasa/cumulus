@@ -287,7 +287,7 @@ test.serial('bootstrap schema matches standard migration schema', async (t) => {
   }
 });
 
-test.serial('manage_executions_partitions provisions future partitions incrementally on subsequent runs', async (t) => {
+test.serial('execution partitions are provisioned incrementally on subsequent runs', async (t) => {
   const { testEnv } = t.context;
   const currentYear = new Date().getFullYear();
 
@@ -314,7 +314,7 @@ test.serial('manage_executions_partitions provisions future partitions increment
   }
 });
 
-test.serial('manage_executions_partitions purges expired partitions while explicitly keeping unexpired rows intact', async (t) => {
+test.serial('expired execution partitions are purged while explicitly keeping unexpired rows intact', async (t) => {
   const { testEnv } = t.context;
 
   // Initialize database schema
@@ -326,6 +326,7 @@ test.serial('manage_executions_partitions purges expired partitions while explic
 
   // Define a mix of expired partitions and one explicit UNEXPIRED partition (e.g., 1 year ago)
   const partitionsToSeed = [
+    { name: 'executions_custom_old_data', start: `${currentYear - 5}-05-01`, end: `${currentYear - 5}-06-01`, arn: 'arn:aws:states:us-east-1:123456789012:execution:expired-5years', isExpired: true },
     { name: `executions_${currentYear - 4}_q1`, start: `${currentYear - 4}-01-01`, end: `${currentYear - 4}-04-01`, arn: 'arn:aws:states:us-east-1:123456789012:execution:expired-4years', isExpired: true },
     { name: `executions_${currentYear - 3}_q2`, start: `${currentYear - 3}-04-01`, end: `${currentYear - 3}-07-01`, arn: 'arn:aws:states:us-east-1:123456789012:execution:expired-3years', isExpired: true },
     { name: `executions_${currentYear - 1}_q3`, start: `${currentYear - 1}-07-01`, end: `${currentYear - 1}-10-01`, arn: 'arn:aws:states:us-east-1:123456789012:execution:keep-1year-old', isExpired: false },
@@ -389,7 +390,7 @@ test.serial('manage_executions_partitions purges expired partitions while explic
   t.is(remainingKeepRows.length, keepArns.length, 'Unexpired guard keys must still remain inside executions_global_unique');
 });
 
-test.serial('manage_executions_partitions disables deletion by default when retention years is omitted', async (t) => {
+test.serial('execution partition deletion is disabled by default when retention years is omitted', async (t) => {
   const { testEnv } = t.context;
 
   // Configure env with retention completely omitted to ensure baseline null behavior triggers

@@ -7,6 +7,9 @@ const logger = new Logger({ sender: '@cumulus/db-migration-lambda' });
 
 export type Command = 'latest' | 'rollback';
 
+const CREATE_FUTURE_PARTITIONS_PROC_NAME = 'create_future_executions_partitions';
+const DELETE_EXPIRED_PARTITIONS_PROC_NAME = 'delete_expired_executions_partitions';
+
 export interface HandlerEvent {
   command?: Command,
   env?: NodeJS.ProcessEnv
@@ -44,12 +47,11 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
         const parsedRetention = Number.parseInt(env.EXECUTIONS_PARTITION_RETENTION_YEARS || '', 10);
         const retentionYearsPast = Number.isInteger(parsedRetention) ? parsedRetention : null;
 
-        logger.debug(`Running post-migration task: manage_executions_partitions(${totalYearsAhead}, ${retentionYearsPast})`);
+        logger.debug(`Running post-migration task: ${CREATE_FUTURE_PARTITIONS_PROC_NAME}(${totalYearsAhead})`);
+        await knex.raw(`CALL ${CREATE_FUTURE_PARTITIONS_PROC_NAME}(?);`, [totalYearsAhead]);
 
-        await knex.raw('CALL manage_executions_partitions(?, ?);', [
-          totalYearsAhead,
-          retentionYearsPast,
-        ]);
+        logger.debug(`Running post-migration task: ${DELETE_EXPIRED_PARTITIONS_PROC_NAME}(${retentionYearsPast})`);
+        await knex.raw(`CALL ${DELETE_EXPIRED_PARTITIONS_PROC_NAME}(?);`, [retentionYearsPast]);
 
         break;
       }
