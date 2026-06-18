@@ -9,10 +9,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-4842**
-  - Added db procedures to provision future quarterly executions partitions and selectively delete
-    expired ones older than the retention window. The db procedures are executed by the
-    db-migration Lambda handler post-migration.
-  - Added optional `db_partition_config.executions_retention_years` variable to `tf-modules/data-persistence`.
+  - Added database procedures to provision future quarterly execution partitions and delete expired
+    partitions older than the retention window. The create_future_executions_partitions procedure
+    is now executed automatically by the DB migration Lambda handler post-migration.
 
 ### FIXED
 - **CUMULUS-4694**

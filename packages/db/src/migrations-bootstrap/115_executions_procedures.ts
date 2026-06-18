@@ -41,8 +41,8 @@ export const up = async (knex: Knex): Promise<void> => {
   // PROCEDURE TO DROP EXPIRED PARTITIONS
   await knex.raw(`
     CREATE OR REPLACE PROCEDURE ${DELETE_EXPIRED_PARTITIONS_PROC_NAME}(
-      p_retention_years_past INT,
-      p_batch_size INT DEFAULT 10000
+      p_retention_months_past INT,
+      p_deletion_batch_size INT DEFAULT 10000
     )
     LANGUAGE plpgsql
     AS $$
@@ -54,13 +54,13 @@ export const up = async (knex: Knex): Promise<void> => {
       v_cutoff_date   DATE;
       v_rows_deleted  INT;
     BEGIN
-      IF p_retention_years_past IS NULL OR p_retention_years_past <= 0 THEN
+      IF p_retention_months_past IS NULL OR p_retention_months_past <= 0 THEN
         RAISE NOTICE 'Retention tracking disabled (value is NULL or <= 0). Skipping partition deletion phase.';
         RETURN;
       END IF;
 
-      -- calculate the exact cutoff date (e.g., exactly X years ago from today)
-      v_cutoff_date := CURRENT_DATE - (p_retention_years_past || ' years')::INTERVAL;
+      -- calculate the exact cutoff date (e.g., exactly X months ago from today)
+      v_cutoff_date := CURRENT_DATE - (p_retention_months_past || ' months')::INTERVAL;
 
       FOR v_drop_record IN
         SELECT
@@ -105,7 +105,7 @@ export const up = async (knex: Knex): Promise<void> => {
                 WHERE execution_cumulus_id IN (SELECT cumulus_id FROM %I)
                 LIMIT %L
               );',
-              v_drop_record.tablename, p_batch_size
+              v_drop_record.tablename, p_deletion_batch_size
             );
             GET DIAGNOSTICS v_rows_deleted = ROW_COUNT;
             COMMIT;
@@ -121,7 +121,7 @@ export const up = async (knex: Knex): Promise<void> => {
                 WHERE execution_cumulus_id IN (SELECT cumulus_id FROM %I)
                 LIMIT %L
               );',
-              v_drop_record.tablename, p_batch_size
+              v_drop_record.tablename, p_deletion_batch_size
             );
             GET DIAGNOSTICS v_rows_deleted = ROW_COUNT;
             COMMIT;
@@ -137,7 +137,7 @@ export const up = async (knex: Knex): Promise<void> => {
                 WHERE arn IN (SELECT arn FROM %I)
                 LIMIT %L
               );',
-              v_drop_record.tablename, p_batch_size
+              v_drop_record.tablename, p_deletion_batch_size
             );
             GET DIAGNOSTICS v_rows_deleted = ROW_COUNT;
             COMMIT;
