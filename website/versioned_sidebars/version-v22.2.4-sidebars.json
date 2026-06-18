@@ -178,7 +178,8 @@
         "features/replay-archived-sqs-messages",
         "features/granule_uniquification",
         "features/change_granule_collection",
-        "features/record_archival"
+        "features/record_archival",
+        "features/iceberg"
       ]
     },
     {
@@ -193,7 +194,8 @@
         "troubleshooting/troubleshooting-deployment",
         "troubleshooting/rerunning-workflow-executions",
         "troubleshooting/reindex-elasticsearch",
-        "troubleshooting/troubleshooting-database-migrations"
+        "troubleshooting/troubleshooting-database-migrations",
+        "troubleshooting/troubleshooting-iceberg"
       ]
     },
     {
