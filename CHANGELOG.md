@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-4520**
-  - Add Iceberg documentation
+  - Add Iceberg design and troubleshooting documentation
 - **CUMULUS-4842**
   - Added database procedures to provision future quarterly execution partitions and delete expired
     partitions older than the retention window. The create_future_executions_partitions procedure

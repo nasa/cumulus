@@ -1,6 +1,7 @@
 ---
-id: Iceberg
-title: Iceberg design
+id: iceberg
+title: Iceberg Design
+hide_title: false
 ---
 
 ## Rationale
