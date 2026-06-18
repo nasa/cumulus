@@ -6,12 +6,62 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### FIXED
-- **CSD-113**
-  - Fixed issue with with bulk granule deletion where CMR records were not being removed
+### Added
+
+- **CUMULUS-4520**
+  - Add Iceberg design and troubleshooting documentation
+
+### Changed
+
+- **CSD-99**
+  - Changed the `CMR` class to a singleton
+  - Changed `cmr-utils` functions that call the `CMR` class functions to retry upon 401 authentication failures
+  - Added functions `checkRefreshLaunchpadToken` and `refreshLaunchpadToken` to the `CMR` class to be invoked upon a 401 authentication failure which removes and/or retrieves a valid launchpad token
+  - Added functions to the `launchpad-auth` package which adds a lock file for token creation, removes an invalid token, and checks s3 for the token and lock file
+- **CUMULUS-4694**
+  - Add flag to enable/disable iceberg replication
+
+### Fixed
+
+- **CUMULUS-4694**
+  - Fixed issue with references to `module.cluster` in the Iceberg replication terraform code
+
+## [v22.2.3] 2026-06-15
 
 ### Added
 
+- **CUMULUS-4694**
+  - Add flag to enable/disable iceberg replication
+
+### Changed
+
+- **CUMULUS-4918**
+  - Add release number tag to Iceberg APi image if applicable
+- **CUMULUS-4953**
+  - Shorten Iceberg API load balancer name suffix to accommodate a longer prefix
+
+## [v22.2.2] 2026-06-15
+
+### Fixed
+
+- **CSD-113**
+  - Fixed issue with with bulk granule deletion where CMR records were not being removed
+
+## [v22.2.1] 2026-06-04
+
+- **CSD-111**
+  - Add requester-pays to all relevant aws-client S3 calls
+
+## [v22.2.0] 2026-06-04
+
+### Added
+
+- **CUMULUS-4866**
+  - Add metrics_provider to pg database collection model
+  - Add metrics_provider to iceberg schema
+  - Add metrics_provider to sns outputs to creation/update/delete executions, granules, pdrs
+- **CUMULUS-4873**
+  - Add initial module for BigNBit.
 - **CUMULUS-4891**
   - Add scripts to build Iceberg replication docker images and push them to ECR as part of the build process
 - **CUMULUS-4894**
@@ -23,7 +73,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4866**
   - Add ifNotExists in db migration script to prevent breakage on update with pre-migration work
 - **CUMULUS-4694**
-  - Add flag to enable/disable iceberg replication
+  - Change replication tasks to use proper region
 - **CUMULUS-4882**
   - Updated the triggers on the granules table to track collection updates and introduced a
     `cumulus.allow_collection_update` setting to authorize cross-collection shifts.
@@ -33,24 +83,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     cross-collection collision checks only on actual unique constraint conflicts during ingest.
   - Updated the `db_partition_config` variable in `tf-modules/data-persistence` to accept null
     values, automatically fall back to defaults, and pass resolved fallback values to the child module.
-- **CUMULUS-4918**
-  - Add release number tag to Iceberg APi image if applicable
-- **CUMULUS-4953**
-  - Shorten Iceberg API load balancer name suffix to accommodate a longer prefix
+- **CUMULUS-4891**
+  - Force build/push of iceberg replication images when merging to master
+- **CUMULUS-4912**
+  - Move Iceberg API image build from Bamboo to github workflow
 
 ## [v22.1.1] 2026-05-28
 
 ### Added
 
-- **CUMULUS-4912**
-  - Move Iceberg API image build from Bamboo to github workflow
+- **CUMULUS-4891**
+  - Add scripts to build Iceberg replication docker images and push them to ECR as part of the build process
 - **CUMULUS-4898**
   - Add Iceberg API documentation page to Cumulus Documentation
     Once released, the Iceberg API doc should be at: https://nasa.github.io/cumulus/docs/next/deployment/iceberg-api
-- **CUMULUS-4866**
-  - Add metrics_provider to pg database collection model
-  - Add metrics_provider to iceberg schema
-  - Add metrics_provider to sns outputs to creation/update/delete executions, granules, pdrs
 - **CUMULUS-4866**
   - Add cmrProvider to sns output granules, executions, pdrs
 - **CUMULUS-4883**
@@ -75,8 +121,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **CUMULUS-4694** Change replication tasks to use proper region
-- **CUMULUS-4891** Force build/push of iceberg replication images when merging to master
 - **CUMULUS-4776** Split iceberg replication into separate services and add support for partitioned tables
 - **async-operations-update**
   - Update Async Operation container to new version 57, `cumuluss/async-operation:57`. Users should update their references to `async-operation` with the new version.
@@ -9898,7 +9942,11 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v22.1.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v22.2.3...HEAD
+[v22.2.3]: https://github.com/nasa/cumulus/compare/v22.2.2...v22.2.3
+[v22.2.2]: https://github.com/nasa/cumulus/compare/v22.2.1...v22.2.2
+[v22.2.1]: https://github.com/nasa/cumulus/compare/v22.2.0...v22.2.1
+[v22.2.0]: https://github.com/nasa/cumulus/compare/v22.1.1...v22.2.0
 [v22.1.1]: https://github.com/nasa/cumulus/compare/v22.0.0...v22.1.1
 [v22.0.0]: https://github.com/nasa/cumulus/compare/v21.3.5...v22.0.0
 [v21.3.5]: https://github.com/nasa/cumulus/compare/v21.3.4...v21.3.5
