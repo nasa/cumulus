@@ -301,7 +301,7 @@ test.serial('execution partitions are provisioned incrementally on subsequent ru
   t.false(provisioned.includes(`executions_${currentYear + 2}_q1`), 'Year +2 partitions should not exist yet');
 
   // Incremental Run: Expand to 4 years ahead
-  await t.context.testKnex.destroy(); // clear connections
+  await t.context.testKnex.destroy();
   await handler({ command: 'latest', env: { ...testEnv, EXECUTIONS_PARTITION_TOTAL_YEARS: '4' } });
   t.context.testKnex = await getKnexClient({ env: testEnv });
 

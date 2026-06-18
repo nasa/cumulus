@@ -149,17 +149,17 @@ test.serial('expired execution partitions are purged while explicitly keeping un
   const expectedTotalExpiredRows = totalExpiredPartitions * BATCH_SEED_SIZE;
   const expectedTotalRows = expectedTotalExpiredRows + 1;
 
-  const [[uniqueBefore], [execBefore], [joinBefore], [pdrBefore]] = await Promise.all([
+  const [[execBefore], [joinBefore], [pdrBefore], [uniqueBefore]] = await Promise.all([
+    t.context.executionPgModel.count(knex, []),
+    t.context.granulesExecutionsPgModel.count(knex, []),
+    t.context.pdrPgModel.count(knex, []),
     knex('executions_global_unique').count('arn as count'),
-    knex('executions').count('cumulus_id as count'),
-    knex('granules_executions').count('execution_cumulus_id as count'),
-    knex('pdrs').count('cumulus_id as count'),
   ]);
 
-  t.is(Number(uniqueBefore.count), expectedTotalRows);
   t.is(Number(execBefore.count), expectedTotalRows);
   t.is(Number(joinBefore.count), expectedTotalRows);
   t.is(Number(pdrBefore.count), expectedTotalRows);
+  t.is(Number(uniqueBefore.count), expectedTotalRows);
 
   const retentionMonthsPast = 25;
   const deletionBatchSize = 50;
@@ -182,16 +182,16 @@ test.serial('expired execution partitions are purged while explicitly keeping un
   t.truthy(defaultCheck.rows[0].exists, 'The default layout fallback table partition must remain untouched');
 
   const [[execAfter], [joinAfter], [pdrAfter], [uniqueAfter]] = await Promise.all([
-    knex('executions').count('cumulus_id as count'),
-    knex('granules_executions').count('execution_cumulus_id as count'),
-    knex('pdrs').count('cumulus_id as count'),
+    t.context.executionPgModel.count(knex, []),
+    t.context.granulesExecutionsPgModel.count(knex, []),
+    t.context.pdrPgModel.count(knex, []),
     knex('executions_global_unique').count('arn as count'),
   ]);
 
   t.is(Number(execAfter.count), 1, 'Only unexpired control row must remain in main table');
   t.is(Number(joinAfter.count), 1, 'Only unexpired control mapping must remain in link table');
-  t.is(Number(pdrAfter.count), 1, 'Only unexpired control tracking entry must remain in PDR table');
-  t.is(Number(uniqueAfter.count), 1, 'Only unexpired global constraint tracking token must remain');
+  t.is(Number(pdrAfter.count), 1, 'Only unexpired control row must remain in PDR table');
+  t.is(Number(uniqueAfter.count), 1, 'Only unexpired global unique arn must remain');
 
   const remainingExpiredUnique = await knex('executions_global_unique').whereLike('arn', '%:expired-%');
   t.is(remainingExpiredUnique.length, 0, 'All expired keys must be cleaned out of the global uniqueness lookup engine');
