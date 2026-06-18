@@ -29,6 +29,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-4694**
   - Fixed issue with references to `module.cluster` in the Iceberg replication terraform code
+- **CUMULUS-4952**
+  - Fixed the SchemaSpy command to generate database schemas correctly.
 
 ## [v22.2.3] 2026-06-15
 
