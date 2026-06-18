@@ -145,7 +145,8 @@ export const up = async (knex: Knex): Promise<void> => {
           END LOOP;
 
           RAISE NOTICE 'Dropping expired partition: %', v_drop_record.tablename;
-          EXECUTE format('DROP TABLE IF EXISTS %I CASCADE;', v_drop_record.tablename);
+          EXECUTE format('ALTER TABLE executions DETACH PARTITION %I', v_drop_record.tablename);
+          EXECUTE format('DROP TABLE IF EXISTS %I;', v_drop_record.tablename);
         END IF;
       END LOOP;
     END $$;
