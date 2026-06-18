@@ -40,7 +40,7 @@ $ npm install @cumulus/integration-tests
 <a name="module_Collections"></a>
 
 ## Collections
-**Example**  
+**Example**
 ```js
 const Collections = require('@cumulus/integration-test/Collections');
 ```
@@ -81,8 +81,8 @@ have a granuleId of `gran-1`. Filenames can only contain a single `.` character.
   ]
   ```
 
-**Kind**: Exported function  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the generated collection  
+**Kind**: Exported function
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the generated collection
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -95,8 +95,8 @@ have a granuleId of `gran-1`. Filenames can only contain a single `.` character.
 Given a Cumulus collection configuration, return a list of the filetype
 configs with their `url_path`s updated.
 
-**Kind**: inner method of [<code>createCollection</code>](#exp_module_Collections--createCollection)  
-**Returns**: <code>Array.&lt;Object&gt;</code> - a list of collection filetype configs  
+**Kind**: inner method of [<code>createCollection</code>](#exp_module_Collections--createCollection)
+**Returns**: <code>Array.&lt;Object&gt;</code> - a list of collection filetype configs
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -109,8 +109,8 @@ configs with their `url_path`s updated.
 Update a collection with a custom file path, duplicate handling, and name
 updated with the postfix.
 
-**Kind**: inner method of [<code>createCollection</code>](#exp_module_Collections--createCollection)  
-**Returns**: <code>Object</code> - an updated collection  
+**Kind**: inner method of [<code>createCollection</code>](#exp_module_Collections--createCollection)
+**Returns**: <code>Object</code> - an updated collection
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -125,7 +125,7 @@ updated with the postfix.
 #### createCollection~collectionExists(stackName, collection) ⇒ <code>boolean</code>
 Returns true if collection exists. False otherwise.
 
-**Kind**: inner method of [<code>createCollection</code>](#exp_module_Collections--createCollection)  
+**Kind**: inner method of [<code>createCollection</code>](#exp_module_Collections--createCollection)
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -137,7 +137,7 @@ Returns true if collection exists. False otherwise.
 #### createCollection~addCollection(stackName, collection) ⇒ <code>Promise.&lt;undefined&gt;</code>
 Add a new collection to Cumulus
 
-**Kind**: inner method of [<code>createCollection</code>](#exp_module_Collections--createCollection)  
+**Kind**: inner method of [<code>createCollection</code>](#exp_module_Collections--createCollection)
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -149,8 +149,8 @@ Add a new collection to Cumulus
 #### createCollection~addCollections(stackName, bucketName, dataDirectory, [postfix], [customFilePath], [duplicateHandling]) ⇒ <code>Promise.&lt;Array.&lt;Object&gt;&gt;</code>
 Add collections to database
 
-**Kind**: inner method of [<code>createCollection</code>](#exp_module_Collections--createCollection)  
-**Returns**: <code>Promise.&lt;Array.&lt;Object&gt;&gt;</code> - - collections that were added  
+**Kind**: inner method of [<code>createCollection</code>](#exp_module_Collections--createCollection)
+**Returns**: <code>Promise.&lt;Array.&lt;Object&gt;&gt;</code> - - collections that were added
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -164,7 +164,7 @@ Add collections to database
 <a name="module_Executions"></a>
 
 ## Executions
-**Example**  
+**Example**
 ```js
 const Executions = require('@cumulus/integration-test/Executions');
 ```
@@ -178,8 +178,8 @@ const Executions = require('@cumulus/integration-test/Executions');
 ### findExecutionArn(prefix, matcher, [queryParameters], [options]) ⇒ <code>Promise.&lt;string&gt;</code> ⏏
 Find the execution ARN matching the `matcher` function
 
-**Kind**: Exported function  
-**Returns**: <code>Promise.&lt;string&gt;</code> - the ARN of the matching execution  
+**Kind**: Exported function
+**Returns**: <code>Promise.&lt;string&gt;</code> - the ARN of the matching execution
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -194,9 +194,9 @@ Find the execution ARN matching the `matcher` function
 ### getExecutionWithStatus(params) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
 Wait for an execution to have an expected status and return the execution
 
-**Kind**: Exported function  
+**Kind**: Exported function
 **Returns**: <code>Promise.&lt;Object&gt;</code> - the execution as returned by the `GET /executions/<execution-arn>`
-endpoint  
+endpoint
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -210,7 +210,7 @@ endpoint
 <a name="module_Granules"></a>
 
 ## Granules
-**Example**  
+**Example**
 ```js
 const Granules = require('@cumulus/integration-test/Granules');
 ```
@@ -224,8 +224,8 @@ const Granules = require('@cumulus/integration-test/Granules');
 ### getGranuleWithStatus(params) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
 Wait for a granule to have an expected status and return the granule
 
-**Kind**: Exported function  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the granule as returned by the `GET /granules/<granule-id>` endpoint  
+**Kind**: Exported function
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the granule as returned by the `GET /granules/<granule-id>` endpoint
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -244,8 +244,8 @@ Wait for a granule to have an expected status and return the granule
 Wait for listGranules to return at least a single value before returning an
 empty result
 
-**Kind**: inner method of [<code>getGranuleWithStatus</code>](#exp_module_Granules--getGranuleWithStatus)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - - results of a successful listGranules  
+**Kind**: inner method of [<code>getGranuleWithStatus</code>](#exp_module_Granules--getGranuleWithStatus)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - - results of a successful listGranules
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -254,7 +254,7 @@ empty result
 <a name="module_Providers"></a>
 
 ## Providers
-**Example**  
+**Example**
 ```js
 const Providers = require('@cumulus/integration-test/Providers');
 ```
@@ -269,8 +269,8 @@ Create a provider using the Cumulus API
 - **protocol**: `s3`
 - **globalConnectionLimit**: `10`
 
-**Kind**: Exported function  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the generated provider  
+**Kind**: Exported function
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the generated provider
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -280,7 +280,7 @@ Create a provider using the Cumulus API
 <a name="module_Rules"></a>
 
 ## Rules
-**Example**  
+**Example**
 ```js
 const Rules = require('@cumulus/integration-test/Rules');
 ```
@@ -294,8 +294,8 @@ Create a `onetime` rule using the Cumulus API
 - **name**: random string starting with `rule_`
 - **rule**: `{ type: 'onetime' }`
 
-**Kind**: Exported function  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the generated rule  
+**Kind**: Exported function
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the generated rule
 
 | Param | Type | Description |
 | --- | --- | --- |
