@@ -174,6 +174,7 @@ const sidebars = {
         'features/granule_uniquification',
         'features/change_granule_collection',
         'features/record_archival',
+        'features/iceberg',
       ],
     },
     {
@@ -189,6 +190,7 @@ const sidebars = {
         'troubleshooting/rerunning-workflow-executions',
         'troubleshooting/reindex-elasticsearch',
         'troubleshooting/troubleshooting-database-migrations',
+        'troubleshooting/troubleshooting-iceberg',
       ],
     },
     {

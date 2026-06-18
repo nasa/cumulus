@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/common",
-  "version": "22.2.3",
+  "version": "22.2.4",
   "description": "Common utilities used across tasks",
   "keywords": [
     "GIBS",
@@ -45,9 +45,9 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@aws-sdk/signature-v4-crt": "^3.993.0",
-    "@cumulus/aws-client": "22.2.3",
-    "@cumulus/errors": "22.2.3",
-    "@cumulus/logger": "22.2.3",
+    "@cumulus/aws-client": "22.2.4",
+    "@cumulus/errors": "22.2.4",
+    "@cumulus/logger": "22.2.4",
     "ajv": "^6.12.3",
     "follow-redirects": "^1.2.4",
     "fs-extra": "^5.0.0",

@@ -6,10 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v22.2.4] 2026-06-18
+
 ### Added
 
 - **CUMULUS-4520**
-  - Add Iceberg documentation
+  - Add Iceberg design and troubleshooting documentation
 
 ### Changed
 
@@ -18,8 +20,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Changed `cmr-utils` functions that call the `CMR` class functions to retry upon 401 authentication failures
   - Added functions `checkRefreshLaunchpadToken` and `refreshLaunchpadToken` to the `CMR` class to be invoked upon a 401 authentication failure which removes and/or retrieves a valid launchpad token
   - Added functions to the `launchpad-auth` package which adds a lock file for token creation, removes an invalid token, and checks s3 for the token and lock file
-- **CUMULUS-4694**
-  - Add flag to enable/disable iceberg replication
 
 ### Fixed
 
@@ -9940,7 +9940,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v22.2.3...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v22.2.4...HEAD
+[v22.2.3]: https://github.com/nasa/cumulus/compare/v22.2.3...v22.2.4
 [v22.2.3]: https://github.com/nasa/cumulus/compare/v22.2.2...v22.2.3
 [v22.2.2]: https://github.com/nasa/cumulus/compare/v22.2.1...v22.2.2
 [v22.2.1]: https://github.com/nasa/cumulus/compare/v22.2.0...v22.2.1
