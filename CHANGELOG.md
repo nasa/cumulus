@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### FIXED
+- **CSD-113**
+  - Fixed issue with with bulk granule deletion where CMR records were not being removed
+
 ### Added
 
 - **CUMULUS-4891**
@@ -18,6 +22,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-4866**
   - Add ifNotExists in db migration script to prevent breakage on update with pre-migration work
+- **CUMULUS-4694**
+  - Add flag to enable/disable iceberg replication
 - **CUMULUS-4882**
   - Updated the triggers on the granules table to track collection updates and introduced a
     `cumulus.allow_collection_update` setting to authorize cross-collection shifts.
@@ -29,6 +35,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     values, automatically fall back to defaults, and pass resolved fallback values to the child module.
 - **CUMULUS-4918**
   - Add release number tag to Iceberg APi image if applicable
+- **CUMULUS-4953**
+  - Shorten Iceberg API load balancer name suffix to accommodate a longer prefix
 
 ## [v22.1.1] 2026-05-28
 
