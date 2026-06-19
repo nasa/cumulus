@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v22.2.5] 2026-06-19
+
+### Fixed
+
+- **CUMULUS-4694**
+  - Fixed iceberg terraform output value
+
 ## [v22.2.4] 2026-06-18
 
 ### Added
@@ -25,7 +32,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-4694**
   - Fixed issue with references to `module.cluster` in the Iceberg replication terraform code
-  - Fixed iceberg terraform output value
 
 ## [v22.2.3] 2026-06-15
 
@@ -9941,8 +9947,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v22.2.4...HEAD
-[v22.2.3]: https://github.com/nasa/cumulus/compare/v22.2.3...v22.2.4
+[Unreleased]: https://github.com/nasa/cumulus/compare/v22.2.5...HEAD
+[v22.2.5]: https://github.com/nasa/cumulus/compare/v22.2.4...v22.2.5
+[v22.2.4]: https://github.com/nasa/cumulus/compare/v22.2.3...v22.2.4
 [v22.2.3]: https://github.com/nasa/cumulus/compare/v22.2.2...v22.2.3
 [v22.2.2]: https://github.com/nasa/cumulus/compare/v22.2.1...v22.2.2
 [v22.2.1]: https://github.com/nasa/cumulus/compare/v22.2.0...v22.2.1
