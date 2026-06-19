@@ -70,6 +70,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-4866**
+  - Add ifNotExists in db migration script to prevent breakage on update with pre-migration work
 - **CUMULUS-4694**
   - Change replication tasks to use proper region
 - **CUMULUS-4882**
