@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-4842**
+  - Added database procedures to provision future quarterly execution partitions and delete expired
+    partitions older than the retention window. The create_future_executions_partitions procedure
+    is now executed automatically by the DB migration Lambda handler post-migration.
+
+### Fixed
+
+- **CUMULUS-4952**
+  - Fixed the SchemaSpy command to generate database schemas correctly.
+
+### Added
+
 - **CUMULUS-4520**
   - Add Iceberg design and troubleshooting documentation
 - **CUMULUS-4842**
@@ -29,8 +41,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-4694**
   - Fixed issue with references to `module.cluster` in the Iceberg replication terraform code
-- **CUMULUS-4952**
-  - Fixed the SchemaSpy command to generate database schemas correctly.
+  - Fixed iceberg terraform output value
 
 ## [v22.2.3] 2026-06-15
 
