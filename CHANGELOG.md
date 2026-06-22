@@ -22,10 +22,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-4520**
   - Add Iceberg design and troubleshooting documentation
-- **CUMULUS-4842**
-  - Added database procedures to provision future quarterly execution partitions and delete expired
-    partitions older than the retention window. The create_future_executions_partitions procedure
-    is now executed automatically by the DB migration Lambda handler post-migration.
 
 ### Changed
 
