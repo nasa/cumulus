@@ -42,6 +42,17 @@ const dumpSchema = async (env) => {
   return normalizeDump(stdout);
 };
 
+// Helper to fetch active partition tables from PostgreSQL catalog
+const getPartitionNames = async (tableName, knexClient) => {
+  const result = await knexClient
+    .select('child.relname as name')
+    .from('pg_inherits')
+    .join('pg_class as parent', 'pg_inherits.inhparent', 'parent.oid')
+    .join('pg_class as child', 'pg_inherits.inhrelid', 'child.oid')
+    .where('parent.relname', tableName);
+  return result.map((p) => p.name);
+};
+
 test.before(async (t) => {
   // Master connection used to manage dynamic test databases
   t.context.masterKnex = await getKnexClient({ env: localStackConnectionEnv });
@@ -204,12 +215,7 @@ test.serial('handler creates correct granules and files partitions based on env'
 
     t.context.testKnex = await getKnexClient({ env: testEnv });
 
-    const granulePartitions = await t.context.testKnex
-      .select('pg_class.relname as partition_name')
-      .from('pg_class')
-      .join('pg_inherits', 'pg_class.oid', 'pg_inherits.inhrelid')
-      .join('pg_class as parent', 'pg_inherits.inhparent', 'parent.oid')
-      .where('parent.relname', 'granules');
+    const granulePartitions = await getPartitionNames('granules', t.context.testKnex);
 
     t.is(
       granulePartitions.length,
@@ -217,12 +223,7 @@ test.serial('handler creates correct granules and files partitions based on env'
       `Should have ${process.env.GRANULES_PARTITION_COUNT} granule partitions`
     );
 
-    const filePartitions = await t.context.testKnex
-      .select('pg_class.relname as partition_name')
-      .from('pg_class')
-      .join('pg_inherits', 'pg_class.oid', 'pg_inherits.inhrelid')
-      .join('pg_class as parent', 'pg_inherits.inhparent', 'parent.oid')
-      .where('parent.relname', 'files');
+    const filePartitions = await getPartitionNames('files', t.context.testKnex);
 
     t.is(
       filePartitions.length,
@@ -283,5 +284,32 @@ test.serial('bootstrap schema matches standard migration schema', async (t) => {
   } finally {
     await t.context.masterKnex.raw(`DROP DATABASE IF EXISTS ${standardDb}`);
     await t.context.masterKnex.raw(`DROP DATABASE IF EXISTS ${bootstrapDb}`);
+  }
+});
+
+test.serial('execution partitions are provisioned incrementally on subsequent runs', async (t) => {
+  const { testEnv } = t.context;
+  const currentYear = new Date().getFullYear();
+
+  // Initial Run: Provision 2 years ahead
+  await handler({ command: 'latest', env: { ...testEnv, EXECUTIONS_PARTITION_TOTAL_YEARS: '2' } });
+  t.context.testKnex = await getKnexClient({ env: testEnv });
+
+  let provisioned = await getPartitionNames('executions', t.context.testKnex);
+  t.true(provisioned.includes(`executions_${currentYear}_q1`), 'Current year partitions should exist');
+  t.true(provisioned.includes(`executions_${currentYear + 1}_q4`), 'Next year partitions should exist');
+  t.false(provisioned.includes(`executions_${currentYear + 2}_q1`), 'Year +2 partitions should not exist yet');
+
+  // Incremental Run: Expand to 4 years ahead
+  await t.context.testKnex.destroy();
+  await handler({ command: 'latest', env: { ...testEnv, EXECUTIONS_PARTITION_TOTAL_YEARS: '4' } });
+  t.context.testKnex = await getKnexClient({ env: testEnv });
+
+  // Final Validation: Verify all 4 years of partitions exist cleanly
+  provisioned = await getPartitionNames('executions', t.context.testKnex);
+  for (let year = currentYear; year < currentYear + 4; year += 1) {
+    for (let q = 1; q <= 4; q += 1) {
+      t.true(provisioned.includes(`executions_${year}_q${q}`), `executions_${year}_q${q} missing`);
+    }
   }
 });

@@ -4,6 +4,11 @@ const FUNCTION_NAME_PREFIX = 'executions_enforce_global_uniqueness';
 const TRIGGER_NAME_PREFIX = 'executions_enforce_unique_arn_url_trigger';
 
 export const up = async (knex: Knex): Promise<void> => {
+  await knex.raw(`
+    DROP TRIGGER IF EXISTS ${TRIGGER_NAME_PREFIX} ON executions;
+    DROP FUNCTION IF EXISTS ${FUNCTION_NAME_PREFIX}();
+  `);
+
   // DELETE FUNCTION & TRIGGER
   await knex.raw(`
     CREATE OR REPLACE FUNCTION ${FUNCTION_NAME_PREFIX}_delete() RETURNS trigger AS $$
