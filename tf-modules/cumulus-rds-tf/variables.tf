@@ -173,6 +173,17 @@ variable "rds_scaling_timeout_action" {
   default     = "ForceApplyCapacityChange"
 }
 
+variable "storage_type" {
+  type        = string
+  description = "The storage type for the Aurora cluster. Options: 'aurora' (Standard) or 'aurora-iops' (I/O-Optimized)."
+  default     = "aurora"
+
+  validation {
+    condition     = contains(["aurora", "aurora-iopt1"], var.storage_type)
+    error_message = "The storage_type variable must be either 'aurora' or 'aurora-iopt1'."
+  }
+}
+
 variable "enabled_cloudwatch_logs_exports" {
   description = "Set of log types to export to CloudWatch Logs. For Amazon Aurora PostgreSQL, the only valid value is [\"postgresql\"]."
   type        = list(string)

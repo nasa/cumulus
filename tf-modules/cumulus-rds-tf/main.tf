@@ -125,6 +125,7 @@ resource "aws_rds_cluster" "cumulus" {
   db_subnet_group_name            = aws_db_subnet_group.default.id
   apply_immediately               = var.apply_immediately
   storage_encrypted               = true
+  storage_type                    = var.storage_type
   enabled_cloudwatch_logs_exports = var.enabled_cloudwatch_logs_exports
 
   serverlessv2_scaling_configuration {
