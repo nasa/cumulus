@@ -8,6 +8,14 @@ import { getJsonS3Object } from '@cumulus/aws-client/S3';
 
 import { DistributionBucketMap } from './types';
 
+interface BucketDetails {
+  name: string;
+  type: string;
+}
+interface DistributionBucketMap2 {
+  [bucket: string]: BucketDetails
+}
+
 export const getDistributionBucketMapKey = (stackName: string) =>
   `${stackName}/distribution_bucket_map.json`;
 
@@ -15,17 +23,29 @@ export async function fetchDistributionBucketMap(
   systemBucket: string = envUtils.getRequiredEnvVar('system_bucket'),
   stackName: string = envUtils.getRequiredEnvVar('stackName')
 ): Promise<DistributionBucketMap> {
+  const bucketMap = await getJsonS3Object(
+    systemBucket,
+    getDistributionBucketMapKey(stackName)
+  ) as DistributionBucketMap2;
+
+  return Object.fromEntries(Object.entries(bucketMap).map(([key, value]) => [key, value.name]))
+}
+
+export async function fetchDistributionTypedBucketMap(
+  systemBucket: string = envUtils.getRequiredEnvVar('system_bucket'),
+  stackName: string = envUtils.getRequiredEnvVar('stackName')
+): Promise<DistributionBucketMap2> {
   const distributionBucketMap = await getJsonS3Object(
     systemBucket,
     getDistributionBucketMapKey(stackName)
-  );
+  ) as DistributionBucketMap2;
   return distributionBucketMap;
 }
 
 export function constructDistributionUrl(
   fileBucket: string,
   fileKey: string,
-  distributionBucketMap: DistributionBucketMap,
+  distributionBucketMap: DistributionBucketMap2,
   distributionEndpoint?: string
 ): string {
   if (!distributionEndpoint) {
@@ -35,7 +55,7 @@ export function constructDistributionUrl(
   if (!bucketPath) {
     throw new MissingBucketMap(`No distribution bucket mapping exists for ${fileBucket}`);
   }
-  const urlPath = urljoin(bucketPath, fileKey);
+  const urlPath = urljoin(bucketPath.type, fileKey);
   return urljoin(distributionEndpoint, urlPath);
 }
 

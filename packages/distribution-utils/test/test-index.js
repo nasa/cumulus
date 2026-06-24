@@ -13,6 +13,7 @@ const {
   constructDistributionUrl,
   getDistributionBucketMapKey,
   fetchDistributionBucketMap,
+  fetchDistributionTypedBucketMap,
   resolveDistributionEndpoint,
 } = require('..');
 
@@ -24,9 +25,12 @@ test.before(async (t) => {
   t.context.fileKey = 'coll123/granABC';
   t.context.distEndpoint = 'http://d111111abcdef8.cloudfront.net/';
   t.context.bucketMap = {
-    abcd1234: 'prod1A2B',
+    abcd1234: {
+      name: 'prod1A2B',
+      type: 'public',
+    },
   };
-
+  t.context.unTypedBucketMap = Object.fromEntries(Object.entries(t.context.bucketMap).map(([key, value]) => [key, value.name]))
   await createBucket(t.context.system_bucket);
   await putJsonS3Object(
     t.context.system_bucket,
@@ -53,7 +57,7 @@ test('constructDistributionUrl returns distribution URL', (t) => {
   } = t.context;
   t.is(
     constructDistributionUrl(fileBucket, fileKey, bucketMap, distEndpoint),
-    'http://d111111abcdef8.cloudfront.net/prod1A2B/coll123/granABC'
+    'http://d111111abcdef8.cloudfront.net/public/coll123/granABC'
   );
 });
 
@@ -65,7 +69,7 @@ test('constructDistributionUrl correctly handles distributionEndpoint without a 
   } = t.context;
   t.is(
     constructDistributionUrl(fileBucket, fileKey, bucketMap, 'http://d111111abcdef8.cloudfront.net'),
-    'http://d111111abcdef8.cloudfront.net/prod1A2B/coll123/granABC'
+    'http://d111111abcdef8.cloudfront.net/public/coll123/granABC'
   );
 });
 
@@ -112,19 +116,25 @@ test('fetchDistributionBucketMap throws error if system bucket or stackname are 
     }
   );
 });
-
 test('fetchDistributionBucketMap fetches bucket map with passed vars', async (t) => {
   const bucketMap = await fetchDistributionBucketMap(
+    t.context.system_bucket,
+    t.context.stackName
+  );
+  t.deepEqual(bucketMap, t.context.unTypedBucketMap);
+});
+test('fetchDistributionTypedBucketMap fetches bucket map with passed vars', async (t) => {
+  const bucketMap = await fetchDistributionTypedBucketMap(
     t.context.system_bucket,
     t.context.stackName
   );
   t.deepEqual(bucketMap, t.context.bucketMap);
 });
 
-test.serial('fetchDistributionBucketMap fetches bucket map with env vars', async (t) => {
+test.serial('fetchDistributionTypedBucketMap fetches bucket map with env vars', async (t) => {
   process.env.stackName = t.context.stackName;
   process.env.system_bucket = t.context.system_bucket;
-  const bucketMap = await fetchDistributionBucketMap();
+  const bucketMap = await fetchDistributionTypedBucketMap();
   t.deepEqual(bucketMap, t.context.bucketMap);
 });
 
