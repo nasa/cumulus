@@ -37,6 +37,7 @@ module "rds_cluster" {
   min_capacity                    = var.min_capacity
   max_capacity                    = var.max_capacity
   enable_upgrade                  = var.enable_upgrade
+  storage_type                    = var.storage_type
   enabled_cloudwatch_logs_exports = var.enabled_cloudwatch_logs_exports
   postgresql_log_retention_days   = var.postgresql_log_retention_days
   db_log_min_duration_ms          = var.db_log_min_duration_ms
