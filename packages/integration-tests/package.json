@@ -1,10 +1,6 @@
 {
   "name": "@cumulus/integration-tests",
-<<<<<<< HEAD
   "version": "22.2.5",
-=======
-  "version": "22.2.3",
->>>>>>> eb59362e8cb7d45543d0c09c965d8e69a2ed0f8e
   "description": "Integration tests",
   "bin": {
     "cumulus-test": "./bin/cli.js"
@@ -35,7 +31,6 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@aws-sdk/client-lambda": "^3.993.0",
-<<<<<<< HEAD
     "@cumulus/api": "22.2.5",
     "@cumulus/api-client": "22.2.5",
     "@cumulus/aws-client": "22.2.5",
@@ -46,18 +41,6 @@
     "@cumulus/logger": "22.2.5",
     "@cumulus/message": "22.2.5",
     "@cumulus/oauth-client": "22.2.5",
-=======
-    "@cumulus/api": "22.2.3",
-    "@cumulus/api-client": "22.2.3",
-    "@cumulus/aws-client": "22.2.3",
-    "@cumulus/cmr-client": "22.2.3",
-    "@cumulus/cmrjs": "22.2.3",
-    "@cumulus/common": "22.2.3",
-    "@cumulus/launchpad-auth": "22.2.3",
-    "@cumulus/logger": "22.2.3",
-    "@cumulus/message": "22.2.3",
-    "@cumulus/oauth-client": "22.2.3",
->>>>>>> eb59362e8cb7d45543d0c09c965d8e69a2ed0f8e
     "base-64": "^0.1.0",
     "commander": "^2.15.0",
     "dotenv": "^8.2.0",

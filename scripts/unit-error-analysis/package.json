@@ -1,10 +1,6 @@
 {
   "name": "@cumulus/unit-error-analysis",
-<<<<<<< HEAD
   "version": "22.2.5",
-=======
-  "version": "22.2.3",
->>>>>>> eb59362e8cb7d45543d0c09c965d8e69a2ed0f8e
   "author": "Cumulus Authors",
   "description": "compile errors",
   "license": "Apache-2.0",
@@ -29,11 +25,7 @@
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"
   },
   "dependencies": {
-<<<<<<< HEAD
     "@cumulus/aws-client": "22.2.5",
-=======
-    "@cumulus/aws-client": "22.2.3",
->>>>>>> eb59362e8cb7d45543d0c09c965d8e69a2ed0f8e
     "@types/minimist": "^1.2.5",
     "minimist": "^1.2.8",
     "moment": "^2.30.1"

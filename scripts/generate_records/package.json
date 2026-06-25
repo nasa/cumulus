@@ -1,10 +1,6 @@
 {
   "name": "@cumulus/generate_records",
-<<<<<<< HEAD
   "version": "22.2.5",
-=======
-  "version": "22.2.3",
->>>>>>> eb59362e8cb7d45543d0c09c965d8e69a2ed0f8e
   "author": "Cumulus Authors",
   "description": "compile errors",
   "license": "Apache-2.0",
@@ -31,21 +27,12 @@
     "timeout": "10m"
   },
   "dependencies": {
-<<<<<<< HEAD
     "@cumulus/api-client": "22.2.5",
     "@cumulus/common": "22.2.5",
     "@cumulus/db": "22.2.5",
     "@cumulus/errors": "22.2.5",
     "@cumulus/integration-tests": "22.2.5",
     "@cumulus/logger": "22.2.5",
-=======
-    "@cumulus/api-client": "22.2.3",
-    "@cumulus/common": "22.2.3",
-    "@cumulus/db": "22.2.3",
-    "@cumulus/errors": "22.2.3",
-    "@cumulus/integration-tests": "22.2.3",
-    "@cumulus/logger": "22.2.3",
->>>>>>> eb59362e8cb7d45543d0c09c965d8e69a2ed0f8e
     "@types/minimist": "^1.2.5",
     "cli-progress": "^3.12.0",
     "crypto-js": "^4.2.0",

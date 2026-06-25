@@ -1,10 +1,6 @@
 {
   "name": "@cumulus/launchpad-auth",
-<<<<<<< HEAD
   "version": "22.2.5",
-=======
-  "version": "22.2.3",
->>>>>>> eb59362e8cb7d45543d0c09c965d8e69a2ed0f8e
   "description": "Utilities for authentication with Launchpad",
   "keywords": [
     "CUMULUS",
@@ -44,14 +40,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-<<<<<<< HEAD
     "@cumulus/aws-client": "22.2.5",
     "@cumulus/logger": "22.2.5",
-=======
-    "@cumulus/aws-client": "22.2.3",
-    "@cumulus/logger": "22.2.3",
-    "p-retry": "^4.2.0",
->>>>>>> eb59362e8cb7d45543d0c09c965d8e69a2ed0f8e
     "got": "^11.8.5",
     "lodash": "^4.18.1",
     "p-retry": "^4.2.0",

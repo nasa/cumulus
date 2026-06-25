@@ -1,10 +1,6 @@
 {
   "name": "@cumulus/logger",
-<<<<<<< HEAD
   "version": "22.2.5",
-=======
-  "version": "22.2.3",
->>>>>>> eb59362e8cb7d45543d0c09c965d8e69a2ed0f8e
   "description": "A log library for use on Cumulus",
   "keywords": [
     "GIBS",
