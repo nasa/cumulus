@@ -12,9 +12,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added database procedures to provision future quarterly execution partitions and delete expired
     partitions older than the retention window. The create_future_executions_partitions procedure
     is now executed automatically by the DB migration Lambda handler post-migration.
+- **CUMULUS-4986**
+  - Added `storage_type` variable to `tf-modules/cumulus-rds-tf` module with default value `aurora`.
 
 ### Fixed
 
+- **CUMULUS-5005**
+  - Remove unused /dashboard API endpoint
 - **CUMULUS-4952**
   - Fixed the SchemaSpy command to generate database schemas correctly.
 
