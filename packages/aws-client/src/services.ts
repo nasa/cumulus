@@ -1,4 +1,5 @@
 import { APIGatewayClient } from '@aws-sdk/client-api-gateway';
+import { AthenaClient } from '@aws-sdk/client-athena';
 import { CloudFormation } from '@aws-sdk/client-cloudformation';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocument, TranslateConfig } from '@aws-sdk/lib-dynamodb';
@@ -19,6 +20,7 @@ import { EC2 } from '@aws-sdk/client-ec2';
 import awsClient from './client';
 
 export const apigateway = awsClient(APIGatewayClient, '2015-07-09');
+export const athena = awsClient(AthenaClient);
 export const ecs = awsClient(ECS, '2014-11-13');
 export const ec2 = awsClient(EC2, '2016-11-15');
 export const cloudwatchevents = awsClient(CloudWatchEvents, '2015-10-07');

@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     is now executed automatically by the DB migration Lambda handler post-migration.
 - **CUMULUS-4986**
   - Added `storage_type` variable to `tf-modules/cumulus-rds-tf` module with default value `aurora`.
+- **CUMULUS-4954**
+  - Added `AthenaQueryClient` to `packages/aws-client` that can interact with and run queries in Athena.
 
 ### Fixed
 
