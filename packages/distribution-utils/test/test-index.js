@@ -13,7 +13,7 @@ const {
   constructDistributionUrl,
   getDistributionBucketMapKey,
   fetchDistributionBucketMap,
-  fetchDistributionTypedBucketMap,
+  fetchLegacyDistributionBucketMap,
   resolveDistributionEndpoint,
 } = require('..');
 
@@ -27,10 +27,11 @@ test.before(async (t) => {
   t.context.bucketMap = {
     abcd1234: {
       name: 'prod1A2B',
-      type: 'public',
+      legacy_name: 'public',
     },
   };
-  t.context.unTypedBucketMap = Object.fromEntries(Object.entries(t.context.bucketMap).map(([key, value]) => [key, value.name]))
+  t.context.bucketNameMap = Object.fromEntries(Object.entries(t.context.bucketMap).map(([key, value]) => [key, value.name]))
+  t.context.legacyBucketMap = Object.fromEntries(Object.entries(t.context.bucketMap).map(([key, value]) => [key, value.legacy_name]))
   await createBucket(t.context.system_bucket);
   await putJsonS3Object(
     t.context.system_bucket,
@@ -53,10 +54,10 @@ test('constructDistributionUrl returns distribution URL', (t) => {
     fileBucket,
     fileKey,
     distEndpoint,
-    bucketMap,
+    legacyBucketMap,
   } = t.context;
   t.is(
-    constructDistributionUrl(fileBucket, fileKey, bucketMap, distEndpoint),
+    constructDistributionUrl(fileBucket, fileKey, legacyBucketMap, distEndpoint),
     'http://d111111abcdef8.cloudfront.net/public/coll123/granABC'
   );
 });
@@ -65,10 +66,10 @@ test('constructDistributionUrl correctly handles distributionEndpoint without a 
   const {
     fileBucket,
     fileKey,
-    bucketMap,
+    legacyBucketMap,
   } = t.context;
   t.is(
-    constructDistributionUrl(fileBucket, fileKey, bucketMap, 'http://d111111abcdef8.cloudfront.net'),
+    constructDistributionUrl(fileBucket, fileKey, legacyBucketMap, 'http://d111111abcdef8.cloudfront.net'),
     'http://d111111abcdef8.cloudfront.net/public/coll123/granABC'
   );
 });
@@ -121,21 +122,21 @@ test('fetchDistributionBucketMap fetches bucket map with passed vars', async (t)
     t.context.system_bucket,
     t.context.stackName
   );
-  t.deepEqual(bucketMap, t.context.unTypedBucketMap);
+  t.deepEqual(bucketMap, t.context.bucketNameMap);
 });
-test('fetchDistributionTypedBucketMap fetches bucket map with passed vars', async (t) => {
-  const bucketMap = await fetchDistributionTypedBucketMap(
+test('fetchLegacyDistributionBucketMap fetches bucket map with passed vars', async (t) => {
+  const bucketMap = await fetchLegacyDistributionBucketMap(
     t.context.system_bucket,
     t.context.stackName
   );
-  t.deepEqual(bucketMap, t.context.bucketMap);
+  t.deepEqual(bucketMap, t.context.legacyBucketMap);
 });
 
-test.serial('fetchDistributionTypedBucketMap fetches bucket map with env vars', async (t) => {
+test.serial('fetchLegacyDistributionBucketMap fetches bucket map with env vars', async (t) => {
   process.env.stackName = t.context.stackName;
   process.env.system_bucket = t.context.system_bucket;
-  const bucketMap = await fetchDistributionTypedBucketMap();
-  t.deepEqual(bucketMap, t.context.bucketMap);
+  const bucketMap = await fetchLegacyDistributionBucketMap();
+  t.deepEqual(bucketMap, t.context.legacyBucketMap);
 });
 
 test('resolveDistributionEndpoint returns mapped endpoint when cmrProvider is in map', (t) => {

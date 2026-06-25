@@ -9,7 +9,7 @@ const { getObjectSize } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 
 const {
-  fetchDistributionTypedBucketMap,
+  fetchLegacyDistributionBucketMap,
   resolveDistributionEndpoint,
 } = require('@cumulus/distribution-utils');
 
@@ -127,7 +127,7 @@ async function updateGranulesCmrMetadata(event) {
   const excludeDataGranule = isBoolean(event.config.excludeDataGranule) ?
     event.config.excludeDataGranule : false;
 
-  const distributionBucketMap = await fetchDistributionTypedBucketMap();
+  const distributionBucketMap = await fetchLegacyDistributionBucketMap();
   const distEndpoint = resolveDistributionEndpoint(
     config.cmr_provider,
     config.distribution_endpoint_per_cmr_provider,
