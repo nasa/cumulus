@@ -43,11 +43,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Changed `cmr-utils` functions that call the `CMR` class functions to retry upon 401 authentication failures
   - Added functions `checkRefreshLaunchpadToken` and `refreshLaunchpadToken` to the `CMR` class to be invoked upon a 401 authentication failure which removes and/or retrieves a valid launchpad token
   - Added functions to the `launchpad-auth` package which adds a lock file for token creation, removes an invalid token, and checks s3 for the token and lock file
+- **CUMULUS-4694**
+  - Add flag to enable/disable iceberg replication
 
 ### Fixed
 
 - **CUMULUS-4694**
   - Fixed issue with references to `module.cluster` in the Iceberg replication terraform code
+  - Fixed iceberg terraform output value
 
 ## [v22.2.3] 2026-06-15
 
@@ -90,6 +93,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4894**
   - Added a test to the db-migration lambda to validate that schemas generated via the bootstrap
     migration and standard migrations are consistent and produce identical database schemas.
+
+### Changed
+
+- **CUMULUS-4866**
+  - Add ifNotExists in db migration script to prevent breakage on update with pre-migration work
+- **CUMULUS-4694**
+  - Change replication tasks to use proper region
 - **CUMULUS-4882**
   - Updated the triggers on the granules table to track collection updates and introduced a
     `cumulus.allow_collection_update` setting to authorize cross-collection shifts.
@@ -9958,13 +9968,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-<<<<<<< HEAD
 [Unreleased]: https://github.com/nasa/cumulus/compare/v22.2.5...HEAD
 [v22.2.5]: https://github.com/nasa/cumulus/compare/v22.2.4...v22.2.5
 [v22.2.4]: https://github.com/nasa/cumulus/compare/v22.2.3...v22.2.4
-=======
-[Unreleased]: https://github.com/nasa/cumulus/compare/v22.2.3...HEAD
->>>>>>> eb59362e8cb7d45543d0c09c965d8e69a2ed0f8e
 [v22.2.3]: https://github.com/nasa/cumulus/compare/v22.2.2...v22.2.3
 [v22.2.2]: https://github.com/nasa/cumulus/compare/v22.2.1...v22.2.2
 [v22.2.1]: https://github.com/nasa/cumulus/compare/v22.2.0...v22.2.1
