@@ -175,7 +175,7 @@ variable "rds_scaling_timeout_action" {
 
 variable "storage_type" {
   type        = string
-  description = "The storage type for the Aurora cluster. Options: 'aurora' (Standard) or 'aurora-iops' (I/O-Optimized)."
+  description = "The storage type for the Aurora cluster. Options: 'aurora' (Standard) or 'aurora-iopt1' (I/O-Optimized)."
   default     = "aurora"
 
   validation {
