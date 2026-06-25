@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+<<<<<<< HEAD
 ## [v22.2.5] 2026-06-19
 
 ### Fixed
@@ -14,11 +15,29 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fixed iceberg terraform output value
 
 ## [v22.2.4] 2026-06-18
+=======
+### Added
+
+- **CUMULUS-4842**
+  - Added database procedures to provision future quarterly execution partitions and delete expired
+    partitions older than the retention window. The create_future_executions_partitions procedure
+    is now executed automatically by the DB migration Lambda handler post-migration.
+- **CUMULUS-4986**
+  - Added `storage_type` variable to `tf-modules/cumulus-rds-tf` module with default value `aurora`.
+
+### Fixed
+
+- **CUMULUS-5005**
+  - Remove unused /dashboard API endpoint
+- **CUMULUS-4952**
+  - Fixed the SchemaSpy command to generate database schemas correctly.
+>>>>>>> eb59362e8cb7d45543d0c09c965d8e69a2ed0f8e
 
 ### Added
 
 - **CUMULUS-4520**
   - Add Iceberg design and troubleshooting documentation
+<<<<<<< HEAD
 
 ### Changed
 
@@ -78,6 +97,72 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-4694**
+=======
+
+### Changed
+
+- **CSD-99**
+  - Changed the `CMR` class to a singleton
+  - Changed `cmr-utils` functions that call the `CMR` class functions to retry upon 401 authentication failures
+  - Added functions `checkRefreshLaunchpadToken` and `refreshLaunchpadToken` to the `CMR` class to be invoked upon a 401 authentication failure which removes and/or retrieves a valid launchpad token
+  - Added functions to the `launchpad-auth` package which adds a lock file for token creation, removes an invalid token, and checks s3 for the token and lock file
+- **CUMULUS-4694**
+  - Add flag to enable/disable iceberg replication
+
+### Fixed
+
+- **CUMULUS-4694**
+  - Fixed issue with references to `module.cluster` in the Iceberg replication terraform code
+  - Fixed iceberg terraform output value
+
+## [v22.2.3] 2026-06-15
+
+### Added
+
+- **CUMULUS-4694**
+  - Add flag to enable/disable iceberg replication
+
+### Changed
+
+- **CUMULUS-4918**
+  - Add release number tag to Iceberg APi image if applicable
+- **CUMULUS-4953**
+  - Shorten Iceberg API load balancer name suffix to accommodate a longer prefix
+
+## [v22.2.2] 2026-06-15
+
+### Fixed
+
+- **CSD-113**
+  - Fixed issue with with bulk granule deletion where CMR records were not being removed
+
+## [v22.2.1] 2026-06-04
+
+- **CSD-111**
+  - Add requester-pays to all relevant aws-client S3 calls
+
+## [v22.2.0] 2026-06-04
+
+### Added
+
+- **CUMULUS-4866**
+  - Add metrics_provider to pg database collection model
+  - Add metrics_provider to iceberg schema
+  - Add metrics_provider to sns outputs to creation/update/delete executions, granules, pdrs
+- **CUMULUS-4873**
+  - Add initial module for BigNBit.
+- **CUMULUS-4891**
+  - Add scripts to build Iceberg replication docker images and push them to ECR as part of the build process
+- **CUMULUS-4894**
+  - Added a test to the db-migration lambda to validate that schemas generated via the bootstrap
+    migration and standard migrations are consistent and produce identical database schemas.
+
+### Changed
+
+- **CUMULUS-4866**
+  - Add ifNotExists in db migration script to prevent breakage on update with pre-migration work
+- **CUMULUS-4694**
+>>>>>>> eb59362e8cb7d45543d0c09c965d8e69a2ed0f8e
   - Change replication tasks to use proper region
 - **CUMULUS-4882**
   - Updated the triggers on the granules table to track collection updates and introduced a
@@ -9947,9 +10032,13 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
+<<<<<<< HEAD
 [Unreleased]: https://github.com/nasa/cumulus/compare/v22.2.5...HEAD
 [v22.2.5]: https://github.com/nasa/cumulus/compare/v22.2.4...v22.2.5
 [v22.2.4]: https://github.com/nasa/cumulus/compare/v22.2.3...v22.2.4
+=======
+[Unreleased]: https://github.com/nasa/cumulus/compare/v22.2.3...HEAD
+>>>>>>> eb59362e8cb7d45543d0c09c965d8e69a2ed0f8e
 [v22.2.3]: https://github.com/nasa/cumulus/compare/v22.2.2...v22.2.3
 [v22.2.2]: https://github.com/nasa/cumulus/compare/v22.2.1...v22.2.2
 [v22.2.1]: https://github.com/nasa/cumulus/compare/v22.2.0...v22.2.1

@@ -1,6 +1,10 @@
 {
   "name": "@cumulus/es-client",
+<<<<<<< HEAD
   "version": "22.2.5",
+=======
+  "version": "22.2.3",
+>>>>>>> eb59362e8cb7d45543d0c09c965d8e69a2ed0f8e
   "description": "Utilities for working with Elasticsearch",
   "keywords": [
     "CUMULUS",
@@ -34,10 +38,17 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@aws-sdk/credential-providers": "^3.993.0",
+<<<<<<< HEAD
     "@cumulus/common": "22.2.5",
     "@cumulus/errors": "22.2.5",
     "@cumulus/logger": "22.2.5",
     "@cumulus/message": "22.2.5",
+=======
+    "@cumulus/common": "22.2.3",
+    "@cumulus/errors": "22.2.3",
+    "@cumulus/logger": "22.2.3",
+    "@cumulus/message": "22.2.3",
+>>>>>>> eb59362e8cb7d45543d0c09c965d8e69a2ed0f8e
     "@elastic/elasticsearch": "^5.6.20",
     "aws4": "^1.12.0",
     "lodash": "^4.18.1",
@@ -45,8 +56,13 @@
     "p-limit": "^1.2.0"
   },
   "devDependencies": {
+<<<<<<< HEAD
     "@cumulus/aws-client": "22.2.5",
     "@cumulus/test-data": "22.2.5",
+=======
+    "@cumulus/aws-client": "22.2.3",
+    "@cumulus/test-data": "22.2.3",
+>>>>>>> eb59362e8cb7d45543d0c09c965d8e69a2ed0f8e
     "p-each-series": "^2.1.0"
   }
 }

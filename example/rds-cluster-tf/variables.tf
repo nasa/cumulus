@@ -128,6 +128,12 @@ variable "parameter_group_family_v17" {
   default     = "aurora-postgresql17"
 }
 
+variable "storage_type" {
+  type        = string
+  description = "The storage type configuration for the Aurora database cluster in this deployment."
+  default     = "aurora"
+}
+
 variable "enabled_cloudwatch_logs_exports" {
   description = "Set of log types to export to CloudWatch Logs. For Amazon Aurora PostgreSQL, the only valid value is [\"postgresql\"]."
   type        = list(string)
