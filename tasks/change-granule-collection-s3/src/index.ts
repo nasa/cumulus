@@ -31,7 +31,7 @@ import { CumulusMessage } from '@cumulus/types/message';
 import { getRequiredEnvVar } from '@cumulus/common/env';
 import { calculateObjectHash, copyObject, s3Join, s3ObjectExists } from '@cumulus/aws-client/S3';
 import { listGranules } from '@cumulus/api-client/granules';
-import { fetchDistributionBucketMap, resolveDistributionEndpoint } from '@cumulus/distribution-utils';
+import { fetchDistributionBucketNameMap, resolveDistributionEndpoint } from '@cumulus/distribution-utils';
 import { getCMRCollectionId } from '@cumulus/cmrjs/cmr-utils';
 import {
   MB,
@@ -485,7 +485,7 @@ export async function updateCMRData(
   );
   const bucketTypes = Object.fromEntries(Object.values(config.buckets)
     .map(({ name, type }) => [name, type]));
-  const distributionBucketMap = await fetchDistributionBucketMap();
+  const distributionBucketMap = await fetchDistributionBucketNameMap();
   const outputObjects: { [granuleId: string]: Object } = {};
   targetGranules.forEach((targetGranule) => {
     const cmrFile = cmrFilesByGranuleId[targetGranule.granuleId];

@@ -84,7 +84,7 @@ const index = proxyquire('../dist/src', {
     getCollection: getCollectionStub,
   },
   '@cumulus/distribution-utils': {
-    fetchDistributionBucketMap: fetchBucketMapStub,
+    fetchDistributionBucketNameMap: fetchBucketMapStub,
   },
   got: {
     default: {

@@ -30,7 +30,7 @@ const {
 } = require('@cumulus/db');
 const { getEsClient } = require('@cumulus/es-client/search');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
-const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
+const { fetchDistributionBucketNameMap } = require('@cumulus/distribution-utils');
 
 const { errorify, RecordDoesNotExist } = require('@cumulus/errors');
 const FileUtils = require('./FileUtils');
@@ -211,7 +211,7 @@ async function moveGranule(apiGranule, destinations, distEndpoint) {
     (acc, { name, type }) => ({ ...acc, [name]: type }),
     {}
   );
-  const distributionBucketMap = await fetchDistributionBucketMap();
+  const distributionBucketMap = await fetchDistributionBucketNameMap();
 
   const {
     updatedFiles,

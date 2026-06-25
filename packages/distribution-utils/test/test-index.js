@@ -12,8 +12,8 @@ const { InvalidArgument, MissingBucketMap, MissingRequiredEnvVarError } = requir
 const {
   constructDistributionUrl,
   getDistributionBucketMapKey,
-  fetchDistributionBucketMap,
-  fetchLegacyDistributionBucketMap,
+  fetchDistributionBucketNameMap,
+  fetchLegacyDistributionBucketNameMap,
   resolveDistributionEndpoint,
 } = require('..');
 
@@ -109,33 +109,33 @@ test('getDistributionBucketMapKey returns expected path', (t) => {
   );
 });
 
-test('fetchDistributionBucketMap throws error if system bucket or stackname are undefined', async (t) => {
+test('fetchDistributionBucketNameMap throws error if system bucket or stackname are undefined', async (t) => {
   await t.throwsAsync(
-    fetchDistributionBucketMap,
+    fetchDistributionBucketNameMap,
     {
       instanceOf: MissingRequiredEnvVarError,
     }
   );
 });
-test('fetchDistributionBucketMap fetches bucket map with passed vars', async (t) => {
-  const bucketMap = await fetchDistributionBucketMap(
+test('fetchDistributionBucketNameMap fetches bucket map with passed vars', async (t) => {
+  const bucketMap = await fetchDistributionBucketNameMap(
     t.context.system_bucket,
     t.context.stackName
   );
   t.deepEqual(bucketMap, t.context.bucketNameMap);
 });
-test('fetchLegacyDistributionBucketMap fetches bucket map with passed vars', async (t) => {
-  const bucketMap = await fetchLegacyDistributionBucketMap(
+test('fetchLegacyDistributionBucketNameMap fetches bucket map with passed vars', async (t) => {
+  const bucketMap = await fetchLegacyDistributionBucketNameMap(
     t.context.system_bucket,
     t.context.stackName
   );
   t.deepEqual(bucketMap, t.context.legacyBucketMap);
 });
 
-test.serial('fetchLegacyDistributionBucketMap fetches bucket map with env vars', async (t) => {
+test.serial('fetchLegacyDistributionBucketNameMap fetches bucket map with env vars', async (t) => {
   process.env.stackName = t.context.stackName;
   process.env.system_bucket = t.context.system_bucket;
-  const bucketMap = await fetchLegacyDistributionBucketMap();
+  const bucketMap = await fetchLegacyDistributionBucketNameMap();
   t.deepEqual(bucketMap, t.context.legacyBucketMap);
 });
 

@@ -20,7 +20,7 @@ interface DistributionBucketMap2 {
 export const getDistributionBucketMapKey = (stackName: string) =>
   `${stackName}/distribution_bucket_map.json`;
 
-export async function fetchDistributionBucketMap(
+export async function fetchDistributionBucketNameMap(
   systemBucket: string = envUtils.getRequiredEnvVar('system_bucket'),
   stackName: string = envUtils.getRequiredEnvVar('stackName')
 ): Promise<DistributionBucketMap> {
@@ -32,7 +32,7 @@ export async function fetchDistributionBucketMap(
   return Object.fromEntries(Object.entries(bucketMap).map(([key, value]) => [key, value.name]))
 }
 
-export async function fetchLegacyDistributionBucketMap(
+export async function fetchLegacyDistributionBucketNameMap(
   systemBucket: string = envUtils.getRequiredEnvVar('system_bucket'),
   stackName: string = envUtils.getRequiredEnvVar('stackName')
 ): Promise<DistributionBucketMap> {

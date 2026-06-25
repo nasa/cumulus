@@ -15,7 +15,7 @@ const { s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { removeNilProperties } = require('@cumulus/common/util');
-const { fetchDistributionBucketMap, resolveDistributionEndpoint } = require('@cumulus/distribution-utils');
+const { fetchDistributionBucketNameMap, resolveDistributionEndpoint } = require('@cumulus/distribution-utils');
 const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
 
 const { CMRSearchConceptQueue } = require('@cumulus/cmr-client');
@@ -789,7 +789,7 @@ async function createReconciliationReport(recReportParams) {
   log.info(`createReconciliationReport (${JSON.stringify(recReportParams)})`);
   // Fetch the bucket names to reconcile
   const bucketsConfigJson = await getJsonS3Object(systemBucket, getBucketsConfigKey(stackName));
-  const distributionBucketMap = await fetchDistributionBucketMap(systemBucket, stackName);
+  const distributionBucketMap = await fetchDistributionBucketNameMap(systemBucket, stackName);
 
   const dataBuckets = Object.values(bucketsConfigJson)
     .filter(isDataBucket).map((config) => config.name);

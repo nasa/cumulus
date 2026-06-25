@@ -18,7 +18,7 @@ import { sts } from '@cumulus/aws-client/services';
 import { AssumeRoleResponse } from '@cumulus/aws-client/STS';
 import {
   constructDistributionUrl,
-  fetchDistributionBucketMap,
+  fetchDistributionBucketNameMap,
 } from '@cumulus/distribution-utils';
 
 import { getAuthToken } from '@cumulus/lzards-api-client';
@@ -52,7 +52,7 @@ export const generateCloudfrontUrl = async (params: {
   Key: string,
   cloudfrontEndpoint?: string,
 }) => {
-  const distributionBucketMap = await fetchDistributionBucketMap();
+  const distributionBucketMap = await fetchDistributionBucketNameMap();
   return constructDistributionUrl(
     params.Bucket,
     params.Key,
