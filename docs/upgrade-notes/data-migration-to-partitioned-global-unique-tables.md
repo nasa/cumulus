@@ -9,7 +9,7 @@ hide_title: false
 The deployment of db patches for
 [CUMULUS-4982 Partition files_global_unique and granules_global_unique tables](https://bugs.earthdata.nasa.gov/browse/CUMULUS-4982)
 creates the new HASH-partitioned structures and safely renames your active data to *_old_non_partitioned backup tables.
-This guide covers how to manually transfer that data, verify it, and clean up the database.
+This guide covers how to manually transfer that data, verify it, and clean up the old tables.
 
 ## Execution Steps
 
@@ -43,8 +43,8 @@ This guide covers how to manually transfer that data, verify it, and clean up th
 
     tmux new-session -s CumulusUpgrade -n migrateGlobalUnique
 
-    psql -h <Endpoint for writer instance> -p <Port for database or 5432> -d <cumulus database name> -U <database admin user> -f 20260625_migrate_and_verify_global_uniqueness.sql -W
-    #e.g. psql -h cumulus-dev-rds-cluster.cluster-xxx.us-east-1.rds.amazonaws.com -p 5432 -d cumulus_test_db -U cumulus_test -f 20260625_migrate_and_verify_global_uniqueness.sql -W
+    psql -h <Endpoint for writer instance> -p <Port for database or 5432> -d <cumulus database name> -U <database admin user> -f /home/ssm-user/20260625_migrate_and_verify_global_uniqueness.sql -W
+    #e.g. psql -h cumulus-dev-rds-cluster.cluster-xxx.us-east-1.rds.amazonaws.com -p 5432 -d cumulus_test_db -U cumulus_test -f /home/ssm-user/20260625_migrate_and_verify_global_uniqueness.sql -W
     ```
 
 4. Monitor the Running Command
