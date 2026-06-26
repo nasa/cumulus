@@ -44,8 +44,8 @@ provider "aws" {
 
 locals {
   tags                       = merge(var.tags, { Deployment = var.prefix })
-  protected_bucket_names     = [for k, v in var.buckets : v.name if v.type == "protected"]
-  public_bucket_names        = [for k, v in var.buckets : v.name if v.type == "public"]
+  protected_buckets     = [for k, v in var.buckets : v if v.type == "protected"]
+  public_buckets        = [for k, v in var.buckets : v if v.type == "public"]
   rds_security_group         = lookup(data.terraform_remote_state.data_persistence.outputs, "rds_security_group", "")
   rds_credentials_secret_arn = lookup(data.terraform_remote_state.data_persistence.outputs, "database_credentials_secret_arn", "")
 

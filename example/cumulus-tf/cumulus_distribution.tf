@@ -7,12 +7,12 @@ resource "aws_s3_bucket_object" "bucket_map_yaml_distribution" {
   bucket = var.system_bucket
   key    = "${var.prefix}/cumulus_distribution/bucket_map.yaml"
   content = templatefile(local.bucket_map_file_name, {
-    protected_buckets = local.protected_bucket_names,
-    public_buckets    = local.public_bucket_names
+    protected_buckets = local.protected_buckets,
+    public_buckets    = local.public_buckets
   })
   etag = md5(templatefile(local.bucket_map_file_name, {
-    protected_buckets = local.protected_bucket_names,
-    public_buckets    = local.public_bucket_names
+    protected_buckets = local.protected_buckets,
+    public_buckets    = local.public_buckets
   }))
   tags = var.tags
 }

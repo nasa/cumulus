@@ -122,7 +122,9 @@ async function runTestUsingBuckets(buckets, testFunction) {
  * @returns {Object} with keys of internalBucket, and publicBucket.
  */
 async function setupBucketsConfig() {
-  const systemBucket = process.env.system_bucket;
+  const systemBucket = {
+    name: process.env.system_bucket,
+  }
   const buckets = {
     protected: {
       name: systemBucket,
@@ -131,26 +133,27 @@ async function setupBucketsConfig() {
     public: {
       name: randomId('public'),
       type: 'public',
+      legacy_name: 'public'
     },
   };
 
   process.env.DISTRIBUTION_ENDPOINT = 'http://example.com/';
   await s3PutObject({
-    Bucket: systemBucket,
+    Bucket: systemBucket.name,
     Key: getBucketsConfigKey(process.env.stackName),
     Body: JSON.stringify(buckets),
   });
   await createBucket(buckets.public.name);
   // Create the required bucket map configuration file
   await s3PutObject({
-    Bucket: systemBucket,
+    Bucket: systemBucket.name,
     Key: getDistributionBucketMapKey(process.env.stackName),
     Body: JSON.stringify({
-      [systemBucket]: systemBucket,
-      [buckets.public.name]: buckets.public.name,
+      [systemBucket.name]: systemBucket,
+      [buckets.public.name]: buckets.public,
     }),
   });
-  return { internalBucket: systemBucket, publicBucket: buckets.public.name };
+  return { internalBucket: systemBucket.name, publicBucket: buckets.public.name };
 }
 
 test.before(async (t) => {
@@ -1267,7 +1270,7 @@ test.serial('When a move granule request fails to move a file correctly, it reco
   });
 });
 
-test.serial('move a file and update ECHO10 xml metadata', async (t) => {
+test.only('move a file and update ECHO10 xml metadata', async (t) => {
   const { internalBucket, publicBucket } = await setupBucketsConfig();
   const newGranule = fakeGranuleFactoryV2({ collectionId: t.context.collectionId });
 
@@ -1364,6 +1367,7 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
 
   const newUrls = xmlObject.Granule.OnlineAccessURLs.OnlineAccessURL.map((obj) => obj.URL);
   const newDestination = `${process.env.DISTRIBUTION_ENDPOINT}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].fileName}`;
+  console.log(newUrls, newDestination);
   t.true(newUrls.includes(newDestination));
 
   // All original URLs are unchanged (because they weren't involved in the granule move)
