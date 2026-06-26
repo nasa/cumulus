@@ -68,10 +68,10 @@ variable "db_partition_config" {
   type = object({
     # By adding optional(type, default), Terraform handles the null fallback automatically
     executions_total_years       = optional(number, 2)
-    granules_count               = optional(number, 512)
-    files_count                  = optional(number, 1024)
-    granules_global_unique_count = optional(number, 128)
-    files_global_unique_count    = optional(number, 256)
+    granules_count               = optional(number, 64)
+    files_count                  = optional(number, 256)
+    granules_global_unique_count = optional(number, 16)
+    files_global_unique_count    = optional(number, 64)
   })
   description = <<EOT
     Configuration for database table partitioning:
@@ -88,10 +88,10 @@ variable "db_partition_config" {
   # Fallback if the user completely omits the db_partition_config block
   default = {
     executions_total_years       = 2
-    granules_count               = 512
-    files_count                  = 1024
-    granules_global_unique_count = 128
-    files_global_unique_count    = 256
+    granules_count               = 64
+    files_count                  = 256
+    granules_global_unique_count = 16
+    files_global_unique_count    = 64
   }
 }
 
