@@ -31,6 +31,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-5005**
+  - Remove unused /dashboard API endpoint
 - **CUMULUS-4952**
   - Fixed the SchemaSpy command to generate database schemas correctly.
 
