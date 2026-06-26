@@ -10,10 +10,9 @@ import { DistributionBucketMap } from './types';
 
 interface BucketDetails {
   name: string;
-  type: string;
   legacy_name?: string;
 }
-interface DistributionBucketMap2 {
+interface FullDistributionBucketMap {
   [bucket: string]: BucketDetails
 }
 
@@ -27,9 +26,11 @@ export async function fetchDistributionBucketNameMap(
   const bucketMap = await getJsonS3Object(
     systemBucket,
     getDistributionBucketMapKey(stackName)
-  ) as DistributionBucketMap2;
+  ) as FullDistributionBucketMap;
 
-  return Object.fromEntries(Object.entries(bucketMap).map(([key, value]) => [key, value.name]))
+  return Object.fromEntries(
+    Object.entries(bucketMap).map(([key, value]) => [key, value.name])
+  );
 }
 
 export async function fetchLegacyDistributionBucketNameMap(
@@ -39,8 +40,10 @@ export async function fetchLegacyDistributionBucketNameMap(
   const bucketMap = await getJsonS3Object(
     systemBucket,
     getDistributionBucketMapKey(stackName)
-  ) as DistributionBucketMap2;
-  return Object.fromEntries(Object.entries(bucketMap).map(([key, value]) => [key, value.legacy_name || value.name]));
+  ) as FullDistributionBucketMap;
+  return Object.fromEntries(
+    Object.entries(bucketMap).map(([key, value]) => [key, value.legacy_name || value.name])
+  );
 }
 
 export function constructDistributionUrl(
@@ -49,7 +52,6 @@ export function constructDistributionUrl(
   distributionBucketMap: DistributionBucketMap,
   distributionEndpoint?: string
 ): string {
-  console.log(distributionBucketMap)
   if (!distributionEndpoint) {
     throw new InvalidArgument(`Cannot construct distribution url with host ${distributionEndpoint}`);
   }

@@ -30,8 +30,12 @@ test.before(async (t) => {
       legacy_name: 'public',
     },
   };
-  t.context.bucketNameMap = Object.fromEntries(Object.entries(t.context.bucketMap).map(([key, value]) => [key, value.name]))
-  t.context.legacyBucketMap = Object.fromEntries(Object.entries(t.context.bucketMap).map(([key, value]) => [key, value.legacy_name]))
+  t.context.bucketNameMap = Object.fromEntries(
+    Object.entries(t.context.bucketMap).map(([key, value]) => [key, value.name])
+  );
+  t.context.legacyBucketMap = Object.fromEntries(
+    Object.entries(t.context.bucketMap).map(([key, value]) => [key, value.legacy_name])
+  );
   await createBucket(t.context.system_bucket);
   await putJsonS3Object(
     t.context.system_bucket,
