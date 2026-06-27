@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - If your database contains an estimated **1 million or more rows** in either the
     `granules_global_unique` or `files_global_unique` tables, you must manually execute the data
     migration script immediately following the stack deployment. Please follow the instructions found in the
-    [Data migration to partitioned global unique tables documentation](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-granules-to-include-producer_granule_id).
+    [Data migration to partitioned global unique tables documentation](https://nasa.github.io/cumulus/docs/next/upgrade-notes/data-migration-to-partitioned-global-unique-tables).
 
 ### Added
 
