@@ -2,18 +2,18 @@
 MAP:
 %{ if length(public_buckets) > 0 ~}
 %{ for bucket in protected_buckets ~}
-  ${bucket}: ${bucket}
+  ${bucket.name}: ${bucket.name}
 %{ endfor ~}
 %{ endif ~}
 %{ if length(public_buckets) > 0 ~}
 %{ for bucket in public_buckets ~}
-  ${bucket}: ${bucket}
+  ${bucket.name}: ${bucket.name}
 %{ endfor ~}
 %{ endif ~}
 %{ endif ~}
 %{ if length(public_buckets) > 0 ~}
 PUBLIC_BUCKETS:
 %{ for bucket in public_buckets ~}
-  ${bucket}: "${bucket} is a public bucket"
+  ${bucket.name}: "${bucket.name} is a public bucket"
 %{ endfor ~}
 %{ endif ~}
