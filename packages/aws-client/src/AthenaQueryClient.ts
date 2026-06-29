@@ -8,18 +8,13 @@ import {
   StartQueryExecutionCommand,
   GetQueryExecutionCommand,
   QueryExecutionState,
+  GetQueryExecutionCommandOutput,
   GetQueryResultsCommand,
   ResultSet,
 } from '@aws-sdk/client-athena';
 
-// import { s3 } from './services';
-// import { athena } from './services';
-
 import isNil from 'lodash/isNil';
 import Logger from '@cumulus/logger';
-
-// import { inTestMode } from './test-utils';
-// import { improveStackTrace } from './utils';
 
 const log = new Logger({ sender: 'aws-client/AthenaQueryClient' });
 
@@ -87,26 +82,6 @@ export class AthenaQueryClient {
    * @returns {Array} Array of Objects
    */
   async query(sqlQuery: string): Promise<MappedData | undefined> {
-    // const queryExecutionInput = {
-    //   QueryString: sqlQuery,
-    //   QueryExecutionContext: {
-    //     Database: this.database,
-    //     Catalog: this.catalog,
-    //   },
-    //   ResultConfiguration: this.resultConfiguration,
-    //   WorkGroup: this.workGroup,
-    //   ResultReuseConfiguration: this.resultReuseConfiguration,
-    // };
-    // log.info(`about to run query with ${JSON.stringify(queryExecutionInput)}`);
-
-    // const { QueryExecutionId } = await this.client.send(
-    //   new StartQueryExecutionCommand(queryExecutionInput)
-    // );
-    // log.info(`from query execution, got back ${QueryExecutionId}, which is a ${typeof QueryExecutionId}`);
-
-    // if (QueryExecutionId === undefined) {
-    //   throw new Error('QueryExecutionId was undefined');
-    // }
     const queryExecutionId = await this.startQueryExecution(sqlQuery);
 
     const response = await this.checkQueryExecutionStateAndGetData(queryExecutionId);
@@ -145,6 +120,19 @@ export class AthenaQueryClient {
   }
 
   /**
+   * Get query execution status and output
+   *
+   * @param {string} QueryExecutionId - Id of a query which we sent to Athena
+   * @returns {GetQueryExecutionCommandOutput} - output from GetQueryExecutionCommand
+   */
+  private async getQueryExecution(
+    QueryExecutionId: string
+  ): Promise<GetQueryExecutionCommandOutput> {
+    const command = new GetQueryExecutionCommand({ QueryExecutionId });
+    return await this.client.send(command);
+  }
+
+  /**
    * Check query exeqution state
    * if it is "QUEUED" or "RUNNING", recursively call to check the state
    * with increasing polling delays until the state is "SUCCEEDED" and after it we get the data
@@ -157,8 +145,7 @@ export class AthenaQueryClient {
     QueryExecutionId: string,
     delay: number = 0
   ): Promise<MappedData | undefined> {
-    const command = new GetQueryExecutionCommand({ QueryExecutionId });
-    const response = await this.client.send(command);
+    const response = await this.getQueryExecution(QueryExecutionId);
     const state = response.QueryExecution?.Status?.State;
     log.info(`response (${typeof response}) and state (${typeof state}) ${state} from GetQueryExecutionCommand. ${JSON.stringify(response)}`);
 
@@ -169,11 +156,7 @@ export class AthenaQueryClient {
     } else if (state === QueryExecutionState.SUCCEEDED) {
       return await this.getQueryResults(QueryExecutionId);
     } else if (state === QueryExecutionState.QUEUED || state === QueryExecutionState.RUNNING) {
-      // make a variable to pass and increase timeout
-      // polling intervals:
-      // 1000 (1s), 5000 (5s), 10000 (10s), 30000 (30s), 60000 (1m),
-      // 300000 (5m), 600000 (10m), 1200000 (20m), 1800000 (30m),
-      // 2400000 (40m), 3000000 (50m), 3600000 (60m/1h)
+      // polling intervals: 1000 (1s), 600000 (10m), 3600000 (60m/1h)
       let delayPass = delay;
       if (delayPass <= 1000) {
         delayPass = 1000;
@@ -204,11 +187,6 @@ export class AthenaQueryClient {
    * @returns {Array} Array of Objects
    */
   private async getQueryResults(QueryExecutionId: string): Promise<MappedData> {
-  // private async getQueryResults(QueryExecutionId: string): Promise<MappedData> {
-    // const getQueryResultsCommand = new GetQueryResultsCommand({
-    //   QueryExecutionId,
-    // });
-    // const response = await this.client.send(getQueryResultsCommand);
     const response = await this.client.send(new GetQueryResultsCommand({
       QueryExecutionId,
     }));
@@ -224,11 +202,9 @@ export class AthenaQueryClient {
    */
   mapData(data: ResultSet | undefined): MappedData {
     const mappedData: MappedData = [];
-    // if (data === undefined || data.Rows.length === 0) return [];
     if (data === undefined || data.Rows === undefined || data.Rows.length === 0) return mappedData;
 
     const columns: string[] = data.Rows[0].Data!.map((column) => column.VarCharValue as string);
-    // using ! since we checked against Rows.length
 
     data.Rows.forEach((item, i) => {
       if (i === 0) return;
@@ -236,10 +212,10 @@ export class AthenaQueryClient {
 
       const mappedObject: MappedObject = {};
       item.Data.forEach((datum, j) => {
-        if (!isNil(datum.VarCharValue)) {
-          mappedObject[columns[j]] = datum.VarCharValue;
-        } else {
+        if (isNil(datum.VarCharValue)) {
           mappedObject[columns[j]] = '';
+        } else {
+          mappedObject[columns[j]] = datum.VarCharValue;
         }
       });
 
@@ -251,7 +227,8 @@ export class AthenaQueryClient {
 
   /**
    * Simple helper timeout function uses in checkQueryExecutionStateAndGetData function
-   * @param {number} msTime Time in miliseconds
+   *
+   * @param {number} msTime - Time in miliseconds
    * @returns {Promise} Promise
    */
   private timeout(msTime: number) {
