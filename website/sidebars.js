@@ -250,6 +250,7 @@ const sidebars = {
         'upgrade-notes/upgrade-terraform-1.12',
         'upgrade-notes/archived_column_indexing',
         'upgrade-notes/update-granules-to-include-producer_granule_id',
+        'upgrade-notes/data-migration-to-partitioned-global-unique-tables',
       ],
     },
     {
