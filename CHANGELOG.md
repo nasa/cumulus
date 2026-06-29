@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [v22.3.0] 2026-06-29
 
+#### Migration Notes
+
+- **CUMULUS-4982**
+  - You **must** completely stop all data ingestion workloads before initiating this deployment.
+  - If your database contains an estimated **1 million or more rows** in either the
+    `granules_global_unique` or `files_global_unique` tables, you must manually execute the data
+    migration script immediately following the stack deployment. Please follow the instructions found in the
+    [Data migration to partitioned global unique tables documentation](https://nasa.github.io/cumulus/docs/next/upgrade-notes/data-migration-to-partitioned-global-unique-tables).
+
 ### Added
 
 - **CUMULUS-4842**
@@ -16,6 +25,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     is now executed automatically by the DB migration Lambda handler post-migration.
 - **CUMULUS-4986**
   - Added `storage_type` variable to `tf-modules/cumulus-rds-tf` module with default value `aurora`.
+
+### Changed
+
+- **CUMULUS-4982**
+  - Converted granules_global_unique and files_global_unique tables to HASH partitioned tables
 
 ### Fixed
 
