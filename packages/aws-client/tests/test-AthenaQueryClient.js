@@ -170,5 +170,3 @@ test('mapData returns expected result when ResultSet is empty', (t) => {
 // test start query -> check -> success -> mapped data
 
 // test `query`
-
-
