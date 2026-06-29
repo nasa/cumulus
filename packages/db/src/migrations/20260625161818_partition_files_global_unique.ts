@@ -27,7 +27,7 @@ export const up = async (knex: Knex): Promise<void> => {
     WHERE relname = 'files_global_unique';
   `);
 
-  const estimatedRows = countCheck.rows?.estimated_count ?? 0;
+  const estimatedRows = Number(countCheck.rows?.[0]?.estimated_count ?? 0);
   const shouldMigrate = estimatedRows < MIGRATION_ROW_COUNT_THRESHOLD;
 
   await knex.raw(`ALTER TABLE files_global_unique RENAME TO ${oldTableName};`);
