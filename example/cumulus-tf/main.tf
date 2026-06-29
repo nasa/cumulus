@@ -46,7 +46,7 @@ locals {
   tags                       = merge(var.tags, { Deployment = var.prefix })
   protected_buckets     = [for k, v in var.buckets : v if v.type == "protected"]
   public_buckets        = [for k, v in var.buckets : v if v.type == "public"]
-  public_bucket_names        = [for bucket in local.protected_buckets : bucket.name]
+  protected_bucket_names        = [for bucket in local.protected_buckets : bucket.name]
   public_bucket_names        = [for bucket in local.public_buckets : bucket.name]
   rds_security_group         = lookup(data.terraform_remote_state.data_persistence.outputs, "rds_security_group", "")
   rds_credentials_secret_arn = lookup(data.terraform_remote_state.data_persistence.outputs, "database_credentials_secret_arn", "")
