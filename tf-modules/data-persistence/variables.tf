@@ -75,7 +75,7 @@ variable "db_partition_config" {
   })
   description = <<EOT
     Configuration for database table partitioning:
-    - executions_total_years: How many years worth of quarterly partitions to generate for 'executions'.
+    - executions_total_years: How many years worth of quarterly partitions to generate ahead of time for 'executions'.
     - granules_count: The number of hash/bigint-based partitions to create for the 'granules' table.
     - files_count: The number of hash/bigint-based partitions to create for the 'files' table.
     - granules_global_unique_count: The number of hash/bigint-based partitions to create for the 'granules_global_unique' table.
