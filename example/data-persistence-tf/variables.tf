@@ -99,15 +99,19 @@ variable "dbRecreation" {
 
 variable "db_partition_config" {
   type = object({
-    executions_total_years = number
-    granules_count         = number
-    files_count            = number
+    executions_total_years       = number
+    granules_count               = number
+    files_count                  = number
+    granules_global_unique_count = number
+    files_global_unique_count    = number
   })
   description = "Partition configuration for this deployment"
   default = {
-    executions_total_years = 3
-    granules_count         = 4
-    files_count            = 4
+    executions_total_years       = 3
+    granules_count               = 4
+    files_count                  = 4
+    granules_global_unique_count = 4
+    files_global_unique_count    = 2
   }
 }
 variable "use_bootstrap" {
