@@ -1,7 +1,7 @@
 {
   "name": "@cumulus/granule-invalidator-task",
   "private": true,
-  "version": "22.2.5",
+  "version": "22.3.0",
   "description": "Granule invalidator task",
   "main": "index.js",
   "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/granule-invalidator",
