@@ -15,6 +15,7 @@ import {
 // import { s3 } from './services';
 // import { athena } from './services';
 
+import isNil from 'lodash/isNil';
 import Logger from '@cumulus/logger';
 
 // import { inTestMode } from './test-utils';
@@ -49,10 +50,7 @@ interface AthenaQueryClientConfig {
   ResultReuseConfiguration?: ResultReuseConfiguration;
 }
 
-type MappedObject = {
-  [index: string]: string
-};
-
+type MappedObject = { [index: string]: string };
 type MappedData = Array<MappedObject>;
 
 export class AthenaQueryClient {
@@ -89,6 +87,40 @@ export class AthenaQueryClient {
    * @returns {Array} Array of Objects
    */
   async query(sqlQuery: string): Promise<MappedData | undefined> {
+    // const queryExecutionInput = {
+    //   QueryString: sqlQuery,
+    //   QueryExecutionContext: {
+    //     Database: this.database,
+    //     Catalog: this.catalog,
+    //   },
+    //   ResultConfiguration: this.resultConfiguration,
+    //   WorkGroup: this.workGroup,
+    //   ResultReuseConfiguration: this.resultReuseConfiguration,
+    // };
+    // log.info(`about to run query with ${JSON.stringify(queryExecutionInput)}`);
+
+    // const { QueryExecutionId } = await this.client.send(
+    //   new StartQueryExecutionCommand(queryExecutionInput)
+    // );
+    // log.info(`from query execution, got back ${QueryExecutionId}, which is a ${typeof QueryExecutionId}`);
+
+    // if (QueryExecutionId === undefined) {
+    //   throw new Error('QueryExecutionId was undefined');
+    // }
+    const queryExecutionId = await this.startQueryExecution(sqlQuery);
+
+    const response = await this.checkQueryExecutionStateAndGetData(queryExecutionId);
+    log.info(`response (${typeof response}) from checkQueryExecutionStateAndGetData: ${JSON.stringify(response)}`);
+    return response;
+  }
+
+  /**
+   * Start Query Execution
+   *
+   * @param {string} sqlQuery - The SQL query string
+   * @returns {string} QueryExecutionId - unique ID of the query run from request
+   */
+  async startQueryExecution(sqlQuery: string): Promise<string> {
     const queryExecutionInput = {
       QueryString: sqlQuery,
       QueryExecutionContext: {
@@ -107,18 +139,15 @@ export class AthenaQueryClient {
     log.info(`from query execution, got back ${QueryExecutionId}, which is a ${typeof QueryExecutionId}`);
 
     if (QueryExecutionId === undefined) {
-      throw new Error('QueryExecutionId was undefined');
+      throw new Error('QueryExecutionId was returned by Athena StartQueryExecutionCommand as undefined');
     }
-
-    const response = await this.checkQueryExecutionStateAndGetData(QueryExecutionId);
-    log.info(`response (${typeof response}) from checkQueryExecutionStateAndGetData: ${JSON.stringify(response)}`);
-    return response;
+    return QueryExecutionId;
   }
 
   /**
-   * Check query exeqution state if it's equal "QUEUED" or "RUNNING"
-   * then afte 1 second the function call itself again recursively
-   * until the state is "SUCCEEDED" and after it we get the data
+   * Check query exeqution state
+   * if it is "QUEUED" or "RUNNING", recursively call to check the state
+   * with increasing polling delays until the state is "SUCCEEDED" and after it we get the data
    *
    * @param {string} QueryExecutionId - Id of a query which we sent to Athena
    * @param {number} delay - polling interval passed in, in millisecs
@@ -169,27 +198,31 @@ export class AthenaQueryClient {
   }
 
   /**
-   * Get result of query execution
+   * Get query execution result
    *
    * @param {string} QueryExecutionId - Id of a query which we sent to Athena
    * @returns {Array} Array of Objects
    */
   private async getQueryResults(QueryExecutionId: string): Promise<MappedData> {
-    const getQueryResultsCommand = new GetQueryResultsCommand({
+  // private async getQueryResults(QueryExecutionId: string): Promise<MappedData> {
+    // const getQueryResultsCommand = new GetQueryResultsCommand({
+    //   QueryExecutionId,
+    // });
+    // const response = await this.client.send(getQueryResultsCommand);
+    const response = await this.client.send(new GetQueryResultsCommand({
       QueryExecutionId,
-    });
-    const response = await this.client.send(getQueryResultsCommand);
+    }));
     log.info(`response (${typeof response}) from GetQueryResults: ${JSON.stringify(response)}`);
     return this.mapData(response.ResultSet);
   }
 
   /**
-   * The function map data returned from Athena as rows of values in the array of key/value objects.
+   * Map data returned from Athena in rows, with each row an object with columns/keys and values.
    *
-   * @param {ResultSet} data - Data in rows returned from Athena Query
-   * @returns {MappedData} Array of MappedObjects <columnName: stringValue> from Athena Query
+   * @param {ResultSet} data - Data in rows returned from Athena Query, in the ResultSet format
+   * @returns {MappedData} Array of rows of data as MappedObjects <columnName: stringValue>
    */
-  private mapData(data: ResultSet | undefined): MappedData {
+  mapData(data: ResultSet | undefined): MappedData {
     const mappedData: MappedData = [];
     // if (data === undefined || data.Rows.length === 0) return [];
     if (data === undefined || data.Rows === undefined || data.Rows.length === 0) return mappedData;
@@ -203,7 +236,7 @@ export class AthenaQueryClient {
 
       const mappedObject: MappedObject = {};
       item.Data.forEach((datum, j) => {
-        if (datum.VarCharValue) {
+        if (!isNil(datum.VarCharValue)) {
           mappedObject[columns[j]] = datum.VarCharValue;
         } else {
           mappedObject[columns[j]] = '';

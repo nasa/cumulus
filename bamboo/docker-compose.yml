@@ -41,8 +41,11 @@ services:
     environment:
       ES_JAVA_OPTS: "-Xms750m -Xmx750m"
   localstack:
+    # image: ministackorg/ministack:1.3.65-full
     image: ministackorg/ministack:1.3.65
     network_mode: "service:build_env"
+    # environment:
+    #   - ATHENA_ENGINE=duckdb
   build_env:
     image: $CUMULUS_BASE_IMAGE
     volumes:
