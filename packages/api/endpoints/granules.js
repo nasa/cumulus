@@ -639,41 +639,48 @@ const associateExecution = async (req, res) => {
   let pgGranule;
   let pgExecution;
   let pgCollection;
+
+  // 1. Fetch the records from the database
   try {
     pgCollection = await collectionPgModel.get(
       knex,
       deconstructCollectionId(collectionId)
     );
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      return res.boom.notFound(
+        `No collection found to associate execution with for collectionId ${collectionId}`
+      );
+    }
+    throw error;
+  }
+
+  try {
     pgGranule = await granulePgModel.get(knex, {
       granule_id: granuleId,
       collection_cumulus_id: pgCollection.cumulus_id,
     });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      return res.boom.notFound(
+        `Granule ${granuleId} does not exist in collection ${collectionId}`
+      );
+    }
+    throw error;
+  }
+
+  try {
     pgExecution = await executionPgModel.get(knex, {
       arn: executionArn,
     });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      if (pgCollection === undefined) {
-        return res.boom.notFound(
-          `No collection found to associate execution with for collectionId ${collectionId}`
-        );
-      }
-      if (pgGranule === undefined) {
-        return res.boom.notFound(
-          `No granule found to associate execution with for granuleId ${granuleId} and collectionId: ${collectionId}`
-        );
-      }
-      if (pgExecution === undefined) {
-        return res.boom.notFound(
-          `No execution found to associate granule with for executionArn ${executionArn}`
-        );
-      }
       return res.boom.notFound(`Execution ${executionArn} not found`);
     }
-    return res.boom.badRequest(errorify(error));
+    throw error;
   }
 
-  // Update both granule objects with new execution/updatedAt time
+  // 2. If everything ok then update
   const updatedPgGranule = {
     ...pgGranule,
     updated_at: new Date(),
@@ -704,6 +711,7 @@ const associateExecution = async (req, res) => {
     );
     return res.boom.badRequest(errorify(error));
   }
+
   return res.send({
     message: `Successfully associated execution ${executionArn} with granule granuleId ${granuleId} collectionId ${collectionId}`,
   });
@@ -722,7 +730,6 @@ const BulkPatchSchema = z.object({
 
 const parseBulkPatchGranuleCollectionPayload = zodParser('BulkPatchGranuleCollection payload', BulkPatchGranuleCollectionSchema);
 const parseBulkPatchPayload = zodParser('BulkPatchSchema payload', BulkPatchSchema);
-
 /**
  * Update a batch of granules to change collectionId to a new collectionId
  * in PG
