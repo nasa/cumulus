@@ -1,0 +1,22 @@
+{
+    "name": "OPERA_L2_RTC-S1-STATIC_V1",
+    "version": "1.0",
+    "duplicateHandling": "replace",
+    "process": "RTC-STATIC",
+    "url_path": "OPERA_L2_RTC-S1_STATIC/{granule.granuleId}/",
+    "granuleId": "^OPERA_L2_RTC-S1-STATIC_.*_\\d{8}_S1[A-Z]_.*$",
+    "granuleIdExtraction": "(OPERA_L2_RTC-S1.*)(\\.tif)",
+    "sampleFileName": "OPERA_L2_RTC-S1-STATIC_T069-147170-IW1_20140403_S1A_30_v0.1_incidence_angle.tif",
+    "files": [
+        {
+            "bucket": "opera-products",
+            "regex": "^OPERA_L2_RTC-S1-STATIC_(?!.*BROWSE).*",
+            "sampleFileName": "OPERA_L2_RTC-S1-STATIC_T069-147170-IW1_20140403_S1A_30_v0.1_incidence_angle.tif"
+        },
+        {
+            "bucket": "opera-browse",
+            "regex": "^OPERA_L2_RTC-S1-STATIC.*_BROWSE.*",
+            "sampleFileName": "OPERA_L2_RTC-S1-STATIC_T048-100996-IW1_20210422_S1A_30_v0.0_BROWSE.png"
+        }
+    ]
+}
