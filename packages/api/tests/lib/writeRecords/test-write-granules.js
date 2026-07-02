@@ -366,6 +366,41 @@ test.serial('getGranuleFromQueryResultOrLookup() returns cumulus ID from databas
   );
 });
 
+test.serial('getGranuleFromQueryResultOrLookup() throws error if matching database record belongs to a different collection', async (t) => {
+  const fakeGranuleId = 'G-Test-12345';
+
+  // Create incoming payload assigned to collection ID 111
+  const granuleRecord = fakeGranuleRecordFactory({
+    granule_id: fakeGranuleId,
+    collection_cumulus_id: 111,
+  });
+
+  // Mock the existing database record under a different collection (222)
+  const existingDbRecord = fakeGranuleRecordFactory({
+    granule_id: fakeGranuleId,
+    collection_cumulus_id: 222,
+  });
+
+  const fakeGranulePgModel = {
+    get: () => Promise.resolve(existingDbRecord),
+  };
+
+  const messagePattern = new RegExp(
+    `A granule already exists for granuleId: ${granuleRecord.granule_id} in a different collection`
+  );
+
+  const error = await t.throwsAsync(
+    getGranuleFromQueryResultOrLookup({
+      trx: {},
+      queryResult: [], // Triggers database fallback lookup path
+      granuleRecord,
+      granulePgModel: fakeGranulePgModel,
+    })
+  );
+
+  t.regex(error.message, messagePattern);
+});
+
 test.serial('writeFilesViaTransaction() throws error if any writes fail', async (t) => {
   const { knex } = t.context;
 
@@ -2313,7 +2348,8 @@ test.serial('writeGranulesFromMessage() sets `published` to false if null value 
   t.is(translatedPgRecord.published, false);
 });
 
-test.serial('writeGranulesFromMessage() does not write a granule to Postgres if a granule with the same ID and with a different collection ID already exists', async (t) => {
+test.serial('writeGranulesFromMessage() does not write a granule to Postgres if a granule '
+  + 'with the same ID and with a different collection ID already exists', async (t) => {
   const {
     collectionPgModel,
     collectionCumulusId,
@@ -2338,10 +2374,73 @@ test.serial('writeGranulesFromMessage() does not write a granule to Postgres if 
     fakeGranuleRecordFactory({
       granule_id: granuleId,
       collection_cumulus_id: pgCollection.cumulus_id,
+      status: 'running',
     }),
     '*'
   );
 
+  cumulusMessage.payload.granules[0].createdAt = Date.now();
+  cumulusMessage.meta.status = 'completed';
+  const [error] = await t.throwsAsync(writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    executionCreatedAt,
+    providerCumulusId,
+    knex,
+    granulePgModel,
+    testOverrides: { stepFunctionUtils },
+  }));
+
+  t.true(error.message.includes(`A granule already exists for granuleId: ${pgGranule.granule_id}`));
+  t.false(
+    await t.context.granulePgModel.exists(knex, {
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    })
+  );
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  });
+
+  t.is(Messages, undefined);
+});
+
+test.serial('writeGranulesFromMessage() does not write a granule to Postgres if a granule '
+  + 'with the same ID and with a different collection ID already exists and an older date '
+  + 'violates writeConstraints', async (t) => {
+  const {
+    collectionPgModel,
+    collectionCumulusId,
+    cumulusMessage,
+    executionCumulusId,
+    executionCreatedAt,
+    granuleId,
+    granulePgModel,
+    knex,
+    providerCumulusId,
+    stepFunctionUtils,
+  } = t.context;
+
+  const differentCollection = fakeCollectionRecordFactory();
+  const [pgCollection] = await collectionPgModel.create(
+    knex,
+    differentCollection
+  );
+
+  const [pgGranule] = await granulePgModel.create(
+    knex,
+    fakeGranuleRecordFactory({
+      granule_id: granuleId,
+      collection_cumulus_id: pgCollection.cumulus_id,
+      status: 'running',
+    }),
+    '*'
+  );
+
+  cumulusMessage.payload.granules[0].createdAt = Date.now() - 24 * 60 * 60 * 1000;
+  cumulusMessage.meta.status = 'completed';
   const [error] = await t.throwsAsync(writeGranulesFromMessage({
     cumulusMessage,
     executionCumulusId,
@@ -4481,7 +4580,11 @@ test.serial('updateGranuleStatusToQueued() updates granule status in PostgreSQL 
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
   t.is(Messages.length, 2);
-  t.deepEqual(publishedMessage.record, translatedPgGranule);
+  t.deepEqual(publishedMessage.record, {
+    ...translatedPgGranule,
+    metricsProvider: t.context.collection.metrics_provider,
+    cmrProvider: t.context.collection.cmr_provider,
+  });
   t.is(publishedMessage.event, 'Update');
 });
 
@@ -4572,7 +4675,11 @@ test.serial('updateGranuleStatusToQueued() does not publish a SNS message if wri
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
   t.is(Messages.length, 1);
-  t.deepEqual(publishedMessage.record, apiGranule);
+  t.deepEqual(publishedMessage.record, {
+    ...apiGranule,
+    metricsProvider: t.context.collection.metrics_provider,
+    cmrProvider: t.context.collection.cmr_provider,
+  });
   t.is(publishedMessage.event, 'Create');
 });
 
@@ -4621,7 +4728,11 @@ test.serial('_writeGranule() successfully publishes an SNS message', async (t) =
   const snsMessageBody = JSON.parse(Messages[0].Body);
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
-  t.deepEqual(publishedMessage.record, translatedGranule);
+  t.deepEqual(publishedMessage.record, {
+    ...translatedGranule,
+    metricsProvider: t.context.collection.metrics_provider,
+    cmrProvider: t.context.collection.cmr_provider,
+  });
   t.is(publishedMessage.event, 'Update');
 });
 

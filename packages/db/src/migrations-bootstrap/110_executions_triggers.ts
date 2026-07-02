@@ -1,53 +1,73 @@
 import { Knex } from 'knex';
 
-const FUNCTION_NAME = 'executions_enforce_global_uniqueness';
-const TRIGGER_NAME = 'executions_enforce_unique_arn_url_trigger';
+const FUNCTION_NAME_PREFIX = 'executions_enforce_global_uniqueness';
+const TRIGGER_NAME_PREFIX = 'executions_enforce_unique_arn_url_trigger';
 
 export const up = async (knex: Knex): Promise<void> => {
+  // DELETE FUNCTION & TRIGGER
   await knex.raw(`
-    CREATE OR REPLACE FUNCTION ${FUNCTION_NAME}()
-    RETURNS trigger AS $$
-    DECLARE
-      rows smallint;
+    CREATE OR REPLACE FUNCTION ${FUNCTION_NAME_PREFIX}_delete() RETURNS trigger AS $$
     BEGIN
-      IF (TG_OP IN ('DELETE', 'UPDATE')) THEN
-        DELETE FROM executions_global_unique
-        WHERE arn = OLD.arn;
+      DELETE FROM executions_global_unique WHERE arn = OLD.arn;
+      RETURN OLD;
+    END;
+    $$ LANGUAGE plpgsql;
+  `);
 
-      -- Don't block delete if guard row missing
-        IF TG_OP = 'DELETE' THEN
-          RETURN OLD;
-        END IF;
-      END IF;
+  await knex.raw(`
+    CREATE TRIGGER ${TRIGGER_NAME_PREFIX}_delete
+    BEFORE DELETE ON executions
+    FOR EACH ROW
+    EXECUTE FUNCTION ${FUNCTION_NAME_PREFIX}_delete();
+  `);
 
-      IF (TG_OP IN ('INSERT', 'UPDATE')) THEN
-        INSERT INTO executions_global_unique (arn, url)
-        VALUES (NEW.arn, NEW.url);
-      END IF;
-
-      GET DIAGNOSTICS rows = ROW_COUNT;
-
-      IF rows != 1 THEN
-        RAISE EXCEPTION '% affected % rows (expected: 1)', TG_OP, rows;
-      END IF;
+  // INSERT FUNCTION & TRIGGER
+  await knex.raw(`
+    CREATE OR REPLACE FUNCTION ${FUNCTION_NAME_PREFIX}_insert() RETURNS trigger AS $$
+    BEGIN
+      INSERT INTO executions_global_unique (arn, url)
+      VALUES (NEW.arn, NEW.url);
 
       RETURN NEW;
     END;
     $$ LANGUAGE plpgsql;
-    `);
+  `);
 
   await knex.raw(`
-    CREATE TRIGGER ${TRIGGER_NAME}
-    BEFORE INSERT OR UPDATE OF arn, url OR DELETE
-    ON executions
+    CREATE TRIGGER ${TRIGGER_NAME_PREFIX}_insert
+    BEFORE INSERT ON executions
     FOR EACH ROW
-    EXECUTE FUNCTION ${FUNCTION_NAME}();
+    EXECUTE FUNCTION ${FUNCTION_NAME_PREFIX}_insert();
+  `);
+
+  // UPDATE FUNCTION & TRIGGER
+  await knex.raw(`
+    CREATE OR REPLACE FUNCTION ${FUNCTION_NAME_PREFIX}_update() RETURNS trigger AS $$
+    BEGIN
+      DELETE FROM executions_global_unique WHERE arn = OLD.arn;
+
+      INSERT INTO executions_global_unique (arn, url)
+      VALUES (NEW.arn, NEW.url);
+
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+  `);
+
+  await knex.raw(`
+    CREATE TRIGGER ${TRIGGER_NAME_PREFIX}_update
+    BEFORE UPDATE OF arn, url ON executions
+    FOR EACH ROW
+    EXECUTE FUNCTION ${FUNCTION_NAME_PREFIX}_update();
   `);
 };
 
 export const down = async (knex: Knex): Promise<void> => {
-  await knex.raw(`
-    DROP TRIGGER IF EXISTS ${TRIGGER_NAME} ON executions;
-    DROP FUNCTION IF EXISTS ${FUNCTION_NAME}();
-  `);
+  await knex.raw(`DROP TRIGGER IF EXISTS ${TRIGGER_NAME_PREFIX}_delete ON executions;`);
+  await knex.raw(`DROP TRIGGER IF EXISTS ${TRIGGER_NAME_PREFIX}_insert ON executions;`);
+  await knex.raw(`DROP TRIGGER IF EXISTS ${TRIGGER_NAME_PREFIX}_update ON executions;`);
+
+  await knex.raw(`DROP FUNCTION IF EXISTS ${FUNCTION_NAME_PREFIX}_delete();`);
+  await knex.raw(`DROP FUNCTION IF EXISTS ${FUNCTION_NAME_PREFIX}_insert();`);
+  await knex.raw(`DROP FUNCTION IF EXISTS ${FUNCTION_NAME_PREFIX}_update();`);
 };

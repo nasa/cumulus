@@ -74,3 +74,8 @@ export type ApiGranule = {
   timeToPreprocess?: number | null
   updatedAt?: number | null
 } & PartialGranuleTemporalInfo & PartialGranuleProcessingInfo;
+
+export type MetricsGranule = {
+  cmrProvider: string
+  metricsProvider: string
+} & ApiGranule;

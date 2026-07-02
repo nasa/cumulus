@@ -56,3 +56,6 @@ saml_launchpad_metadata_url = "https://auth.launchpad-sbx.nasa.gov/unauth/metada
 thin_egress_jwt_secret_name = "cumulus_sandbox_jwt_tea_secret"
 
 orca_default_bucket = "cumulus-test-sandbox-orca-glacier"
+
+iceberg_s3_bucket = "sandbox-ci-iceberg"
+iceberg_namespace = "sandbox_ci"

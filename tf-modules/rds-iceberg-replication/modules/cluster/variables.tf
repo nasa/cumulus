@@ -6,7 +6,7 @@ variable "prefix" {
 variable "region" {
   description = "Region to deploy module to"
   type        = string
-  default     = "us-east-1"
+  default     = "us-west-2"
 }
 
 variable "vpc_id" {
@@ -16,7 +16,7 @@ variable "vpc_id" {
 
 variable "iceberg_s3_bucket" {
   description = "S3 bucket where iceberg tables are stored"
-  type = string
+  type        = string
 }
 
 variable "tags" {

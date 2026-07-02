@@ -46,6 +46,12 @@ variable "cumulus_iceberg_api_image_version" {
   type        = string
 }
 
+variable "cumulus_iceberg_api_image_repository_url" {
+  description = "Repository URL of the Cumulus Iceberg API image"
+  type        = string
+  default     = null
+}
+
 variable "ecs_execution_role_arn" {
   description = "ARN of the ECS execution role"
   type        = string
@@ -108,6 +114,18 @@ variable "iceberg_health_check_grace_period_seconds" {
   description = "Seconds to ignore failing load balancer health checks on newly instantiated ECS tasks"
   type        = number
   default     = 180
+}
+
+variable "duckdb_max_pool_size" {
+  description = "Maximum number of DuckDB connections in the connection pool"
+  type        = number
+  default     = 3
+}
+
+variable "duckdb_pool_rebuild_interval_seconds" {
+  description = "Seconds between preemptive DuckDB idle-pool rebuilds"
+  type        = number
+  default     = 18000
 }
 
 variable "cloudwatch_log_retention_periods" {

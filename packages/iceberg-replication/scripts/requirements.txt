@@ -1,0 +1,20 @@
+# AWS
+boto3
+
+# PostgreSQL
+psycopg2-binary
+
+# Apache Arrow
+pyarrow
+
+# Apache Iceberg
+pyiceberg[pyiceberg-core,glue,s3]
+
+# PySpark
+pyspark==3.5.7
+
+# HTTP
+requests
+
+# Kafka
+confluent-kafka

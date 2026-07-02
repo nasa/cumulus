@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/website",
-  "version": "21.3.1",
+  "version": "22.2.4",
   "description": "The Cumulus website",
   "license": "Apache-2.0",
   "scripts": {
@@ -16,7 +16,7 @@
     "clean": "git clean -d -x -e node_modules -f"
   },
   "devDependencies": {
-    "@docusaurus/core": "^3.10.0",
+    "@docusaurus/core": "^3.10.1",
     "@docusaurus/preset-classic": "^3.10.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"

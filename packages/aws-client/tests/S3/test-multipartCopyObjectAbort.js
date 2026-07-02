@@ -46,6 +46,7 @@ test('multipartCopyObject() aborts the upload if something fails', async (t) => 
       Bucket: 'destination-bucket',
       Key: 'destination-key',
       UploadId: 'abc-123',
+      RequestPayer: 'requester',
     }
   );
 });

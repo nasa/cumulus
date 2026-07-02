@@ -53,7 +53,7 @@ echo "Deploying Cumulus data-persistence module to $DEPLOYMENT"
   -var "subnet_ids=[\"$AWS_SUBNET\"]" \
   -var "vpc_id=$VPC_ID" \
   -var "rds_admin_access_secret_arn=$RDS_ADMIN_ACCESS_SECRET_ARN" \
-  -var "rds_security_group=$RDS_SECURITY_GROUP"\
+  -var "rds_security_group=$RDS_SECURITY_GROUP" \
   -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/$ROLE_BOUNDARY"
 
 cd ../cumulus-tf
@@ -70,6 +70,86 @@ echo "terraform {
 # Initialize deployment
 ../terraform init \
   -input=false
+
+set_iceberg_image_version
+
+DEPLOY_ICEBERG_API="${DEPLOY_ICEBERG_API:-false}"
+ICEBERG_IMAGE_REPOSITORY_URL="${ICEBERG_IMAGE_REPOSITORY_URL:-ghcr.io/nasa/cumulus-iceberg-api}"
+ICEBERG_IMAGE_WAIT_TIMEOUT_SECONDS="${ICEBERG_IMAGE_WAIT_TIMEOUT_SECONDS:-1800}"
+ICEBERG_IMAGE_WAIT_INTERVAL_SECONDS="${ICEBERG_IMAGE_WAIT_INTERVAL_SECONDS:-15}"
+
+branch_name="${bamboo_planRepository_branchName:-$(printenv "bamboo.planRepository.branchName" || true)}"
+if [[ "$branch_name" != "master" ]]; then
+  image="cumulus-iceberg-api"
+  registry_host="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+  ICEBERG_IMAGE_REPOSITORY_URL="${registry_host}/${image}"
+  ICEBERG_IMAGE_VERSION="latest"
+fi
+
+wait_for_ghcr_image() {
+  local image_repository_url="$1"
+  local image_version="$2"
+  local timeout_seconds="$3"
+  local interval_seconds="$4"
+
+  # Extract the image name (e.g., nasa/cumulus-iceberg-api)
+  local repo_path="${image_repository_url#ghcr.io/}"
+  local manifest_url="https://ghcr.io/v2/${repo_path}/manifests/${image_version}"
+  local accept_manifest="application/vnd.oci.image.index.v1+json, application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json"
+
+  local start_time
+  local current_time
+  local elapsed
+  local http_code
+  local token
+
+  start_time=$(date +%s)
+  echo "Waiting up to ${timeout_seconds}s for image ${image_repository_url}:${image_version} to be available in GHCR"
+
+  # Fetch an anonymous authentication token for GHCR
+  token=$(curl --silent "https://ghcr.io/token?scope=repository:${repo_path}:pull" | grep -o '"token":"[^"]*' | grep -o '[^"]*$')
+
+  if [[ -z "$token" ]]; then
+    echo "ERROR: Failed to fetch auth token from GHCR." >&2
+    return 1
+  fi
+
+  while true; do
+    # Pass the bearer token in the Authorization header
+    http_code=$(curl --silent --show-error --location --output /dev/null --write-out "%{http_code}" \
+      --header "Accept: ${accept_manifest}" \
+      --header "Authorization: Bearer ${token}" \
+      "$manifest_url" || true)
+
+    if [[ "$http_code" == "200" ]]; then
+      echo "Image is available in GHCR: ${image_repository_url}:${image_version}"
+      return 0
+    fi
+
+    current_time=$(date +%s)
+    elapsed=$((current_time - start_time))
+
+    if (( elapsed >= timeout_seconds )); then
+      echo "Timed out after ${timeout_seconds}s waiting for image ${image_repository_url}:${image_version}. Last HTTP status: ${http_code}" >&2
+      return 1
+    fi
+
+    echo "Image not available yet (HTTP ${http_code}). Retrying in ${interval_seconds}s..."
+    sleep "$interval_seconds"
+  done
+}
+
+if [[ "$DEPLOY_ICEBERG_API" == "true" && "$ICEBERG_IMAGE_REPOSITORY_URL" == ghcr.io/* ]]; then
+  wait_for_ghcr_image \
+    "$ICEBERG_IMAGE_REPOSITORY_URL" \
+    "$ICEBERG_IMAGE_VERSION" \
+    "$ICEBERG_IMAGE_WAIT_TIMEOUT_SECONDS" \
+    "$ICEBERG_IMAGE_WAIT_INTERVAL_SECONDS"
+fi
+
+echo "Deploy Iceberg API: ${DEPLOY_ICEBERG_API}"
+echo "Using Iceberg API image version ${ICEBERG_IMAGE_VERSION}"
+echo "Using Iceberg API image repository URL ${ICEBERG_IMAGE_REPOSITORY_URL}"
 
 # Deploy cumulus-tf via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
@@ -101,3 +181,6 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -var "metrics_es_host=$METRICS_ES_HOST" \
   -var "metrics_es_username=$METRICS_ES_USER" \
   -var "metrics_es_password=$METRICS_ES_PASS" \
+  -var "cumulus_iceberg_api_image_version=$ICEBERG_IMAGE_VERSION" \
+  -var "cumulus_iceberg_api_image_repository_url=$ICEBERG_IMAGE_REPOSITORY_URL" \
+  -var "deploy_iceberg_api=$DEPLOY_ICEBERG_API"

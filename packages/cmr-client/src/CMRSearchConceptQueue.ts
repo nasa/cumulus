@@ -69,7 +69,7 @@ export class CMRSearchConceptQueue<T> {
     this.format = params.format;
     this.items = [];
 
-    this.CMR = new CMR(params.cmrSettings);
+    this.CMR = CMR.getInstance(params.cmrSettings);
   }
 
   /**

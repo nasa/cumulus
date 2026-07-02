@@ -22,7 +22,6 @@ const {
   FilePgModel,
   GranulePgModel,
   GranulesExecutionsPgModel,
-  getGranulesByGranuleId,
   translateApiFiletoPostgresFile,
   upsertGranuleWithExecutionJoinRecord,
   translateApiGranuleToPostgresGranuleWithoutNilsRemoved,
@@ -168,12 +167,17 @@ const _writeFiles = async ({
  * database result is returned, so no cumulus ID will be returned. In those
  * cases, this function will lookup the granule cumulus ID from the record.
  *
+ * Enforces a strict collection scope validation: if a matching granule is found
+ * but its collection_cumulus_id differs from the target record, it throws an error
+ * to block cross-collection granule ID duplicates.
+ *
  * @param {Object} params
  * @param {KnexTransaction} params.trx - A Knex transaction
  * @param {PostgresGranuleRecord[]} params.queryResult - Query result
  * @param {PostgresGranuleRecord} params.granuleRecord - A postgres granule record
  * @param {GranulePgModel} [params.granulePgModel] - PG Database model for granule data
  * @returns {Promise<PostgresGranuleRecord>} - PG Granule record
+ * @throws {Error} If a granule with the same ID exists in a different collection
  */
 const getGranuleFromQueryResultOrLookup = async ({
   queryResult = [],
@@ -187,10 +191,13 @@ const getGranuleFromQueryResultOrLookup = async ({
       trx,
       {
         granule_id: granuleRecord.granule_id,
-        collection_cumulus_id: granuleRecord.collection_cumulus_id,
       }
     );
+    if (granule.collection_cumulus_id !== granuleRecord.collection_cumulus_id) {
+      throw new Error(`A granule already exists for granuleId: ${granuleRecord.granule_id} in a different collection ${granuleRecord.collection_cumulus_id}`);
+    }
   }
+
   return granule;
 };
 
@@ -282,17 +289,45 @@ const _removeExcessFiles = async ({
   });
 };
 
+/**
+* add metricsAndCmrProvider and publish granule to sns
+* @param {Object} params
+* @param {string} params.snsEventType
+* @param {PostgresGranuleRecord} params.pgGranule
+* @param {{metricsProvider: string, cmrProvider: string} | null} [params.metricsAndCmrProvider=null]
+* @param {Knex} params.knex - Instance of a Knex client
+*/
 const _publishPostgresGranuleUpdateToSns = async ({
   snsEventType,
   pgGranule,
+  metricsAndCmrProvider = null,
   knex,
 }) => {
-  const granuletoPublish = await translatePostgresGranuleToApiGranule({
+  const translatedGranule = await translatePostgresGranuleToApiGranule({
     granulePgRecord: pgGranule,
     knexOrTransaction: knex,
   });
-  await publishGranuleSnsMessageByEventType(granuletoPublish, snsEventType);
-  log.info('Successfully wrote granule %j to SNS topic', granuletoPublish);
+  let metricsProvider;
+  let cmrProvider;
+  if (metricsAndCmrProvider) {
+    ({ metricsProvider, cmrProvider } = metricsAndCmrProvider);
+  } else {
+    const collectionPgModel = new CollectionPgModel();
+    ({
+      metrics_provider: metricsProvider,
+      cmr_provider: cmrProvider,
+    } = await collectionPgModel.getMetricsAndCmrProvider(
+      knex,
+      pgGranule.collection_cumulus_id
+    ));
+  }
+  const metricsGranule = {
+    metricsProvider,
+    cmrProvider,
+    ...translatedGranule,
+  };
+  await publishGranuleSnsMessageByEventType(metricsGranule, snsEventType);
+  log.info('Successfully wrote granule %j to SNS topic', metricsGranule);
 };
 
 /**
@@ -606,7 +641,12 @@ const _writeGranuleRecords = async (params) => {
  * @param {number}            params.executionCumulusId - Execution ID the granule was written from
  * @param {Date}              params.executionCreatedAt - EExecution record create time
  *                            was written from
+ * @param {{
+ *   metricsProvider: string,
+ *   cmrProvider: string
+ * } | null} [params.metricsAndCmrProvider=null]
  * @param {GranulePgModel}    params.granulePgModel - @cumulus/db compatible granule module instance
+
  * @returns {Promise<void>}
  */
 const _writeGranule = async ({
@@ -617,6 +657,7 @@ const _writeGranule = async ({
   granulePgModel,
   knex,
   snsEventType,
+  metricsAndCmrProvider = null,
   writeConstraints = true,
   writeGranuleFilesMethod = _writeGranuleFiles,
 }) => {
@@ -649,6 +690,7 @@ const _writeGranule = async ({
     await _publishPostgresGranuleUpdateToSns({
       snsEventType,
       pgGranule,
+      metricsAndCmrProvider,
       knex,
     });
   }
@@ -986,9 +1028,10 @@ const writeGranuleExecutionAssociationsFromMessage = async ({
  *
  * @param {Object} params
  * @param {Object} params.cumulusMessage - A workflow message
- * @param {string} params.executionCumulusId
+ * @param {number} params.executionCumulusId
  *   Cumulus ID for execution referenced in workflow message, if any
  * @param {Date}  params.executionCreatedAt - Execution record create time
+ * @param {{ metricsProvider: string, cmrProvider: string }} params.metricsAndCmrProvider
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
  * @param {Object} [params.granulePgModel]
  *   Optional override for the granule model writing to PostgreSQL database
@@ -1002,6 +1045,7 @@ const writeGranulesFromMessage = async ({
   cumulusMessage,
   executionCumulusId,
   executionCreatedAt,
+  metricsAndCmrProvider,
   knex,
   granulePgModel = new GranulePgModel(),
   testOverrides = {}, // Used only for test mocks
@@ -1133,25 +1177,12 @@ const writeGranulesFromMessage = async ({
         knexOrTransaction: knex,
       });
 
-      // TODO: CUMULUS-3017 - Remove this unique collectionId condition
-      // Check if granuleId exists across another collection
-      const granulesByGranuleId = await getGranulesByGranuleId(knex, apiGranuleRecord.granuleId);
-      const granuleExistsAcrossCollection = granulesByGranuleId.some(
-        (g) => g.collection_cumulus_id !== postgresGranuleRecord.collection_cumulus_id
-      );
-      if (granuleExistsAcrossCollection) {
-        log.error('Could not write granule. It already exists across another collection');
-        const conflictError = new Error(
-          `A granule already exists for granuleId: ${apiGranuleRecord.granuleId} with collectionId: ${apiGranuleRecord.collectionId}`
-        );
-        throw conflictError;
-      }
-
       return _writeGranule({
         apiGranuleRecord,
         executionCumulusId,
         executionCreatedAt,
         granulePgModel,
+        metricsAndCmrProvider,
         knex,
         postgresGranuleRecord: omitBy(postgresGranuleRecord, isUndefined),
         snsEventType: 'Update',

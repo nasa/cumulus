@@ -173,6 +173,17 @@ variable "rds_scaling_timeout_action" {
   default     = "ForceApplyCapacityChange"
 }
 
+variable "storage_type" {
+  type        = string
+  description = "The storage type for the Aurora cluster. Options: 'aurora' (Standard) or 'aurora-iopt1' (I/O-Optimized)."
+  default     = "aurora"
+
+  validation {
+    condition     = contains(["aurora", "aurora-iopt1"], var.storage_type)
+    error_message = "The storage_type variable must be either 'aurora' or 'aurora-iopt1'."
+  }
+}
+
 variable "enabled_cloudwatch_logs_exports" {
   description = "Set of log types to export to CloudWatch Logs. For Amazon Aurora PostgreSQL, the only valid value is [\"postgresql\"]."
   type        = list(string)
@@ -248,9 +259,14 @@ variable "db_parameters" {
       apply_method = "pending-reboot"
     },
     {
-      name  = "rds.logical_replication"
-      value = "1"
-      apply_method = "pending-reboot"  # Requires restart
+      name         = "rds.logical_replication"
+      value        = "1"
+      apply_method = "pending-reboot" # Requires restart
+    },
+    {
+      name         = "max_locks_per_transaction"
+      value        = "256"
+      apply_method = "pending-reboot" # Requires restart
     },
   ]
 }

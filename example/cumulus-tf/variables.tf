@@ -211,6 +211,12 @@ variable "tea_distribution_url" {
   default = null
 }
 
+variable "tea_distribution_url_per_cmr_provider" {
+  description = "Map of CMR provider short_name to TEA external endpoint URL. Used in consolidated deployments to route distribution URLs per Collection.cmrProvider. Falls back to tea_distribution_url for any provider not listed."
+  type        = map(string)
+  default     = {}
+}
+
 variable "sync_granule_s3_jitter_max_ms" {
   description = "Maximum random jitter in milliseconds for SyncGranule S3 operations (0-59000). Set to 0 to disable."
   type        = number
@@ -291,6 +297,18 @@ variable "iceberg_api_memory" {
   type        = number
   default     = 1024
   description = "The amount of memory in MB to reserve for the Iceberg API Fargate Task"
+}
+
+variable "duckdb_max_pool_size" {
+  type        = number
+  default     = 3
+  description = "Maximum number of DuckDB connections in the connection pool"
+}
+
+variable "duckdb_pool_rebuild_interval_seconds" {
+  type        = number
+  default     = 18000
+  description = "Seconds between preemptive DuckDB idle-pool rebuilds"
 }
 
 variable "api_service_autoscaling_min_capacity" {
@@ -426,7 +444,7 @@ variable "rds_admin_access_secret_arn" {
 variable "async_operation_image_version" {
   description = "docker image version to use for Cumulus async operations tasks"
   type        = string
-  default     = "56"
+  default     = "58"
 }
 
 variable "cumulus_process_activity_version" {
@@ -622,4 +640,10 @@ variable "cumulus_iceberg_api_image_version" {
   description = "The version of the Cumulus Iceberg API image to use"
   type        = string
   default     = "latest"
+}
+
+variable "cumulus_iceberg_api_image_repository_url" {
+  description = "The repository URL of the Cumulus Iceberg API image to use"
+  type        = string
+  default     = null
 }

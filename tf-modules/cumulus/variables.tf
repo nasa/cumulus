@@ -3,7 +3,7 @@
 variable "async_operation_image" {
   description = "docker image to use for Cumulus async operations tasks"
   type        = string
-  default     = "cumuluss/async-operation:56"
+  default     = "cumuluss/async-operation:58"
 }
 
 variable "cmr_client_id" {
@@ -126,6 +126,12 @@ variable "tea_internal_api_endpoint" {
   description = "Thin Egress App internal endpoint URL"
   type        = string
   default     = null
+}
+
+variable "tea_distribution_url_per_cmr_provider" {
+  description = "Map of CMR provider short_name to TEA external endpoint URL. Used in consolidated deployments to route distribution URLs per Collection.cmrProvider. Falls back to tea_external_api_endpoint for any provider not listed."
+  type        = map(string)
+  default     = {}
 }
 
 variable "token_secret" {
@@ -708,10 +714,28 @@ variable "iceberg_api_memory" {
   default     = 512
 }
 
+variable "duckdb_max_pool_size" {
+  description = "Maximum number of DuckDB connections in the connection pool"
+  type        = number
+  default     = 3
+}
+
+variable "duckdb_pool_rebuild_interval_seconds" {
+  description = "Seconds between preemptive DuckDB idle-pool rebuilds"
+  type        = number
+  default     = 18000
+}
+
 variable "cumulus_iceberg_api_image_version" {
   description = "Version of the Cumulus Iceberg API image"
   type        = string
   default     = "latest"
+}
+
+variable "cumulus_iceberg_api_image_repository_url" {
+  description = "Repository URL of the Cumulus Iceberg API image"
+  type        = string
+  default     = null
 }
 
 variable "api_service_autoscaling_min_capacity" {
@@ -753,6 +777,6 @@ variable "iceberg_namespace" {
   default     = null
   validation {
     condition     = !var.deploy_iceberg_api || (var.iceberg_namespace != null && trimspace(var.iceberg_namespace) != "")
-      error_message = "iceberg_namespace must be set to a non-empty value when deploy_iceberg_api is true."
+    error_message = "iceberg_namespace must be set to a non-empty value when deploy_iceberg_api is true."
   }
 }

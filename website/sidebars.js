@@ -67,6 +67,7 @@ const sidebars = {
           items: [
             'deployment/thin_egress_app',
             'deployment/cumulus_distribution',
+            'deployment/iceberg-api',
           ],
         },
         {
@@ -173,6 +174,7 @@ const sidebars = {
         'features/granule_uniquification',
         'features/change_granule_collection',
         'features/record_archival',
+        'features/iceberg',
       ],
     },
     {
@@ -188,6 +190,7 @@ const sidebars = {
         'troubleshooting/rerunning-workflow-executions',
         'troubleshooting/reindex-elasticsearch',
         'troubleshooting/troubleshooting-database-migrations',
+        'troubleshooting/troubleshooting-iceberg',
       ],
     },
     {
@@ -247,6 +250,7 @@ const sidebars = {
         'upgrade-notes/upgrade-terraform-1.12',
         'upgrade-notes/archived_column_indexing',
         'upgrade-notes/update-granules-to-include-producer_granule_id',
+        'upgrade-notes/data-migration-to-partitioned-global-unique-tables',
       ],
     },
     {

@@ -6,6 +6,7 @@ const omitBy = require('lodash/omitBy');
 
 const {
   ExecutionPgModel,
+  CollectionPgModel,
   translateApiExecutionToPostgresExecutionWithoutNilsRemoved,
   translatePostgresExecutionToApiExecution,
 } = require('@cumulus/db');
@@ -34,6 +35,7 @@ const { publishExecutionSnsMessage } = require('../publishSnsMessageUtils');
  * @typedef { import('knex').Knex } Knex
  * @typedef { import('knex').Knex.Transaction } KnexTransaction
  * @typedef { import('@cumulus/types').ApiExecution } ApiExecution
+ * @typedef { import('@cumulus/types').MetricsExecution } MetricsExecution
  * @typedef { import('@cumulus/types/message').CumulusMessage} CumulusMessage
  * @typedef { import('@cumulus/db').PostgresExecution } PostgresExecution
  * @typedef { import('@cumulus/db').PostgresExecutionRecord } PostgresExecutionRecord
@@ -163,6 +165,8 @@ const _writeExecutionRecord = async ({
  * @param {PostgresExecution} params.postgresRecord - Execution PostgreSQL record to be written
  * @param {Knex} params.knex - Knex client
  * @param {ExecutionPgModelType} [params.executionPgModel] - PostgreSQL execution model
+ * @param {{metricsProvider: string, cmrProvider: string} | null} params.metricsAndCmrProvider
+ * metricsProvider and cmrProvider inherited from calling function. will be determined if left null
  * @param {boolean} [params.writeConstraints] - Boolean flag to set if record write constraints
  *   apply
  * @returns {Promise<PostgresExecutionRecord>} - PostgreSQL execution record that was written
@@ -172,6 +176,7 @@ const _writeExecutionAndPublishSnsMessage = async ({
   postgresRecord,
   knex,
   executionPgModel,
+  metricsAndCmrProvider = null,
   writeConstraints = true,
 }) => {
   const writeExecutionResponse = await _writeExecutionRecord(
@@ -182,11 +187,33 @@ const _writeExecutionAndPublishSnsMessage = async ({
       writeConstraints,
     }
   );
+
   const translatedExecution = await translatePostgresExecutionToApiExecution(
     writeExecutionResponse,
     knex
   );
-  await publishExecutionSnsMessage(translatedExecution);
+  const collectionCumulusId = postgresRecord.collection_cumulus_id;
+  let metricsProvider = '';
+  let cmrProvider = '';
+  if (metricsAndCmrProvider) {
+    ({ metricsProvider, cmrProvider } = metricsAndCmrProvider);
+  } else if (collectionCumulusId) {
+    const collectionPgModel = new CollectionPgModel();
+    ({
+      metrics_provider: metricsProvider,
+      cmr_provider: cmrProvider,
+    } = await collectionPgModel.getMetricsAndCmrProvider(
+      knex,
+      collectionCumulusId
+    ));
+  }
+  const metricsExecution = {
+    metricsProvider,
+    cmrProvider,
+    ...translatedExecution,
+  };
+
+  await publishExecutionSnsMessage(metricsExecution);
   return writeExecutionResponse;
 };
 
@@ -201,6 +228,7 @@ const _writeExecutionAndPublishSnsMessage = async ({
  * @param {number} [params.asyncOperationCumulusId] - Identifier for the associated async operation
  * @param {number} [params.parentExecutionCumulusId] - Identifier for the parent execution
  * @param {Date} [params.parentExecutionCreatedAt] - Creation timestamp of the parent execution
+ * @param {{metricsProvider: string, cmrProvider: string} | null} params.metricsAndCmrProvider
  * @param {number} [params.updatedAt=Date.now()] - Timestamp (in ms) used for record updateAt field
  * @returns {Promise<PostgresExecutionRecord>} - write message response
  */
@@ -211,6 +239,7 @@ const writeExecutionRecordFromMessage = async ({
   asyncOperationCumulusId,
   parentExecutionCumulusId,
   parentExecutionCreatedAt,
+  metricsAndCmrProvider = null,
   updatedAt = Date.now(),
 }) => {
   const postgresRecord = buildExecutionRecord({
@@ -224,6 +253,7 @@ const writeExecutionRecordFromMessage = async ({
   const writeExecutionResponse = await _writeExecutionAndPublishSnsMessage({
     // Re-add arn to satisfy TS type checking
     postgresRecord: { ...omitBy(postgresRecord, isUndefined), arn: postgresRecord.arn },
+    metricsAndCmrProvider,
     knex,
   });
   return writeExecutionResponse;

@@ -2,19 +2,23 @@ const { CMR } = require('@cumulus/cmr-client');
 const log = require('@cumulus/common/log');
 const {
   createRejectableTransaction,
-  getGranuleCollectionId,
   GranulePgModel,
+  CollectionPgModel,
 } = require('@cumulus/db');
 const cmrjsCmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { GranuleNotPublished } = require('@cumulus/errors');
 
 /**
- * @typedef {import('@cumulus/db').PostgresCollectionRecord} PostgresCollectionRecord
+ * @typedef {import('@cumulus/db').PostgresCollection} PostgresCollection
  * @typedef {import('@cumulus/db').PostgresGranuleRecord} PostgresGranuleRecord
  * @typedef {import('knex').Knex} Knex
  *
- * @typedef {(granule: unknown, collectionId: string) => Promise<void>} RemoveGranuleFromCmrFn
+ * @typedef {(
+ *   granule: unknown,
+ *   collectionId: string,
+ *   collectionCmrProvider: string
+ * ) => Promise<void>} RemoveGranuleFromCmrFn
  */
 
 /**
@@ -22,19 +26,20 @@ const { GranuleNotPublished } = require('@cumulus/errors');
  *
  * @param {Object} granule - A postgres granule record
  * @param {string} collectionId - The CMR collection 'id' for the granule to be removed
+ * @param {string} collectionCmrProvider - The CMR provider to be used in delete operation
  * @throws {GranuleNotPublished|Error}
  * @private
  */
-const _removeGranuleFromCmr = async (granule, collectionId) => {
+const _removeGranuleFromCmr = async (granule, collectionId, collectionCmrProvider) => {
   let metadata;
-  log.info(`granules.removeGranuleFromCmrByGranule granule_id: ${granule.granule_id}, colletion_id: ${collectionId}`);
+  log.info(`granules.removeGranuleFromCmrByGranule granule_id: ${granule.granule_id}, collection_id: ${collectionId}`);
   if (!granule.published || !granule.cmr_link) {
     log.warn(`Granule ${granule.granule_id} in Collection ${collectionId} is not published to CMR, so cannot be removed from CMR`);
     return;
   }
 
-  const cmrSettings = await cmrjsCmrUtils.getCmrSettings();
-  const cmr = new CMR(cmrSettings);
+  const cmrSettings = await cmrjsCmrUtils.getCmrSettings({ provider: collectionCmrProvider });
+  const cmr = CMR.getInstance(cmrSettings);
   try {
     metadata = await cmr.getGranuleMetadata(granule.cmr_link);
   } catch (error) {
@@ -47,7 +52,7 @@ const _removeGranuleFromCmr = async (granule, collectionId) => {
 
   // Use granule UR to delete from CMR
   if (metadata) {
-    await cmr.deleteGranule(metadata.title, collectionId);
+    await cmr.deleteGranule(metadata.title);
   }
 };
 
@@ -57,7 +62,7 @@ const _removeGranuleFromCmr = async (granule, collectionId) => {
  * @param {Object} params
  * @param {Knex} params.knex - DB client
  * @param {PostgresGranuleRecord} params.pgGranuleRecord - A Postgres granule record
- * @param {PostgresCollectionRecord} [params.pgCollection] - A Postgres Collection record
+ * @param {PostgresCollection} [params.pgCollection] - A Postgres Collection record
  * @param {GranulePgModel} [params.granulePgModel=new GranulePgModel()]
  *  - Instance of granules model for PostgreSQL
  * @param {RemoveGranuleFromCmrFn} [params.removeGranuleFromCmrFunction]
@@ -73,12 +78,20 @@ const unpublishGranule = async ({
   removeGranuleFromCmrFunction = _removeGranuleFromCmr,
 }) => {
   /** @type {string} */
-  let collectionId;
+  let resolvedPgCollection = pgCollection;
+  let collectionCmrProvider;
   if (pgCollection) {
-    collectionId = constructCollectionId(pgCollection.name, pgCollection.version);
+    collectionCmrProvider = pgCollection.cmr_provider;
   } else {
-    collectionId = await getGranuleCollectionId(knex, pgGranuleRecord);
+    resolvedPgCollection = await new CollectionPgModel().get(
+      knex, { cumulus_id: pgGranuleRecord.collection_cumulus_id }
+    );
+    collectionCmrProvider = resolvedPgCollection.cmr_provider;
   }
+  const collectionId = constructCollectionId(
+    resolvedPgCollection.name,
+    resolvedPgCollection.version
+  );
 
   // If we cannot find a Postgres Collection or Postgres Granule,
   // don't update the Postgres Granule, continue to update the Dynamo granule
@@ -99,7 +112,11 @@ const unpublishGranule = async ({
       ['*']
     );
 
-    await removeGranuleFromCmrFunction(pgGranuleRecord, collectionId);
+    await removeGranuleFromCmrFunction(
+      pgGranuleRecord,
+      collectionId,
+      collectionCmrProvider
+    );
     return { pgGranule };
   });
 };
