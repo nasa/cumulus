@@ -1270,7 +1270,7 @@ test.serial('When a move granule request fails to move a file correctly, it reco
   });
 });
 
-test.only('move a file and update ECHO10 xml metadata', async (t) => {
+test.serial('move a file and update ECHO10 xml metadata', async (t) => {
   const { internalBucket, publicBucket } = await setupBucketsConfig();
   const newGranule = fakeGranuleFactoryV2({ collectionId: t.context.collectionId });
 
@@ -1367,7 +1367,7 @@ test.only('move a file and update ECHO10 xml metadata', async (t) => {
 
   const newUrls = xmlObject.Granule.OnlineAccessURLs.OnlineAccessURL.map((obj) => obj.URL);
   const newDestination = `${process.env.DISTRIBUTION_ENDPOINT}${destinations[0].bucket}/${destinations[0].filepath}/${newGranule.files[0].fileName}`;
-  console.log(newUrls, newDestination);
+
   t.true(newUrls.includes(newDestination));
 
   // All original URLs are unchanged (because they weren't involved in the granule move)

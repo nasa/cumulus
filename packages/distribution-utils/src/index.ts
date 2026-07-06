@@ -52,7 +52,6 @@ export function constructDistributionUrl(
   distributionBucketMap: DistributionBucketMap,
   distributionEndpoint?: string
 ): string {
-  console.log(distributionBucketMap, fileBucket);
   if (!distributionEndpoint) {
     throw new InvalidArgument(`Cannot construct distribution url with host ${distributionEndpoint}`);
   }
