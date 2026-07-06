@@ -6,9 +6,9 @@
  * files with different timestamps will result in an identical Lambda.
  */
 
-
 const fs = require('fs');
 // Importing archiver dynamically to avoid issues with ESM-only modules in CommonJS contexts.
+// eslint-disable-next-line node/no-extraneous-require
 const { importArchiver } = require('@cumulus/common/importEsm');
 
 const isDirectory = (x) => fs.statSync(x).isDirectory();
@@ -21,9 +21,10 @@ const [zipPath, ...files] = process.argv.slice(2);
 // https://en.wikipedia.org/wiki/2009_Stanley_Cup_Finals#Game_seven
 const date = new Date('2009-06-12');
 
-// Need this to wrap the await in an async function because top-level await is not supported in CommonJS modules.
-;(async () => {
-  const ZipArchive = await importArchiver()
+// Need this to wrap the await in an async function because
+// top-level await is not supported in CommonJS modules.
+(async () => {
+  const ZipArchive = await importArchiver();
   const archive = new ZipArchive();
 
   archive.pipe(fs.createWriteStream(zipPath));
