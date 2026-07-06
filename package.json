@@ -95,7 +95,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "archiver": "^8.0.0",
+    "archiver": "^7.0.1",
     "crypto-js": "^4.2.0",
     "fs-extra": "^9.0.0"
   },
