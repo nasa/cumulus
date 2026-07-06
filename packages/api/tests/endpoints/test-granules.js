@@ -124,7 +124,7 @@ async function runTestUsingBuckets(buckets, testFunction) {
 async function setupBucketsConfig() {
   const systemBucket = {
     name: process.env.system_bucket,
-  }
+  };
   const buckets = {
     protected: {
       name: systemBucket,
@@ -133,7 +133,7 @@ async function setupBucketsConfig() {
     public: {
       name: randomId('public'),
       type: 'public',
-      legacy_name: 'public'
+      legacy_name: 'public',
     },
   };
 
