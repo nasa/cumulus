@@ -6,8 +6,8 @@
  * files with different timestamps will result in an identical Lambda.
  */
 
-const fs = require('fs');
-const archiver = require('archiver');
+import fs from 'fs';
+import { ZipArchive } from 'archiver';
 
 const isDirectory = (x) => fs.statSync(x).isDirectory();
 
@@ -19,7 +19,7 @@ const [zipPath, ...files] = process.argv.slice(2);
 // https://en.wikipedia.org/wiki/2009_Stanley_Cup_Finals#Game_seven
 const date = new Date('2009-06-12');
 
-const archive = archiver('zip');
+const archive = new ZipArchive('zip', { zlib: { level: 9 } });
 
 archive.pipe(fs.createWriteStream(zipPath));
 
