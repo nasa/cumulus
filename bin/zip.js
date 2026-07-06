@@ -6,8 +6,10 @@
  * files with different timestamps will result in an identical Lambda.
  */
 
-import fs from 'fs';
-import { ZipArchive } from 'archiver';
+
+const fs = require('fs');
+// Importing archiver dynamically to avoid issues with ESM-only modules in CommonJS contexts.
+const { importArchiver } = require('@cumulus/common/importEsm');
 
 const isDirectory = (x) => fs.statSync(x).isDirectory();
 
@@ -19,20 +21,24 @@ const [zipPath, ...files] = process.argv.slice(2);
 // https://en.wikipedia.org/wiki/2009_Stanley_Cup_Finals#Game_seven
 const date = new Date('2009-06-12');
 
-const archive = new ZipArchive('zip', { zlib: { level: 9 } });
+// Need this to wrap the await in an async function because top-level await is not supported in CommonJS modules.
+;(async () => {
+  const ZipArchive = await importArchiver()
+  const archive = new ZipArchive();
 
-archive.pipe(fs.createWriteStream(zipPath));
+  archive.pipe(fs.createWriteStream(zipPath));
 
-files
-  .filter((x) => x !== '.')
-  .forEach(
-    (name) => {
-      if (isDirectory(name)) {
-        archive.directory(name, undefined, { date });
-      } else {
-        archive.append(fs.createReadStream(name), { date, name });
+  files
+    .filter((x) => x !== '.')
+    .forEach(
+      (name) => {
+        if (isDirectory(name)) {
+          archive.directory(name, undefined, { date });
+        } else {
+          archive.append(fs.createReadStream(name), { date, name });
+        }
       }
-    }
-  );
+    );
 
-archive.finalize();
+  archive.finalize();
+})();
