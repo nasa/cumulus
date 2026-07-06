@@ -127,7 +127,7 @@ async function setupBucketsConfig() {
   };
   const buckets = {
     protected: {
-      name: systemBucket,
+      name: systemBucket.name,
       type: 'protected',
     },
     public: {
