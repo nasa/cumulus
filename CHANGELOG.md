@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v22.3.0] 2026-06-29
+
+#### Migration Notes
+
+- **CUMULUS-4982**
+  - You **must** completely stop all data ingestion workloads before initiating this deployment.
+  - If your database contains an estimated **1 million or more rows** in either the
+    `granules_global_unique` or `files_global_unique` tables, you must manually execute the data
+    migration script immediately following the stack deployment. Please follow the instructions found in the
+    [Data migration to partitioned global unique tables documentation](https://nasa.github.io/cumulus/docs/next/upgrade-notes/data-migration-to-partitioned-global-unique-tables).
+
 ### Added
 
 - **CUMULUS-4842**
@@ -15,12 +26,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4986**
   - Added `storage_type` variable to `tf-modules/cumulus-rds-tf` module with default value `aurora`.
 
+### Changed
+
+- **CUMULUS-4982**
+  - Converted granules_global_unique and files_global_unique tables to HASH partitioned tables
+
 ### Fixed
 
 - **CUMULUS-5005**
   - Remove unused /dashboard API endpoint
 - **CUMULUS-4952**
   - Fixed the SchemaSpy command to generate database schemas correctly.
+
+## [v22.2.5] 2026-06-19
+
+### Fixed
+
+- **CUMULUS-4694**
+  - Fixed iceberg terraform output value
+
+## [v22.2.4] 2026-06-18
 
 ### Added
 
@@ -34,14 +59,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Changed `cmr-utils` functions that call the `CMR` class functions to retry upon 401 authentication failures
   - Added functions `checkRefreshLaunchpadToken` and `refreshLaunchpadToken` to the `CMR` class to be invoked upon a 401 authentication failure which removes and/or retrieves a valid launchpad token
   - Added functions to the `launchpad-auth` package which adds a lock file for token creation, removes an invalid token, and checks s3 for the token and lock file
-- **CUMULUS-4694**
-  - Add flag to enable/disable iceberg replication
 
 ### Fixed
 
 - **CUMULUS-4694**
   - Fixed issue with references to `module.cluster` in the Iceberg replication terraform code
-  - Fixed iceberg terraform output value
 
 ## [v22.2.3] 2026-06-15
 
@@ -9959,7 +9981,10 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v22.2.3...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v22.3.0...HEAD
+[v22.3.0]: https://github.com/nasa/cumulus/compare/v22.2.5...v22.3.0
+[v22.2.5]: https://github.com/nasa/cumulus/compare/v22.2.4...v22.2.5
+[v22.2.4]: https://github.com/nasa/cumulus/compare/v22.2.3...v22.2.4
 [v22.2.3]: https://github.com/nasa/cumulus/compare/v22.2.2...v22.2.3
 [v22.2.2]: https://github.com/nasa/cumulus/compare/v22.2.1...v22.2.2
 [v22.2.1]: https://github.com/nasa/cumulus/compare/v22.2.0...v22.2.1
