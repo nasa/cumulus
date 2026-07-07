@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Bumped `archiver` version and corresponding updates to `bin/zip.js` to address CVE-2026-13149.
 - **CUMULUS-5660**
   - Mitigated vulnerabilties discovered in bamboo-CI build
 - **CUMULUS-5677**
