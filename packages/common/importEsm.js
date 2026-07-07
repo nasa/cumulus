@@ -13,4 +13,9 @@ const importGot = async () => {
   return got;
 };
 
-module.exports = { importGot };
+const importArchiver = async () => {
+  const { ZipArchive } = await import('archiver');
+  return ZipArchive;
+};
+
+module.exports = { importGot, importArchiver };
