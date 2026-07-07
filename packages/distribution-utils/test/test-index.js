@@ -128,6 +128,10 @@ test('fetchDistributionBucketNameMap fetches bucket map with passed vars', async
   );
   t.deepEqual(bucketMap, t.context.bucketNameMap);
 });
+test('fetchDistributionBucketNameMap fetches bucket map with env vars', async (t) => {
+  const bucketMap = await fetchDistributionBucketNameMap();
+  t.deepEqual(bucketMap, t.context.bucketNameMap);
+});
 test('fetchLegacyDistributionBucketNameMap fetches bucket map with passed vars', async (t) => {
   const bucketMap = await fetchLegacyDistributionBucketNameMap(
     t.context.system_bucket,
