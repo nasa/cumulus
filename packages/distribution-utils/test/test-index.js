@@ -129,6 +129,8 @@ test('fetchDistributionBucketNameMap fetches bucket map with passed vars', async
   t.deepEqual(bucketMap, t.context.bucketNameMap);
 });
 test('fetchDistributionBucketNameMap fetches bucket map with env vars', async (t) => {
+  process.env.stackName = t.context.stackName;
+  process.env.system_bucket = t.context.system_bucket;
   const bucketMap = await fetchDistributionBucketNameMap();
   t.deepEqual(bucketMap, t.context.bucketNameMap);
 });
