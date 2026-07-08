@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+- Bumped `archiver` version and corresponding updates to `bin/zip.js` to address CVE-2026-13149.
+
 ## [v22.3.0] 2026-06-29
 
 #### Migration Notes
