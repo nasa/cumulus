@@ -22,7 +22,7 @@ wheels = [
 
 [[package]]
 name = "aws-api-proxy"
-version = "22.3.1"
+version = "22.3.2"
 source = { virtual = "." }
 dependencies = [
     { name = "cumulus-message-adapter" },
