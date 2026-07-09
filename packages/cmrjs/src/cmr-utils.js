@@ -235,13 +235,10 @@ function granulesToCmrFileObjects(granules, filterFunc = isCMRFile) {
 /**
  * Posts CMR XML files from S3 to CMR.
  *
- * @param {Object} cmrFile - an object representing the cmr file
- * @param {string} cmrFile.granuleId - the granuleId of the cmr xml File
- * @param {string} cmrFile.filename - the s3 uri to the cmr xml file
- * @param {string} cmrFile.metadata - granule xml document
- * @param {Object} cmrClient - a CMR instance
+ * @param {CmrPublishObject} cmrFile - the enriched CMR file, with parsed metadata
+ * @param {import('@cumulus/cmr-client').CMR} cmrClient - a CMR instance
  * @param {string} provider - the CMR provider to target
- * @param {string} revisionId - Optional CMR Revision ID
+ * @param {string} [revisionId] - Optional CMR Revision ID
  * @returns {Promise<Object>} CMR's success response which includes the concept-id
  */
 async function publishECHO10XML2CMR(cmrFile, cmrClient, provider, revisionId) {
@@ -266,13 +263,10 @@ async function publishECHO10XML2CMR(cmrFile, cmrClient, provider, revisionId) {
 /**
  * Posts CMR JSON files from S3 to CMR.
  *
- * @param {Object} cmrFile - an object representing the CMR file
- * @param {string} cmrFile.filename - the cmr filename
- * @param {Object} cmrFile.metadataObject - the UMMG JSON cmr metadata
- * @param {Object} cmrFile.granuleId - the metadata's granuleId
- * @param {Object} cmrClient - a CMR instance
+ * @param {CmrPublishObject} cmrFile - the enriched CMR file, with parsed UMMG metadata
+ * @param {import('@cumulus/cmr-client').CMR} cmrClient - a CMR instance
  * @param {string} provider - the CMR provider to target
- * @param {string} revisionId - Optional CMR Revision ID
+ * @param {string} [revisionId] - Optional CMR Revision ID
  * @returns {Promise<Object>} CMR's success response which includes the concept-id
  */
 async function publishUMMGJSON2CMR(cmrFile, cmrClient, provider, revisionId) {
