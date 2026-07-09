@@ -41,7 +41,6 @@ export interface CMRConstructorParams {
   clientId: string,
   password?: string,
   passwordSecretName?: string,
-  provider: string,
   token?: string,
   username?: string,
   oauthProvider: string,
@@ -82,7 +81,6 @@ export class CMR {
   private refreshPromise?: Promise<void>;
 
   clientId: string;
-  provider: string;
   username?: string;
   oauthProvider: string;
   password?: string;
@@ -97,7 +95,6 @@ export class CMR {
    */
   private constructor(params: CMRConstructorParams) {
     this.clientId = params.clientId;
-    this.provider = params.provider;
     this.username = params.username;
     this.password = params.password;
     this.passwordSecretName = params.passwordSecretName;
@@ -117,10 +114,9 @@ export class CMR {
     if (!CMR.instance) {
       CMR.instance = new CMR(params);
     } else {
-      const { clientId, provider, username, oauthProvider, api } = CMR.instance;
+      const { clientId, username, oauthProvider, api } = CMR.instance;
       log.info(`Returning existing CMR configuration: {
         clientId: ${clientId},
-        provider: ${provider},
         username: ${username},
         oauthProvider: ${oauthProvider},
         api: ${api}}`);
@@ -324,12 +320,13 @@ export class CMR {
    * Adds a collection record to the CMR
    *
    * @param {string} xml - the collection XML document
+   * @param {string} provider - the CMR provider to target
    * @returns {Promise.<Object>} the CMR response
    */
-  async ingestCollection(xml: string): Promise<unknown> {
+  async ingestCollection(xml: string, provider: string): Promise<unknown> {
     return await this.withCmrLaunchpadTokenRefreshRetry(async () => {
       const headers = this.getWriteHeaders({ token: await this.getToken() });
-      return await ingestConcept('collection', xml, 'Collection.DataSetId', this.provider, headers);
+      return await ingestConcept('collection', xml, 'Collection.DataSetId', provider, headers);
     });
   }
 
@@ -337,13 +334,18 @@ export class CMR {
    * Adds a granule record to the CMR
    *
    * @param {string} xml - the granule XML document
+   * @param {string} provider - the CMR provider to target
    * @param {string} cmrRevisionId - Optional CMR Revision ID
    * @returns {Promise.<Object>} the CMR response
    */
-  async ingestGranule(xml: string, cmrRevisionId?: string): Promise<unknown> {
+  async ingestGranule(
+    xml: string,
+    provider: string,
+    cmrRevisionId?: string
+  ): Promise<unknown> {
     return await this.withCmrLaunchpadTokenRefreshRetry(async () => {
       const headers = this.getWriteHeaders({ token: await this.getToken(), cmrRevisionId });
-      return await ingestConcept('granule', xml, 'Granule.GranuleUR', this.provider, headers);
+      return await ingestConcept('granule', xml, 'Granule.GranuleUR', provider, headers);
     });
   }
 
@@ -351,11 +353,15 @@ export class CMR {
    * Adds/Updates UMMG json metadata in the CMR
    *
    * @param {Object} ummgMetadata - UMMG metadata object
+   * @param {string} provider - the CMR provider to target
    * @param {string} cmrRevisionId - Optional CMR Revision ID
    * @returns {Promise<Object>} to the CMR response object.
    */
-  async ingestUMMGranule(ummgMetadata: UmmMetadata, cmrRevisionId?: string)
-    : Promise<CMRResponseBody | CMRErrorResponseBody> {
+  async ingestUMMGranule(
+    ummgMetadata: UmmMetadata,
+    provider: string,
+    cmrRevisionId?: string
+  ): Promise<CMRResponseBody | CMRErrorResponseBody> {
     return await this.withCmrLaunchpadTokenRefreshRetry(async () => {
       const headers = this.getWriteHeaders({
         token: await this.getToken(),
@@ -368,7 +374,7 @@ export class CMR {
 
       try {
         const response = await got.put(
-          `${getIngestUrl({ provider: this.provider })}granules/${granuleId}`,
+          `${getIngestUrl({ provider })}granules/${granuleId}`,
           {
             json: ummgMetadata,
             responseType: 'json',
@@ -402,12 +408,13 @@ export class CMR {
    * Deletes a collection record from the CMR
    *
    * @param {string} datasetID - the collection unique id
+   * @param {string} provider - the CMR provider to target
    * @returns {Promise.<Object>} the CMR response
    */
-  async deleteCollection(datasetID: string): Promise<unknown> {
+  async deleteCollection(datasetID: string, provider: string): Promise<unknown> {
     return await this.withCmrLaunchpadTokenRefreshRetry(async () => {
       const headers = this.getWriteHeaders({ token: await this.getToken() });
-      return await deleteConcept('collections', datasetID, this.provider, headers);
+      return await deleteConcept('collections', datasetID, provider, headers);
     });
   }
 
@@ -415,12 +422,13 @@ export class CMR {
    * Deletes a granule record from the CMR
    *
    * @param {string} granuleUR - the granule unique id
+   * @param {string} provider - the CMR provider to target
    * @returns {Promise.<Object>} the CMR response
    */
-  async deleteGranule(granuleUR: string): Promise<unknown> {
+  async deleteGranule(granuleUR: string, provider: string): Promise<unknown> {
     return await this.withCmrLaunchpadTokenRefreshRetry(async () => {
       const headers = this.getWriteHeaders({ token: await this.getToken() });
-      return await deleteConcept('granules', granuleUR, this.provider, headers);
+      return await deleteConcept('granules', granuleUR, provider, headers);
     });
   }
 
@@ -445,15 +453,17 @@ export class CMR {
    * Search in collections
    *
    * @param {string} params - the search parameters
+   * @param {string} provider - the CMR provider to target
    * @param {string} [format=json] - format of the response
    * @returns {Promise.<Object>} the CMR response
    */
   async searchCollections(
     params: { [key: string]: string },
+    provider: string,
     format = 'json'
   ): Promise<unknown[]> {
     const searchParams = new URLSearchParams({
-      provider_short_name: this.provider,
+      provider_short_name: provider,
       ...params,
     });
 
@@ -468,15 +478,17 @@ export class CMR {
    * Search in granules
    *
    * @param {string} params - the search parameters
+   * @param {string} provider - the CMR provider to target
    * @param {string} [format='json'] - format of the response
    * @returns {Promise.<Object>} the CMR response
    */
   async searchGranules(
     params: { [key: string]: string },
+    provider: string,
     format = 'json'
   ): Promise<unknown[]> {
     const searchParams = new URLSearchParams({
-      provider_short_name: this.provider,
+      provider_short_name: provider,
       ...params,
     });
 
