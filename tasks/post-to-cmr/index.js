@@ -162,7 +162,7 @@ async function postToCMR(event) {
   // post all meta files to CMR
   const results = await pMap(
     updatedCMRFiles,
-    (cmrFile) => publish2CMR(cmrFile, cmrSettings, cmrSettings.provider, cmrRevisionId),
+    (cmrFile) => publish2CMR(cmrFile, cmrSettings, cmrRevisionId),
     { concurrency }
   );
   const endTime = Date.now();
