@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+- **CSD-121**
+  - Updates the CMR.js CMR client object to *not* store the CMR provider and update all class methods to require
+    a provider method parameter.    Update all tasks/related callers to provide expected input
+
 ## [v22.3.1] 2026-07-07
 
 - Bumped `archiver` version and corresponding updates to `bin/zip.js` to address CVE-2026-13149.
