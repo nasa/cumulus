@@ -11,10 +11,6 @@ locals {
   }
 }
 
-data "aws_ecr_repository" "cumulus_iceberg_api" {
-  name = "cumulus-iceberg-api"
-}
-
 data "aws_ssm_parameter" "private_ca" {
   name = "ngap_private_ca_arn"
 }
