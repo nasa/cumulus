@@ -57,13 +57,7 @@ const { updateUMMGGranuleURAndGranuleIdentifier } = require('./ummgModifiers');
 /**
 
 /**
- * @typedef {{
- *   provider: string,
- *   clientId: string,
- *   username?: string,
- *   password?: string,
- *   token?: string
- * }} CmrCredentials
+ * @typedef {CMRConstructorParams & { provider: string }} CmrCredentials
  */
 
 /**
