@@ -37,7 +37,7 @@ resource "aws_ecs_task_definition" "iceberg_api" {
   container_definitions = jsonencode([
     {
       name      = "iceberg-api-container"
-      image     = "${coalesce(var.cumulus_iceberg_api_image_repository_url, data.aws_ecr_repository.cumulus_iceberg_api.repository_url)}:${var.cumulus_iceberg_api_image_version}"
+      image     = "${var.cumulus_iceberg_api_image_repository_url}:${var.cumulus_iceberg_api_image_version}"
       essential = true
       portMappings = [
         {
