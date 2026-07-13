@@ -18,6 +18,7 @@ import psycopg2
 import pyarrow as pa
 import pyarrow.compute as pc
 import pyarrow.csv as pv
+import requests
 from botocore.exceptions import ClientError
 from create_staging_branch import create_staging_branches
 from pyiceberg.catalog import load_catalog
@@ -78,6 +79,28 @@ ICEBERG_RESERVED_TABLE_NAMES = {
 }
 
 
+def _get_container_cpu_limit():
+    metadata_url = os.getenv("ECS_CONTAINER_METADATA_URI_V4")
+    if not metadata_url:
+        return None
+    resp = requests.get(f"{metadata_url}/task", timeout=2)
+    resp.raise_for_status()
+    data = resp.json()
+    # CPU is in vCPU units (1024 = 1 vCPU)
+    cpu_units = data.get("Limits", {}).get("CPU")
+    if cpu_units is None:
+        return None
+    return cpu_units  # already in vCPUs for task-level limits
+
+
+def _get_n_workers(default=4):
+    cpu = _get_container_cpu_limit()
+    if cpu is None:
+        return default
+    # never use more than 4 workers
+    return min(4, max(1, int(cpu)))
+
+
 @dataclass
 class Config:
     """Runtime configuration loaded from environment variables."""
@@ -129,7 +152,7 @@ def init_config() -> Config:
         warehouse=f"s3://{os.environ['ICEBERG_S3_BUCKET']}/{os.getenv('ICEBERG_S3_PREFIX', 'warehouse')}",  # noqa: E501
         target_buffer_size=768 * 1024 * 1024,
         block_size=16 * 1024 * 1024,
-        n_workers=int(os.getenv("N_WORKERS", "4")),
+        n_workers=_get_n_workers(),
     )
 
 

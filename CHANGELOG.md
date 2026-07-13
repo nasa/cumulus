@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+- **CUMULUS-5033**
+  - Fix bootstrap service to handle empty RDS tables
+  - Add SQL to grant privileges to allow disabling replication
+  - Change Iceberg setup code to correctly compute the number of workers based on CPU
+  - Remove unused terraform resource for Iceberg API
+
 - **CSD-121**
   - Updates the CMR.js CMR client object to *not* store the CMR provider and update all class methods to require
     a provider method parameter.    Update all tasks/related callers to provide expected input
