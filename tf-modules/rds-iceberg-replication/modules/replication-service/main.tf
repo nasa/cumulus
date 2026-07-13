@@ -39,10 +39,6 @@ resource "aws_efs_access_point" "kafka_data" {
 resource "aws_efs_file_system" "kafka_data" {
   encrypted = true
   tags      = merge(var.tags, { Name = "${local.full_name}-kafka-data" })
-
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "aws_efs_mount_target" "kafka_data" {
