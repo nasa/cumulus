@@ -95,7 +95,7 @@ You can even join and query data from both Iceberg and Postgres in the same quer
 ## Removing Iceberg Tables
 
 If one or more tables need(s) to be removed there is a script available in the shared scripts
-repository, `remove_iceberg_tables.py` that will delete the Glue tables and the associated S3
+repository, `remove_iceberg_tables.py`, that will delete the Glue tables and the associated S3
 files. This can be used to recover when the Iceberg tables are hopelessly out of sync with
 RDS, or if the replication needs to be disabled for some other reason.
 
@@ -103,4 +103,4 @@ If the tables are out of sync, run the script to delete the tables, then restart
 for the replication. Alternatively, set `enable_iceberg_replication` to `false` in your `.tfvars`
 file and run `terraform apply`, then run `remove_iceberg_tables.py` to delete the tables.
 
-If the tables are deleted they will be recreated when the ECS task restarts.
+If the tables are deleted they will be recreated when the ECS tasks restart.
