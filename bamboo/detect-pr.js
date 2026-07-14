@@ -6,24 +6,24 @@ const graphql = require('@octokit/graphql');
 // Query Github API for first commit on target ref and see if it has an associated pull request
 
 async function getPrsForRef(headRefName, baseRefName) {
-  const queryResponse = await graphql(`{
-    repository(owner:"nasa", name:"cumulus") {
+  const queryResponse = await graphql(`
+    query($headRefName: String!) {
+      repository(owner:"nasa", name:"cumulus") {
         name
-        ref(qualifiedName: "${headRefName}") {
+        ref(qualifiedName: $headRefName) {
           name
           target {
-            ... on Commit{
+            ... on Commit {
               history(first: 1) {
-                nodes{
+                nodes {
                   id
                   associatedPullRequests(last: 100) {
-                    edges{
-                      node{
+                    edges {
+                      node {
                         title
                         state
                         headRefName
                         baseRefName
-                        }
                       }
                     }
                   }
@@ -32,7 +32,10 @@ async function getPrsForRef(headRefName, baseRefName) {
             }
           }
         }
-  }`, {
+      }
+    }
+  `, {
+    headRefName: `refs/heads/${headRefName}`,
     headers: {
       authorization: `token ${process.env.GITHUB_TOKEN}`,
     },
