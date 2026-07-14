@@ -25,7 +25,7 @@ locals {
 module "rds_iceberg_replication" {
   source                            = "../../tf-modules/rds-iceberg-replication"
   prefix                            = var.prefix
-  enable_iceberg_replication        = true
+  enable_iceberg_replication        = var.enable_iceberg_replication
   admin_db_login_secret_arn         = var.admin_db_login_secret_arn
   region                            = var.region
   vpc_id                            = var.vpc_id
