@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+- **CUMULUS-5112**
+  - Change Iceberg API image release tagging to be based on lerna.json update
+
 - **CUMULUS-5033**
   - Fix bootstrap service to handle empty RDS tables
   - Add SQL to grant privileges to allow disabling replication
