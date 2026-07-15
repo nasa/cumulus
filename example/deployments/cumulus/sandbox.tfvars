@@ -59,3 +59,6 @@ orca_default_bucket = "cumulus-test-sandbox-orca-glacier"
 
 iceberg_s3_bucket = "sandbox-ci-iceberg"
 iceberg_namespace = "sandbox_ci"
+
+cumulus_iceberg_api_image_version        = "22.2.5"
+cumulus_iceberg_api_image_repository_url = "ghcr.io/nasa/cumulus-iceberg-api"

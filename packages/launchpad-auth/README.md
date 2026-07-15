@@ -61,7 +61,7 @@ newly made valid token.
 Validate a Launchpad token
 
 **Kind**: Exported function
-**Returns**: The validate result object with:
+**Returns**: The validate result object:
   status - 'success' or 'failed';
   message - reason for failure;
   session_maxtimeout - number (seconds);
