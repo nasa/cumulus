@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [v22.3.3] 2026-07-14
 
+### Fixed
+
 - **CUMULUS-5033**
   - Fix bootstrap service to handle empty RDS tables
   - Add SQL to grant privileges to allow disabling replication
@@ -16,6 +18,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Add variable to enable/disable iceberg deployment in example
 
 ## [v22.3.2] 2026-07-09
+
+### Fixed
 
 - **CSD-121**
   - Updates the CMR.js CMR client object to *not* store the CMR provider and update all class methods to require
