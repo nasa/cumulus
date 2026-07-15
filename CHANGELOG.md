@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-## [v22.3.2] 2026-07-14
+## [v22.3.3] 2026-07-14
 
 - **CUMULUS-5033**
   - Fix bootstrap service to handle empty RDS tables
