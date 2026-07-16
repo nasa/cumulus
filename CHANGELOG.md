@@ -6,8 +6,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
 - **CUMULUS-5112**
   - Change Iceberg API image release tagging to be based on lerna.json update
+
+
+## [v22.3.3] 2026-07-14
+
+### Fixed
 
 - **CUMULUS-5033**
   - Fix bootstrap service to handle empty RDS tables
@@ -15,6 +22,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Change Iceberg setup code to correctly compute the number of workers based on CPU
   - Remove unused terraform resource for Iceberg API
   - Add variable to enable/disable iceberg deployment in example
+
+## [v22.3.2] 2026-07-09
+
+### Fixed
 
 - **CSD-121**
   - Updates the CMR.js CMR client object to *not* store the CMR provider and update all class methods to require
@@ -9999,7 +10010,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v22.3.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v22.3.3...HEAD
+[v22.3.3]: https://github.com/nasa/cumulus/compare/v22.3.2...v22.3.3
+[v22.3.2]: https://github.com/nasa/cumulus/compare/v22.3.1...v22.3.2
 [v22.3.1]: https://github.com/nasa/cumulus/compare/v22.3.0...v22.3.1
 [v22.3.0]: https://github.com/nasa/cumulus/compare/v22.2.5...v22.3.0
 [v22.2.5]: https://github.com/nasa/cumulus/compare/v22.2.4...v22.2.5
