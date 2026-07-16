@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **CUMULUS-5112**
+  - Change Iceberg API image release tagging to be based on lerna.json update
+
+
 ## [v22.3.3] 2026-07-14
 
 ### Fixed
