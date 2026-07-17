@@ -43,7 +43,7 @@ test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.Bucket);
 });
 
-test('startQueryExecution() initiates a query and receives a QueryExecutionId response', async (t) => {
+test.serial('startQueryExecution() initiates a query and receives a QueryExecutionId response', async (t) => {
   const tableName = `${randomString()}_table`;
   const tableQuery = `CREATE TABLE IF NOT EXISTS ${tableName}
 ( bucket string, key string, version_id string, is_latest boolean, is_delete_marker boolean);`;
@@ -99,7 +99,7 @@ test('mapData() returns expected result when ResultSet is empty', (t) => {
   t.deepEqual([], mappedResult);
 });
 
-test('query() initiates a query, waits for it to finish, and returns the mapped response', async (t) => {
+test.serial('query() initiates a query, waits for it to finish, and returns the mapped response', async (t) => {
   // could not get ministack duckdb to find a table to perform operations on it,
   // even after verifying a create table query succeeeded
   // so using the mocked db version of Athena in ministack, which returns mock data
@@ -128,7 +128,7 @@ test('query() initiates a query, waits for it to finish, and returns the mapped 
   t.deepEqual(results, expected);
 });
 
-test('checkQueryExecutionStateAndGetData throws when getQueryExecution returns with a CANCELLED state', async (t) => {
+test.serial('checkQueryExecutionStateAndGetData throws when getQueryExecution returns with a CANCELLED state', async (t) => {
   const tableName = `${randomString()}_table`;
   const tableQuery = `CREATE TABLE IF NOT EXISTS ${tableName}
 ( bucket string, key string, version_id string, is_latest boolean, is_delete_marker boolean);`;
@@ -166,7 +166,7 @@ test('checkQueryExecutionStateAndGetData throws when getQueryExecution returns w
   );
 });
 
-test('checkQueryExecutionStateAndGetData throws when getQueryExecution returns with a FAILED state', async (t) => {
+test.serial('checkQueryExecutionStateAndGetData throws when getQueryExecution returns with a FAILED state', async (t) => {
   const tableName = `${randomString()}_table`;
   const tableQuery = `CREATE TABLE IF NOT EXISTS ${tableName}
 ( bucket string, key string, version_id string, is_latest boolean, is_delete_marker boolean);`;
