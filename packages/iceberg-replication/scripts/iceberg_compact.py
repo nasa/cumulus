@@ -25,6 +25,11 @@ Run modes:
   One-shot:  omit --interval  (default)
   Server:    --interval N     (runs compaction in a loop, sleeping N seconds between
   runs)
+
+Spark recovery:
+  If the local Spark JVM dies or becomes unreachable (Py4J/connection errors),
+  the session is torn down and restarted automatically, up to --max-spark-restarts
+  times per compaction run.
 """
 
 import argparse
@@ -34,11 +39,22 @@ import time
 from datetime import datetime
 
 import requests
+from py4j.protocol import Py4JError, Py4JNetworkError
 from pyiceberg.catalog import load_catalog
+from pyspark import SparkContext
 from pyspark.sql import SparkSession
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
+
+# Errors that indicate the Spark JVM / Py4J gateway is unreachable rather than
+# a logical failure in the compaction itself.
+SPARK_CONN_ERRORS = (
+    Py4JError,
+    Py4JNetworkError,
+    ConnectionRefusedError,
+    ConnectionResetError,
+)
 
 # Tools interacting with Iceberg tables run into problems when the tables are
 # named with a special Iceberg concept name like files, manifests, or history.
@@ -138,6 +154,36 @@ def get_spark(jars_dir: str, warehouse: str, region: str) -> SparkSession:
     )
     log.info(f"Spark version: {spark.version}")
     return spark
+
+
+def spark_is_alive(spark: SparkSession) -> bool:
+    """Cheap liveness probe for the Spark JVM."""
+    try:
+        spark.sql("SELECT 1").collect()
+        return True
+    except Exception:
+        return False
+
+
+def restart_spark(spark, jars_dir: str, warehouse: str, region: str) -> SparkSession:
+    """Tear down a (possibly dead) Spark session and start a fresh one."""
+    log.warning("Restarting Spark session...")
+    try:
+        spark.stop()
+    except Exception as e:
+        log.warning(f"spark.stop() failed (JVM likely already dead): {e}")
+
+    # If the JVM gateway itself died, getOrCreate() would try to reuse it.
+    # Force pyspark to spawn a new gateway/JVM. These are internal attributes
+    # but are the standard workaround for a dead local JVM (stable across
+    # PySpark 3.x -- re-verify on major version bumps).
+    SparkContext._active_spark_context = None
+    SparkContext._gateway = None
+    SparkContext._jvm = None
+    SparkSession._instantiatedSession = None
+    SparkSession._activeSession = None
+
+    return get_spark(jars_dir, warehouse, region)
 
 
 def get_catalog(region: str, warehouse: str):
@@ -584,42 +630,58 @@ def rewrite_tables(  # noqa: PLR0912, PLR0913, PLR0915
         log.info("No tables needed compaction")
         return
 
-    for table_name in table_names:
-        start_time = time.time()
-        try:
-            if full_overwrite:
-                modified = full_rewrite_single_table(
-                    namespace=namespace,
-                    table_name=table_name,
-                    catalog=catalog,
-                    spark=spark,
-                    staging_branch=staging_branch,
-                    main_branch=main_branch,
-                    dry_run=dry_run,
+    try:
+        for table_name in table_names:
+            start_time = time.time()
+            try:
+                if full_overwrite:
+                    modified = full_rewrite_single_table(
+                        namespace=namespace,
+                        table_name=table_name,
+                        catalog=catalog,
+                        spark=spark,
+                        staging_branch=staging_branch,
+                        main_branch=main_branch,
+                        dry_run=dry_run,
+                    )
+                else:
+                    modified = partition_rewrite_single_table(
+                        namespace=namespace,
+                        table_name=table_name,
+                        catalog=catalog,
+                        spark=spark,
+                        staging_branch=staging_branch,
+                        main_branch=main_branch,
+                        dry_run=dry_run,
+                    )
+                duration = round(time.time() - start_time)
+                results[table_name] = (
+                    ("ok", duration) if modified else ("skipped", None)
                 )
+            except SPARK_CONN_ERRORS:
+                # Spark itself is unreachable -- no point continuing with the
+                # remaining tables on a dead session. Propagate so the caller
+                # can restart Spark and retry. The finally block below still
+                # attempts to resume the Kafka connector.
+                raise
+            except Exception as e:
+                log.error(
+                    f"ERROR compacting {namespace}.{table_name}: {e}", exc_info=True
+                )
+                duration = round(time.time() - start_time)
+                results[table_name] = (f"failed: {e}", duration)
+    finally:
+        # -- Resume connector even if a table blew up or Spark died ------------
+        # This prevents the sink from being left PAUSED indefinitely when a
+        # compaction pass fails partway through.
+        if kafka_client:
+            if not dry_run:
+                try:
+                    kafka_client.resume()
+                except Exception as e:
+                    log.error(f"Failed to resume Kafka connector: {e}", exc_info=True)
             else:
-                modified = partition_rewrite_single_table(
-                    namespace=namespace,
-                    table_name=table_name,
-                    catalog=catalog,
-                    spark=spark,
-                    staging_branch=staging_branch,
-                    main_branch=main_branch,
-                    dry_run=dry_run,
-                )
-            duration = round(time.time() - start_time)
-            results[table_name] = ("ok", duration) if modified else ("skipped", None)
-        except Exception as e:
-            log.error(f"ERROR compacting {namespace}.{table_name}: {e}", exc_info=True)
-            duration = round(time.time() - start_time)
-            results[table_name] = (f"failed: {e}", duration)
-
-    # -- Resume connector once after all tables --------------------------------
-    if kafka_client:
-        if not dry_run:
-            kafka_client.resume()
-        else:
-            log.info("[DRY RUN] Would resume Kafka connector here")
+                log.info("[DRY RUN] Would resume Kafka connector here")
 
     # -- Overall summary -------------------------------------------------------
     log.info("")
@@ -644,10 +706,35 @@ def rewrite_tables(  # noqa: PLR0912, PLR0913, PLR0915
         raise RuntimeError("One or more tables failed compaction (see above).")
 
 
+def run_with_spark_recovery(spark, args, shared_kwargs, max_restarts: int = 2):
+    """Run one compaction pass, restarting Spark on connection failures.
+
+    Returns the (possibly new) spark session so the caller keeps a live handle.
+    """
+    for attempt in range(max_restarts + 1):
+        if not spark_is_alive(spark):
+            log.warning("Spark session is not responding.")
+            spark = restart_spark(spark, args.jars_dir, args.warehouse, args.region)
+            shared_kwargs["spark"] = spark
+        try:
+            rewrite_tables(**shared_kwargs)
+            return spark
+        except SPARK_CONN_ERRORS as e:
+            if attempt == max_restarts:
+                raise
+            log.error(
+                f"Spark connection error "
+                f"(attempt {attempt + 1}/{max_restarts + 1}): {e}"
+            )
+            spark = restart_spark(spark, args.jars_dir, args.warehouse, args.region)
+            shared_kwargs["spark"] = spark
+    return spark
+
+
 # -- CLI ----------------------------------------------------------------------
 
 
-def main():  # noqa: PLR0915
+def main():  # noqa: PLR0912, PLR0915
     """Compact the iceberg tables."""
     parser = argparse.ArgumentParser(
         description="Compact Iceberg equality deletes via PySpark INSERT OVERWRITE. "
@@ -681,6 +768,13 @@ def main():  # noqa: PLR0915
         help="When set, run compaction in a continuous loop sleeping "
         "this many seconds between runs (server mode). "
         "Omit for a one-shot run.",
+    )
+    parser.add_argument(
+        "--max-spark-restarts",
+        type=int,
+        default=2,
+        help="Maximum number of Spark session restarts to attempt per "
+        "compaction run when the Spark JVM is unreachable (default: 2).",
     )
     args = parser.parse_args()
 
@@ -734,7 +828,9 @@ def main():  # noqa: PLR0915
         if args.interval is None:
             # Run compaction once and then exit
             try:
-                rewrite_tables(**shared_kwargs)
+                spark = run_with_spark_recovery(
+                    spark, args, shared_kwargs, max_restarts=args.max_spark_restarts
+                )
             except RuntimeError as e:
                 raise SystemExit(str(e))
         else:
@@ -755,7 +851,12 @@ def main():  # noqa: PLR0915
                     f"starting at {datetime.utcnow().isoformat()}Z ---"
                 )
                 try:
-                    rewrite_tables(**shared_kwargs)
+                    spark = run_with_spark_recovery(
+                        spark,
+                        args,
+                        shared_kwargs,
+                        max_restarts=args.max_spark_restarts,
+                    )
                 except Exception as e:
                     # Log but keep looping; a single bad run shouldn't crash the server.
                     log.error(
@@ -775,7 +876,10 @@ def main():  # noqa: PLR0915
                     log.info("Interrupted during sleep -- shutting down.")
                     break
     finally:
-        spark.stop()
+        try:
+            spark.stop()
+        except Exception:  # noqa: S110
+            pass
         log.info("Spark session stopped.")
 
 
