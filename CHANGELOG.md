@@ -436,6 +436,8 @@ Please note changes in 21.3.4 may not yet be released in future versions, as thi
 - **CUMULUS-4388**
   - Added cnm_to_cma task (lambda).
   - Original cnm_to_cma was written in Java.  Converted to Python.
+- **CUMULUS-4381**
+  - Added cma_to_cnm task (lambda).
 - **CUMULUS-4382**
   - Migrated the granule-invalidator task to the `tasks` directory as part of a coreification task in support of providing rolling archive functionality.
 - **CUMULUS-4385**
