@@ -761,6 +761,9 @@ def main():  # noqa: PLR0915
                     log.error(
                         f"Compaction run #{run_number} failed: {e}", exc_info=True
                     )
+                    shared_kwargs.spark = get_spark(
+                        args.jars_dir, args.warehouse, args.region
+                    )
 
                 run_duration = time.time() - run_start
 
