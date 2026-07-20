@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-5033**
+  - Catch crashed spark server and restart for Iceberg
+
 - **CUMULUS-5112**
   - Change Iceberg API image release tagging to be based on lerna.json update
 
