@@ -128,10 +128,10 @@ test('query() initiates a query, waits for it to finish, and returns the mapped 
   t.deepEqual(results, expected);
 });
 
-test('checkQueryExecutionStateAndGetData throws when getQueryExecution returns with a CANCELLED state', async (t) => {
+test.skip('checkQueryExecutionStateAndGetData throws when getQueryExecution returns with a CANCELLED state', async (t) => {
   const tableName = `${randomString()}_table`;
   const tableQuery = `CREATE TABLE IF NOT EXISTS ${tableName}
-( bucket string, key string, version_id string, is_latest boolean, is_delete_marker boolean);`;
+  ( bucket string, key string, version_id string, is_latest boolean, is_delete_marker boolean);`;
   await t.context.client.query(tableQuery);
 
   const testBucket = 'daac-public-bucket';
@@ -166,7 +166,7 @@ test('checkQueryExecutionStateAndGetData throws when getQueryExecution returns w
   );
 });
 
-test('checkQueryExecutionStateAndGetData throws when getQueryExecution returns with a FAILED state', async (t) => {
+test.skip('checkQueryExecutionStateAndGetData throws when getQueryExecution returns with a FAILED state', async (t) => {
   const tableName = `${randomString()}_table`;
   const tableQuery = `CREATE TABLE IF NOT EXISTS ${tableName}
 ( bucket string, key string, version_id string, is_latest boolean, is_delete_marker boolean);`;

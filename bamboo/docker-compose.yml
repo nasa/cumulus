@@ -40,7 +40,7 @@ services:
     network_mode: "service:build_env"
     environment:
       ES_JAVA_OPTS: "-Xms750m -Xmx750m"
-  localstack:
+  ministack:
     # image: ministackorg/ministack:1.3.65-full
     image: ministackorg/ministack:1.3.65
     network_mode: "service:build_env"
@@ -52,6 +52,7 @@ services:
       - ${CUMULUS_UNIT_TEST_DATA-/tmp/cumulus_unit_test_data}:${CUMULUS_UNIT_TEST_DATA-/tmp/cumulus_unit_test_data}
     environment:
       - LOCALSTACK_HOST=127.0.0.1
+      - MINISTACK_HOST=127.0.0.1
       - LOCAL_ES_HOST=127.0.0.1
       - CI_UID
       - DOCKER_TEST_RUN=true
