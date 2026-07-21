@@ -6,12 +6,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v22.3.4] 2026-07-21
+
 ### Changed
 
 - **CUMULUS-5033**
   - Catch crashed spark server and restart for Iceberg
 
 ## [v22.3.3] 2026-07-14
+
+### Fixed
 
 - **CUMULUS-5033**
   - Fix bootstrap service to handle empty RDS tables
@@ -22,11 +26,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [v22.3.2] 2026-07-09
 
+### Fixed
+
 - **CSD-121**
   - Updates the CMR.js CMR client object to *not* store the CMR provider and update all class methods to require
     a provider method parameter.    Update all tasks/related callers to provide expected input
 
 ## [v22.3.1] 2026-07-07
+
+### Updated
 
 - Bumped `archiver` version and corresponding updates to `bin/zip.js` to address CVE-2026-13149.
 
@@ -10005,7 +10013,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v22.3.3...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v22.3.4...HEAD
+[v22.3.4]: https://github.com/nasa/cumulus/compare/v22.3.3...v22.3.4
 [v22.3.3]: https://github.com/nasa/cumulus/compare/v22.3.2...v22.3.3
 [v22.3.2]: https://github.com/nasa/cumulus/compare/v22.3.1...v22.3.2
 [v22.3.1]: https://github.com/nasa/cumulus/compare/v22.3.0...v22.3.1
