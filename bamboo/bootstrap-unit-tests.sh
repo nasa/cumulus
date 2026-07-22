@@ -72,7 +72,7 @@ while ! $docker_command "sftp \
   user@127.0.0.1:/keys/ssh_client_rsa_key.pub /dev/null"; do
   echo 'Waiting for SFTP to start'
   docker ps -a
-  sleep 2
+  sleep 10
 done
 echo 'SFTP service is available'
 
