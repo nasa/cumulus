@@ -59,8 +59,10 @@ while ! $docker_command  'curl --connect-timeout 5 -sS -o /dev/null http://127.0
 done
 echo 'HTTP service is available'
 
-echo $UNIT_TEST_BUILD_DIR
-echo $($docker_command "mkdir /keys;cp $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key /keys/; chmod -R 400 /keys")
+
+echo $($docker_command "echo $(mkdir /keys;cp $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key /keys/; chmod -R 400 /keys)")
+$docker_command "echo$(ls $UNIT_TEST_BUILD_DIR/packages/test-data/keys)" 
+$docker_command "echo$(ls /keys)"
 
 # Wait for the SFTP server to be available
 while ! $docker_command "sftp \
@@ -73,7 +75,7 @@ while ! $docker_command "sftp \
   user@127.0.0.1:/keys/ssh_client_rsa_key.pub /dev/null"; do
   echo 'Waiting for SFTP to start'
   docker ps -a
-  sleep 10
+  sleep 2
 done
 echo 'SFTP service is available'
 
