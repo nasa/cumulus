@@ -60,9 +60,9 @@ done
 echo 'HTTP service is available'
 
 
-echo $($docker_command "echo $(mkdir /keys;cp $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key /keys/; chmod -R 400 /keys)")
-$docker_command "echo$(ls $UNIT_TEST_BUILD_DIR/packages/test-data/keys)"
-$docker_command "echo$(ls /keys)"
+if [ ! -d "/keys" ] then
+  $docker_command "echo $(mkdir /keys;cp $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key /keys/; chmod -R 400 /keys)"
+fi
 
 # Wait for the SFTP server to be available
 while ! $docker_command "sftp \
