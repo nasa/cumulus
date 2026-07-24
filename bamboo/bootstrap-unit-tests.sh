@@ -61,7 +61,11 @@ echo 'HTTP service is available'
 
 docker ps -a
 
+$docker_command "echo cat $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key"
+$docker_command "if [ ! -d keys ]; then echo 'Keys dir missing'; fi"
 $docker_command "if [ ! -d keys ]; then     mkdir /keys;cp $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key /keys/; chmod -R 400 /keys; fi"
+
+$docker_command "echo ls /keys"
 
 # Wait for the SFTP server to be available
 while ! $docker_command "sftp \
