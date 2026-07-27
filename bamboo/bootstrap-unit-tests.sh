@@ -61,13 +61,16 @@ echo 'HTTP service is available'
 
 docker ps -a
 
-$docker_command "mkdir /keys;cp $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key /keys/; chmod -R 400 /keys"
+$docker_command "echo $(ls -l $UNIT_TEST_BUILD_DIR/packages/test-data/keys)"
+$docker_command "echo $(ls -l /keys)"
+$docker_command "mkdir /keys; cp $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key /keys/; chmod -R 400 /keys; ls -l /keys"
+$docker_command "echo $(ls -l /keys)"
 
 $docker_command "echo $(cat $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key)"
-$docker_command "if [ ! -d keys ]; then echo 'Keys dir missing'; fi"
-$docker_command "if [ ! -d keys ]; then     mkdir /keys;cp $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key /keys/; chmod -R 400 /keys; fi"
+$docker_command "if [ ! -d /keys ]; then echo 'Keys dir missing'; fi"
+$docker_command "if [ ! -d /keys ]; then mkdir /keys; cp $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key /keys/; chmod -R 400 /keys; fi"
 
-$docker_command "echo $(ls /keys)"
+$docker_command "echo $(ls -l /keys)"
 
 # Wait for the SFTP server to be available
 while ! $docker_command "sftp \
@@ -80,7 +83,7 @@ while ! $docker_command "sftp \
   user@127.0.0.1:/keys/ssh_client_rsa_key.pub /dev/null"; do
   echo 'Waiting for SFTP to start'
   docker ps -a
-  sleep 2
+  sleep 15
 done
 echo 'SFTP service is available'
 
