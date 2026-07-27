@@ -81,7 +81,7 @@ while ! $docker_command "sftp \
   -o 'UserKnownHostsFile=/dev/null'\
   -o 'PreferredAuthentications=publickey'\
   user@127.0.0.1:/keys/ssh_client_rsa_key.pub /dev/null"; do
-  
+
   $docker_command "sftp \
   -P 2222\
   -i /keys/ssh_client_rsa_key\
