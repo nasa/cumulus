@@ -222,3 +222,9 @@ variable "snapshot_cleanup_interval_minutes" {
   type        = number
   default     = 60
 }
+
+variable "enable_iceberg_replication" {
+  description = "Create the Iceberg replication module when true"
+  type        = bool
+  default     = true
+}

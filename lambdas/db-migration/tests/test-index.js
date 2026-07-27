@@ -203,12 +203,14 @@ test.serial('handler can apply standard patches to a database previously created
   t.truthy(migrations.length > 0, 'The migrations table should contain entries from the patch-based files');
 });
 
-test.serial('handler creates correct granules and files partitions based on env', async (t) => {
+test.serial('handler creates correct hash partitions across tables based on env variables', async (t) => {
   const { testEnv } = t.context;
 
   // Set environment variables for this test
   process.env.GRANULES_PARTITION_COUNT = '16';
   process.env.FILES_PARTITION_COUNT = '32';
+  process.env.GRANULES_GLOBAL_UNIQUE_PARTITION_COUNT = '8';
+  process.env.FILES_GLOBAL_UNIQUE_PARTITION_COUNT = '4';
 
   try {
     await handler({ command: 'latest', env: testEnv });
@@ -229,6 +231,20 @@ test.serial('handler creates correct granules and files partitions based on env'
       filePartitions.length,
       Number(process.env.FILES_PARTITION_COUNT),
       `Should have ${process.env.FILES_PARTITION_COUNT} file partitions`
+    );
+
+    const granuleUniquePartitions = await getPartitionNames('granules_global_unique', t.context.testKnex);
+    t.is(
+      granuleUniquePartitions.length,
+      Number(process.env.GRANULES_GLOBAL_UNIQUE_PARTITION_COUNT),
+      `Should have ${process.env.GRANULES_GLOBAL_UNIQUE_PARTITION_COUNT} granules global unique partitions`
+    );
+
+    const fileUniquePartitions = await getPartitionNames('files_global_unique', t.context.testKnex);
+    t.is(
+      fileUniquePartitions.length,
+      Number(process.env.FILES_GLOBAL_UNIQUE_PARTITION_COUNT),
+      `Should have ${process.env.FILES_GLOBAL_UNIQUE_PARTITION_COUNT} files global unique partitions`
     );
   } finally {
     delete process.env.GRANULES_PARTITION_COUNT;

@@ -143,6 +143,7 @@ async function fetchCMRCollections({ collectionIds }) {
   const cmrCollectionsIterator = /** @type {CMRSearchConceptQueue<CMRCollectionItem>} */(
     new CMRSearchConceptQueue({
       cmrSettings,
+      provider: cmrSettings.provider,
       type: 'collections',
       format: 'umm_json',
     }));
@@ -565,6 +566,7 @@ async function reconciliationReportForGranules(params) {
     const cmrGranulesIterator
     = /** @type {CMRSearchConceptQueue<CMRItem>} */(new CMRSearchConceptQueue({
       cmrSettings,
+      provider: cmrSettings.provider,
       type: 'granules',
       searchParams,
       format: 'umm_json',

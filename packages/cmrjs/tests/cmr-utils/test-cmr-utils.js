@@ -1520,7 +1520,7 @@ test.serial('publish2CMR passes cmrRevisionId to publishECHO10XML2CMR', async (t
     revertPublishECHO10XML2CMRSpy();
   });
   await cmrUtil.publish2CMR(updatedXmlFile, credentials, cmrRevisionId);
-  t.is(publishECHO10XML2CMRSpy.getCall(0).args[2], cmrRevisionId);
+  t.is(publishECHO10XML2CMRSpy.getCall(0).args[3], cmrRevisionId);
 });
 
 test.serial('publish2CMR passes cmrRevisionId to publishUMMGJSON2CMR', async (t) => {
@@ -1536,7 +1536,7 @@ test.serial('publish2CMR passes cmrRevisionId to publishUMMGJSON2CMR', async (t)
   });
 
   await cmrUtil.publish2CMR(cmrFileObject, credentials, cmrRevisionId);
-  t.is(publishUMMGJSON2CMRSpy.getCall(0).args[2], cmrRevisionId);
+  t.is(publishUMMGJSON2CMRSpy.getCall(0).args[3], cmrRevisionId);
 });
 
 test.serial('publishECHO10XML2CMR passes cmrRevisionId to ingestGranule', async (t) => {
@@ -1552,7 +1552,7 @@ test.serial('publishECHO10XML2CMR passes cmrRevisionId to ingestGranule', async 
   });
 
   await cmrUtil.publish2CMR(cmrFileObject, credentials, cmrRevisionId);
-  t.is(ingestGranuleSpy.getCall(0).args[1], cmrRevisionId);
+  t.is(ingestGranuleSpy.getCall(0).args[2], cmrRevisionId);
 });
 
 test.serial('publishUMMGJSON2CMR passes cmrRevisionId to ingestUMMGranule', async (t) => {
@@ -1568,7 +1568,7 @@ test.serial('publishUMMGJSON2CMR passes cmrRevisionId to ingestUMMGranule', asyn
   });
 
   await cmrUtil.publish2CMR(cmrFileObject, credentials, cmrRevisionId);
-  t.is(ingestUMMGranuleSpy.getCall(0).args[1], cmrRevisionId);
+  t.is(ingestUMMGranuleSpy.getCall(0).args[2], cmrRevisionId);
 });
 
 test(
