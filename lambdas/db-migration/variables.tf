@@ -39,9 +39,11 @@ variable "vpc_id" {
 
 variable "db_partition_config" {
   type = object({
-    executions_total_years = number
-    granules_count         = number
-    files_count            = number
+    executions_total_years       = number
+    granules_count               = number
+    files_count                  = number
+    granules_global_unique_count = number
+    files_global_unique_count    = number
   })
   description = "Partitioning settings for the database migration Lambda"
 }

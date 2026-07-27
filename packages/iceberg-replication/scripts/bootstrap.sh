@@ -124,6 +124,7 @@ psql \
   <<EOF
 CREATE EXTENSION IF NOT EXISTS pglogical;
 GRANT rds_replication TO $USER;
+GRANT USAGE ON SCHEMA pglogical TO $USER;
 EOF
 
 psql \
