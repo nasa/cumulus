@@ -61,16 +61,21 @@ echo 'HTTP service is available'
 
 docker ps -a
 
+sftp_container_name="${container_id}-sftp-1"
+sftp_container_id="docker ps -aqf 'name=${sftp_container_name}'"
+
 $docker_command "echo $(ls -l $UNIT_TEST_BUILD_DIR/packages/test-data/keys)"
 $docker_command "echo $(ls -l /keys)"
 $docker_command "mkdir /keys; cp $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key /keys/; chmod -R 400 /keys; ls -l /keys"
 $docker_command "echo $(ls -l /keys)"
+$docker_command "echo $(ls -l /)"
 
 $docker_command "echo $(cat $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key)"
 $docker_command "if [ ! -d /keys ]; then echo 'Keys dir missing'; fi"
 $docker_command "if [ ! -d /keys ]; then mkdir /keys; cp $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key /keys/; chmod -R 400 /keys; fi"
 
 $docker_command "echo $(ls -l /keys)"
+$docker_command "echo $(ls -l /)"
 
 # Wait for the SFTP server to be available
 while ! $docker_command "sftp \
@@ -82,6 +87,9 @@ while ! $docker_command "sftp \
   -o 'PreferredAuthentications=publickey'\
   user@127.0.0.1:/keys/ssh_client_rsa_key.pub /dev/null"; do
   echo 'Waiting for SFTP to start'
+  docker logs --tail 100 ${sftp_container_id}
+  docker exec ${sftp_container_name} tail /var/log/messages
+  echo $($docker_command "sftp -P 2222 -i /keys/ssh_client_rsa_key -o 'ConnectTimeout=5' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -o 'PreferredAuthentications=publickey' user@127.0.0.1:/keys/ssh_client_rsa_key.pub /dev/null")
   docker ps -a
   sleep 15
 done
