@@ -68,14 +68,14 @@ $docker_command "echo $(ls -l $UNIT_TEST_BUILD_DIR/packages/test-data/keys)"
 $docker_command "echo $(ls -l /keys)"
 $docker_command "mkdir /keys; cp $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key /keys/; chmod -R 400 /keys; ls -l /keys"
 $docker_command "echo $(ls -l /keys)"
-$docker_command "echo $(ls -l /)"
+# $docker_command "echo $(ls -l /)"
 
 $docker_command "echo $(cat $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key)"
 $docker_command "if [ ! -d /keys ]; then echo 'Keys dir missing'; fi"
 $docker_command "if [ ! -d /keys ]; then mkdir /keys; cp $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key /keys/; chmod -R 400 /keys; fi"
 
-$docker_command "echo $(ls -l /keys)"
-$docker_command "echo $(ls -l /)"
+# $docker_command "echo $(ls -l /keys)"
+# $docker_command "echo $(ls -l /)"
 
 # Wait for the SFTP server to be available
 while ! $docker_command "sftp \
