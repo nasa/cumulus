@@ -8,9 +8,9 @@ set -e
 ./bamboo/extract-ts-build-cache.sh
 
 npm install
-rm -rf website/build
-npm run docs-install
-npm run docs-build
+# rm -rf website/build
+# npm run docs-install
+# npm run docs-build
 npm run ci:bootstrap-no-scripts
 set +e; apt-get update; set -e;
 apt-get install -y jq rsync zip

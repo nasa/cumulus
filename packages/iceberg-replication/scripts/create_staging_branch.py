@@ -44,10 +44,6 @@ def create_staging_branches(cat, namespace, tables):
         table = cat.load_table(full_name)
         refs = table.refs()
 
-        if "staging" in refs:
-            print(f"  WARNING: staging branch already exists for {full_name}, skipping")
-            continue
-
         if "main" not in refs:
             # Table has no snapshots yet (empty table) — create an empty snapshot
             # so that main branch exists and staging branch can be created from it
@@ -56,29 +52,37 @@ def create_staging_branches(cat, namespace, tables):
             from pyiceberg.io.pyarrow import schema_to_pyarrow  # noqa: PLC0415
 
             pa_schema = schema_to_pyarrow(table.schema())
+
+            # Rebuild schema honoring required (non-nullable) fields
+            fields = []
+            for iceberg_field, pa_field in zip(table.schema().fields, pa_schema):
+                nullable = not iceberg_field.required
+                fields.append(pa_field.with_nullable(nullable))
+            pa_schema = pa.schema(fields)
+
             empty = pa.table(
                 {
                     f.name: pa.array([], type=pa_schema.field(f.name).type)
                     for f in table.schema().fields
                 },
-                schema=pa_schema,  # <-- this enforces nullability on each field
+                schema=pa_schema,
             )
             table.append(empty)
+
             # Reload to get updated refs
             table = cat.load_table(full_name)
             refs = table.refs()
 
         if "main" not in refs:
-            print(
-                f"  ERROR: 'main' branch still not found for {full_name} after empty snapshot"  # noqa: E501
-            )
+            print(f"  ERROR: 'main' branch still not found for {full_name}")
             continue
 
-        main_snapshot_id = refs["main"].snapshot_id
-
-        table.manage_snapshots().create_branch(main_snapshot_id, "staging").commit()
-
-        print(f"  Created staging branch at snapshot {main_snapshot_id}")
+        if "staging" not in refs:
+            main_snapshot_id = refs["main"].snapshot_id
+            table.manage_snapshots().create_branch(main_snapshot_id, "staging").commit()
+            print(f"  Created staging branch at snapshot {main_snapshot_id}")
+        else:
+            print(f"  staging branch already exists for {full_name}")
 
     print("done")
 

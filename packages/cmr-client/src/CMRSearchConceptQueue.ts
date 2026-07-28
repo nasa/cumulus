@@ -5,15 +5,13 @@ import { CMR, CMRConstructorParams } from './CMR';
  */
 export const providerParams = ({
   searchParams = new URLSearchParams(),
-  cmrSettings,
+  provider,
 }: {
   searchParams?: URLSearchParams,
-  cmrSettings: {
-    provider: string
-  }
+  provider: string,
 }): URLSearchParams => {
   if (!searchParams.has('provider_short_name')) {
-    searchParams.append('provider_short_name', cmrSettings.provider);
+    searchParams.append('provider_short_name', provider);
   }
 
   return searchParams;
@@ -21,6 +19,7 @@ export const providerParams = ({
 
 export interface CMRSearchConceptQueueConstructorParams {
   cmrSettings: CMRConstructorParams,
+  provider: string,
   type: string,
   searchParams?: URLSearchParams,
   format?: string
@@ -64,7 +63,7 @@ export class CMRSearchConceptQueue<T> {
     this.type = params.type;
     this.params = providerParams({
       searchParams: params.searchParams,
-      cmrSettings: params.cmrSettings,
+      provider: params.provider,
     });
     this.format = params.format;
     this.items = [];

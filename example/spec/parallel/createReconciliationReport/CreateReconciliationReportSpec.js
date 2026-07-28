@@ -239,15 +239,15 @@ const createCmrClient = async (config) => {
     process.env[key] = value;
   });
   const cmrSettings = await getCmrSettings();
-  return CMR.getInstance(cmrSettings);
+  return { cmrClient: CMR.getInstance(cmrSettings), cmrProvider: cmrSettings.provider };
 };
 
 // ingest a granule xml to CMR
-async function ingestGranuleToCMR(cmrClient) {
+async function ingestGranuleToCMR(cmrClient, cmrProvider) {
   const granuleId = randomStringFromRegex(granuleRegex);
   console.log(`\ningestGranuleToCMR granule id: ${granuleId}`);
   const xml = generateCmrXml({ granuleId }, collection);
-  await cmrClient.ingestGranule(xml);
+  await cmrClient.ingestGranule(xml, cmrProvider);
   return { granuleId };
 }
 
@@ -321,6 +321,7 @@ const fetchReconciliationReport = async (stackName, reportName) => {
 describe('When there are granule differences and granule reconciliation is run', () => {
   let beforeAllFailed = false;
   let cmrClient;
+  let cmrProvider;
   let cmrGranule;
   let collectionId;
   let config;
@@ -347,7 +348,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
       process.env.CMR_ENVIRONMENT = 'UAT';
 
-      cmrClient = await createCmrClient(config);
+      ({ cmrClient, cmrProvider } = await createCmrClient(config));
 
       // Find a protected bucket
       protectedBucket = await findProtectedBucket(config.bucket, config.stackName);
@@ -390,7 +391,7 @@ describe('When there are granule differences and granule reconciliation is run',
       ] = await Promise.all([
         ingestAndPublishGranule(config, testSuffix, testDataFolder, true),
         ingestAndPublishGranule(config, testSuffix, testDataFolder, false),
-        ingestGranuleToCMR(cmrClient),
+        ingestGranuleToCMR(cmrClient, cmrProvider),
       ]);
 
       console.log('dbGranuleId', dbGranuleId);
@@ -958,7 +959,7 @@ describe('When there are granule differences and granule reconciliation is run',
       removeCollectionAndAllDependencies({ prefix: config.stackName, collection }),
       s3().deleteObject(extraS3Object),
       deleteFolder(config.bucket, testDataFolder),
-      cmrClient.deleteGranule(cmrGranule.granuleId),
+      cmrClient.deleteGranule(cmrGranule.granuleId, cmrProvider),
     ]);
     cleanupResults.forEach((result) => {
       if (result.status === 'rejected') {

@@ -52,12 +52,12 @@ test('CMRSearchConceptQueue handles paging correctly.', async (t) => {
   process.env.CMR_ENVIRONMENT = 'UAT';
   const cmrSearchQueue = new CMRSearchConceptQueue({
     cmrSettings: {
-      provider: 'CUMULUS',
       clientId: 'fakeClient',
       username: 'fakeUser',
       password: 'fakePassword',
       token: 'abcde',
     },
+    provider: 'CUMULUS',
     type: 'granules',
     searchParams: new URLSearchParams(),
     format: 'umm_json',
@@ -70,7 +70,7 @@ test('CMRSearchConceptQueue handles paging correctly.', async (t) => {
 
 test('cmrSearchQueue provides correct initial params when SearchParams are an instanceOf URLSearchParams.', (t) => {
   const searchParams = new URLSearchParams([['key', 'param'], ['key', 'param2']]);
-  const defaultParams = { cmrSettings: { provider: 'cmrprovider' } };
+  const defaultParams = { provider: 'cmrprovider' };
   const test1Params = { ...defaultParams, searchParams: searchParams };
   const actual = providerParams(test1Params);
   const expected = new URLSearchParams([['key', 'param'], ['key', 'param2'], ['provider_short_name', 'cmrprovider']]);
@@ -79,7 +79,7 @@ test('cmrSearchQueue provides correct initial params when SearchParams are an in
 
 test('cmrSearchQueue provides correct initial params when SearchParams are a plain object.', (t) => {
   const searchParams = new URLSearchParams({ key: 'param' });
-  const defaultParams = { cmrSettings: { provider: 'cmrprovider' } };
+  const defaultParams = { provider: 'cmrprovider' };
   const test1Params = { ...defaultParams, searchParams };
   const actual = providerParams(test1Params);
   const expected = new URLSearchParams({ key: 'param', provider_short_name: 'cmrprovider' });

@@ -77,9 +77,11 @@ resource "aws_lambda_function" "db_migration" {
     variables = {
       databaseCredentialSecretArn = var.rds_user_access_secret_arn
 
-      EXECUTIONS_PARTITION_TOTAL_YEARS = var.db_partition_config.executions_total_years
-      GRANULES_PARTITION_COUNT         = var.db_partition_config.granules_count
-      FILES_PARTITION_COUNT            = var.db_partition_config.files_count
+      EXECUTIONS_PARTITION_TOTAL_YEARS       = var.db_partition_config.executions_total_years
+      GRANULES_PARTITION_COUNT               = var.db_partition_config.granules_count
+      FILES_PARTITION_COUNT                  = var.db_partition_config.files_count
+      GRANULES_GLOBAL_UNIQUE_PARTITION_COUNT = var.db_partition_config.granules_global_unique_count
+      FILES_GLOBAL_UNIQUE_PARTITION_COUNT    = var.db_partition_config.files_global_unique_count
 
       USE_BOOTSTRAP = var.use_bootstrap
     }

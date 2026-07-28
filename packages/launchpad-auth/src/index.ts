@@ -250,10 +250,12 @@ export async function getLaunchpadToken(
  * @param token - the token to be validated
  * @param [userGroup] - the cumulus user group that a valid user should belong to
  *
- * @returns - the validate result object with
- * { status: 'success or failed', message: 'reason for failure',
- * session_maxtimeout: number second, session_starttime: number millisecond,
- * owner_auid: string}
+ * @returns The validate result object with:
+ *   status - 'success' or 'failed';
+ *   message - reason for failure;
+ *   session_maxtimeout - number (seconds);
+ *   session_starttime - number (milliseconds);
+ *   owner_auid - string
  *
  * @async
  * @alias module:launchpad-auth
