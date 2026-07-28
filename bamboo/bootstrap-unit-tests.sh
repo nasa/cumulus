@@ -62,7 +62,8 @@ echo 'HTTP service is available'
 docker ps -a
 
 sftp_container_name="${container_id}-sftp-1"
-sftp_container_id="docker ps -aqf 'name=${sftp_container_name}'"
+sftp_container_id=$(docker ps -aqf name=$sftp_container_name)
+echo $sftp_container_id
 
 $docker_command "echo $(ls -l $UNIT_TEST_BUILD_DIR/packages/test-data/keys)"
 $docker_command "echo $(ls -l /keys)"
