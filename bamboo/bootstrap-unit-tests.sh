@@ -87,11 +87,11 @@ while ! $docker_command "sftp \
   -o 'PreferredAuthentications=publickey'\
   user@127.0.0.1:/keys/ssh_client_rsa_key.pub /dev/null"; do
   echo 'Waiting for SFTP to start'
-  # docker logs --tail 100 ${sftp_container_id}
-  # docker exec ${sftp_container_name} tail /var/log/messages
+  docker logs --tail 100 ${sftp_container_id}
+  docker exec ${sftp_container_name} tail /var/log/messages
   # echo $($docker_command "sftp -P 2222 -i /keys/ssh_client_rsa_key -o 'ConnectTimeout=5' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -o 'PreferredAuthentications=publickey' user@127.0.0.1:/keys/ssh_client_rsa_key.pub /dev/null")
   docker ps -a
-  sleep 2
+  sleep 10
 done
 echo 'SFTP service is available'
 
