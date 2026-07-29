@@ -70,6 +70,7 @@ while ! $docker_command "sftp \
   -o 'UserKnownHostsFile=/dev/null'\
   -o 'PreferredAuthentications=publickey'\
   user@127.0.0.1:/keys/ssh_client_rsa_key.pub /dev/null"; do
+  $docker_command "mkdir /keys; cp $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key /keys/; chmod -R 400 /keys; ls -l /keys"
   echo 'Waiting for SFTP to start'
   docker ps -a
   sleep 2
