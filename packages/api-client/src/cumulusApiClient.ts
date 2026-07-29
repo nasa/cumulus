@@ -46,9 +46,9 @@ export async function invokeApi(
         throw new Error('No payload received from lambda invocation');
       }
 
-      const parsedPayload = JSON.parse(new TextDecoder('utf-8').decode(apiOutput.Payload));
+      let parsedPayload; try { parsedPayload = JSON.parse(new TextDecoder('utf-8').decode(apiOutput.Payload)); } catch (e) { throw new CumulusApiClientError(`Error parsing lambda payload: ${e.message}`, 500, undefined); }
 
-      if (parsedPayload?.errorMessage?.includes('Task timed out')) {
+      if (parsedPayload && parsedPayload.errorMessage && parsedPayload.errorMessage.includes('Task timed out')) {
         throw new CumulusApiClientError(
           `Error calling ${payload.path}: ${parsedPayload.errorMessage}`,
           parsedPayload?.statusCode,
@@ -56,7 +56,7 @@ export async function invokeApi(
         );
       }
 
-      if (!expectedStatusCodesFlat.includes(parsedPayload?.statusCode)) {
+      if (parsedPayload && !expectedStatusCodesFlat.includes(parsedPayload.statusCode)) {
         throw new CumulusApiClientError(
           `${payload.path} returned ${parsedPayload.statusCode}: ${parsedPayload.body}`,
           parsedPayload?.statusCode,
