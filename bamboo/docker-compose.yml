@@ -46,6 +46,10 @@ services:
     network_mode: "service:build_env"
     environment:
       - ATHENA_ENGINE=mock
+  localstack:
+    image: localstack/localstack:4.0.3
+    environment:
+      SERVICES: "cloudformation,cloudwatch,cloudwatchlogs,dynamodb,iam,kinesis,kms,lambda,s3,secretsmanager,sns,sqs,stepfunctions,ssm,logs"
   build_env:
     image: $CUMULUS_BASE_IMAGE
     volumes:
