@@ -3,5 +3,6 @@
   "pass-enoaudit": true,
   "retry-count": 20,
   "allowlist": [
+    "GHSA-mh99-v99m-4gvg"
   ]
 }

@@ -14,6 +14,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-5112**
   - Change Iceberg API image release tagging to be based on lerna.json update
 
+### Fixed
+
+- **CUMULUS-5233**
+  - Resolve high-severity audit failures by pinning patched `brace-expansion` and `js-yaml` versions via npm `overrides`.
+    Allowlisted GHSA-mh99-v99m-4gvg, which has no patch compatible with the `minimatch`-required 1.x/2.x `brace-expansion` lines.
+
 
 ## [v22.3.3] 2026-07-14
 
