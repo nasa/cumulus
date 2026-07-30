@@ -12,4 +12,4 @@ if [[ $CI = true ]]; then
 fi
 chgrp user /data/granules
 chmod 775 /data/granules
-/usr/sbin/sshd -D -f /etc/ssh/sshd_config
+/usr/sbin/sshd -D -dd -f /etc/ssh/sshd_config
