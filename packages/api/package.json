@@ -122,6 +122,7 @@
   },
   "devDependencies": {
     "@cumulus/test-data": "22.3.3",
+    "@ljharb/tsconfig": "^0.2.3",
     "aws-sdk-client-mock": "^3.0.1",
     "proxyquire": "^2.1.3"
   }
