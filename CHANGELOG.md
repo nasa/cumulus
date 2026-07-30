@@ -19,6 +19,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-5026**
+  - Fix boolean logic for allowProviderMismatch flag to handle true evaluations correctly
+
 - **CUMULUS-5033**
   - Fix bootstrap service to handle empty RDS tables
   - Add SQL to grant privileges to allow disabling replication
