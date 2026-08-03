@@ -63,42 +63,41 @@ docker ps -a
 
 sftp_container_name="${container_id}-sftp-1"
 sftp_container_id=$(docker ps -aqf name=$sftp_container_name)
-echo $sftp_container_id
 
 $docker_command "ls -l $UNIT_TEST_BUILD_DIR/packages/test-data/keys || true"
 $docker_command "ls -l /keys || true"
 
-# Ensure the SFTP container has the matching public key in its authorized_keys
-if [ -n "${sftp_container_id}" ]; then
-  if [ -f "$UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key.pub" ]; then
-    echo "Copying public key into sftp container ${sftp_container_id}"
-    docker cp "$UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key.pub" "${sftp_container_id}:/tmp/ssh_client_rsa_key.pub" || true
-    docker exec "${sftp_container_id}" bash -lc "mkdir -p /home/user/.ssh && chmod 700 /home/user/.ssh && cat /tmp/ssh_client_rsa_key.pub >> /home/user/.ssh/authorized_keys && chmod 600 /home/user/.ssh/authorized_keys && chown -R user:user /home/user/.ssh" || true
-    docker exec "${sftp_container_id}" bash -lc "ls -la /home/user/.ssh || true; cat /home/user/.ssh/authorized_keys 2>/dev/null || true" || true
-  else
-    echo "Public key not found: $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key.pub"
-  fi
-fi
+# # Ensure the SFTP container has the matching public key in its authorized_keys
+# if [ -n "${sftp_container_id}" ]; then
+#   if [ -f "$UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key.pub" ]; then
+#     echo "Copying public key into sftp container ${sftp_container_id}"
+#     docker cp "$UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key.pub" "${sftp_container_id}:/tmp/ssh_client_rsa_key.pub" || true
+#     docker exec "${sftp_container_id}" bash -lc "mkdir -p /home/user/.ssh && chmod 700 /home/user/.ssh && cat /tmp/ssh_client_rsa_key.pub >> /home/user/.ssh/authorized_keys && chmod 600 /home/user/.ssh/authorized_keys && chown -R user:user /home/user/.ssh" || true
+#     docker exec "${sftp_container_id}" bash -lc "ls -la /home/user/.ssh || true; cat /home/user/.ssh/authorized_keys 2>/dev/null || true" || true
+#   else
+#     echo "Public key not found: $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key.pub"
+#   fi
+# fi
 
 $docker_command "mkdir /keys; cp $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key /keys/; chmod -R 400 /keys; ls -l /keys"
 $docker_command "ls -l /keys || true"
 
 SFTP_MAX_RETRIES=${SFTP_MAX_RETRIES:-12}
 SFTP_RETRY_SLEEP=${SFTP_RETRY_SLEEP:-10}
-attempt=0
+sftp_attempt=0
 while true; do
-  attempt=$((attempt+1))
+  sftp_attempt=$((sftp_attempt+1))
   if $docker_command "sftp -P 2222 -i /keys/ssh_client_rsa_key -o 'ConnectTimeout=5' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -o 'PreferredAuthentications=publickey' user@127.0.0.1:/keys/ssh_client_rsa_key.pub /dev/null"; then
     echo 'SFTP service is available'
     break
   fi
-  echo "SFTP attempt ${attempt}/${SFTP_MAX_RETRIES} failed — collecting diagnostics"
-  docker logs --tail 200 ${sftp_container_id} || true
+  echo "SFTP attempt ${sftp_attempt}/${SFTP_MAX_RETRIES} failed — collecting diagnostics"
+  docker logs --tail 300 ${sftp_container_id} || true
   echo 'Verbose SFTP client output from build_env:'
   $docker_command "sftp -vvv -P 2222 -i /keys/ssh_client_rsa_key -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' user@127.0.0.1:/keys/ssh_client_rsa_key.pub 2>&1 || true" || true
   docker ps -a
-  if [ "$attempt" -ge "$SFTP_MAX_RETRIES" ]; then
-    echo "SFTP failed after ${attempt} attempts — aborting"
+  if [ "$sftp_attempt" -ge "$SFTP_MAX_RETRIES" ]; then
+    echo "SFTP failed after ${sftp_attempt} attempts — aborting"
     exit 1
   fi
   sleep ${SFTP_RETRY_SLEEP}
