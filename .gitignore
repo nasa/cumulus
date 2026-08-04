@@ -37,6 +37,7 @@ cumulus-message-adapter.zip
 dist/
 gitbook
 node_modules
+package-lock.json
 packaged-*
 packages/deployment/app/*.js
 profiles.clj
