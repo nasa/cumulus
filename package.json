@@ -189,14 +189,17 @@
   },
   "overrides": {
     "axios@1": "^1.14.0",
-    "brace-expansion": "^1.1.18 || ^2.1.4 || ^5.0.9",
+    "brace-expansion@1": "^1.1.18",
+    "brace-expansion@2": "^2.1.4",
+    "brace-expansion@5": "^5.0.9",
     "form-data": "^4.0.4",
     "js-yaml": "^3.15.0 || ^4.3.0",
     "lodash@4": "^4.18.1",
     "lodash-es@4": "^4.18.1",
     "minimatch@3": "^3.1.5",
     "minimatch@7": "^7.4.9",
-    "minimatch@10": "^10.2.4",
+    "minimatch@9": "^9.0.9",
+    "minimatch@10": "^10.2.6",
     "request": {
       "qs": "^6.14.1"
     },
