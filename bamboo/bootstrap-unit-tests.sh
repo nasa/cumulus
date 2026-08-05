@@ -59,22 +59,35 @@ while ! $docker_command  'curl --connect-timeout 5 -sS -o /dev/null http://127.0
 done
 echo 'HTTP service is available'
 
-$docker_command "mkdir /keys;cp $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key /keys/; chmod -R 400 /keys"
+docker ps -a
+
+sftp_container_name="${container_id}-sftp-1"
+sftp_container_id=$(docker ps -aqf name=$sftp_container_name)
+
+$docker_command "mkdir /keys;cp $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key /keys/; chmod -R 400 /keys; ls -l /keys"
 
 # Wait for the SFTP server to be available
-while ! $docker_command "sftp \
-  -P 2222\
-  -i /keys/ssh_client_rsa_key\
-  -o 'ConnectTimeout=5'\
-  -o 'StrictHostKeyChecking=no'\
-  -o 'UserKnownHostsFile=/dev/null'\
-  -o 'PreferredAuthentications=publickey'\
-  user@127.0.0.1:/keys/ssh_client_rsa_key.pub /dev/null"; do
-  echo 'Waiting for SFTP to start'
+SFTP_MAX_RETRIES=${SFTP_MAX_RETRIES:-12}
+SFTP_RETRY_SLEEP=${SFTP_RETRY_SLEEP:-10}
+sftp_attempt=0
+while true; do
+  sftp_attempt=$((sftp_attempt+1))
+  if $docker_command "sftp -P 2222 -i /keys/ssh_client_rsa_key -o 'ConnectTimeout=5' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -o 'PreferredAuthentications=publickey' user@127.0.0.1:/keys/ssh_client_rsa_key.pub /dev/null"; then
+    echo 'SFTP service is available'
+    break
+  fi
+  echo "SFTP attempt ${sftp_attempt}/${SFTP_MAX_RETRIES} failed"
+  # echo "SFTP attempt ${sftp_attempt}/${SFTP_MAX_RETRIES} failed — collecting diagnostics"
+  docker logs --tail 300 ${sftp_container_id} || true
+  # echo 'Verbose SFTP client output from build_env:'
+  # $docker_command "sftp -vvv -P 2222 -i /keys/ssh_client_rsa_key -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' user@127.0.0.1:/keys/ssh_client_rsa_key.pub 2>&1 || true" || true
   docker ps -a
-  sleep 2
+  if [ "$sftp_attempt" -ge "$SFTP_MAX_RETRIES" ]; then
+    echo "SFTP failed after ${sftp_attempt} attempts — aborting"
+    exit 1
+  fi
+  sleep ${SFTP_RETRY_SLEEP}
 done
-echo 'SFTP service is available'
 
 # Wait for the Elasticsearch service to be available
 while ! $docker_command  'nc -z 127.0.0.1 9200'; do
