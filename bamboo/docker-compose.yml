@@ -52,7 +52,6 @@ services:
       - ${CUMULUS_UNIT_TEST_DATA-/tmp/cumulus_unit_test_data}:${CUMULUS_UNIT_TEST_DATA-/tmp/cumulus_unit_test_data}
     environment:
       - LOCALSTACK_HOST=127.0.0.1
-      - MINISTACK_HOST=127.0.0.1
       - LOCAL_ES_HOST=127.0.0.1
       - CI_UID
       - DOCKER_TEST_RUN=true
