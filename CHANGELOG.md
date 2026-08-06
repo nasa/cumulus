@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-5217**
+  - Fix Iceberg API image build failure in github workflow
+
 - **CUMULUS-5033**
   - Catch crashed spark server and restart for Iceberg
 
@@ -18,6 +21,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [v22.3.3] 2026-07-14
 
 ### Fixed
+
+- **CUMULUS-5026**
+  - Fix boolean logic for allowProviderMismatch flag to handle true evaluations correctly
 
 - **CUMULUS-5033**
   - Fix bootstrap service to handle empty RDS tables

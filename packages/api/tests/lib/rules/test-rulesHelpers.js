@@ -55,6 +55,7 @@ const {
   createRuleTrigger,
   deleteRuleResources,
   updateRuleTrigger,
+  filterRulesByRuleParams,
 } = require('../../../lib/rulesHelpers');
 const { getSnsTriggerPermissionId } = require('../../../lib/snsRuleHelpers');
 
@@ -2524,4 +2525,49 @@ test.serial('Enabling a disabled SNS rule and passing rule.arn throws specific e
   t.teardown(() => {
     snsStub.restore();
   });
+});
+
+test('keeps rule when ruleParams is true, short-circuiting rule.meta', (t) => {
+  const rules = [{ rule: {}, provider: 'providerB', meta: { allowProviderMismatchOnRuleFilter: false } }];
+  const ruleParams = { provider: 'providerA', allowProviderMismatchOnRuleFilter: true };
+
+  const result = filterRulesByRuleParams(rules, ruleParams);
+
+  t.is(result.length, 1);
+});
+
+test('keeps rule when ruleParams is false but rule.meta is true (|| behavior)', (t) => {
+  const rules = [{ rule: {}, provider: 'providerB', meta: { allowProviderMismatchOnRuleFilter: true } }];
+  const ruleParams = { provider: 'providerA', allowProviderMismatchOnRuleFilter: false };
+
+  const result = filterRulesByRuleParams(rules, ruleParams);
+
+  t.is(result.length, 1);
+});
+
+test('filters rule when both ruleParams and rule.meta are explicitly false', (t) => {
+  const rules = [{ rule: {}, provider: 'providerB', meta: { allowProviderMismatchOnRuleFilter: false } }];
+  const ruleParams = { provider: 'providerA', allowProviderMismatchOnRuleFilter: false };
+
+  const result = filterRulesByRuleParams(rules, ruleParams);
+
+  t.is(result.length, 0);
+});
+
+test('keeps rule when ruleParams is undefined and rule.meta is true', (t) => {
+  const rules = [{ rule: {}, provider: 'providerB', meta: { allowProviderMismatchOnRuleFilter: true } }];
+  const ruleParams = { provider: 'providerA' }; // undefined flag
+
+  const result = filterRulesByRuleParams(rules, ruleParams);
+
+  t.is(result.length, 1);
+});
+
+test('filters rule when the flag is undefined in both ruleParams and rule.meta', (t) => {
+  const rules = [{ rule: {}, provider: 'providerB' }]; // no meta defined
+  const ruleParams = { provider: 'providerA' }; // no flag defined
+
+  const result = filterRulesByRuleParams(rules, ruleParams);
+
+  t.is(result.length, 0);
 });
