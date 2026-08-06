@@ -295,6 +295,7 @@ const setupDatabaseAndCMRForTests = async ({ t, params = {} }) => {
     numExtraPgCollections = randomBetween(5, 10),
     numExtraPgCollectionsOutOfRange = randomBetween(5, 10),
     numExtraCmrCollections = randomBetween(5, 10),
+    matchingCollectionsOverride,
   } = params;
 
   const startTimestamp = new Date('2020-06-01T00:00:00.000Z').getTime();
@@ -303,7 +304,7 @@ const setupDatabaseAndCMRForTests = async ({ t, params = {} }) => {
   const monthLater = moment(endTimestamp).add(1, 'month').valueOf();
 
   // Create collections that are in sync pg/CMR during the time period
-  const matchingCollections = range(numMatchingCollections).map((r) => ({
+  const matchingCollections = matchingCollectionsOverride ?? range(numMatchingCollections).map((r) => ({
     ...requiredStaticCollectionFields,
     name: randomId(`name${r}-`),
     version: randomId('vers'),
@@ -2040,3 +2041,79 @@ test.serial('Internal reconciliation report type throws an error', async (t) => 
     { message: 'Internal Reconciliation Reports are no longer valid' }
   );
 });
+
+// This is checking that a colction specific provider overrides the env cmr provider
+// showing that we properly use the getCmrSettings with the cmr_provider from the collection record
+test.serial("per-collection cmr_providers used in reconciliationReportForGranules", async (t) => {
+  const orginalProvider = process.env.cmr_provider
+  const collectionName = "test-provider-collection"
+  const collectionVersion = "001"
+  const collectionId = constructCollectionId(collectionName, collectionVersion)
+  
+  const collectionProvider = "collection_provider"
+  const envProvider = "env_provider"
+
+  process.env.cmr_provider = envProvider
+
+  // env cleanup
+  t.teardown(() => {
+    if (process.env.cmr_provider === undefined) delete process.env.cmr_provider
+    else process.env.provider = orginalProvider
+  })
+
+  const matchingCollections = [
+    {
+      ...requiredStaticCollectionFields,
+      name: collectionName,
+      version: collectionVersion,
+      cmrProvider: collectionProvider,
+      metricsProvider: 'metricsA',
+      updatedAt: Date.parse('2020-06-10T00:00:00.000Z'),
+    },
+  ];
+
+  await setupDatabaseAndCMRForTests({
+    t,
+    params: {
+      matchingCollectionsOverride: matchingCollections,
+    },
+  });
+
+  CMR.prototype.searchConcept.restore();
+  const cmrSearchStub = sinon.stub(CMR.prototype, 'searchConcept');
+  cmrSearchStub.withArgs('granules').onCall(0).resolves([]);
+
+  // need to define bucketsConfig, distributionBucketMap, recReportParams
+  await reconciliationReportForGranules({
+    collectionId: collectionId,
+    bucketsConfig: new BucketsConfig({}),
+    distributionBucketMap: {},
+    recReportParams: { knex: t.context.knex },
+  })
+
+  sinon.assert.calledWithMatch(
+    cmrSearchStub,
+    'granules',
+    sinon.match.instanceOf(URLSearchParams),
+    'umm_json',
+    false
+  );
+  const granulesCall = cmrSearchStub.getCalls().find((call) => call.args[0] === 'granules');
+  t.truthy(granulesCall);
+  t.is(granulesCall.args[1].get('provider_short_name'), collectionProvider);
+  t.not(granulesCall.args[1].get('provider_short_name'), envProvider);
+});
+
+// ensures that when we fetch collections from CMR for fetchCMRCollections we are using the cmr providers from collections
+// instead of just the basic cmr_provider from the env which is how it currently operates
+// test.serial('colection reconciliation queries to CMR use multiple providers from multiple collections and merge output',
+//   async (t) => {
+
+    // create 2 collections in fake collections DB with different providers
+    // set up the same 2 ones in CMR expecting the reconciliation to show that they are both the same 
+    // run 'CreateReconciliatonReport' function
+    // check that resulting collection comparison in the report counts reflect merged CMR results from both providers
+    // expected fail initially - merged CMR results only use 1 provider only
+//     t.true(false)
+//   }
+// )

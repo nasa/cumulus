@@ -556,7 +556,7 @@ async function reconciliationReportForGranules(params) {
       process.env.DISTRIBUTION_ENDPOINT
     );
 
-    const cmrSettings = /** @type CMRSettings */(await getCmrSettings());
+    const cmrSettings = /** @type CMRSettings */(await getCmrSettings({provider: collectionRecord.cmr_provider}));
     const searchParams = new URLSearchParams({ short_name: name, version: version, sort_key: 'granule_ur' });
     cmrGranuleSearchParams(recReportParams).forEach(([paramName, paramValue]) => {
       searchParams.append(paramName, paramValue);
