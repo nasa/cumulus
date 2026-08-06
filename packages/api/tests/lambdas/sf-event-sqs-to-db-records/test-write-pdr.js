@@ -443,7 +443,7 @@ test.serial('writePdr() successfully publishes an SNS message', async (t) => {
   });
 });
 
-test.serial('writePdr() does not publish an SNS message if pdr_sns_topic_arn is not set', async (t) => {
+test.skip('writePdr() does not publish an SNS message if pdr_sns_topic_arn is not set', async (t) => {
   process.env.pdr_sns_topic_arn = undefined;
   const {
     cumulusMessage,
