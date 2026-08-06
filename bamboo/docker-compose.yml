@@ -43,9 +43,6 @@ services:
   localstack:
     image: ministackorg/ministack:1.3.65-full
     network_mode: "service:build_env"
-    ports:
-      - "4566:4566"
-      - "4571:4571"
     environment:
       - ATHENA_ENGINE=mock
       - SERVICES=cloudformation,cloudwatch,cloudwatchlogs,dynamodb,iam,kinesis,kms,lambda,s3,secretsmanager,sns,sqs,stepfunctions,ssm,logs,athena
