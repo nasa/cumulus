@@ -81,21 +81,16 @@ echo 'HTTP service is available'
 
 $docker_command "mkdir /keys;cp $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key /keys/; chmod -R 400 /keys"
 
-# Wait for the SFTP server to be available
-while ! $docker_command "sftp \
-  -P 2222\
-  -i /keys/ssh_client_rsa_key\
-  -o 'ConnectTimeout=5'\
-  -o 'StrictHostKeyChecking=no'\
-  -o 'UserKnownHostsFile=/dev/null'\
-  -o 'PreferredAuthentications=publickey'\
-  user@127.0.0.1:/keys/ssh_client_rsa_key.pub /dev/null"; do
-  echo 'Waiting for SFTP to start'
+# Wait for the SFTP server TCP port to be open. Use a port check instead
+# of attempting publickey authentication which can hang if keys aren't
+# accepted yet by the server.
+while ! $docker_command 'nc -z 127.0.0.1 2222'; do
+  echo 'Waiting for SFTP TCP port to be available'
   docker ps -a
   check_compose_exited_and_dump
   sleep 2
 done
-echo 'SFTP service is available'
+echo 'SFTP TCP port is open'
 
 # Wait for the Elasticsearch service to be available
 while ! $docker_command  'nc -z 127.0.0.1 9200'; do
