@@ -12,6 +12,22 @@ export COMPOSE_FILE=./bamboo/docker-compose.yml
 ## Set container_id for docker compose to use to identify the compose stack per planKey
 docker_command="docker exec -t ${container_id}-build_env-1 /bin/bash -c"
 
+# Helper: if any compose container has Exited/Dead status, dump logs and exit
+check_compose_exited_and_dump() {
+  # List containers in this compose project with name|status|id
+  local exited
+  exited=$(docker ps -a --filter "label=com.docker.compose.project=${container_id}" --format '{{.Names}}|{{.Status}}|{{.ID}}' | grep -E 'Exited|Dead' || true)
+  if [ -n "$exited" ]; then
+    echo "One or more compose containers have exited or died; dumping status and logs"
+    docker ps -a
+    while IFS='|' read -r name status id; do
+      echo "==== Logs for $name ($id) - status: $status ===="
+      docker logs --tail 500 "$id" || true
+    done <<< "$exited"
+    exit 1
+  fi
+}
+
 docker ps -a
 
 echo 'Removing running docker containers...'
@@ -26,9 +42,11 @@ docker compose -p ${container_id} rm -f
 docker compose -p ${container_id} up -d
 
 docker ps -a
+check_compose_exited_and_dump
 while ! docker container inspect ${container_id}-build_env-1; do
   echo 'Waiting for build env to be available';
   docker ps -a
+  check_compose_exited_and_dump
   sleep 5;
 done
 
@@ -47,6 +65,7 @@ $docker_command "cd $UNIT_TEST_BUILD_DIR; npm run install-python-deps"
 while ! $docker_command  'curl --connect-timeout 5 -sS -o /dev/null ftp://testuser:testpass@127.0.0.1/README.md'; do
   echo 'Waiting for FTP to start'
   docker ps -a
+  check_compose_exited_and_dump
   sleep 2
 done
 echo 'FTP service is available'
@@ -55,31 +74,29 @@ echo 'FTP service is available'
 while ! $docker_command  'curl --connect-timeout 5 -sS -o /dev/null http://127.0.0.1:3030/README.md'; do
   echo 'Waiting for HTTP to start'
   docker ps -a
+  check_compose_exited_and_dump
   sleep 2
 done
 echo 'HTTP service is available'
 
 $docker_command "mkdir /keys;cp $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key /keys/; chmod -R 400 /keys"
 
-# Wait for the SFTP server to be available
-while ! $docker_command "sftp \
-  -P 2222\
-  -i /keys/ssh_client_rsa_key\
-  -o 'ConnectTimeout=5'\
-  -o 'StrictHostKeyChecking=no'\
-  -o 'UserKnownHostsFile=/dev/null'\
-  -o 'PreferredAuthentications=publickey'\
-  user@127.0.0.1:/keys/ssh_client_rsa_key.pub /dev/null"; do
-  echo 'Waiting for SFTP to start'
+# Wait for the SFTP server TCP port to be open. Use a port check instead
+# of attempting publickey authentication which can hang if keys aren't
+# accepted yet by the server.
+while ! $docker_command 'nc -z 127.0.0.1 2222'; do
+  echo 'Waiting for SFTP TCP port to be available'
   docker ps -a
+  check_compose_exited_and_dump
   sleep 2
 done
-echo 'SFTP service is available'
+echo 'SFTP TCP port is open'
 
 # Wait for the Elasticsearch service to be available
 while ! $docker_command  'nc -z 127.0.0.1 9200'; do
   echo 'Waiting for Elasticsearch to start'
   docker ps -a
+  check_compose_exited_and_dump
   sleep 2
 done
 echo 'Elasticsearch service is started'
@@ -97,6 +114,7 @@ $docker_command "curl -XPUT 'http://127.0.0.1:9200/_cluster/settings' -d \@/$UNI
 while ! $docker_command 'nc -z 127.0.0.1 4566'; do
   echo 'Waiting for Localstack Lambda service to start'
   docker ps -a
+  check_compose_exited_and_dump
   sleep 2
 done
 echo 'Localstack Lambda service is started'

@@ -1,4 +1,6 @@
 #!/bin/bash
+echo 'bootstrap-sftp.sh start'
+
 set -e
 echo 'user:password' | chpasswd
 
@@ -12,4 +14,6 @@ if [[ $CI = true ]]; then
 fi
 chgrp user /data/granules
 chmod 775 /data/granules
-/usr/sbin/sshd -D -f /etc/ssh/sshd_config
+/usr/sbin/sshd -D -ddd -f /etc/ssh/sshd_config
+
+echo 'bootstrap-sftp.sh end'
