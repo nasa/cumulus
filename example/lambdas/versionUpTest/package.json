@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/test-version-up",
-  "version": "22.3.3",
+  "version": "22.3.4",
   "description": "Version Up Test Lambda",
   "main": "index.js",
   "private": true,
