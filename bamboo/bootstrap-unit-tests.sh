@@ -59,7 +59,7 @@ while ! $docker_command  'curl --connect-timeout 5 -sS -o /dev/null http://127.0
 done
 echo 'HTTP service is available'
 
-$docker_command "mkdir /keys;cp $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key /keys/; chmod -R 400 /keys"
+$docker_command "mkdir /keys;cp $UNIT_TEST_BUILD_DIR/packages/test-data/keys/ssh_client_rsa_key /keys/; chmod -R 600 /keys"
 
 # Wait for the SFTP server to be available
 while ! $docker_command "sftp \
@@ -75,6 +75,8 @@ while ! $docker_command "sftp \
   sleep 2
 done
 echo 'SFTP service is available'
+
+docker ps -a
 
 # Wait for the Elasticsearch service to be available
 while ! $docker_command  'nc -z 127.0.0.1 9200'; do

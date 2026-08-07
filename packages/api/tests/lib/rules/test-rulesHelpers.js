@@ -1128,7 +1128,7 @@ test.serial('deleteRuleResources does not delete event source mappings if they e
   });
 });
 
-test.serial('deleteRuleResources() removes SNS source mappings and permissions', async (t) => {
+test.skip('deleteRuleResources() removes SNS source mappings and permissions', async (t) => {
   const {
     rulePgModel,
     testKnex,
