@@ -52,7 +52,10 @@ const {
   fakeOrcaGranuleFactory,
 } = require('../../lib/testUtils');
 const {
-  handler: unwrappedHandler, reconciliationReportForGranules, reconciliationReportForGranuleFiles,
+  handler: unwrappedHandler,
+  reconciliationReportForGranules,
+  reconciliationReportForGranuleFiles,
+  reconciliationReportForCollections,
 } = require('../../lambdas/create-reconciliation-report');
 const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEvent');
 const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
@@ -2051,8 +2054,8 @@ test.serial("per-collection cmr_providers used in reconciliationReportForGranule
   const collectionId = constructCollectionId(collectionName, collectionVersion)
   
   const collectionProvider = "collection_provider"
+  
   const envProvider = "env_provider"
-
   process.env.cmr_provider = envProvider
 
   // env cleanup
@@ -2106,14 +2109,87 @@ test.serial("per-collection cmr_providers used in reconciliationReportForGranule
 
 // ensures that when we fetch collections from CMR for fetchCMRCollections we are using the cmr providers from collections
 // instead of just the basic cmr_provider from the env which is how it currently operates
-// test.serial('colection reconciliation queries to CMR use multiple providers from multiple collections and merge output',
-//   async (t) => {
+test.serial(
+  "queries to CMR in CreateReconciliatonReportforCollections use multiple providers from multiple collections and merge output",
+  async (t) => {
+    const originalProvider = process.env.cmr_provider;
 
-    // create 2 collections in fake collections DB with different providers
-    // set up the same 2 ones in CMR expecting the reconciliation to show that they are both the same 
-    // run 'CreateReconciliatonReport' function
-    // check that resulting collection comparison in the report counts reflect merged CMR results from both providers
-    // expected fail initially - merged CMR results only use 1 provider only
-//     t.true(false)
-//   }
-// )
+    const envProvider = 'env-provider';
+    process.env.cmr_provider = envProvider;
+
+     // env cleanup
+    t.teardown(() => {
+      if (originalProvider === undefined) delete process.env.cmr_provider;
+      else process.env.cmr_provider = originalProvider;
+    });
+
+    const matchingCollections = [
+      {
+        ...requiredStaticCollectionFields,
+        name: 'test-collection',
+        version: "001",
+        cmrProvider: 'fake-provider',
+        metricsProvider: 'metricsA',
+        updatedAt: Date.parse('2020-06-10T00:00:00.000Z'),
+      },
+      {
+        ...requiredStaticCollectionFields,
+        name: 'another-test-collection',
+        version: "001",
+        cmrProvider: 'another-fake-provider',
+        metricsProvider: 'metricsA',
+        updatedAt: Date.parse('2020-06-10T00:00:00.000Z'),
+      },
+    ];
+
+    await setupDatabaseAndCMRForTests({
+      t,
+      params: {
+        matchingCollectionsOverride: matchingCollections,
+      },
+    });
+
+    CMR.prototype.searchConcept.restore();
+    const cmrSearchStub = sinon.stub(CMR.prototype, 'searchConcept');
+    const seenProviders = new Set();
+    cmrSearchStub.callsFake(async (type, params) => {
+      if (type !== 'collections') return [];
+
+      const provider = params.get('provider_short_name');
+
+      // CMRSearchConceptQueue paginates until it receives an empty array back,
+      // so each provider must only return results on its first page request.
+      if (seenProviders.has(provider)) return [];
+      seenProviders.add(provider);
+
+      if (provider === 'fake-provider') {
+        return [{ umm: { ShortName: 'test-collection', Version: '001' } }];
+      }
+      if (provider === 'another-fake-provider') {
+        return [{ umm: { ShortName: 'another-test-collection', Version: '001' } }];
+      }
+      return [];
+    });
+
+    const collectionReport = await reconciliationReportForCollections({ knex: t.context.knex });
+
+    sinon.assert.calledWithMatch(
+      cmrSearchStub,
+      'collections',
+      sinon.match.instanceOf(URLSearchParams),
+      'umm_json',
+      false
+    );
+
+    const queriedProviders = cmrSearchStub.getCalls()
+      .filter((call) => call.args[0] === 'collections')
+      .map((call) => call.args[1].get('provider_short_name'));
+
+    // Expected future behavior: query CMR once per collection provider and merge results.
+    t.true(queriedProviders.includes('fake-provider'));
+    t.true(queriedProviders.includes('another-fake-provider'));
+    t.is(collectionReport.okCollections.length, 2);
+    t.deepEqual(collectionReport.onlyInCumulus, []);
+    t.deepEqual(collectionReport.onlyInCmr, []);
+  }
+)

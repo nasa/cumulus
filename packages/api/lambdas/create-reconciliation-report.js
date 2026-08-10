@@ -130,6 +130,35 @@ function isOneWayGranuleReport(reportParams) {
 }
 
 /**
+ * Helper function that takes a provider and queries CMR for collections associated 
+ * with that provider
+ * @param {string} provider 
+ * @returns collectionIDs in CMR associated with that provider
+ */
+async function queryCMRForCollectionsByProvider(provider) {
+  const providerCollectionIds = [];
+  const cmrSettings = await getCmrSettings({ provider });
+  const cmrCollectionsIterator = /** @type {CMRSearchConceptQueue<CMRCollectionItem>} */(
+      new CMRSearchConceptQueue({
+        cmrSettings,
+        provider: cmrSettings.provider,
+        type: 'collections',
+        format: 'umm_json',
+      }));
+
+    let nextCmrItem = await cmrCollectionsIterator.shift();
+    while (nextCmrItem) {
+      providerCollectionIds.push(
+        constructCollectionId(nextCmrItem.umm.ShortName, nextCmrItem.umm.Version)
+      );
+      nextCmrItem
+        // eslint-disable-next-line no-await-in-loop
+        = /** @type {CMRCollectionItem | null} */ (await cmrCollectionsIterator.shift());
+    }
+    return providerCollectionIds
+}
+
+/**
  * Fetches collections from the CMR (Common Metadata Repository) and returns their IDs.
  *
  * @param {EnhancedNormalizedRecReportParams} recReportParams - The parameters for the function.
@@ -138,29 +167,19 @@ function isOneWayGranuleReport(reportParams) {
  * @example
  * await fetchCMRCollections({ collectionIds: ['COLLECTION_1', 'COLLECTION_2'] });
  */
-async function fetchCMRCollections({ collectionIds }) {
-  const cmrSettings = await getCmrSettings();
-  const cmrCollectionsIterator = /** @type {CMRSearchConceptQueue<CMRCollectionItem>} */(
-    new CMRSearchConceptQueue({
-      cmrSettings,
-      provider: cmrSettings.provider,
-      type: 'collections',
-      format: 'umm_json',
-    }));
+async function fetchCMRCollections({ collectionIds, providers }) {
+  log.debug(providers)
+  let providerList = [...new Set((providers ?? []).filter(Boolean))];
 
-  const allCmrCollectionIds = [];
-  let nextCmrItem = await cmrCollectionsIterator.shift();
-  while (nextCmrItem) {
-    allCmrCollectionIds.push(
-      constructCollectionId(nextCmrItem.umm.ShortName, nextCmrItem.umm.Version)
-    );
-    nextCmrItem
-      // eslint-disable-next-line no-await-in-loop
-      = /** @type {CMRCollectionItem | null} */ (await cmrCollectionsIterator.shift());
+  if (providerList.length === 0) {
+    const defaultSettings = await getCmrSettings();
+    providerList = [defaultSettings.provider];
   }
+  const perProviderResults = await Promise.all(
+    providerList.map(async (provider) => queryCMRForCollectionsByProvider(provider))
+  )
 
-  const cmrCollectionIds = allCmrCollectionIds.sort();
-
+  const cmrCollectionIds = perProviderResults.flat().sort()
   if (!collectionIds) return cmrCollectionIds;
   return cmrCollectionIds.filter((item) => collectionIds.includes(item));
 }
@@ -170,7 +189,8 @@ async function fetchCMRCollections({ collectionIds }) {
  *
  * @param {EnhancedNormalizedRecReportParams} recReportParams - The reconciliation
  * report parameters.
- * @returns {Promise<string[]>} A promise that resolves to an array of collection IDs.
+ * @returns {Promise< { collectionIds: string[], providers: string[] }>} A promise
+ * that resolves to an array of collection IDs and provider names
  */
 async function fetchDbCollections(recReportParams) {
   const {
@@ -181,12 +201,18 @@ async function fetchDbCollections(recReportParams) {
     providers,
     startTimestamp,
   } = recReportParams;
+  const dbCollectionIds = [];
+  const dbCollectionProviders = [];
+
   if (providers || granuleIds || startTimestamp || endTimestamp) {
     const filteredDbCollections = await getUniqueCollectionsByGranuleFilter({
       ...recReportParams,
     });
-    return filteredDbCollections.map((collection) =>
-      constructCollectionId(collection.name, collection.version));
+    for (const collection of filteredDbCollections) {
+      dbCollectionIds.push(constructCollectionId(collection.name, collection.version));
+      dbCollectionProviders.push(collection.cmr_provider);
+    }
+    return { collectionIds: dbCollectionIds, providers: dbCollectionProviders };
   }
 
   const queryStringParameters = removeNilProperties({
@@ -200,9 +226,14 @@ async function fetchDbCollections(recReportParams) {
     queryStringParameters: { ...queryStringParameters, limit: 'null' },
   }).query(knex);
   const dbCollections = searchResponse.results;
-  return dbCollections.map((collection) =>
-    constructCollectionId(collection.name, collection.version));
-}
+  
+  for (const collection of dbCollections) {
+    dbCollectionIds.push(constructCollectionId(collection.name, collection.version));
+    dbCollectionProviders.push(collection.cmr_provider);
+  }
+
+    return { collectionIds: dbCollectionIds, providers: dbCollectionProviders };
+  }
 
 /**
  * Verify that all objects in an S3 bucket contain corresponding entries in
@@ -336,8 +367,14 @@ async function reconciliationReportForCollections(recReportParams) {
     // get all collections from CMR and sort them, since CMR query doesn't support
     // 'Version' as sort_key
     log.debug('Fetching collections from CMR.');
-    const cmrCollectionIds = (await fetchCMRCollections(recReportParams)).sort();
-    const dbCollectionIds = (await fetchDbCollections(recReportParams)).sort();
+    // fix for cumulus 4541 - need to get relevant prodivers from the collections call - maybe just extract and return those as well
+    // and pass those providers into fetchCMRCollections
+
+    const {collectionIds: dbCollectionIds, providers} = (await fetchDbCollections(recReportParams));
+
+    dbCollectionIds.sort()
+    const uniqueProviders = [...new Set(providers.filter(Boolean))];
+    const cmrCollectionIds = (await fetchCMRCollections({...recReportParams, providers: uniqueProviders})).sort();
 
     log.info(`Comparing ${cmrCollectionIds.length} CMR collections to ${dbCollectionIds.length} PostgreSQL collections`);
 
@@ -698,6 +735,7 @@ async function reconciliationReportForGranules(params) {
 }
 // export for testing
 exports.reconciliationReportForGranules = reconciliationReportForGranules;
+exports.reconciliationReportForCollections = reconciliationReportForCollections;
 
 /**
  * Compare the holdings in CMR with Cumulus' internal data store, report any discrepancies
