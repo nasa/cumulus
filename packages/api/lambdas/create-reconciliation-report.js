@@ -10,6 +10,7 @@ const camelCase = require('lodash/camelCase');
 const moment = require('moment');
 
 const { buildS3Uri, getJsonS3Object } = require('@cumulus/aws-client/S3');
+const { CMR } = require('@cumulus/cmr-client');
 const S3ListObjectsV2Queue = require('@cumulus/aws-client/S3ListObjectsV2Queue');
 const { s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
@@ -159,16 +160,43 @@ async function queryCMRForCollectionsByProvider(provider) {
 }
 
 /**
- * Fetches collections from the CMR (Common Metadata Repository) and returns their IDs.
+ * Fetches all available collections from the CMR (Common Metadata Repository) and returns their IDs.
  *
  * @param {EnhancedNormalizedRecReportParams} recReportParams - The parameters for the function.
  * @returns {Promise<string[]>} A promise that resolves to an array of collection IDs from the CMR.
  *
  * @example
- * await fetchCMRCollections({ collectionIds: ['COLLECTION_1', 'COLLECTION_2'] });
+ * await fetchCMRCollectionsForAllCollections({ collectionIds: ['COLLECTION_1', 'COLLECTION_2'] });
  */
-async function fetchCMRCollections({ collectionIds, providers }) {
-  log.debug(providers)
+async function fetchCMRCollectionsForAllCollections({ collectionIds }) {
+  const cmrSettings = await getCmrSettings();
+  const cmrClient = CMR.getInstance(cmrSettings);
+
+  const cmrCollections = await cmrClient.searchConcept(
+    'collections',
+    new URLSearchParams(),
+    'umm_json'
+  );
+  
+  const cmrCollectionIds = cmrCollections
+    .map((collection) =>
+      constructCollectionId(collection.umm.ShortName, collection.umm.Version))
+    .sort();
+
+  if (!collectionIds) return cmrCollectionIds;
+  return cmrCollectionIds.filter((item) => collectionIds.includes(item));
+}
+
+/**
+ * Placeholder for the one-way CMR collection query path.
+ *
+ * This keeps the reconciliation flow explicit without changing current behavior yet.
+ *
+ * @param {EnhancedNormalizedRecReportParams} recReportParams - The reconciliation
+ * report parameters.
+ * @returns {Promise<string[]>} A promise that resolves to an array of collection IDs from the CMR.
+ */
+async function fetchCMRCollectionsForOneWayReport({collectionIds, providers}) {
   let providerList = [...new Set((providers ?? []).filter(Boolean))];
 
   if (providerList.length === 0) {
@@ -182,6 +210,19 @@ async function fetchCMRCollections({ collectionIds, providers }) {
   const cmrCollectionIds = perProviderResults.flat().sort()
   if (!collectionIds) return cmrCollectionIds;
   return cmrCollectionIds.filter((item) => collectionIds.includes(item));
+}
+
+/**
+ * Chooses the CMR collection query path used by reconciliation reports.
+ *
+ * @param {EnhancedNormalizedRecReportParams} recReportParams - The reconciliation
+ * report parameters.
+ * @returns {Promise<string[]>} A promise that resolves to an array of collection IDs from the CMR.
+ */
+async function fetchCMRCollections(recReportParams) {
+  return isOneWayCollectionReport(recReportParams)
+    ? fetchCMRCollectionsForOneWayReport(recReportParams)
+    : fetchCMRCollectionsForAllCollections(recReportParams);
 }
 
 /**
@@ -226,7 +267,7 @@ async function fetchDbCollections(recReportParams) {
     queryStringParameters: { ...queryStringParameters, limit: 'null' },
   }).query(knex);
   const dbCollections = searchResponse.results;
-  
+
   for (const collection of dbCollections) {
     dbCollectionIds.push(constructCollectionId(collection.name, collection.version));
     dbCollectionProviders.push(collection.cmr_provider);
@@ -234,6 +275,8 @@ async function fetchDbCollections(recReportParams) {
 
     return { collectionIds: dbCollectionIds, providers: dbCollectionProviders };
   }
+
+
 
 /**
  * Verify that all objects in an S3 bucket contain corresponding entries in
@@ -364,17 +407,14 @@ async function reconciliationReportForCollections(recReportParams) {
   let collectionsOnlyInCmr = [];
 
   try {
-    // get all collections from CMR and sort them, since CMR query doesn't support
-    // 'Version' as sort_key
-    log.debug('Fetching collections from CMR.');
-    // fix for cumulus 4541 - need to get relevant prodivers from the collections call - maybe just extract and return those as well
-    // and pass those providers into fetchCMRCollections
 
     const {collectionIds: dbCollectionIds, providers} = (await fetchDbCollections(recReportParams));
-
     dbCollectionIds.sort()
     const uniqueProviders = [...new Set(providers.filter(Boolean))];
-    const cmrCollectionIds = (await fetchCMRCollections({...recReportParams, providers: uniqueProviders})).sort();
+    const cmrCollectionIds = (await fetchCMRCollections({
+      ...recReportParams, 
+      ...(oneWayReport ? {providers: uniqueProviders} : {})
+    })).sort();
 
     log.info(`Comparing ${cmrCollectionIds.length} CMR collections to ${dbCollectionIds.length} PostgreSQL collections`);
 
