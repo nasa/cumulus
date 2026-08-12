@@ -5,9 +5,6 @@ apt-get update
 apt-get install -y python3-pip
 pip install awscli
 
-echo "force unlock dev stack"
-../terraform force-unlock -force 06d0d1bc-f3cf-eb36-1975-9cd0e05011b9
-
 TF_VERSION=$(cat .tfversion)
 # Fetch terraform binary
 if ! curl -o terraform_${TF_VERSION}_linux_amd64.zip https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip ; then
