@@ -45,8 +45,10 @@ services:
     image: ministackorg/ministack:1.3.65
     network_mode: "service:build_env"
     environment:
-      SERVICES: "cloudformation,cloudwatch,cloudwatchlogs,dynamodb,iam,kinesis,kms,lambda,s3,secretsmanager,sns,sqs,stepfunctions,ssm,logs"
+      SERVICES: "cloudformation,monitoring,logs,dynamodb,iam,kinesis,kms,lambda,s3,secretsmanager,sns,sqs,stepfunctions,ssm"
       ATHENA_ENGINE: "mock"
+      LOG_LEVEL: "DEBUG"
+      SFTP_PORT_PER_SERVER: "1"
 
   build_env:
     image: $CUMULUS_BASE_IMAGE
