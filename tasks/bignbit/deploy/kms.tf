@@ -7,8 +7,8 @@ resource "aws_kms_key" "bignbit_parameter_key" {
 data "aws_iam_policy_document" "bignbit_parameter_key_policy" {
   # Allow deployment users to manage the key
   statement {
-    effect    = "Allow"
-    actions   = [
+    effect = "Allow"
+    actions = [
       "kms:Create*",
       "kms:Describe*",
       "kms:Enable*",
@@ -27,7 +27,7 @@ data "aws_iam_policy_document" "bignbit_parameter_key_policy" {
     ]
 
     principals {
-      type        = "AWS"
+      type = "AWS"
       identifiers = [
         "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/NGAPAdmin",
         "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/NGAPShApplicationDeveloper"
@@ -37,8 +37,8 @@ data "aws_iam_policy_document" "bignbit_parameter_key_policy" {
 
   # Allow BigNBit roles to use the key (but not manage it)
   statement {
-    effect    = "Allow"
-    actions   = [
+    effect = "Allow"
+    actions = [
       "kms:Decrypt",
       "kms:Encrypt",
       "kms:GenerateDataKey"
@@ -48,7 +48,7 @@ data "aws_iam_policy_document" "bignbit_parameter_key_policy" {
     ]
 
     principals {
-      type        = "AWS"
+      type = "AWS"
       identifiers = [
         module.bignbit.bignbit_lambda_role.arn
       ]

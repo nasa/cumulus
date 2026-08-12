@@ -131,38 +131,38 @@ function isOneWayGranuleReport(reportParams) {
 }
 
 /**
- * Helper function that takes a provider and queries CMR for collections associated 
+ * Helper function that takes a provider and queries CMR for collections associated
  * with that provider
- * @param {string} provider 
+ * @param {string} provider
  * @returns collectionIDs in CMR associated with that provider
  */
 async function queryCMRForCollectionsByProvider(provider) {
   const providerCollectionIds = [];
   const cmrSettings = await getCmrSettings({ provider });
   const cmrCollectionsIterator = /** @type {CMRSearchConceptQueue<CMRCollectionItem>} */(
-      new CMRSearchConceptQueue({
-        cmrSettings,
-        provider: cmrSettings.provider,
-        type: 'collections',
-        format: 'umm_json',
-      }));
+    new CMRSearchConceptQueue({
+      cmrSettings,
+      provider: cmrSettings.provider,
+      type: 'collections',
+      format: 'umm_json',
+    }));
 
-    let nextCmrItem = await cmrCollectionsIterator.shift();
-    while (nextCmrItem) {
-      providerCollectionIds.push(
-        constructCollectionId(nextCmrItem.umm.ShortName, nextCmrItem.umm.Version)
-      );
-      nextCmrItem
+  let nextCmrItem = await cmrCollectionsIterator.shift();
+  while (nextCmrItem) {
+    providerCollectionIds.push(
+      constructCollectionId(nextCmrItem.umm.ShortName, nextCmrItem.umm.Version)
+    );
+    nextCmrItem
         // eslint-disable-next-line no-await-in-loop
         = /** @type {CMRCollectionItem | null} */ (await cmrCollectionsIterator.shift());
-    }
-    return providerCollectionIds
+  }
+  return providerCollectionIds;
 }
 
 /**
- * Fetches all available collections from the CMR (Common Metadata Repository) and returns their IDs.
+ * Fetches all available collections from the CMR and returns their IDs.
  *
- * @param {EnhancedNormalizedRecReportParams} recReportParams - The parameters for the function.
+ * @param {EnhancedNormalizedRecReportParams} recReportParams
  * @returns {Promise<string[]>} A promise that resolves to an array of collection IDs from the CMR.
  *
  * @example
@@ -177,7 +177,7 @@ async function fetchCMRCollectionsForAllCollections({ collectionIds }) {
     new URLSearchParams(),
     'umm_json'
   );
-  
+
   const cmrCollectionIds = cmrCollections
     .map((collection) =>
       constructCollectionId(collection.umm.ShortName, collection.umm.Version))
@@ -196,7 +196,7 @@ async function fetchCMRCollectionsForAllCollections({ collectionIds }) {
  * report parameters.
  * @returns {Promise<string[]>} A promise that resolves to an array of collection IDs from the CMR.
  */
-async function fetchCMRCollectionsForOneWayReport({collectionIds, providers}) {
+async function fetchCMRCollectionsForOneWayReport({ collectionIds, providers }) {
   let providerList = [...new Set((providers ?? []).filter(Boolean))];
 
   if (providerList.length === 0) {
@@ -204,22 +204,24 @@ async function fetchCMRCollectionsForOneWayReport({collectionIds, providers}) {
     providerList = [defaultSettings.provider];
   }
   const perProviderResults = await Promise.all(
-    providerList.map(async (provider) => queryCMRForCollectionsByProvider(provider))
-  )
+    providerList.map((provider) => queryCMRForCollectionsByProvider(provider))
+  );
 
-  const cmrCollectionIds = perProviderResults.flat().sort()
+  const cmrCollectionIds = perProviderResults.flat().sort();
   if (!collectionIds) return cmrCollectionIds;
   return cmrCollectionIds.filter((item) => collectionIds.includes(item));
 }
 
 /**
  * Chooses the CMR collection query path used by reconciliation reports.
+ * One way or 2 way.  2 way results in a global collections call to CMR
+ * which is avoided if possible in the one way path
  *
  * @param {EnhancedNormalizedRecReportParams} recReportParams - The reconciliation
  * report parameters.
  * @returns {Promise<string[]>} A promise that resolves to an array of collection IDs from the CMR.
  */
-async function fetchCMRCollections(recReportParams) {
+function fetchCMRCollections(recReportParams) {
   return isOneWayCollectionReport(recReportParams)
     ? fetchCMRCollectionsForOneWayReport(recReportParams)
     : fetchCMRCollectionsForAllCollections(recReportParams);
@@ -273,10 +275,8 @@ async function fetchDbCollections(recReportParams) {
     dbCollectionProviders.push(collection.cmr_provider);
   }
 
-    return { collectionIds: dbCollectionIds, providers: dbCollectionProviders };
-  }
-
-
+  return { collectionIds: dbCollectionIds, providers: dbCollectionProviders };
+}
 
 /**
  * Verify that all objects in an S3 bucket contain corresponding entries in
@@ -400,20 +400,20 @@ async function reconciliationReportForCollections(recReportParams) {
   //   Report collections only in CUMULUS
   log.info(`reconciliationReportForCollections (${JSON.stringify(recReportParams)})`);
   const oneWayReport = isOneWayCollectionReport(recReportParams);
-  log.debug(`Creating one way report: ${oneWayReport}`);
 
   const okCollections = [];
   let collectionsOnlyInCumulus = [];
   let collectionsOnlyInCmr = [];
 
   try {
-
-    const {collectionIds: dbCollectionIds, providers} = (await fetchDbCollections(recReportParams));
-    dbCollectionIds.sort()
+    const { collectionIds: dbCollectionIds, providers } = (
+      await fetchDbCollections(recReportParams)
+    );
+    dbCollectionIds.sort();
     const uniqueProviders = [...new Set(providers.filter(Boolean))];
     const cmrCollectionIds = (await fetchCMRCollections({
-      ...recReportParams, 
-      ...(oneWayReport ? {providers: uniqueProviders} : {})
+      ...recReportParams,
+      ...(oneWayReport ? { providers: uniqueProviders } : {}),
     })).sort();
 
     log.info(`Comparing ${cmrCollectionIds.length} CMR collections to ${dbCollectionIds.length} PostgreSQL collections`);
@@ -633,7 +633,9 @@ async function reconciliationReportForGranules(params) {
       process.env.DISTRIBUTION_ENDPOINT
     );
 
-    const cmrSettings = /** @type CMRSettings */(await getCmrSettings({provider: collectionRecord.cmr_provider}));
+    const cmrSettings = /** @type CMRSettings */(await getCmrSettings(
+      { provider: collectionRecord.cmr_provider }
+    ));
     const searchParams = new URLSearchParams({ short_name: name, version: version, sort_key: 'granule_ur' });
     cmrGranuleSearchParams(recReportParams).forEach(([paramName, paramValue]) => {
       searchParams.append(paramName, paramValue);
