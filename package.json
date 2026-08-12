@@ -147,7 +147,7 @@
     "jasmine": "^3.1.0",
     "jasmine-console-reporter": "^2.0.1",
     "jasmine-reporters": "^2.3.2",
-    "js-yaml": "^3.13.1",
+    "js-yaml": "^3.15.1",
     "jsdoc-to-markdown": "7.1.1",
     "latest-version": "^9.0.0",
     "lerna": "^9.0.5",

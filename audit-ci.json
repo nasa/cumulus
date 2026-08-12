@@ -5,6 +5,7 @@
   "allowlist": [
     "GHSA-3jxr-9vmj-r5cp",
     "GHSA-mh99-v99m-4gvg",
-    "GHSA-52cp-r559-cp3m"
+    "GHSA-52cp-r559-cp3m",
+    "GHSA-rgw5-rvv9-x895"
   ]
 }

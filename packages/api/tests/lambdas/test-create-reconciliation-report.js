@@ -2273,7 +2273,7 @@ test.serial(
       'umm_json',
       false
     );
-    console.log(`test collectionReport: ${JSON.stringify(collectionReport, null, 2)}`);
+
     const queriedProviders = cmrSearchStub.getCalls()
       .filter((call) => call.args[0] === 'collections')
       .map((call) => call.args[1].get('provider_short_name'));

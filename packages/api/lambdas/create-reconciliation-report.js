@@ -134,7 +134,7 @@ function isOneWayGranuleReport(reportParams) {
  * Helper function that takes a provider and queries CMR for collections associated
  * with that provider
  * @param {string} provider
- * @returns collectionIDs in CMR associated with that provider
+ * @returns {string[]} collectionIDs in CMR associated with that provider
  */
 async function queryCMRForCollectionsByProvider(provider) {
   const providerCollectionIds = [];
@@ -161,7 +161,10 @@ async function queryCMRForCollectionsByProvider(provider) {
 
 /**
  * Fetches all available collections from the CMR and returns their IDs.
- *
+ * Intended for use when we need to find providers only in CMR
+ * An optional input allows users to filter these to only return desired collectionIDs 
+ * if they are present in CMR
+ * 
  * @param {EnhancedNormalizedRecReportParams} recReportParams
  * @returns {Promise<string[]>} A promise that resolves to an array of collection IDs from the CMR.
  *
@@ -188,9 +191,8 @@ async function fetchCMRCollectionsForAllCollections({ collectionIds }) {
 }
 
 /**
- * Placeholder for the one-way CMR collection query path.
- *
- * This keeps the reconciliation flow explicit without changing current behavior yet.
+ * Retrieve collections from CMR by filtering on provider if provided
+ * Passes cmr provider into the CMR search
  *
  * @param {EnhancedNormalizedRecReportParams} recReportParams - The reconciliation
  * report parameters.
@@ -406,10 +408,11 @@ async function reconciliationReportForCollections(recReportParams) {
   let collectionsOnlyInCmr = [];
 
   try {
-    const { collectionIds: dbCollectionIds, providers } = (
+    const { collectionIds: dbCollectionIds, providers: providers } = (
       await fetchDbCollections(recReportParams)
     );
     dbCollectionIds.sort();
+
     const uniqueProviders = [...new Set(providers.filter(Boolean))];
     const cmrCollectionIds = (await fetchCMRCollections({
       ...recReportParams,

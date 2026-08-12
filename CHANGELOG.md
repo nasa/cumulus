@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-4511**
+  - Enable reconciliaton reports to use collection provided cmr_provider when necessary
+
 - **CUMULUS-5217**
   - Fix Iceberg API image build failure in github workflow
 
