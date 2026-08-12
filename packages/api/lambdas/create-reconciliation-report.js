@@ -408,7 +408,7 @@ async function reconciliationReportForCollections(recReportParams) {
   let collectionsOnlyInCmr = [];
 
   try {
-    const { collectionIds: dbCollectionIds, providers: providers } = (
+    const { collectionIds: dbCollectionIds, providers } = (
       await fetchDbCollections(recReportParams)
     );
     dbCollectionIds.sort();
