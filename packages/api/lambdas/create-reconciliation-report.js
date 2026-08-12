@@ -162,9 +162,9 @@ async function queryCMRForCollectionsByProvider(provider) {
 /**
  * Fetches all available collections from the CMR and returns their IDs.
  * Intended for use when we need to find providers only in CMR
- * An optional input allows users to filter these to only return desired collectionIDs 
+ * An optional input allows users to filter these to only return desired collectionIDs
  * if they are present in CMR
- * 
+ *
  * @param {EnhancedNormalizedRecReportParams} recReportParams
  * @returns {Promise<string[]>} A promise that resolves to an array of collection IDs from the CMR.
  *
