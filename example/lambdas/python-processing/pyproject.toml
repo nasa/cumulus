@@ -1,6 +1,6 @@
 [project]
 name = "cumulus-python-processing"
-version = "22.3.3"
+version = "22.3.4"
 description = "Python reference activity that utilizes the Cumulus Process SDK."
 requires-python = "~=3.12.0"
 
