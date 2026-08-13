@@ -186,6 +186,8 @@ async function fetchCMRCollectionsForAllCollections({ collectionIds }) {
       constructCollectionId(collection.umm.ShortName, collection.umm.Version))
     .sort();
 
+  log.info(`fetchCMRCollectionsForAllCollections: global CMR search returned ${cmrCollectionIds.length} collections; requested collectionIds filter: ${JSON.stringify(collectionIds)}`);
+
   if (!collectionIds) return cmrCollectionIds;
   return cmrCollectionIds.filter((item) => collectionIds.includes(item));
 }
