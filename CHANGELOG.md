@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **CUMULUS-5026**
+  - Fix boolean logic for allowProviderMismatch flag to handle true evaluations correctly
+
+### Changed
+
+- **CUMULUS-5217**
+  - Fix Iceberg API image build failure in github workflow
+
+- **CUMULUS-5033**
+  - Catch crashed spark server and restart for Iceberg
+
+- **CUMULUS-5112**
+  - Change Iceberg API image release tagging to be based on lerna.json update
+
 ## [v22.3.4] 2026-07-21
 
 ### Changed
