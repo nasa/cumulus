@@ -362,12 +362,15 @@ const setupDatabaseAndCMRForTests = async ({ t, params = {} }) => {
     updatedAt: randomTimeBetween(endTimestamp + 1, monthLater),
   }));
   // create extra cmr collections that fall inside of the range.
+  // Reuses a provider already known to postgres, since fetchCMRCollections only
+  // queries CMR for providers pulled from postgres, a brand new provider would
+  // never be found this way (that gap is instead caught downstream at ingestion).
   const extraCmrCollections = extraCmrCollectionsOverride ?? range(numExtraCmrCollections)
     .map((r) => ({
       ...requiredStaticCollectionFields,
       name: randomId(`extraCmr${r}-`),
       version: randomId('vers'),
-      cmrProvider: randomId('prov'),
+      cmrProvider: matchingCollections[r % matchingCollections.length].cmrProvider,
       metricsProvider: randomId('metricsProvider'),
       updatedAt: randomTimeBetween(startTimestamp, endTimestamp),
     }));
@@ -1154,12 +1157,11 @@ test.serial(
     const setupVars = await setupDatabaseAndCMRForTests({ t });
 
     const testCollection = [
-      setupVars.extraCmrCollections[3],
+      setupVars.extraCmrCollections[2],
       setupVars.matchingCollections[2],
       setupVars.extraPgCollections[1],
     ];
     const collectionId = testCollection.map((c) => constructCollectionId(c.name, c.version));
-    console.log(`testCollection: ${JSON.stringify(collectionId)}`);
 
     const event = {
       systemBucket: t.context.systemBucket,
@@ -1992,16 +1994,33 @@ test.serial('Inventory reconciliation report JSON is formatted', async (t) => {
     metricsProvider: randomId('metricsProvider'),
   }));
 
-  const cmrCollections = sortBy(matchingColls, ['name', 'version'])
-    .map((collection) => ({
-      umm: { ShortName: collection.name, Version: collection.version },
-    }));
+  const cmrCollectionsByProvider = new Map(
+    matchingColls.map((c) => [
+      c.cmrProvider, { umm: { ShortName: c.name, Version: c.version } },
+    ])
+  );
+  const testProviders = [];
+  matchingColls.map((collection) => testProviders.push(collection.cmrProvider));
 
   CMR.prototype.searchConcept.restore();
   const cmrSearchStub = sinon.stub(CMR.prototype, 'searchConcept');
-  cmrSearchStub.withArgs('collections').onCall(0).resolves(cmrCollections);
-  cmrSearchStub.withArgs('collections').onCall(1).resolves([]);
-  cmrSearchStub.withArgs('granules').resolves([]);
+  const seenProviders = new Set();
+  cmrSearchStub.callsFake((type, params) => {
+    if (type !== 'collections') return [];
+
+    const provider = params.get('provider_short_name');
+
+    // CMRSearchConceptQueue paginates until it receives an empty array back,
+    // so each provider must only return results on its first page request.
+    if (seenProviders.has(provider)) return [];
+    seenProviders.add(provider);
+
+    // dynamically make sure we return right object if a given provider is used
+    if (testProviders.includes(provider)) {
+      return [cmrCollectionsByProvider.get(provider)];
+    }
+    return [];
+  });
 
   await storeCollectionsWithGranuleToPostgres(matchingColls, t.context);
 
@@ -2143,39 +2162,6 @@ test.serial('per-collection cmr_providers used in reconciliationReportForGranule
   t.is(granulesCall.args[1].get('provider_short_name'), collectionProvider);
   t.not(granulesCall.args[1].get('provider_short_name'), envProvider);
 });
-
-test.serial(
-  '2 way reconciliaton CreateReconciliatonReportforCollections use a global call to get all CMR collections',
-  async (t) => {
-    const returnedCmrCollections = [
-      { umm: { ShortName: 'test-collection', Version: '001' } },
-      { umm: { ShortName: 'another-test-collection', Version: '001' } },
-    ];
-    CMR.prototype.searchConcept.restore();
-    const cmrSearchStub = sinon.stub(CMR.prototype, 'searchConcept');
-    cmrSearchStub.withArgs('collections').onCall(0).resolves(returnedCmrCollections);
-    cmrSearchStub.withArgs('collections').onCall(1).resolves([]);
-    cmrSearchStub.withArgs('granules').resolves([]);
-
-    await reconciliationReportForCollections({ knex: t.context.knex });
-
-    sinon.assert.calledWithMatch(
-      cmrSearchStub,
-      'collections',
-      sinon.match.instanceOf(URLSearchParams),
-      'umm_json'
-    );
-
-    const collectionCalls = cmrSearchStub.getCalls()
-      .filter((call) => call.args[0] === 'collections');
-
-    // checks we made at least 1 collections call to CMR
-    t.true(collectionCalls.length >= 1);
-
-    // verify that it's a global collections call with no provider injected
-    t.true(collectionCalls.every((call) => call.args[1].get('provider_short_name') === null));
-  }
-);
 
 // uses collection IDs pulled from PG to get providers and then query CMR by provider
 test.serial(
