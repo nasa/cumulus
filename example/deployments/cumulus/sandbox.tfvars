@@ -35,7 +35,7 @@ s3_replicator_config = {
 system_bucket = "cumulus-test-sandbox-internal"
 
 cmr_search_client_config = {
-  create_reconciliation_report_cmr_limit     = 1500
+  create_reconciliation_report_cmr_limit     = 3500
   create_reconciliation_report_cmr_page_size = 250
 }
 
