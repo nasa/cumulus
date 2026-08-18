@@ -6047,6 +6047,9 @@ included in the future will have a corresponding CHANGELOG entry in future relea
 - **CUMULUS-1808**
   - Add additional error messaging in `deleteSnsTrigger` to give users more context about where to look to resolve ResourceNotFound error when disabling or deleting a rule.
 
+- **CUMULUS-5046**
+  - Support cross account SQS queues by extracting the owner account ID from the URL and using that in validation of queues.
+
 ### Fixed
 
 - **CUMULUS-2281**
