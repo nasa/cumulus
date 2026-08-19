@@ -191,9 +191,9 @@ export const sqsQueueExists = async (queueUrl: string) => {
     throw new Error(`Unable to determine QueueName from ${queueUrl}`);
   }
 
-  const command = new GetQueueUrlCommand({
-    QueueName: QueueName ,
-    QueueOwnerAWSAccountId: QueueAccount
+  const command = new GetQueueUrlCommand({ 
+    QueueName: QueueName, 
+    QueueOwnerAWSAccountId: QueueAccount,
   });
 
   try {
