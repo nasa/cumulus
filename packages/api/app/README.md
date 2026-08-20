@@ -25,72 +25,71 @@ A separate, limited **read-only** API deployed as a **long-running ECS Fargate s
 - Deployed via Terraform as an ECS Fargate service with an Application Load Balancer
 - Only exposes read-only list endpoints:
 
-  | Endpoint | Description |
-  |---|---|
-  | `GET /version` | API version (no auth required) |
-  | `GET /granules` | List granules |
-  | `GET /collections` | List collections |
-  | `GET /executions` | List executions |
-  | `GET /providers` | List providers |
-  | `GET /pdrs` | List PDRs |
-  | `GET /rules` | List rules |
-  | `GET /async-operations` | List async operations |
-  | `GET /reconciliation-reports` | List reconciliation reports |
-  | `GET /stats` | Statistics summary |
-  | `GET /stats/aggregate/:type?` | Aggregate statistics |
+### Endpoint coverage
+
+  | Endpoint | Auth | Description |
+  |---|---|---|
+  | `GET /health` | No | Readiness/health status |
+  | `GET /version` | No | API version metadata |
+  | `GET /granules` | Yes | List granules |
+  | `GET /collections` | Yes | List collections |
+  | `GET /executions` | Yes | List executions |
+  | `GET /providers` | Yes | List providers |
+  | `GET /pdrs` | Yes | List PDRs |
+  | `GET /rules` | Yes | List rules |
+  | `GET /async-operations` | Yes | List async operations |
+  | `GET /reconciliation-reports` | Yes | List reconciliation reports |
+  | `GET /stats` | Yes | Stats summary |
+  | `GET /stats/aggregate/:type?` | Yes | Aggregate statistics |
 
   All list endpoints are also accessible under the `/v1/` prefix (e.g. `GET /v1/granules`).
 - Uses a singleton DuckDB connection pool for better performance
 
-### ECS Docker Image
+### Docker image
 
-The Iceberg API is packaged as a Docker image for ECS deployment:
+Build from repository root:
 
 ```bash
-# Build from workspace root
 docker build --platform linux/arm64 -f packages/api/app/Dockerfile -t cumulus-iceberg-api:latest .
 ```
 
-The Dockerfile automatically uses `iceberg-index.js` as the entry point. In production the image is pushed to ECR and run by ECS — `AWS_ACCOUNT_ID` and `ICEBERG_NAMESPACE` are injected as ECS task environment variables by Terraform.
+The Dockerfile hosts the Iceberg API in-container. In production the image is pushed to GHCR as part of the CICD and run by ECS. See [docs/deployment/iceberg-api.md](../../../docs/deployment/iceberg-api.md) and [tf-modules/iceberg_api/README.md](../../../tf-modules/iceberg_api/README.md) for deployment configuration.
 
----
+### Environment variables (Iceberg API)
 
-## Environment Variables (Iceberg API only)
-
-### Required
+#### Required by server startup
 
 | Variable | Description |
 |---|---|
-| `api_config_secret_id` | AWS Secrets Manager secret ARN/name containing API configuration |
-| `dynamoTableNameString` | JSON string mapping table env-var names to DynamoDB table names, e.g. `{"AccessTokensTable":"my-table"}` |
-| `AWS_ACCOUNT_ID` | AWS account ID used to attach the Glue Iceberg catalog |
-| `ICEBERG_NAMESPACE` | AWS Glue schema (database) name containing the Iceberg tables |
+| `api_config_secret_id` | Secrets Manager ARN/name containing API configuration values |
+| `dynamoTableNameString` | JSON map of DynamoDB env var names to table names, e.g. `{"AccessTokensTable":"my-table"}` |
 
-### Optional
+#### Required for Iceberg catalog access
+
+| Variable | Description |
+|---|---|
+| `AWS_ACCOUNT_ID` | AWS account ID used when attaching Glue Iceberg catalog |
+| `ICEBERG_NAMESPACE` | Glue database/schema containing Iceberg tables |
+
+#### Common optional variables
 
 | Variable | Default | Description |
 |---|---|---|
-| `PORT` | `5001` | HTTP port the server listens on |
+| `PORT` | `5001` | HTTP listen port |
+| `AWS_REGION` | `us-east-1` | AWS region for Glue/S3 access |
 | `DUCKDB_MAX_POOL_SIZE` | `3` | DuckDB connection pool size |
-| `DUCKDB_POOL_REBUILD_INTERVAL_SECONDS` | `18000` | Seconds between preemptive DuckDB idle-pool rebuilds (default 5 hours) |
-| `AWS_REGION` | `us-east-1` | AWS region |
+| `DUCKDB_POOL_REBUILD_INTERVAL_SECONDS` | `18000` | Preemptive pool rebuild interval (5 hours) |
 | `NODE_ENV` | _(unset)_ | Set to `development` to have DuckDB auto-install extensions (Mac/local use); production uses pre-bundled extensions from the Docker image |
 
-DuckDB refresh behavior is intentionally simple: idle pooled connections are rebuilt on a fixed interval (default every 5 hours), and the pool is also rebuilt on-demand when a recoverable S3 HTTP data-access error is detected during query execution.
-
----
-
-## Local Development (Iceberg API only)
+### Local Development (Iceberg API only)
 
 > **Note:** Local development applies only to the Iceberg API (`iceberg-index.js`). The main Cumulus API (`index.js`) is deployed via Lambda and is not run locally.
 
 AWS credentials must be configured in your environment (via `~/.aws`, SSO session, or env vars). The server connects to the real sandbox AWS Glue catalog.
 
-### Running Locally (Node.js)
+#### Run with Node.js
 
 ```bash
-cd packages/api
-
 NODE_ENV=development \
 api_config_secret_id=<your-secret-manager-arn> \
 dynamoTableNameString='{"AccessTokensTable":"<sandbox-table-name>"}' \
@@ -98,7 +97,7 @@ AWS_ACCOUNT_ID=<your-aws-account-id> \
 ICEBERG_NAMESPACE=<your-glue-schema> \
 AWS_REGION=us-east-1 \
 PORT=5001 \
-node app/iceberg-index.js
+node packages/api/app/iceberg-index.js
 ```
 
 Then test it (`$token` is a Cumulus API token obtained from the [`/token` endpoint](https://nasa.github.io/cumulus-api/#token) of the deployed Cumulus API):
@@ -108,47 +107,42 @@ curl http://localhost:5001/version
 curl -H "Authorization: Bearer $token" "http://localhost:5001/granules"
 ```
 
-### Running With Docker
+#### Run With Docker
 
 An `env.local.example` file is provided as a template. Copy it and fill in your values before running:
 
 ```bash
 cp packages/api/app/env.local.example packages/api/app/.env.local
 # Edit .env.local with your sandbox values
-```
 
-Then build and run:
-
-```bash
-# Build from workspace root
 docker build --platform linux/arm64 -f packages/api/app/Dockerfile -t cumulus-iceberg-api:latest .
-
-docker run --rm -p 5001:5001 \
-  --env-file packages/api/app/.env.local \
-  cumulus-iceberg-api:latest
+docker run --rm -p 5001:5001 --env-file packages/api/app/.env.local cumulus-iceberg-api:latest
 ```
 
-### Local Integration Test With AVA
+#### Local AVA integration test
 
-If you want to validate the Iceberg API locally against your AWS sandbox, run the local AVA test. The test native spawns the Node Express server directly (bypassing Docker) to allow for easier debugging and seamless CI integration.
-
-First, prepare your environment variables:
+This mirrors `bamboo/iceberg-api-integration-tests.sh` to run tests against the Sandbox environment specified in packages/api/app/.env.local:
 
 ```bash
-cp packages/api/app/env.local.example packages/api/app/.env.local
-# Edit .env.local with your sandbox values
+# load env vars from your local env file
+while IFS= read -r line; do
+  [[ -z "$line" || "$line" =~ ^# ]] && continue
+  export "$line"
+done < packages/api/app/.env.local
+
+# test-mode settings
+export PORT=5001
+export FAKE_AUTH=true
+export TOKEN_SECRET=test-secret-12345
+export NODE_ENV=test
+
+# Start Iceberg API locally
+node packages/api/app/iceberg-index.js > iceberg-server-debug.log 2>&1 &
+SERVER_PID=$!
+
+# Run the integration test
+./node_modules/.bin/ava packages/api/tests/docker/test-iceberg-api.js --timeout=5m
+
+# Cleanup
+kill $SERVER_PID
 ```
-
-Then, export the variables to your shell and run the test:
-
-```bash
-# Export the environment variables from your env file
-export $(grep -v '^#' packages/api/app/.env.local | xargs)
-
-# Run the integration test directly using AVA
-./node_modules/.bin/ava packages/api/tests/docker/test-iceberg-api.js
-```
-
-*(Note: The test automatically injects `FAKE_AUTH=true` internally to bypass DynamoDB authentication caching requirements.)*
-
-The test implementation lives in `packages/api/tests/docker/test-iceberg-api.js`.

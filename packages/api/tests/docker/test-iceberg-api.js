@@ -11,7 +11,6 @@ const REQUIRED_ENV_KEYS = [
   'AWS_ACCESS_KEY_ID',
   'AWS_SECRET_ACCESS_KEY',
   'AWS_ACCOUNT_ID',
-  'AWS_REGION',
   'api_config_secret_id',
   'dynamoTableNameString',
   'ICEBERG_NAMESPACE',
