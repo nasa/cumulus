@@ -104,8 +104,8 @@ module "bignbit" {
 data "aws_iam_policy_document" "bignbit_lambda_role_additional_policy" {
   # Allows BigNBit tasks to access encrypted secrets and SSM parameters
   statement {
-    effect  = "Allow"
-    actions = [
+    effect    = "Allow"
+    actions   = [
       "kms:Decrypt",
       "kms:GenerateDataKey"
     ]

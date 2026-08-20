@@ -7,8 +7,8 @@ resource "aws_kms_key" "bignbit_parameter_key" {
 data "aws_iam_policy_document" "bignbit_parameter_key_policy" {
   # Allow deployment users to manage the key
   statement {
-    effect  = "Allow"
-    actions = [
+    effect    = "Allow"
+    actions   = [
       "kms:Create*",
       "kms:Describe*",
       "kms:Enable*",
@@ -37,8 +37,8 @@ data "aws_iam_policy_document" "bignbit_parameter_key_policy" {
 
   # Allow BigNBit roles to use the key (but not manage it)
   statement {
-    effect  = "Allow"
-    actions = [
+    effect    = "Allow"
+    actions   = [
       "kms:Decrypt",
       "kms:Encrypt",
       "kms:GenerateDataKey"
