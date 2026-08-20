@@ -159,11 +159,16 @@ async function queryCMRForCollectionsByProvider(provider) {
 }
 
 /**
+ * @typedef {Pick<EnhancedNormalizedRecReportParams, 'collectionIds' | 'providers'>}
+ * FetchCMRCollectionsParams
+ */
+
+/**
  * Retrieve collections from CMR by filtering on provider if provided
  * Passes cmr provider into the CMR search
  *
- * @param {EnhancedNormalizedRecReportParams} recReportParams - The reconciliation
- * report parameters.
+ * @param {FetchCMRCollectionsParams} params - The reconciliation
+ * report parameters, only need collectionIds and providers.
  * @returns {Promise<string[]>} A promise that resolves to an array of collection IDs from the CMR.
  */
 async function fetchCMRCollections({ collectionIds, providers }) {
@@ -183,12 +188,12 @@ async function fetchCMRCollections({ collectionIds, providers }) {
 }
 
 /**
- * Fetches collections from the database based on the provided parameters.
+ * Fetches collections and providers from the database based on the provided parameters.
  *
  * @param {EnhancedNormalizedRecReportParams} recReportParams - The reconciliation
  * report parameters.
  * @returns {Promise< { collectionIds: string[], providers: string[] }>} A promise
- * that resolves to an array of collection IDs and provider names
+ * that resolves to an object with 2 arrays - collection IDs and provider names
  */
 async function fetchDbCollections(recReportParams) {
   const {
@@ -355,17 +360,19 @@ async function reconciliationReportForCollections(recReportParams) {
   //   Report collections only in CUMULUS
   log.info(`reconciliationReportForCollections (${JSON.stringify(recReportParams)})`);
   const oneWayReport = isOneWayCollectionReport(recReportParams);
+  log.debug(`Creating one way report: ${oneWayReport}`)
 
   const okCollections = [];
   let collectionsOnlyInCumulus = [];
   let collectionsOnlyInCmr = [];
 
   try {
+    log.debug('Fetching collections from PG and CMR')
     const { collectionIds: dbCollectionIds, providers } = (
       await fetchDbCollections(recReportParams)
     );
     dbCollectionIds.sort();
-    // require cmr provider to pass in
+
     const uniqueProviders = [...new Set(providers.filter(Boolean))];
     const cmrCollectionIds = (await fetchCMRCollections({
       ...recReportParams,

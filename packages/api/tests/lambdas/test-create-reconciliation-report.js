@@ -2101,9 +2101,9 @@ test.serial('Internal reconciliation report type throws an error', async (t) => 
   );
 });
 
-// This is checking that a colction specific provider overrides the env cmr provider
+// This is checking that a collection specific provider overrides the env cmr provider
 // showing that we properly use the getCmrSettings with the cmr_provider from the collection record
-test.serial('per-collection cmr_providers used in reconciliationReportForGranules', async (t) => {
+test.serial('per-collection cmr_providers override global ENV provider', async (t) => {
   const orginalProvider = process.env.cmr_provider;
   const collectionName = 'test-provider-collection';
   const collectionVersion = '001';

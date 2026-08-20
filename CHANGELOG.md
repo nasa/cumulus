@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **CUMULUS-4511**
+  - Enable reconciliaton reports to use collection provided cmr_provider when necessary when
+    making CMR calls.
+
 ## [v22.3.5] 2026-08-14
 
 ### Fixed
@@ -14,9 +20,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fix boolean logic for allowProviderMismatch flag to handle true evaluations correctly
 
 ### Changed
-
-- **CUMULUS-4511**
-  - Enable reconciliaton reports to use collection provided cmr_provider when necessary
 
 - **CUMULUS-5217**
   - Fix Iceberg API image build failure in github workflow

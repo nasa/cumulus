@@ -42,7 +42,7 @@ resource "aws_ssm_parameter" "bignbit_edl_username" {
   key_id      = aws_kms_key.bignbit_parameter_key.id
 
   lifecycle {
-    ignore_changes = [value]
+    ignore_changes = [ value ]
   }
 }
 
@@ -54,7 +54,7 @@ resource "aws_ssm_parameter" "bignbit_edl_password" {
   key_id      = aws_kms_key.bignbit_parameter_key.id
 
   lifecycle {
-    ignore_changes = [value]
+    ignore_changes = [ value ]
   }
 }
 
@@ -104,7 +104,7 @@ module "bignbit" {
 data "aws_iam_policy_document" "bignbit_lambda_role_additional_policy" {
   # Allows BigNBit tasks to access encrypted secrets and SSM parameters
   statement {
-    effect = "Allow"
+    effect  = "Allow"
     actions = [
       "kms:Decrypt",
       "kms:GenerateDataKey"
