@@ -360,14 +360,14 @@ async function reconciliationReportForCollections(recReportParams) {
   //   Report collections only in CUMULUS
   log.info(`reconciliationReportForCollections (${JSON.stringify(recReportParams)})`);
   const oneWayReport = isOneWayCollectionReport(recReportParams);
-  log.debug(`Creating one way report: ${oneWayReport}`)
+  log.debug(`Creating one way report: ${oneWayReport}`);
 
   const okCollections = [];
   let collectionsOnlyInCumulus = [];
   let collectionsOnlyInCmr = [];
 
   try {
-    log.debug('Fetching collections from PG and CMR')
+    log.debug('Fetching collections from PG and CMR');
     const { collectionIds: dbCollectionIds, providers } = (
       await fetchDbCollections(recReportParams)
     );
