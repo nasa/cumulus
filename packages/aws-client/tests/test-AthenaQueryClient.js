@@ -10,7 +10,7 @@ const sinon = require('sinon');
 const { AthenaClient, StartQueryExecutionCommand } = require('@aws-sdk/client-athena');
 const { AthenaQueryClient } = require('../AthenaQueryClient');
 
-// TODO: remove mock 
+// TODO: remove mock
 const { mockClient } = require('aws-sdk-client-mock');
 const athenaClientMock = mockClient(AthenaClient);
 
@@ -58,7 +58,7 @@ test('startQueryExecution() initiates a query and receives a QueryExecutionId re
   athenaClientMock.on(StartQueryExecutionCommand).resolves({
     queryId: "12345-abcde-67890",
   });
-  const tableName = `${randomString()}_table`;  
+  const tableName = `${randomString()}_table`;
   const client = new AthenaClient({ region: "us-east-1" });
   const command = new StartQueryExecutionCommand({
     QueryString: `CREATE TABLE IF NOT EXISTS ${tableName}
@@ -125,7 +125,7 @@ test('query() initiates a query, waits for it to finish, and returns the mapped 
   const expected = [{ result: 'mock_value' }];
 
   const dbQuery = `CREATE DATABASE IF NOT EXISTS ${t.context.db}`;
-  
+
   // TODO: fix this test once localstack is replaced
   // const dbResponse = await t.context.client.query(dbQuery);
   // console.log(`data after createDb: ${JSON.stringify(dbResponse)}`);
@@ -202,13 +202,13 @@ test.skip('checkQueryExecutionStateAndGetData throws when getQueryExecution retu
   const tableName = `${randomString()}_table`;
   const tableQuery = `CREATE TABLE IF NOT EXISTS ${tableName}
 ( bucket string, key string, version_id string, is_latest boolean, is_delete_marker boolean);`;
-  
+
   await t.context.client.query(tableQuery);
 
   const testBucket = 'daac-public-bucket';
   const testKey = `${randomString()}`;
   const addDataQuery = `INSERT INTO ${tableName} VALUES ('${testBucket}', '${testKey}', '', true, false);`;
- 
+
   await t.context.client.query(addDataQuery);
 
   const abridgedResponse = {
