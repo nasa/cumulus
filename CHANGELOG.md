@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-5256**
+  - Add orphan file cleanup to Iceberg tables
+
 - **CUMULUS-5012**
   - Adding a SECURITY.md file that contains NASA's official guidance on reporting vulnerabilities
 
