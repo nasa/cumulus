@@ -26,7 +26,8 @@ const icebergRoutes = [
   '/providers',
   '/pdrs',
   '/rules',
-  '/async-operations',
+  '/asyncOperations',
+  '/reconciliationReports',
   '/stats/aggregate/granules?field=status',
 ].flatMap((route) => [route, `/v1${route}`]);
 
