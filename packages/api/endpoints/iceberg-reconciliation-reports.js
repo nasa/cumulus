@@ -1,8 +1,8 @@
 'use strict';
 
 /**
- * Limited reconciliation-reports router for Iceberg API deployment.
- * Only exposes the list endpoint (GET /reconciliation-reports).
+ * Limited reconciliationReports router for Iceberg API deployment.
+ * Only exposes the list endpoint (GET /reconciliationReports).
  */
 
 const router = require('express-promise-router')();

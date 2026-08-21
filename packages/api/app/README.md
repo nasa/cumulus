@@ -37,8 +37,8 @@ A separate, limited **read-only** API deployed as a **long-running ECS Fargate s
   | `GET /providers` | Yes | List providers |
   | `GET /pdrs` | Yes | List PDRs |
   | `GET /rules` | Yes | List rules |
-  | `GET /async-operations` | Yes | List async operations |
-  | `GET /reconciliation-reports` | Yes | List reconciliation reports |
+  | `GET /asyncOperations` | Yes | List async operations |
+  | `GET /reconciliationReports` | Yes | List reconciliation reports |
   | `GET /stats` | Yes | Stats summary |
   | `GET /stats/aggregate/:type?` | Yes | Aggregate statistics |
 

@@ -53,6 +53,7 @@ const tableNames = [
   'executions',
   'files_table',
   'pdrs',
+  'reconciliation_reports',
   'providers',
   'rules',
   'async_operations',

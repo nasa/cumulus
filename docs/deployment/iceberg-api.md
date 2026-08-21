@@ -28,8 +28,8 @@ All list endpoints are also available with the `/v1/` prefix.
 | `GET /providers` | Yes | List providers |
 | `GET /pdrs` | Yes | List PDRs |
 | `GET /rules` | Yes | List rules |
-| `GET /async-operations` | Yes | List async operations |
-| `GET /reconciliation-reports` | Yes | List reconciliation reports |
+| `GET /asyncOperations` | Yes | List async operations |
+| `GET /reconciliationReports` | Yes | List reconciliation reports |
 | `GET /stats` | Yes | Statistics summary |
 | `GET /stats/aggregate/:type?` | Yes | Aggregate statistics |
 
