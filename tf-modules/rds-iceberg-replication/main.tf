@@ -52,6 +52,12 @@ locals {
   } : {}
 }
 
+data "aws_iam_policy" "ECSInfrastructure" {
+  arn = "arn:aws:iam::aws:policy/service-role/AmazonECSInfrastructureRolePolicyForVolumes"
+}
+
+data "aws_caller_identity" "current" {}
+
 module "cluster" {
   count             = var.enable_iceberg_replication == true ? 1 : 0
   source            = "./modules/cluster"
@@ -87,33 +93,34 @@ module "replication_services" {
   volume_size_in_gb         = var.volume_size_in_gb
   admin_db_login_secret_arn = var.admin_db_login_secret_arn
   pg_db                     = var.pg_db
-  ecs_infrastructure_role   = module.cluster[0].ecs_infrastructure_role
+  ecs_infrastructure_role   = aws_iam_role.ecs_infrastructure_role
   ecs_task_execution_role   = module.cluster[0].task_execution_role
-  fargate_task_role         = module.cluster[0].fargate_task_role
+  fargate_task_role         = aws_iam_role.fargate_task_role
   rds_security_group        = var.rds_security_group
   task_security_group_id    = module.cluster[0].no_ingress_all_egress_security_group.id
   ecs_cluster               = module.cluster[0].replication_ecs_cluster
   compaction_interval_sec   = var.compaction_interval_sec
+  orphan_older_than_days    = var.orphan_older_than_days
   region                    = var.region
 }
 
 module "cleanup_service" {
-  count                    = var.enable_iceberg_replication == true ? 1 : 0
-  source                   = "./modules/cleanup-service"
-  prefix                   = var.prefix
-  subnet                   = var.subnet
-  iceberg_s3_bucket        = var.iceberg_s3_bucket
-  iceberg_namespace        = var.iceberg_namespace
-  memory                   = var.snapshot_cleanup_memory
-  cpu                      = var.snapshot_cleanup_cpu
-  cpu_architecture         = var.cpu_architecture
-  ecs_task_execution_role  = module.cluster[0].task_execution_role
-  task_security_group_id   = module.cluster[0].no_ingress_all_egress_security_group.id
-  ecs_cluster              = module.cluster[0].replication_ecs_cluster
-  iceberg_cleanup_image    = var.iceberg_cleanup_image
-  table_include_list       = var.snapshot_table_include_list
-  cleanup_interval_minutes = var.snapshot_cleanup_interval_minutes
-  older_than_minutes       = var.snapshot_older_than_minutes
-  retain_last              = var.snapshot_retain_last
-  region                   = var.region
+  count                       = var.enable_iceberg_replication == true ? 1 : 0
+  source                      = "./modules/cleanup-service"
+  prefix                      = var.prefix
+  subnet                      = var.subnet
+  iceberg_s3_bucket           = var.iceberg_s3_bucket
+  iceberg_namespace           = var.iceberg_namespace
+  memory                      = var.snapshot_cleanup_memory
+  cpu                         = var.snapshot_cleanup_cpu
+  cpu_architecture            = var.cpu_architecture
+  ecs_task_execution_role     = module.cluster[0].task_execution_role
+  task_security_group_id      = module.cluster[0].no_ingress_all_egress_security_group.id
+  ecs_cluster                 = module.cluster[0].replication_ecs_cluster
+  iceberg_cleanup_image       = var.iceberg_cleanup_image
+  table_include_list          = var.snapshot_table_include_list
+  cleanup_interval_minutes    = var.snapshot_cleanup_interval_minutes
+  snapshot_older_than_minutes = var.snapshot_older_than_minutes
+  retain_last                 = var.snapshot_retain_last
+  region                      = var.region
 }

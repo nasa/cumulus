@@ -8,8 +8,9 @@ terraform {
 }
 
 locals {
-  full_name      = "${var.prefix}-${var.slot_name}-replication"
-  batch_size_str = tostring(var.batch_size)
+  full_name                  = "${var.prefix}-${var.slot_name}-replication"
+  batch_size_str             = tostring(var.batch_size)
+  orphan_older_than_days_str = tostring(var.orphan_older_than_days)
 }
 
 data "aws_subnet" "selected" {
@@ -166,6 +167,8 @@ resource "aws_ecs_task_definition" "default" {
         { name = "ICEBERG_S3_BUCKET", value = var.iceberg_s3_bucket },
         { name = "SLOT_NAME", value = var.slot_name },
         { name = "COMPACTION_INTERVAL_SEC", value = var.compaction_interval_sec },
+        { name = "ORPHAN_OLDER_THAN_DAYS", value = local.orphan_older_than_days_str },
+        { name = "CLEANUP_ROLE_NAME", value = var.fargate_task_role.name },
         { name = "BATCH_SIZE", value = local.batch_size_str }
       ]
       secrets = [

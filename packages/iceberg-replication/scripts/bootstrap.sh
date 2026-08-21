@@ -51,6 +51,7 @@ REQUIRED_VARS=(
     "ICEBERG_NAMESPACE"
     "ICEBERG_S3_BUCKET"
     "SLOT_NAME"
+    "CLEANUP_ROLE_NAME"
 )
 
 MISSING_VARS=()
@@ -76,6 +77,7 @@ export SLOT_NAME
 export SPARK_JARS_DIR=./scripts/jars
 export JAVA_TOOL_OPTIONS="-Djava.io.tmpdir=./spark-tmp"
 export COMPACTION_INTERVAL_SEC=${COMPACTION_INTERVAL_SEC:-30}
+export ORPHAN_OLDER_THAN_DAYS=${ORPHAN_OLDER_THAN_DAYS:-3}
 
 parse_credentials $PG_ADMIN_LOGIN_CREDS
 
@@ -179,6 +181,24 @@ envsubst < ./resources/source_connector.json.template | curl -i -X POST \
 # Create Iceberg table and populate it from postgres table
 echo "Running bulk load script"
 python3 ./scripts/bulk_load_self_managed_iceberg.py --compact
+
+# set up orphan file deletion for each table
+
+# Read comma-separated string into an array
+IFS=',' read -ra TABLES_ARRAY <<< "$TABLES"
+
+for table in "${TABLES_ARRAY[@]}"; do
+  # Trim leading/trailing whitespace if needed as well as the leading RDS schema name
+  table=$(echo "$table" | xargs | awk -F'.' '{print $NF}')
+  if [[ "$table" == "files" ]]; then
+    table="files_table"
+  fi
+  export ICEBERG_NAMESPACE
+  export TABLE_NAME="$table"
+  export CLEANUP_ROLE_NAME
+  export ORPHAN_OLDER_THAN_DAYS
+  ./scripts/set_up_orphan_file_deletion.sh
+done
 
 # Start the sink process in the background
 echo "Creating sink process $SINK_CONNECTOR_NAME..."
