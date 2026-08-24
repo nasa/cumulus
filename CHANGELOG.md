@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-5012**
+  - Adding a SECURITY.md file that contains NASA's official guidance on reporting vulnerabilities
+
 ### Changed
 
 - **CUMULUS-5316**
