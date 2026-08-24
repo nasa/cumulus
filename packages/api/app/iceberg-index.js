@@ -12,8 +12,8 @@
  * - GET /providers (list)
  * - GET /pdrs (list)
  * - GET /rules (list)
- * - GET /async-operations (list)
- * - GET /reconciliation-reports (list)
+ * - GET /asyncOperations (list)
+ * - GET /reconciliationReports (list)
  * - GET /stats
  * - GET /stats/aggregate/:type?
  */

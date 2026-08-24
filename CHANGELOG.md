@@ -13,6 +13,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-5316**
+  - Update Iceberg API documentation
+  - Give AWS_PROFILE precedence over AWS_DEFAULT_PROFILE in cumulus aws client and Iceberg API
+  - Rename Iceberg API reconciliation reports and async operations route paths to match Cumulus API
+
 - **CUMULUS-4511**
   - Enable reconciliaton reports to use collection provided cmr_provider when necessary when
     making CMR calls.
