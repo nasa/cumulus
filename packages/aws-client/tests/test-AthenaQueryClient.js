@@ -1,18 +1,20 @@
 'use strict';
 
 // TODO: Remove this comment when localstack is replaced:
-// Athena client tests are unable to run in localstack local environment. Once localstack is replaced
-// these tests will need to be updated to use local AWS instances. This work is outside the scope of CUMULUS-4954.
+// Athena client tests are unable to run in localstack local environment.
+// Once localstack is replaced these tests will need to be updated to use
+// local AWS instances. This work is outside the scope of CUMULUS-4954.
 
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
 const { AthenaClient, StartQueryExecutionCommand } = require('@aws-sdk/client-athena');
-const { AthenaQueryClient } = require('../AthenaQueryClient');
 
 // TODO: remove mock
 const { mockClient } = require('aws-sdk-client-mock');
 const athenaClientMock = mockClient(AthenaClient);
+
+const { AthenaQueryClient } = require('../AthenaQueryClient');
 
 const {
   createBucket,
@@ -56,7 +58,7 @@ test.after.always(async (t) => {
 // TODO: update test once localstack is replced
 test('startQueryExecution() initiates a query and receives a QueryExecutionId response', async (t) => {
   athenaClientMock.on(StartQueryExecutionCommand).resolves({
-    queryId: "12345-abcde-67890",
+    queryId: '12345-abcde-67890',
   });
   const tableName = `${randomString()}_table`;
   const client = new AthenaClient({ region: "us-east-1" });
@@ -66,7 +68,7 @@ test('startQueryExecution() initiates a query and receives a QueryExecutionId re
   });
 
   const response = await client.send(command);
-  t.is(response.queryId, "12345-abcde-67890");
+  t.is(response.queryId, '12345-abcde-67890');
 });
 
 // TODO: fix this test once localstack is replaced
@@ -118,40 +120,32 @@ test.skip('mapData() returns expected result when ResultSet is empty', (t) => {
 });
 
 // TODO: update test once localstack is replced
-test('query() initiates a query, waits for it to finish, and returns the mapped response', async (t) => {
+test.skip('query() initiates a query, waits for it to finish, and returns the mapped response', async (t) => {
   // could not get ministack duckdb to find a table to perform operations on it,
   // even after verifying a create table query succeeeded
   // so using the mocked db version of Athena in ministack, which returns mock data
   const expected = [{ result: 'mock_value' }];
 
   const dbQuery = `CREATE DATABASE IF NOT EXISTS ${t.context.db}`;
-
-  // TODO: fix this test once localstack is replaced
-  // const dbResponse = await t.context.client.query(dbQuery);
-  // console.log(`data after createDb: ${JSON.stringify(dbResponse)}`);
+  const dbResponse = await t.context.client.query(dbQuery);
+  console.log(`data after createDb: ${JSON.stringify(dbResponse)}`);
 
   const tableName = `${randomString()}_table`;
   // create table
   const tableQuery = `CREATE TABLE IF NOT EXISTS ${tableName}
-( bucket string, key string, version_id string, is_latest boolean, is_delete_marker boolean);`;
+  ( bucket string, key string, version_id string, is_latest boolean, is_delete_marker boolean);`;
 
-  // TODO: fix this test once localstack is replaced
-  // await t.context.client.query(tableQuery);
+  await t.context.client.query(tableQuery);
 
   const testBucket = 'daac-public-bucket';
   const testKey = `${randomString()}`;
   // populate table
   const addDataQuery = `INSERT INTO ${tableName} VALUES ('${testBucket}', '${testKey}', '', true, false);`;
-
-  // TODO: fix this test once localstack is replaced
-  // await t.context.client.query(addDataQuery);
+  await t.context.client.query(addDataQuery);
 
   // get data
   const getDataQuery = `SELECT * FROM ${tableName};`;
-
-  // TODO: fix this test once localstack is replaced
-  const results = expected
-  // const results = await t.context.client.query(getDataQuery);
+  const results = await t.context.client.query(getDataQuery);
 
   t.deepEqual(results, expected);
 });
