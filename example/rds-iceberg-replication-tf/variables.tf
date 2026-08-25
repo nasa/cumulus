@@ -211,6 +211,12 @@ variable "snapshot_older_than_minutes" {
   default     = 120
 }
 
+variable "orphan_older_than_days" {
+  description = "Expire orphan files older than this many days"
+  type        = number
+  default     = 3
+}
+
 variable "snapshot_retain_last" {
   description = "Minimum number of snapshots to retain regardless of age"
   type        = number
