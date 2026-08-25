@@ -5,7 +5,7 @@ set -euo pipefail
 # Validate Required Environment Variables
 # ------------------------------------------------------------------------------
 : "${TABLE_NAME:?Environment variable TABLE_NAME must be set}"
-: "${CLEANUP_ROLE_NAME:?Environment variable CLEANUP_ROLE_NAME must be set}"
+: "${CLEANUP_ROLE_ARN:?Environment variable CLEANUP_ROLE_ARN must be set}"
 : "${ICEBERG_S3_BUCKET:?Environment variable ICEBERG_S3_BUCKET must be set}"
 : "${ICEBERG_NAMESPACE:?Environment variable ICEBERG_NAMESPACE must be set}"
 : "${ORPHAN_OLDER_THAN_DAYS:?Environment variable ORPHAN_OLDER_THAN_DAYS must be set}"
@@ -21,8 +21,6 @@ ATHENA_OUTPUT_LOCATION="s3://$ICEBERG_S3_BUCKET/athena-results"
 echo "Fetching AWS Account ID..."
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 echo "Account ID: ${ACCOUNT_ID}"
-
-CLEANUP_ROLE_ARN="arn:aws:iam::${ACCOUNT_ID}:role/${CLEANUP_ROLE_NAME}"
 
 # ------------------------------------------------------------------------------
 # Step 1: Start Athena Query Execution

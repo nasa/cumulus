@@ -22,6 +22,7 @@ Environment Variables:
   ICEBERG_NAMESPACE       (required) The namespace for the Iceberg table(s)
   ICEBERG_S3_BUCKET       (required) The name of the S3 bucket where the Iceberg tables are stored
   SLOT_NAME               (required) The name of the Postgres replication slot for the specified table(s)
+  CLEANUP_ROLE_ARN        (required) The arn of the IAM role used to run the oprhan cleanup
   COMPACTION_INTERVAL_SEC (optional) The delay in seconds between compactions - default 30
 
 Examples:
@@ -51,7 +52,7 @@ REQUIRED_VARS=(
     "ICEBERG_NAMESPACE"
     "ICEBERG_S3_BUCKET"
     "SLOT_NAME"
-    "CLEANUP_ROLE_NAME"
+    "CLEANUP_ROLE_ARN"
 )
 
 MISSING_VARS=()
@@ -195,7 +196,7 @@ for table in "${TABLES_ARRAY[@]}"; do
   fi
   export ICEBERG_NAMESPACE
   export TABLE_NAME="$table"
-  export CLEANUP_ROLE_NAME
+  export CLEANUP_ROLE_ARN
   export ORPHAN_OLDER_THAN_DAYS
   ./scripts/set_up_orphan_file_deletion.sh
 done

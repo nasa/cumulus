@@ -1,5 +1,5 @@
 resource "aws_iam_role" "fargate_task_role" {
-  name = "${var.prefix}-fargate-task-role"
+  name = "${var.prefix}-iceberg-fargate-task-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -21,7 +21,7 @@ resource "aws_iam_role" "fargate_task_role" {
 }
 
 resource "aws_iam_policy" "s3_access_policy" {
-  name        = "${var.prefix}-fargate-s3-access-policy"
+  name        = "${var.prefix}-iceberg-fargate-s3-access-policy"
   description = "IAM policy for Fargate task to access S3"
 
   policy = jsonencode({
@@ -48,7 +48,7 @@ resource "aws_iam_policy" "s3_access_policy" {
 }
 
 resource "aws_iam_policy" "athena_access_policy" {
-  name        = "${var.prefix}-fargate-athena-access-policy"
+  name        = "${var.prefix}-iceberg-fargate-athena-access-policy"
   description = "IAM policy for Fargate task to access Athena"
 
   policy = jsonencode({
@@ -77,7 +77,7 @@ resource "aws_iam_policy" "athena_access_policy" {
 }
 
 resource "aws_iam_policy" "glue_access_policy" {
-  name        = "${var.prefix}-fargate-glue-access-policy"
+  name        = "${var.prefix}-iceberg-fargate-glue-access-policy"
   description = "IAM policy for Fargate task to access AWS Glue"
 
   policy = jsonencode({
@@ -92,9 +92,8 @@ resource "aws_iam_policy" "glue_access_policy" {
       },
       {
         # Allow the task to pass this role to Glue when registering the optimizer
-        Effect = "Allow"
-        Action = "iam:PassRole"
-        # Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.prefix}-fargate-task-role"
+        Effect   = "Allow"
+        Action   = "iam:PassRole"
         Resource = aws_iam_role.fargate_task_role.arn
       }
     ]
@@ -102,7 +101,7 @@ resource "aws_iam_policy" "glue_access_policy" {
 }
 
 resource "aws_iam_policy" "rds_access_policy" {
-  name        = "${var.prefix}-fargate-rds-access-policy"
+  name        = "${var.prefix}-iceberg-fargate-rds-access-policy"
   description = "IAM policy for Fargate task to access RDS"
 
   policy = jsonencode({
@@ -120,7 +119,7 @@ resource "aws_iam_policy" "rds_access_policy" {
 }
 
 resource "aws_iam_policy" "ssm_access_policy" {
-  name        = "${var.prefix}-fargate-ssm-access-policy"
+  name        = "${var.prefix}-iceberg-fargate-ssm-access-policy"
   description = "IAM policy for Fargate task to access SSM"
 
   policy = jsonencode({
@@ -167,7 +166,7 @@ resource "aws_iam_role_policy_attachment" "attach_rds_policy" {
 
 
 resource "aws_iam_role" "ecs_infrastructure_role" {
-  name = "${var.prefix}-ecs-infrastructure-role"
+  name = "${var.prefix}-iceberg-ecs-infrastructure-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
