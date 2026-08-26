@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-5256**
   - Add orphan file cleanup to Iceberg tables
   - NOTE: As of Aug 25, 2026 Iceberg replication is running in Prod 1, but the tables are out of sync for two reasons:
-    Iceberg replication was disabled for a while after the initial rollout due to conflicts with migrations, so there is a missing 
+    Iceberg replication was disabled for a while after the initial rollout due to conflicts with migrations, so there is a missing
     block of time in the replication.
     The batch size for the replication was initially set too low to keep up with traffic. This is corrected in an open PR that
     should be merged soon https://github.com/nasa/cumulus/pull/4572 . This PR also enables orphan file cleanup.
