@@ -61,7 +61,7 @@ test('startQueryExecution() initiates a query and receives a QueryExecutionId re
     queryId: '12345-abcde-67890',
   });
   const tableName = `${randomString()}_table`;
-  const client = new AthenaClient({ region: "us-east-1" });
+  const client = new AthenaClient({ region: 'us-east-1' });
   const command = new StartQueryExecutionCommand({
     QueryString: `CREATE TABLE IF NOT EXISTS ${tableName}
 ( bucket string, key string, version_id string, is_latest boolean, is_delete_marker boolean);`,
