@@ -183,3 +183,9 @@ variable "compaction_interval_sec" {
   type        = string
   default     = "30"
 }
+
+variable "orphan_older_than_days" {
+  description = "Expire orphan files older than this many days"
+  type        = number
+  default     = 3
+}

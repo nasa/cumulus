@@ -18,19 +18,20 @@ It is separate from the main Cumulus API and provides read/list access for suppo
 
 All list endpoints are also available with the `/v1/` prefix.
 
-| Endpoint | Description |
-|---|---|
-| `GET /version` | API version (no auth required) |
-| `GET /granules` | List granules |
-| `GET /collections` | List collections |
-| `GET /executions` | List executions |
-| `GET /providers` | List providers |
-| `GET /pdrs` | List PDRs |
-| `GET /rules` | List rules |
-| `GET /async-operations` | List async operations |
-| `GET /reconciliation-reports` | List reconciliation reports |
-| `GET /stats` | Statistics summary |
-| `GET /stats/aggregate/:type?` | Aggregate statistics |
+| Endpoint | Auth | Description |
+|---|---|---|
+| `GET /health` | No | Readiness/health status |
+| `GET /version` | No | API version metadata |
+| `GET /granules` | Yes | List granules |
+| `GET /collections` | Yes | List collections |
+| `GET /executions` | Yes | List executions |
+| `GET /providers` | Yes | List providers |
+| `GET /pdrs` | Yes | List PDRs |
+| `GET /rules` | Yes | List rules |
+| `GET /asyncOperations` | Yes | List async operations |
+| `GET /reconciliationReports` | Yes | List reconciliation reports |
+| `GET /stats` | Yes | Statistics summary |
+| `GET /stats/aggregate/:type?` | Yes | Aggregate statistics |
 
 ## Request Parameters
 
@@ -42,14 +43,18 @@ Use the matching Cumulus API endpoint documentation for parameter details:
 
 ## Deployment configuration
 
-When deploying with Terraform, you can configure the Iceberg API container image using:
+When deploying with Terraform, configure the Iceberg API container image with:
 
-- `cumulus_iceberg_api_image_version` (tag)
 - `cumulus_iceberg_api_image_repository_url` (repository URL)
+- `cumulus_iceberg_api_image_version` (tag)
 
 In Bamboo deployments (`bamboo/bootstrap-tf-deployment.sh`), the repository URL defaults to:
 
-- `ghcr.io/nasa/cumulus-iceberg-api`
+- `ghcr.io/nasa/cumulus-iceberg-api` (master branch)
+
+For non-master branches, Bamboo switches to account ECR and uses tag `latest`:
+
+- `<AWS_ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/cumulus-iceberg-api:latest`
 
 To override in Bamboo, set:
 

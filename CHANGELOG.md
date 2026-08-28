@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-5256**
+  - Add orphan file cleanup to Iceberg tables
+
+- **CUMULUS-5012**
+  - Adding a SECURITY.md file that contains NASA's official guidance on reporting vulnerabilities
+
+### Changed
+
+- **CUMULUS-5316**
+  - Update Iceberg API documentation
+  - Give AWS_PROFILE precedence over AWS_DEFAULT_PROFILE in cumulus aws client and Iceberg API
+  - Rename Iceberg API reconciliation reports and async operations route paths to match Cumulus API
+
+- **CUMULUS-4511**
+  - Enable reconciliaton reports to use collection provided cmr_provider when necessary when
+    making CMR calls.
+
 ## [v22.3.5] 2026-08-14
 
 ### Fixed
