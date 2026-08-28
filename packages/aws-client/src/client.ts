@@ -4,7 +4,7 @@ import { inTestMode, getLocalstackAwsClientOptions } from './test-utils';
 import { AWSClientTypes } from './types';
 import { getServiceIdentifer } from './utils';
 
-const getRegion = () => process.env.AWS_DEFAULT_REGION || process.env.AWS_REGION || 'us-east-1';
+const getRegion = () => process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1';
 
 const buildServiceClient = (Service: any, options?: object) => {
   if (inTestMode()) {

@@ -53,6 +53,7 @@ const tableNames = [
   'executions',
   'files_table',
   'pdrs',
+  'reconciliation_reports',
   'providers',
   'rules',
   'async_operations',
@@ -85,6 +86,27 @@ function getRequiredEnv(name: 'AWS_ACCOUNT_ID' | 'ICEBERG_NAMESPACE'): string {
   }
 
   return value;
+}
+
+function getEffectiveAwsRegion(): string {
+  return process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1';
+}
+
+function normalizeAwsRegionEnvironment(): string {
+  const awsRegion = process.env.AWS_REGION;
+  const awsDefaultRegion = process.env.AWS_DEFAULT_REGION;
+  const region = getEffectiveAwsRegion();
+
+  if (awsRegion && awsDefaultRegion && awsRegion !== awsDefaultRegion) {
+    log.warn(
+      `AWS region mismatch detected (AWS_REGION=${awsRegion}, AWS_DEFAULT_REGION=${awsDefaultRegion}). `
+      + `Using resolved region ${region} for DuckDB AWS/Glue access.`
+    );
+  }
+
+  process.env.AWS_REGION = region;
+  process.env.AWS_DEFAULT_REGION = region;
+  return region;
 }
 
 /**
@@ -206,7 +228,7 @@ async function loadDuckDbExtensions(conn: DuckDBConnection): Promise<void> {
  * @param conn - active DuckDB connection to configure
  */
 async function applyDuckDbConnectionSettings(conn: DuckDBConnection): Promise<void> {
-  const region = process.env.AWS_REGION || 'us-east-1';
+  const region = getEffectiveAwsRegion();
   await conn.run(`SET s3_region='${region}';`);
   await conn.run('SET s3_url_style=\'vhost\';');
 
@@ -416,6 +438,8 @@ async function ensureGlueSchemaAccessible(
 async function configureConnection(conn: DuckDBConnection): Promise<void> {
   const awsAccountId = getRequiredEnv('AWS_ACCOUNT_ID');
   const glueSchema = getRequiredEnv('ICEBERG_NAMESPACE');
+
+  normalizeAwsRegionEnvironment();
 
   await loadDuckDbExtensions(conn);
   await applyDuckDbConnectionSettings(conn);

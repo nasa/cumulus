@@ -1,8 +1,8 @@
 'use strict';
 
 /**
- * Limited async-operations router for Iceberg API deployment.
- * Only exposes the list endpoint (GET /async-operations).
+ * Limited asyncOperations router for Iceberg API deployment.
+ * Only exposes the list endpoint (GET /asyncOperations).
  */
 
 const router = require('express-promise-router')();
