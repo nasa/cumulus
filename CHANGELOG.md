@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **CUMULUS-5455**
+  - Added `pacote` override (`^21.5.1`) to address https://github.com/advisories/GHSA-w4pp-8pjf-rmxw (CVE-2026-9496)
+
 ### Added
 
 - **CUMULUS-5256**
