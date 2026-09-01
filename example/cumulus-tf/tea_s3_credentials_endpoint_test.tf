@@ -1,4 +1,5 @@
 module "tea_s3_credentials_endpoint_test" {
+  count = 0
   source = "../../tf-modules/distribution"
 
   tea_api_gateway_stage         = local.tea_stage_name
