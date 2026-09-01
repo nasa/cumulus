@@ -18,7 +18,7 @@ We ask that you follow these guidelines with your contributions:
 
 ### Documentation
 
-Anything exported by a module must be documented using [JSDoc](http://usejsdoc.org/).
+Anything exported by a module must be documented using [JSDoc](https://jsdoc.app/).
 
 The following JSDoc rules are enforced by our [eslint](https://eslint.org/)
 configuration:
@@ -39,7 +39,7 @@ configuration:
 - Functions that explicitly return should have a `@returns` tag that has a type.
   Example: `@returns {string}`
 - Parameter names must match those in the function declaration
-- Tags must be valid [JSDoc 3 Block Tags](http://usejsdoc.org/#block-tags)
+- Tags must be valid [JSDoc 3 Block Tags](https://jsdoc.app/#block-tags)
 
 ### Tests
 
