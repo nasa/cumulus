@@ -1,0 +1,19 @@
+{
+    "name": "OPERA_CSLC_S1_STATIC_CALVAL_sqsRule",
+    "workflow": "OPERAWorkflow",
+    "state": "ENABLED",
+    "collection": {
+        "name": "OPERA_L2_CSLC-S1-STATIC_CALVAL_V1",
+        "version": "1.0"
+    },
+    "provider": "ASFDAAC",
+    "rule": {
+        "type": "sqs",
+        "value": "https://sqs.$AWS_REGION.amazonaws.com/$AWS_ACCOUNT_ID/$PREFIX-opera-workflow-queue"
+    },
+    "meta": {
+        "retries": 3,
+        "visibilityTimeout": 1800,
+        "provider_path": "/"
+    }
+}

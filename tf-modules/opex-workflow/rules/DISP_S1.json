@@ -1,0 +1,19 @@
+{
+    "name": "OPERA_DISP_S1_sqsRule",
+    "workflow": "OPERAWorkflow",
+    "state": "ENABLED",
+    "collection": {
+        "name": "OPERA_L3_DISP-S1_V1",
+        "version": "1"
+    },
+    "provider": "ASFDAAC",
+    "rule": {
+        "type": "sqs",
+        "value": "https://sqs.$AWS_REGION.amazonaws.com/$AWS_ACCOUNT_ID/$PREFIX-opera-workflow-queue"
+    },
+    "meta": {
+        "retries": 3,
+        "visibilityTimeout": 1800,
+        "provider_path": "/"
+    }
+}

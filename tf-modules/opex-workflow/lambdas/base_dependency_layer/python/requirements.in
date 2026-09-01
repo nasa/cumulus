@@ -1,0 +1,6 @@
+boto3
+# A very small range of versions of botocore is required by aiobotocore, and it
+# is always slightly behind the latest botocore release. We will need to
+# occasionally bump this by hand to allow later versions of aiobotocore to be
+# pulled in.
+botocore<=1.39.11
