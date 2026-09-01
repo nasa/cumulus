@@ -18,6 +18,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-5256**
   - Add orphan file cleanup to Iceberg tables
+  - NOTE: As of Aug 25, 2026 Iceberg replication is running in Prod 1, but the tables are out of sync for two reasons:
+    Iceberg replication was disabled for a while after the initial rollout due to conflicts with migrations, so there is a missing
+    block of time in the replication.
+    The batch size for the replication was initially set too low to keep up with traffic. This is corrected in an open PR that
+    should be merged soon https://github.com/nasa/cumulus/pull/4572 . This PR also enables orphan file cleanup.
+    After the PR is merged and a release is created subsequent PRs for the consolidated-cumulus repository and the CIRRUS-core
+    repository will be needed as usual before a deployment is done.
+
+    Following the deployment, the Iceberg tables will need to be destroyed using the `remove_iceberg_tables.py` script in the cumulus operators script repository, and the replication services restarted so that the tables get recreated and bootstrapped from the current contents of the RDS database. James Norton  and Chris Durbin  should provide support for this. After that the replication should keep up.
 
 - **CUMULUS-5012**
   - Adding a SECURITY.md file that contains NASA's official guidance on reporting vulnerabilities
