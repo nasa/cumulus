@@ -42,6 +42,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Enable reconciliaton reports to use collection provided cmr_provider when necessary when
     making CMR calls.
 
+- **async-operations-update**
+  - Update Async Operation container to new version 59, `cumuluss/async-operation:59`. Users should update their references to `async-operation` with the new version.
+
 ## [v22.3.5] 2026-08-14
 
 ### Fixed
