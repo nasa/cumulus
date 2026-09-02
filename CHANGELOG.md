@@ -6,10 +6,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v22.4.0] 2026-09-02
+
 ### Fixed
 
 - **CUMULUS-5455**
-  - Added `pacote` override (`^21.5.1`) to address https://github.com/advisories/GHSA-w4pp-8pjf-rmxw (CVE-2026-9496)
+  - Added an npm override forcing `pacote` to `^21.5.1` to address a high-severity ReDoS vulnerability:
+  https://github.com/advisories/GHSA-w4pp-8pjf-rmxw (CVE-2026-9496). `pacote` is npm's package-fetching
+  library and is not used by Cumulus code directly — it enters the dependency tree only as a build-time
+  transitive dependency of `lerna`, the tool used to build and publish the Core monorepo. It is not
+  included in any published `@cumulus/*` package, deployed Lambda/task bundle, or the Cumulus API. This
+  change is internal to the Core build/CI process: no impact to deployed stacks, workflow code, or
+  ingest operations, and no action or redeployment is required by DAACs or migration teams. Anyone
+  building Core from source picks up the fix automatically on their next `npm install`.
 
 ### Added
 
@@ -10058,7 +10067,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v22.3.5...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v22.4.0...HEAD
+[v22.3.5]: https://github.com/nasa/cumulus/compare/v22.3.5...v22.4.0
 [v22.3.5]: https://github.com/nasa/cumulus/compare/v22.3.4...v22.3.5
 [v22.3.4]: https://github.com/nasa/cumulus/compare/v22.3.3...v22.3.4
 [v22.3.3]: https://github.com/nasa/cumulus/compare/v22.3.2...v22.3.3
