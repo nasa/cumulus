@@ -1,4 +1,5 @@
 import { APIGatewayClient } from '@aws-sdk/client-api-gateway';
+import { AthenaClient } from '@aws-sdk/client-athena';
 import { CloudWatchEvents } from '@aws-sdk/client-cloudwatch-events';
 import { CloudFormation } from '@aws-sdk/client-cloudformation';
 import { DynamoDBStreamsClient } from '@aws-sdk/client-dynamodb-streams';
@@ -18,6 +19,7 @@ import { STS } from '@aws-sdk/client-sts';
 
 export type AWSClientTypes =
     APIGatewayClient |
+    AthenaClient |
     DynamoDB |
     DynamoDBClient |
     DynamoDBStreamsClient |
