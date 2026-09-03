@@ -6,6 +6,40 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **CUMULUS-5455**
+  - Added `pacote` override (`^21.5.1`) to address https://github.com/advisories/GHSA-w4pp-8pjf-rmxw (CVE-2026-9496)
+
+### Added
+
+- **CUMULUS-5309**
+  - Support cross account SQS queues by extracting the owner account ID from the URL and using that in validation of queues.
+
+- **CUMULUS-5256**
+  - Add orphan file cleanup to Iceberg tables
+
+- **CUMULUS-5012**
+  - Adding a SECURITY.md file that contains NASA's official guidance on reporting vulnerabilities
+
+### Changed
+
+- **CUMULUS-5316**
+  - Update Iceberg API documentation
+  - Give AWS_PROFILE precedence over AWS_DEFAULT_PROFILE in cumulus aws client and Iceberg API
+  - Rename Iceberg API reconciliation reports and async operations route paths to match Cumulus API
+
+- **CUMULUS-4511**
+  - Enable reconciliaton reports to use collection provided cmr_provider when necessary when
+    making CMR calls.
+
+## [v22.3.5] 2026-08-14
+
+### Fixed
+
+- **CUMULUS-5026**
+  - Fix boolean logic for allowProviderMismatch flag to handle true evaluations correctly
+
 ### Changed
 
 - **CUMULUS-5217**
@@ -27,9 +61,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [v22.3.3] 2026-07-14
 
 ### Fixed
-
-- **CUMULUS-5026**
-  - Fix boolean logic for allowProviderMismatch flag to handle true evaluations correctly
 
 - **CUMULUS-5033**
   - Fix bootstrap service to handle empty RDS tables
@@ -10029,7 +10060,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v22.3.4...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v22.3.5...HEAD
+[v22.3.5]: https://github.com/nasa/cumulus/compare/v22.3.4...v22.3.5
 [v22.3.4]: https://github.com/nasa/cumulus/compare/v22.3.3...v22.3.4
 [v22.3.3]: https://github.com/nasa/cumulus/compare/v22.3.2...v22.3.3
 [v22.3.2]: https://github.com/nasa/cumulus/compare/v22.3.1...v22.3.2
