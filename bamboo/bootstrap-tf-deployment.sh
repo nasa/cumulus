@@ -43,7 +43,7 @@ else
 fi
 
 # Remove RS dev lock state
-../terraform force-unlock 06d0d1bc-f3cf-eb36-1975-9cd0e05011b9 -force
+../terraform force-unlock '06d0d1bc-f3cf-eb36-1975-9cd0e05011b9' -force
 
 # Deploy data-persistence-tf via terraform
 echo "Deploying Cumulus data-persistence module to $DEPLOYMENT"
