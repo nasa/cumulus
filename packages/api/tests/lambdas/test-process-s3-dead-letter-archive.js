@@ -2,7 +2,7 @@
 
 const test = require('ava');
 const sinon = require('sinon');
-const uuidv4 = require('uuid/v4');
+const { v4: uuidv4 } = require('uuid');
 const { createHash } = require('crypto');
 const S3 = require('@cumulus/aws-client/S3');
 

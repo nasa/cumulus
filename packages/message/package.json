@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/message",
-  "version": "21.0.0",
+  "version": "22.4.0",
   "description": "Utilities for building and parsing Cumulus messages",
   "keywords": [
     "GIBS",
@@ -8,7 +8,7 @@
     "NASA"
   ],
   "engines": {
-    "node": ">=20.12.2"
+    "node": ">=22.21.1"
   },
   "publishConfig": {
     "access": "public"
@@ -24,7 +24,7 @@
     "test": "../../node_modules/.bin/ava",
     "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "prepare": "npm run tsc",
+    "build": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'",
@@ -41,16 +41,14 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "21.0.0",
-    "@cumulus/common": "21.0.0",
-    "@cumulus/errors": "21.0.0",
-    "@cumulus/logger": "21.0.0",
-    "@cumulus/types": "21.0.0",
+    "@cumulus/aws-client": "22.4.0",
+    "@cumulus/common": "22.4.0",
+    "@cumulus/errors": "22.4.0",
+    "@cumulus/logger": "22.4.0",
+    "@cumulus/types": "22.4.0",
     "jsonpath-plus": "^10.0.0",
-    "lodash": "^4.17.21",
-    "uuidv4": "^6.2.13"
+    "lodash": "^4.18.1",
+    "uuid": "^11.1.1"
   },
-  "devDependencies": {
-    "@types/uuid": "^8.0.0"
-  }
+  "devDependencies": {}
 }

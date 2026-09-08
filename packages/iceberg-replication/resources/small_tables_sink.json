@@ -1,0 +1,11 @@
+{
+  "name": "ice-small-tables",
+  "topics": "dbserver1.${PG_SCHEMA}.collections,dbserver1.${PG_SCHEMA}.async_operations,dbserver1.${PG_SCHEMA}.providers,dbserver1.${PG_SCHEMA}.pdrs,dbserver1.${PG_SCHEMA}.reconciliation_reports,dbserver1.${PG_SCHEMA}.rules,dbserver1.${PG_SCHEMA}.granules_executions",
+  "iceberg.tables": "${ICEBERG_NAMESPACE}.collections,${ICEBERG_NAMESPACE}.async_operations,${ICEBERG_NAMESPACE}.providers,${ICEBERG_NAMESPACE}.pdrs,${ICEBERG_NAMESPACE}.reconciliation_reports,${ICEBERG_NAMESPACE}.rules,${ICEBERG_NAMESPACE}.granules_executions",
+  "commit.interval-ms": "30000",
+  "commit.timeout-ms": "60000",
+  "iceberg.tables.id-columns": "cumulus_id,cumulus_id,cumulus_id,cumulus_id,cumulus_id,cumulus_id,granule_cumulus_id|execution_cumulus_id",
+  "iceberg.tables.commit-branch": "staging",
+  "iceberg.catalog.warehouse": "s3a://${ICEBERG_S3_BUCKET}/warehouse",
+  "batch.size": "$BATCH_SIZE"
+}

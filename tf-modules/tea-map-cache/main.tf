@@ -10,7 +10,7 @@ terraform {
 data "aws_region" "current" {}
 
 resource "aws_vpc_endpoint" "config" {
-  count             = ! var.deploy_to_ngap && (var.vpc_id != null && length(var.lambda_subnet_ids) != 0) ? 1 : 0
+  count             = !var.deploy_to_ngap && (var.vpc_id != null && length(var.lambda_subnet_ids) != 0) ? 1 : 0
   vpc_id            = var.vpc_id
   service_name      = "com.amazonaws.${data.aws_region.current.name}.execute-api"
   vpc_endpoint_type = "Interface"
@@ -27,7 +27,7 @@ resource "aws_lambda_function" "tea_cache" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/tea-map-cache/dist/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   memory_size      = lookup(var.lambda_memory_sizes, "TeaCache", 512)
   timeout          = lookup(var.lambda_timeouts, "TeaCache", 120)
   environment {

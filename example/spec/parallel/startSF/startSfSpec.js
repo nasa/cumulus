@@ -383,4 +383,72 @@ describe('the sf-starter lambda function', () => {
       expect(runningExecutions.length).toBeLessThanOrEqual(queueMaxExecutions);
     });
   });
+
+  describe('when provided a queue that is configured to be rate-limited', () => {
+    const numberOfMessagesPerQueue = 300;
+    let rateLimitedQueueUrls;
+    beforeAll(async () => {
+      const rateLimitedQueueNames = [
+        `${testName}RateLimitedQueue1`,
+        `${testName}RateLimitedQueue2`,
+        `${testName}RateLimitedQueue3`,
+        `${testName}RateLimitedQueue4`,
+      ];
+      rateLimitedQueueUrls = await Promise.all(rateLimitedQueueNames.map((rateLimitedQueueName) =>
+        sqs().createQueue({
+          QueueName: rateLimitedQueueName,
+          Attributes: {
+            VisibilityTimeout: '600',
+          },
+        })));
+
+      await Promise.all(rateLimitedQueueUrls.map(({ QueueUrl }) =>
+        sendStartSfMessages({
+          numOfMessages: numberOfMessagesPerQueue,
+          queueMaxExecutions: 1000,
+          queueUrl: QueueUrl,
+          workflowArn: passSfArn,
+        })));
+    });
+
+    afterAll(async () => {
+      await Promise.all(rateLimitedQueueUrls.map(({ QueueUrl }) =>
+        sqs().deleteQueue({
+          QueueUrl,
+        })));
+    });
+
+    const rateLimitPerSecond = 5;
+
+    it('consumes messages at the specified rate', async () => {
+      const { Payload } = await lambda().send(new InvokeCommand({
+        FunctionName: `${config.stackName}-sqs2sfThrottleRateLimited`,
+        InvocationType: 'RequestResponse',
+        Payload: new TextEncoder().encode(JSON.stringify({
+          queueUrls: rateLimitedQueueUrls.map(({ QueueUrl }) => QueueUrl),
+          rateLimitPerSecond,
+        })),
+      }));
+      const messagesConsumed = Number(new TextDecoder().decode(Payload));
+
+      const expectedMessageCountNominal = rateLimitPerSecond * 60;
+      const uncertaintyMargin = expectedMessageCountNominal * 0.1;
+      const expectedMessageCountMax = expectedMessageCountNominal + uncertaintyMargin;
+      const expectedMessageCountMin = expectedMessageCountNominal - uncertaintyMargin;
+      expect(messagesConsumed).toBeLessThan(expectedMessageCountMax);
+      expect(messagesConsumed).toBeGreaterThan(expectedMessageCountMin);
+    });
+    it('Does not result in messages entering their visibility timeout', async () => {
+      // Wait 60 seconds for the ApproximateNumberOfMessagesNotVisible to update
+      await sleep(60000);
+      await Promise.all(rateLimitedQueueUrls.map(async ({ QueueUrl }) => {
+        const { Attributes } = await sqs().getQueueAttributes({
+          QueueUrl: QueueUrl,
+          AttributeNames: ['ApproximateNumberOfMessagesNotVisible'],
+        });
+        const numMessagesNotVisible = Number(Attributes.ApproximateNumberOfMessagesNotVisible);
+        expect(numMessagesNotVisible).toEqual(0);
+      }));
+    });
+  });
 });

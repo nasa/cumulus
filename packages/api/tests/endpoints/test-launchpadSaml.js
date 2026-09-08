@@ -17,7 +17,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 
-const { verifyJwtToken } = require('../../lib/token');
+const { verifyJwtToken, createJwtToken } = require('../../lib/token');
 const { AccessToken } = require('../../models');
 const launchpadSaml = rewire('../../endpoints/launchpadSaml');
 const launchpadPublicCertificate = launchpadSaml.__get__(
@@ -362,4 +362,121 @@ test.serial('/token endpoint without API_BASE_URL environment variable returns 5
     .expect(500);
 
   t.is(response.statusCode, 500);
+});
+
+test.serial('/refresh without a token returns 401 error', async (t) => {
+  const response = await request(app)
+    .post('/refresh')
+    .set('Accept', 'application/json')
+    .expect(401);
+
+  t.is(response.body.message, 'Request requires a token');
+});
+
+test.serial('/refresh with an invalid token returns 401 error', async (t) => {
+  const response = await request(app)
+    .post('/refresh')
+    .set('Accept', 'application/json')
+    .send({ token: 'InvalidToken' })
+    .expect(401);
+
+  t.is(response.body.message, 'Invalid access token');
+});
+
+test.serial('/refresh with a non-existent token returns 401 error', async (t) => {
+  const jwt = await buildLaunchpadJwt(t.context.successfulSamlResponse);
+  // Delete the token from the database to simulate a non-existent token
+  await accessTokenModel.delete({ accessToken: t.context.validIndex });
+
+  const response = await request(app)
+    .post('/refresh')
+    .set('Accept', 'application/json')
+    .send({ token: jwt })
+    .expect(401);
+
+  t.is(response.body.message, 'Invalid access token');
+});
+
+test.serial('/refresh with a valid token returns a refreshed token', async (t) => {
+  const jwt = await buildLaunchpadJwt(t.context.successfulSamlResponse);
+  const decodedOriginalToken = verifyJwtToken(jwt);
+
+  const response = await request(app)
+    .post('/refresh')
+    .set('Accept', 'application/json')
+    .send({ token: jwt })
+    .expect(200);
+
+  const decodedRefreshedToken = verifyJwtToken(response.body.token);
+  t.is(decodedRefreshedToken.username, t.context.validUser);
+  t.is(decodedRefreshedToken.accessToken, t.context.validIndex);
+  t.true(decodedRefreshedToken.exp > decodedOriginalToken.exp, 'exp should be extended when refreshing token');
+});
+
+test.serial('/refresh preserves the original iat from the token', async (t) => {
+  const jwt = await buildLaunchpadJwt(t.context.successfulSamlResponse);
+  const decodedOriginalToken = verifyJwtToken(jwt);
+  const originalIat = decodedOriginalToken.iat;
+
+  const response = await request(app)
+    .post('/refresh')
+    .set('Accept', 'application/json')
+    .send({ token: jwt })
+    .expect(200);
+
+  const decodedRefreshedToken = verifyJwtToken(response.body.token);
+  t.is(decodedRefreshedToken.iat, originalIat, 'iat should be preserved when refreshing token');
+  t.not(decodedRefreshedToken.exp, decodedOriginalToken.exp, 'exp should be extended when refreshing token');
+});
+
+test.serial('/refresh with an expired session returns 401', async (t) => {
+  // Set a short max session duration
+  process.env.MAX_SESSION_DURATION = '3600'; // 1 hour
+
+  const jwt = await buildLaunchpadJwt(t.context.successfulSamlResponse);
+  const decodedOriginalToken = verifyJwtToken(jwt);
+
+  // Create a new token with an iat that is 2 hours ago (exceeds max session duration)
+  const oldIat = Math.floor(Date.now() / 1000) - 7200; // 2 hours ago
+  const expiredJwtToken = createJwtToken({
+    accessToken: decodedOriginalToken.accessToken,
+    username: decodedOriginalToken.username,
+    expirationTime: decodedOriginalToken.exp,
+    iat: oldIat,
+  });
+
+  const response = await request(app)
+    .post('/refresh')
+    .set('Accept', 'application/json')
+    .send({ token: expiredJwtToken })
+    .expect(401);
+
+  t.is(response.body.message, 'Session has exceeded maximum duration');
+  delete process.env.MAX_SESSION_DURATION;
+});
+
+test.serial('/refresh with a valid session succeeds', async (t) => {
+  // Set a short max session duration
+  process.env.MAX_SESSION_DURATION = '86400'; // 1 day
+
+  const jwt = await buildLaunchpadJwt(t.context.successfulSamlResponse);
+  const decodedOriginalToken = verifyJwtToken(jwt);
+
+  // Create a new token with an iat that is 1 hour ago (within max session duration)
+  const recentIat = Math.floor(Date.now() / 1000) - 3600; // 1 hour ago
+  const recentJwtToken = createJwtToken({
+    accessToken: decodedOriginalToken.accessToken,
+    username: decodedOriginalToken.username,
+    expirationTime: decodedOriginalToken.exp,
+    iat: recentIat,
+  });
+
+  const response = await request(app)
+    .post('/refresh')
+    .set('Accept', 'application/json')
+    .send({ token: recentJwtToken })
+    .expect(200);
+
+  t.is(response.status, 200);
+  delete process.env.MAX_SESSION_DURATION;
 });

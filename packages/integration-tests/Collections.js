@@ -94,6 +94,8 @@ const buildRandomizedCollection = (overrides = {}) => ({
       sampleFileName: 'asdf.jpg',
     },
   ],
+  cmrProvider: 'CUMULUS',
+  metricsProvider: 'CUMULUS',
   ...overrides,
 });
 

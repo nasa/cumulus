@@ -74,7 +74,59 @@ const setS3FileSize = async (s3, file) => {
 
     return { ...file, size };
   } catch (error) {
-    log.debug(`Unable to get object size for file: ${JSON.stringify(file, null, 2)}, Cause: ${error}`);
+    // Extract HTTP status code from AWS SDK error
+    const statusCode = error.$metadata?.httpStatusCode || error.statusCode || 'unknown';
+    const errorType = error.name || error.constructor.name;
+
+    const errorDetails = {
+      bucket: file.bucket,
+      key: file.key,
+      statusCode,
+      errorType,
+      errorMessage: error.message,
+      granuleFile: file.fileName || file.name,
+    };
+
+    if (statusCode === 403) {
+      log.error(
+        'S3 Access Forbidden (403): Failed to get object size for file. '
+        + 'The Lambda has credentials but is explicitly denied access. '
+        + `Bucket: ${file.bucket}, Key: ${file.key}, `
+        + `Error: ${errorType}`,
+        errorDetails
+      );
+      log.error(
+        'ACTION REQUIRED: Ensure the sf-event-sqs-to-db-records Lambda role has '
+        + `s3:GetObject and s3:GetObjectAttributes permissions for bucket: ${file.bucket}. `
+        + 'Check both IAM role policies and S3 bucket policies for explicit Deny statements.'
+      );
+    } else if (statusCode === 401) {
+      log.error(
+        'S3 Authentication Failed (401): Failed to get object size for file. '
+        + 'The Lambda credentials are missing, invalid, or expired. '
+        + `Bucket: ${file.bucket}, Key: ${file.key}, `
+        + `Error: ${errorType}`,
+        errorDetails
+      );
+      log.error(
+        'ACTION REQUIRED: Verify the Lambda execution role is properly attached. '
+        + 'Check AWS credentials configuration and IAM role trust relationships.'
+      );
+    } else if (statusCode === 404) {
+      log.warn(
+        'S3 Object Not Found: File does not exist in S3. '
+        + `Bucket: ${file.bucket}, Key: ${file.key}`,
+        errorDetails
+      );
+    } else {
+      log.warn(
+        'Failed to get object size from S3. '
+        + `Bucket: ${file.bucket}, Key: ${file.key}, `
+        + `Status: ${statusCode}, Error: ${errorType}, Message: ${error.message}`,
+        errorDetails
+      );
+    }
+
     return file;
   }
 };

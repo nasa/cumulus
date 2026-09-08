@@ -31,7 +31,6 @@
       }
     },
     "counter": { "type": "integer" },
-    "limit": { "type": "integer" },
     "isFinished": {
       "description": "Indicates whether all the step function executions of the PDR are in terminal states",
       "type": "boolean"

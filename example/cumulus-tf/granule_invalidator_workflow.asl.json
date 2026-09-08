@@ -1,0 +1,139 @@
+{
+    "StartAt": "Identify Granules to Delete",
+    "States": {
+        "Identify Granules to Delete": {
+            "Type": "Task",
+            "Resource": "${granule_invalidator_arn}",
+            "Next": "Are there granules to delete?",
+            "Parameters": {
+                "cma": {
+                    "event.$": "$",
+                    "task_config": {
+                        "granule_invalidations": "{$.meta.collection.meta.granule_invalidations}",
+                        "collection": "{$.meta.collection.name}",
+                        "version": "{$.meta.collection.version}",
+                        "cumulus_message": {
+                            "outputs": [
+                                {
+                                    "source": "{$.aggregated_stats}",
+                                    "destination": "{$.meta.aggregated_stats}"
+                                },
+                                {
+                                    "source": "{$.granules_to_be_deleted_count}",
+                                    "destination": "{$.meta.granules_to_be_deleted_count}"
+                                },
+                                {
+                                    "source": "{$.granules}",
+                                    "destination": "{$.payload.granules}"
+                                },
+                                {
+                                    "source": "{$.forceRemoveFromCmr}",
+                                    "destination": "{$.payload.forceRemoveFromCmr}"
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "Next": "Workflow Failed",
+                    "ResultPath": "$.error"
+                }
+            ],
+            "Assign": {
+                "deletion_count.$": "$.meta.granules_to_be_deleted_count"
+            }
+        },
+        "Are there granules to delete?": {
+            "Type": "Choice",
+            "Choices": [
+                {
+                    "Variable": "$deletion_count",
+                    "NumericGreaterThan": 0,
+                    "Next": "Wait for Ops Intervention"
+                }
+            ],
+            "Default": "Workflow Succeeded"
+        },
+        "Wait for Ops Intervention": {
+            "Type": "Wait",
+            "Seconds": 1,
+            "Next": "Bulk Delete"
+        },
+        "Bulk Delete": {
+            "Type": "Task",
+            "Resource": "${cumulus_internal_api_arn}",
+            "Next": "Wait for Bulk Delete to Finish",
+            "Parameters": {
+                "httpMethod": "POST",
+                "resource": "{proxy+}",
+                "path": "/granules/bulkDelete",
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "body.$": "States.JsonToString($.payload)"
+            },
+            "Catch": [
+                {
+                    "ErrorEquals": [
+                        "States.ALL"
+                    ],
+                    "Next": "Workflow Failed",
+                    "ResultPath": "$.error"
+                }
+            ],
+            "ResultSelector": {
+                "api_return.$": "States.StringToJson($.body)"
+            },
+            "ResultPath": "$.payload"
+        },
+        "Check Bulk Delete Status": {
+            "Type": "Task",
+            "Resource": "${cumulus_internal_api_arn}",
+            "Parameters": {
+                "httpMethod": "GET",
+                "resource": "{proxy+}",
+                "path.$": "States.Format('/asyncOperations/{}', $.payload.api_return.id)",
+                "headers": {
+                    "Content-Type": "application/json"
+                }
+            },
+            "ResultSelector": {
+                "api_return.$": "States.StringToJson($.body)"
+            },
+            "ResultPath": "$.payload",
+            "Next": "Is bulk delete done?"
+        },
+        "Is bulk delete done?": {
+            "Type": "Choice",
+            "Choices": [
+                {
+                    "Variable": "$.payload.api_return.status",
+                    "StringMatches": "RUNNING",
+                    "Next": "Wait for Bulk Delete to Finish"
+                },
+                {
+                    "Variable": "$.payload.api_return.status",
+                    "StringMatches": "SUCCEEDED",
+                    "Next": "Workflow Succeeded"
+                }
+            ],
+            "Default": "Workflow Failed"
+        },
+        "Wait for Bulk Delete to Finish": {
+            "Type": "Wait",
+            "Seconds": 10,
+            "Next": "Check Bulk Delete Status"
+        },
+        "Workflow Failed": {
+            "Type": "Fail"
+        },
+        "Workflow Succeeded": {
+            "Type": "Succeed"
+        }
+    }
+}

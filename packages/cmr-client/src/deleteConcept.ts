@@ -45,9 +45,9 @@ async function deleteConcept(
       errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(parsedResponseBody.errors.error)}`;
     }
 
-    log.info(errorMessage);
+    log.error(errorMessage);
 
-    throw new Error(errorMessage);
+    throw Object.assign(new Error(errorMessage), { statusCode, cause: error });
   }
 }
 

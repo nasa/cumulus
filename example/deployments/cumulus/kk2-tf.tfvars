@@ -1,5 +1,5 @@
-prefix            = "kk2-tf"
-system_bucket     = "kk2-tf-internal"
+prefix        = "kk2-tf"
+system_bucket = "kk2-tf-internal"
 buckets = {
   internal = {
     name = "kk2-tf-internal"
@@ -26,5 +26,5 @@ buckets = {
     type = "orca"
   }
 }
-oauth_provider   = "earthdata"
+oauth_provider      = "earthdata"
 orca_default_bucket = "kk2-tf-orca-glacier"

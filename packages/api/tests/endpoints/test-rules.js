@@ -10,6 +10,7 @@ const sinon = require('sinon');
 const {
   CreateFunctionCommand,
   AddPermissionCommand,
+  GetPolicyCommand,
   RemovePermissionCommand,
 } = require('@aws-sdk/client-lambda');
 const { mockClient } = require('aws-sdk-client-mock');
@@ -899,7 +900,7 @@ test('POST returns a 400 response if rule type is invalid', async (t) => {
     .expect(400);
   const { message } = response.body;
   t.is(response.status, 400);
-  const regexp = new RegExp('The record has validation errors:.*rule.type.*should be equal to one of the allowed values');
+  const regexp = new RegExp('The record has validation errors:.*rule/type.*must be equal to one of the allowed values');
   t.truthy(message.match(regexp));
 });
 
@@ -1115,6 +1116,17 @@ test.serial('PATCH sets SNS rule to "disabled" and removes source mapping ARN', 
 
   const mockLambdaClient = mockClient(awsServices.lambda()).onAnyCommand().rejects();
   mockLambdaClient.on(AddPermissionCommand).resolves();
+  mockLambdaClient
+    .on(GetPolicyCommand)
+    .resolves({
+      Policy: JSON.stringify({
+        Statement: [
+          {
+            Sid: 'lambda-permission-id',
+          },
+        ],
+      }),
+    });
   mockLambdaClient.on(RemovePermissionCommand).resolves();
 
   t.teardown(() => {
@@ -1293,7 +1305,7 @@ test('PATCH returns a 400 response if rule type is invalid', async (t) => {
     .expect(400);
 
   const { message } = response.body;
-  const regexp = new RegExp('The record has validation errors:.*rule.type.*should be equal to one of the allowed values');
+  const regexp = new RegExp('The record has validation errors:.*rule/type.*must be equal to one of the allowed values');
   t.truthy(message.match(regexp));
 });
 
@@ -1572,6 +1584,17 @@ test.serial('PUT sets SNS rule to "disabled" and removes source mapping ARN', as
     .resolves({});
   const mockLambdaClient = mockClient(awsServices.lambda()).onAnyCommand().rejects();
   mockLambdaClient.on(AddPermissionCommand).resolves();
+  mockLambdaClient
+    .on(GetPolicyCommand)
+    .resolves({
+      Policy: JSON.stringify({
+        Statement: [
+          {
+            Sid: 'lambda-permission-id',
+          },
+        ],
+      }),
+    });
   mockLambdaClient.on(RemovePermissionCommand).resolves();
 
   t.teardown(() => {
@@ -1732,7 +1755,7 @@ test('PUT returns a 400 response if rule type is invalid', async (t) => {
     .expect(400);
 
   const { message } = response.body;
-  const regexp = new RegExp('The record has validation errors:.*rule.type.*should be equal to one of the allowed values');
+  const regexp = new RegExp('The record has validation errors:.*rule/type.*must be equal to one of the allowed values');
   t.truthy(message.match(regexp));
 });
 

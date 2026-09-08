@@ -491,8 +491,7 @@ test.serial('UpdateEcho10XMLMetadata updates GranuleUR and ProducerGranuleID cor
   );
   const cmrMetadata = await promisify(xml2js.parseString)(cmrXml, xmlParseOptions);
   // Remove producerGranuleId from cmrMetadata.  We expect granuleUR = producerGranuleId
-  // in this case
-  // that granuleUR will after = granuleId, and producerGranuleId will be updated
+  // in this case that granuleUR will after = granuleId, and producerGranuleId will be updated
   const distEndpoint = 'https://distendpoint.com';
   const uploadEchoSpy = sinon.spy(() => Promise.resolve({ ETag: 'foo' }));
 
@@ -510,15 +509,127 @@ test.serial('UpdateEcho10XMLMetadata updates GranuleUR and ProducerGranuleID cor
     updateGranuleIdentifiers: true,
     granuleId: 'TestFixtureGranuleUR_uniq',
     producerGranuleId: 'TestFixtureGranuleUR',
+    excludeDataGranule: false,
   });
   t.is(metadataObject.Granule.GranuleUR, 'TestFixtureGranuleUR_uniq');
-  t.is(metadataObject.Granule.DataGranule.ProducerGranuleId, 'TestFixtureGranuleUR');
+  t.true(metadataObject.Granule.DataGranule instanceof Map, 'DataGranule should be a Map for element ordering');
+  t.is(metadataObject.Granule.DataGranule.get('ProducerGranuleId'), 'TestFixtureGranuleUR');
 });
 
-test.serial('updateUMMG Metadata updates GranuleUR and ProducerGranuleID correctly when updateGranuleIdentifiers is true', async (t) => {
+test.serial('UpdateEcho10XMLMetadata should not update GranuleUR and ProducerGranuleID when updateGranuleIdentifiers is false', async (t) => {
+  const { bucketTypes, distributionBucketMap } = t.context;
+  const cmrXml = await fs.readFile(
+    path.join(__dirname, '../fixtures/cmrFileUpdateFixture.cmr.xml'),
+    'utf8'
+  );
+  const cmrMetadata = await promisify(xml2js.parseString)(cmrXml, xmlParseOptions);
+  // Remove producerGranuleId from cmrMetadata.  We expect granuleUR = producerGranuleId
+  // in this case that granuleUR will after = granuleId, and producerGranuleId will be updated
+  const distEndpoint = 'https://distendpoint.com';
+  const uploadEchoSpy = sinon.spy(() => Promise.resolve({ ETag: 'foo' }));
+
+  const { metadataObject } = await updateEcho10XMLMetadata({
+    cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
+    files: [],
+    distEndpoint,
+    bucketTypes,
+    distributionBucketMap,
+    testOverrides: {
+      generateEcho10XMLStringMethod: () => 'testXmlString',
+      metadataObjectFromCMRXMLFileMethod: () => cmrMetadata,
+      uploadEcho10CMRFileMethod: uploadEchoSpy,
+    },
+    updateGranuleIdentifiers: false,
+    granuleId: 'TestFixtureGranuleUR_uniq',
+    producerGranuleId: 'TestFixtureGranuleUR',
+    excludeDataGranule: false,
+  });
+
+  t.deepEqual(metadataObject.Granule.GranuleUR, cmrMetadata.Granule.GranuleUR);
+  t.deepEqual(metadataObject.Granule.DataGranule, cmrMetadata.Granule.DataGranule);
+});
+
+test.serial('UpdateEcho10XMLMetadata does not update granule DataGranule metadata when excludeDataGranule is true', async (t) => {
+  const { bucketTypes, distributionBucketMap } = t.context;
+  const cmrXml = await fs.readFile(
+    path.join(__dirname, '../fixtures/cmrFileUpdateFixture.cmr.xml'),
+    'utf8'
+  );
+  const cmrMetadata = await promisify(xml2js.parseString)(cmrXml, xmlParseOptions);
+  const distEndpoint = 'https://distendpoint.com';
+  const uploadEchoSpy = sinon.spy(() => Promise.resolve({ ETag: 'foo' }));
+
+  const { metadataObject } = await updateEcho10XMLMetadata({
+    cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
+    files: [],
+    distEndpoint,
+    bucketTypes,
+    distributionBucketMap,
+    testOverrides: {
+      generateEcho10XMLStringMethod: () => 'testXmlString',
+      metadataObjectFromCMRXMLFileMethod: () => cmrMetadata,
+      uploadEcho10CMRFileMethod: uploadEchoSpy,
+    },
+    updateGranuleIdentifiers: true,
+    granuleId: 'TestFixtureGranuleUR_uniq',
+    producerGranuleId: 'TestFixtureGranuleUR',
+    excludeDataGranule: true,
+  });
+
+  // GranuleUR should be updated since that is distinct from the DataGranule
+  // and updateGranuleIdentifiers is true, but the DataGranule should not be
+  // updated since excludeDataGranule is true
+  t.is(metadataObject.Granule.GranuleUR, 'TestFixtureGranuleUR_uniq');
+  t.deepEqual(metadataObject.Granule.DataGranule, cmrMetadata.Granule.DataGranule);
+});
+
+test.serial('UpdateEcho10XMLMetadata maintains ECHO10 DataGranule element order', async (t) => {
+  const { bucketTypes, distributionBucketMap } = t.context;
+  const cmrXml = await fs.readFile(
+    path.join(__dirname, '../fixtures/cmrFileUpdateFixture.cmr.xml'),
+    'utf8'
+  );
+  const cmrMetadata = await promisify(xml2js.parseString)(cmrXml, xmlParseOptions);
+  const distEndpoint = 'https://distendpoint.com';
+  const uploadEchoSpy = sinon.spy(() => Promise.resolve({ ETag: 'foo' }));
+
+  const { metadataObject } = await updateEcho10XMLMetadata({
+    cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
+    files: [],
+    distEndpoint,
+    bucketTypes,
+    distributionBucketMap,
+    testOverrides: {
+      generateEcho10XMLStringMethod: () => 'testXmlString',
+      metadataObjectFromCMRXMLFileMethod: () => cmrMetadata,
+      uploadEcho10CMRFileMethod: uploadEchoSpy,
+    },
+    updateGranuleIdentifiers: true,
+    granuleId: 'TestFixtureGranuleUR_uniq',
+    producerGranuleId: 'NEW_PRODUCER_ID',
+    excludeDataGranule: false,
+  });
+
+  t.true(metadataObject.Granule.DataGranule instanceof Map);
+
+  const keys = Array.from(metadataObject.Granule.DataGranule.keys());
+  const expectedOrder = [
+    'SizeMBDataGranule',
+    'ReprocessingPlanned',
+    'ReprocessingActual',
+    'ProducerGranuleId',
+    'DayNightFlag',
+    'ProductionDateTime',
+    'LocalVersionId',
+  ];
+
+  t.deepEqual(keys, expectedOrder, 'DataGranule elements should be in ECHO10 XSD schema order');
+  t.is(metadataObject.Granule.DataGranule.get('ProducerGranuleId'), 'NEW_PRODUCER_ID');
+});
+
+test.serial('updateUMMGMetadata updates GranuleUR and ProducerGranuleID correctly when updateGranuleIdentifiers is true', async (t) => {
   const { bucketTypes, distributionBucketMap } = t.context;
 
-  // Yes, ETag values always include enclosing double-quotes
   const distEndpoint = 'https://distendpoint.com';
   const uploadEchoSpy = sinon.spy(() => Promise.resolve({ ETag: 'foo' }));
 
@@ -534,6 +645,7 @@ test.serial('updateUMMG Metadata updates GranuleUR and ProducerGranuleID correct
   const { metadataObject } = await updateUMMGMetadata({
     granuleId: 'TestFixtureGranuleUR_uniq',
     producerGranuleId: 'TestFixtureGranuleUR',
+    excludeDataGranule: false,
     cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
     files: filesObject,
     distEndpoint,
@@ -547,6 +659,79 @@ test.serial('updateUMMG Metadata updates GranuleUR and ProducerGranuleID correct
   });
   t.is(metadataObject.GranuleUR, 'TestFixtureGranuleUR_uniq');
   t.is(metadataObject.DataGranule.Identifiers[0].Identifier, 'TestFixtureGranuleUR');
+});
+
+test.serial('updateUMMGMetadata does not update Granule metadata when updateGranuleIdentifiers is false', async (t) => {
+  const { bucketTypes, distributionBucketMap } = t.context;
+
+  const distEndpoint = 'https://distendpoint.com';
+  const uploadEchoSpy = sinon.spy(() => Promise.resolve({ ETag: 'foo' }));
+
+  const cmrJSON = await fs.readFile(
+    path.join(__dirname, '../fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314_v1.6.2.cmr.json'),
+    'utf8'
+  );
+  const cmrMetadata = JSON.parse(cmrJSON);
+  const filesObject = await readJsonFixture(
+    path.join(__dirname, '../fixtures/UMMGFilesObjectFixture.json')
+  );
+
+  const { metadataObject } = await updateUMMGMetadata({
+    granuleId: 'TestFixtureGranuleUR_uniq',
+    producerGranuleId: 'TestFixtureGranuleUR',
+    excludeDataGranule: false,
+    cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
+    files: filesObject,
+    distEndpoint,
+    bucketTypes,
+    distributionBucketMap,
+    updateGranuleIdentifiers: false,
+    testOverrides: {
+      uploadUMMGJSONCMRFileMethod: uploadEchoSpy,
+      metadataObjectFromCMRJSONFileMethod: () => cmrMetadata,
+    },
+  });
+
+  t.deepEqual(metadataObject.GranuleUR, cmrMetadata.GranuleUR);
+  t.deepEqual(metadataObject.DataGranule, cmrMetadata.DataGranule);
+});
+
+test.serial('updateUMMGMetadata does not update the granule DataGranule metadata when excludeDataGranule is true', async (t) => {
+  const { bucketTypes, distributionBucketMap } = t.context;
+
+  const distEndpoint = 'https://distendpoint.com';
+  const uploadEchoSpy = sinon.spy(() => Promise.resolve({ ETag: 'foo' }));
+
+  const cmrJSON = await fs.readFile(
+    path.join(__dirname, '../fixtures/MOD09GQ.A3411593.1itJ_e.006.9747594822314_v1.6.2.cmr.json'),
+    'utf8'
+  );
+  const cmrMetadata = JSON.parse(cmrJSON);
+  const filesObject = await readJsonFixture(
+    path.join(__dirname, '../fixtures/UMMGFilesObjectFixture.json')
+  );
+
+  const { metadataObject } = await updateUMMGMetadata({
+    granuleId: 'TestFixtureGranuleUR_uniq',
+    producerGranuleId: 'TestFixtureGranuleUR',
+    excludeDataGranule: true,
+    cmrFile: { filename: 's3://cumulus-test-sandbox-private/notUsed' },
+    files: filesObject,
+    distEndpoint,
+    bucketTypes,
+    distributionBucketMap,
+    updateGranuleIdentifiers: true,
+    testOverrides: {
+      uploadUMMGJSONCMRFileMethod: uploadEchoSpy,
+      metadataObjectFromCMRJSONFileMethod: () => cmrMetadata,
+    },
+  });
+
+  // GranuleUR should be updated since that is distinct from the DataGranule
+  // and updateGranuleIdentifiers is true, but the DataGranule should not be
+  // updated since excludeDataGranule is true
+  t.is(metadataObject.GranuleUR, 'TestFixtureGranuleUR_uniq');
+  t.deepEqual(metadataObject.DataGranule, cmrMetadata.DataGranule);
 });
 
 test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAccessURLs/OnlineResources', async (t) => {
@@ -619,6 +804,7 @@ test.serial('updateEcho10XMLMetadata adds granule files correctly to OnlineAcces
       metadataObjectFromCMRXMLFileMethod: () => cmrMetadata,
       uploadEcho10CMRFileMethod: uploadEchoSpy,
     },
+    excludeDataGranule: false,
   });
 
   t.is(etag, expectedEtag, "ETag doesn't match");
@@ -703,6 +889,7 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule w
       uploadUMMGJSONCMRFileMethod: uploadEchoSpy,
       metadataObjectFromCMRJSONFileMethod: () => cmrMetadata,
     },
+    excludeDataGranule: false,
   });
   t.is(etag, expectedEtag, "ETag doesn't match");
   t.deepEqual(metadataObject.RelatedUrls.sort(sortByURL), expectedRelatedURLs.sort(sortByURL));
@@ -778,6 +965,7 @@ test.serial('updateUMMGMetadata adds Type correctly to RelatedURLs for granule w
       uploadUMMGJSONCMRFileMethod: uploadEchoSpy,
       metadataObjectFromCMRJSONFileMethod: () => cmrMetadata,
     },
+    excludeDataGranule: false,
   });
 
   t.is(etag, expectedEtag, "ETag doesn't match");
@@ -1159,8 +1347,11 @@ test('getCmrSettings uses values in environment variables by default for launchp
   const credentials = await getCmrSettings({ oauthProvider: 'launchpad' });
 
   t.deepEqual(credentials, {
+    api: 'launchpad-api',
+    certificate: 'launchpad-cert',
     provider: 'CUMULUS-TEST',
     clientId: 'Cumulus-Client-Id',
+    passphrase: launchpadPassphrase,
     token: `${launchpadPassphrase}-launchpad-api-launchpad-cert`,
     oauthProvider: 'launchpad',
   });
@@ -1216,6 +1407,9 @@ test('getCmrSettings uses values in config for launchpad oauth', async (t) => {
     });
 
     t.deepEqual(credentials, {
+      api: 'test-api',
+      certificate: 'test-certificate',
+      passphrase: testPassphrase,
       provider: 'CUMULUS-TEST',
       clientId: 'Cumulus-Client-Id',
       token: `${testPassphrase}-test-api-test-certificate`,
@@ -1326,7 +1520,7 @@ test.serial('publish2CMR passes cmrRevisionId to publishECHO10XML2CMR', async (t
     revertPublishECHO10XML2CMRSpy();
   });
   await cmrUtil.publish2CMR(updatedXmlFile, credentials, cmrRevisionId);
-  t.is(publishECHO10XML2CMRSpy.getCall(0).args[2], cmrRevisionId);
+  t.is(publishECHO10XML2CMRSpy.getCall(0).args[3], cmrRevisionId);
 });
 
 test.serial('publish2CMR passes cmrRevisionId to publishUMMGJSON2CMR', async (t) => {
@@ -1342,7 +1536,7 @@ test.serial('publish2CMR passes cmrRevisionId to publishUMMGJSON2CMR', async (t)
   });
 
   await cmrUtil.publish2CMR(cmrFileObject, credentials, cmrRevisionId);
-  t.is(publishUMMGJSON2CMRSpy.getCall(0).args[2], cmrRevisionId);
+  t.is(publishUMMGJSON2CMRSpy.getCall(0).args[3], cmrRevisionId);
 });
 
 test.serial('publishECHO10XML2CMR passes cmrRevisionId to ingestGranule', async (t) => {
@@ -1358,7 +1552,7 @@ test.serial('publishECHO10XML2CMR passes cmrRevisionId to ingestGranule', async 
   });
 
   await cmrUtil.publish2CMR(cmrFileObject, credentials, cmrRevisionId);
-  t.is(ingestGranuleSpy.getCall(0).args[1], cmrRevisionId);
+  t.is(ingestGranuleSpy.getCall(0).args[2], cmrRevisionId);
 });
 
 test.serial('publishUMMGJSON2CMR passes cmrRevisionId to ingestUMMGranule', async (t) => {
@@ -1374,7 +1568,7 @@ test.serial('publishUMMGJSON2CMR passes cmrRevisionId to ingestUMMGranule', asyn
   });
 
   await cmrUtil.publish2CMR(cmrFileObject, credentials, cmrRevisionId);
-  t.is(ingestUMMGranuleSpy.getCall(0).args[1], cmrRevisionId);
+  t.is(ingestUMMGranuleSpy.getCall(0).args[2], cmrRevisionId);
 });
 
 test(

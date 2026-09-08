@@ -12,7 +12,6 @@ const {
   fakeGranuleRecordFactory,
   FilePgModel,
   generateLocalTestDb,
-  getUniqueGranuleByGranuleId,
   GranulePgModel,
   localStackConnectionEnv,
   migrationDir,
@@ -170,6 +169,7 @@ test.before(async (t) => {
     t.context.files.push(
       fakeFileRecordFactory({
         granule_cumulus_id: pgGranule.cumulus_id,
+        collection_cumulus_id: pgGranule.collection_cumulus_id,
         file_name: pgGranule.granule_id + '.hdf',
         updated_at: new Date().toISOString(),
         bucket: t.context.collectionId + '--bucket',
@@ -178,6 +178,7 @@ test.before(async (t) => {
       }),
       fakeFileRecordFactory({
         granule_cumulus_id: pgGranule.cumulus_id,
+        collection_cumulus_id: pgGranule.collection_cumulus_id,
         file_name: pgGranule.granule_id + '.txt',
         updated_at: new Date().toISOString(),
         bucket: t.context.collectionId + '--bucket',
@@ -186,6 +187,7 @@ test.before(async (t) => {
       }),
       fakeFileRecordFactory({
         granule_cumulus_id: pgGranule.cumulus_id,
+        collection_cumulus_id: pgGranule.collection_cumulus_id,
         file_name: pgGranule.granule_id + '.cmr',
         updated_at: new Date().toISOString(),
         bucket: t.context.collectionId + '--bucket',
@@ -250,7 +252,7 @@ test.serial('PATCH /granules/bulkPatchGranuleCollection successfully updates gra
   const { message } = response.body;
   t.true(message.includes('Successfully wrote granules'));
   const returnedGranules = await Promise.all(granuleIds.map((id) =>
-    getUniqueGranuleByGranuleId(knex, id, granulePgModel)));
+    granulePgModel.get(knex, { granule_id: id })));
 
   for (const granule of returnedGranules) {
     t.is(granule.collection_cumulus_id, collectionCumulusId2);
@@ -308,7 +310,7 @@ test.serial('PATCH /granules/bulkPatch successfully updates a batch of granules'
     .expect(200);
 
   const returnedGranules = await Promise.all(
-    granuleIds.map((id) => getUniqueGranuleByGranuleId(knex, id, granulePgModel))
+    granuleIds.map((id) => granulePgModel.get(knex, { granule_id: id }))
   );
 
   for (const granule of returnedGranules) {

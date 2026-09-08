@@ -6,9 +6,7 @@ const path = require('path');
 const { JSONPath } = require('jsonpath-plus');
 const { parseString } = require('xml2js');
 const { promisify } = require('util');
-const get = require('lodash/get');
 const moment = require('moment');
-
 const {
   getS3Object,
   parseS3Uri,
@@ -18,8 +16,10 @@ const {
 } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 
+const get = require('lodash/get');
+
 const { AccessToken } = require('../models');
-const { createJwtToken } = require('../lib/token');
+const { createJwtToken, refreshTokenAndJwt, verifyAndDecodeTokenFromRequest, handleJwtVerificationError } = require('../lib/token');
 
 const parseXmlString = promisify(parseString);
 
@@ -286,12 +286,55 @@ const samlToken = (req, res) => {
   return res.redirect(redirectUrl.toString());
 };
 
-const notImplemented = (req, res) =>
-  res.boom.notImplemented(
-    `endpoint: "${req.path}" not implemented. Login with launchpad.`
-  );
+/**
+ * Handle refreshing tokens for SAML authentication
+ *
+ * @param {Object} request - an API Gateway request
+ * @param {Object} response - an API Gateway response object
+ * @param {number} [extensionSeconds] - number of seconds to extend token
+ *   expiration (default: 43200)
+ * @returns {Object} an API Gateway response
+ */
+async function refreshAccessToken(request, response, extensionSeconds = 60 * 60) {
+  try {
+    const decodedToken = verifyAndDecodeTokenFromRequest(request);
 
-const refreshEndpoint = notImplemented;
+    const accessTokenModel = new AccessToken();
+
+    try {
+      const jwtToken = await refreshTokenAndJwt(
+        decodedToken,
+        accessTokenModel,
+        extensionSeconds
+      );
+      return response.send({ token: jwtToken });
+    } catch (error) {
+      if (error.message === 'Invalid access token') {
+        return response.boom.unauthorized(error.message);
+      }
+      throw error;
+    }
+  } catch (error) {
+    if (error.noToken) {
+      return response.boom.unauthorized(error.message);
+    }
+    if (error.sessionExpired) {
+      return response.boom.unauthorized(error.message);
+    }
+    return handleJwtVerificationError(error.jwtError || error, response);
+  }
+}
+
+/**
+ * Refreshes a SAML token
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function refreshEndpoint(req, res) {
+  return await refreshAccessToken(req, res);
+}
 
 module.exports = {
   auth,

@@ -5,6 +5,7 @@ import { TableNames } from '../tables';
 
 import { PostgresExecution, PostgresExecutionRecord } from '../types/execution';
 import { getSortFields } from '../lib/sort';
+import { isCollisionError } from '../lib/errors';
 class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionRecord> {
   constructor() {
     super({
@@ -26,23 +27,36 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
     execution: PostgresExecution,
     writeConstraints: boolean = true
   ) {
-    if (writeConstraints && execution.status === 'running') {
-      return await knexOrTrx(this.tableName)
-        .insert(execution)
-        .onConflict('arn')
-        .merge({
-          created_at: execution.created_at,
-          updated_at: execution.updated_at,
-          timestamp: execution.timestamp,
-          original_payload: execution.original_payload,
-        })
-        .returning('*');
+    const updatePayload = writeConstraints && execution.status === 'running'
+      ? {
+        created_at: execution.created_at,
+        updated_at: execution.updated_at,
+        timestamp: execution.timestamp,
+        original_payload: execution.original_payload,
+      }
+      : execution;
+
+    try {
+      // Attempt to insert the execution.
+      // Global uniqueness is enforced at the database level via a trigger
+      // (refer to migrations/110_executions_triggers.ts).
+      return await knexOrTrx.transaction(async (trx) =>
+        await trx(this.tableName)
+          .insert(execution)
+          .returning('*'));
+    } catch (error) {
+      // Trigger-raised duplicate, fallback to update
+      // Attempt update (should affect at most 1 row due to global uniqueness invariant)
+      if (isCollisionError(error)) {
+        const updated = await knexOrTrx(this.tableName)
+          .where('arn', execution.arn)
+          .limit(1) // defensive (not enforced by PG)
+          .update(updatePayload)
+          .returning('*');
+        return updated; // may be []
+      }
+      throw error;
     }
-    return await knexOrTrx(this.tableName)
-      .insert(execution)
-      .onConflict('arn')
-      .merge()
-      .returning('*');
   }
 
   /**

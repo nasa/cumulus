@@ -10,8 +10,8 @@ module "queue_granules_workflow" {
   state_machine_definition = templatefile(
     "${path.module}/queue_granules_workflow.asl.json",
     {
-      ingest_granule_workflow_name: module.ingest_granule_workflow.name,
-      queue_granules_task_arn: module.cumulus.queue_granules_task.task_arn,
+      ingest_granule_workflow_name : module.ingest_granule_workflow.name,
+      queue_granules_task_arn : module.cumulus.queue_granules_task.task_arn,
     }
   )
 }

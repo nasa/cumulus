@@ -5,7 +5,7 @@ const { Search } = require('@cumulus/es-client/search');
 
 const metrics = () => ('log_destination_arn' in process.env);
 
-const esMetricsParams = ['_doc', `${process.env.stackName}-*`, true];
+const esMetricsParams = [undefined, `${process.env.stackName}-*`, true];
 
 /**
  * list all the logs

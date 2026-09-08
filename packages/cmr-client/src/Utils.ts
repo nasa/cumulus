@@ -10,3 +10,11 @@ export function parseXMLString(xmlString: string): Promise<unknown> {
     }
   );
 }
+
+export function redactAuthorization(headers: Record<string, any>): Record<string, any> {
+  const redactedHeaders = { ...headers };
+  if (redactedHeaders['Authorization']) {
+    redactedHeaders['Authorization'] = '[REDACTED]';
+  }
+  return redactedHeaders;
+}

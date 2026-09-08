@@ -7,15 +7,14 @@ const { parseString } = require('xml2js');
 const { xmlParseOptions } = require('@cumulus/cmrjs/utils');
 const { urlPathTemplate } = require('../url-path-template');
 
+const testDataDir = path.dirname(require.resolve('@cumulus/test-data/package.json'));
 const modisXmlFile = path.join(
-  __dirname,
-  '..',
-  'node_modules/@cumulus/test-data/granules/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml'
+  testDataDir,
+  'granules/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml'
 );
 const measuresXmlFile = path.join(
-  __dirname,
-  '..',
-  'node_modules/@cumulus/test-data/granules/antarctica_ice_velocity_450m.nc.cmr.xml'
+  testDataDir,
+  'granules/antarctica_ice_velocity_450m.nc.cmr.xml'
 );
 
 /**

@@ -17,20 +17,22 @@ import { getExecutionInfoByGranuleCumulusIds } from '../lib/execution';
 
 const log = new Logger({ sender: '@cumulus/db/GranuleSearch' });
 
-interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
+export interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
   collectionName: string,
   collectionVersion: string,
   pdrName?: string,
   providerName?: string,
 }
 
+const collectionCumulusIdColumn = 'collection_cumulus_id';
+
 /**
  * Class to build and execute db search query for granules
  */
 export class GranuleSearch extends BaseSearch {
-  constructor(event: QueryEvent) {
+  constructor(event: QueryEvent, enableEstimate = true) {
     // estimate the table rowcount by default
-    if (event?.queryStringParameters?.estimateTableRowCount !== 'false') {
+    if (enableEstimate && event?.queryStringParameters?.estimateTableRowCount !== 'false') {
       set(event, 'queryStringParameters.estimateTableRowCount', 'true');
     }
     super(event, 'granule');
@@ -52,8 +54,7 @@ export class GranuleSearch extends BaseSearch {
       providers: providersTable,
       pdrs: pdrsTable,
     } = TableNames;
-    const countQuery = knex(this.tableName)
-      .count('*');
+    const countQuery = this.baseCountQuery(knex);
 
     const searchQuery = knex(this.tableName)
       .select(`${this.tableName}.*`)
@@ -106,6 +107,44 @@ export class GranuleSearch extends BaseSearch {
     if (prefix) {
       [countQuery, searchQuery].forEach((query) => query.whereLike(`${this.tableName}.granule_id`, `${prefix}%`));
     }
+  }
+
+  /**
+   * Build queries for sort keys and fields
+   *
+   * Extends BaseSearch sorting behavior by optionally prepending the
+   * `collection_cumulus_id` partition key
+   *
+   * @param params
+   * @param params.searchQuery - query builder for search
+   * @param [params.dbQueryParameters] - db query parameters
+   */
+  protected buildSortQuery(params: {
+    searchQuery: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const { dbQueryParameters } = params;
+    const { sort } = dbQueryParameters || this.dbQueryParameters;
+    const finalSort = [...(sort || [])];
+
+    // when querying collection-scoped data, prepend the partition key to the sort order
+    // to improve partition pruning and enable more efficient index/partition scans
+    if (this.searchCollection()
+      && finalSort.length > 0
+      && !finalSort.some(({ column }) => column === collectionCumulusIdColumn)) {
+      finalSort.unshift({
+        column: collectionCumulusIdColumn,
+        order: 'asc',
+      });
+    }
+
+    super.buildSortQuery({
+      ...params,
+      dbQueryParameters: {
+        ...(dbQueryParameters || this.dbQueryParameters),
+        sort: finalSort,
+      },
+    });
   }
 
   /**

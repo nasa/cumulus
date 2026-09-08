@@ -39,6 +39,7 @@ const generateMoveGranuleTestFilesAndEntries = async (params) => {
     knexTransaction: t.context.knex,
     granule: fakePgGranule,
     executionCumulusId: t.context.testExecutionCumulusId,
+    executionCreatedAt: t.context.testExecutionCreatedAt,
   });
   const postgresGranuleCumulusId = upsertedPgGranule.cumulus_id;
 
@@ -54,6 +55,7 @@ const generateMoveGranuleTestFilesAndEntries = async (params) => {
       source: 'fakeSource',
       file_size: 9,
       granule_cumulus_id: postgresGranuleCumulusId,
+      collection_cumulus_id: t.context.collectionCumulusId,
     }),
     fakeFileRecordFactory({
       bucket,
@@ -61,6 +63,7 @@ const generateMoveGranuleTestFilesAndEntries = async (params) => {
       source: 'fakeSource',
       file_size: 9,
       granule_cumulus_id: postgresGranuleCumulusId,
+      collection_cumulus_id: t.context.collectionCumulusId,
     }),
     fakeFileRecordFactory({
       bucket: secondBucket,
@@ -68,6 +71,7 @@ const generateMoveGranuleTestFilesAndEntries = async (params) => {
       source: 'fakeSource',
       file_size: 9,
       granule_cumulus_id: postgresGranuleCumulusId,
+      collection_cumulus_id: t.context.collectionCumulusId,
     }),
   ];
   await Promise.all(pgFiles.map((file) => filePgModel.create(t.context.knex, file)));

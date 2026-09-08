@@ -1,6 +1,6 @@
 import { Knex } from 'knex';
 
-import { removeNilProperties } from '@cumulus/common/util';
+import { parseIfJson, removeNilProperties, returnNullOrUndefinedOrDate } from '@cumulus/common/util';
 import { constructCollectionId, deconstructCollectionId } from '@cumulus/message/Collections';
 import { getExecutionUrlFromArn } from '@cumulus/message/Executions';
 import { ApiPdr } from '@cumulus/types/api/pdrs';
@@ -30,6 +30,10 @@ export const translateApiPdrToPostgresPdr = async (
   executionPgModel = new ExecutionPgModel()
 ): Promise<PostgresPdr> => {
   const { name, version } = deconstructCollectionId(record.collectionId);
+  const execution = record.execution
+    ? await executionPgModel.get(knex, { url: record.execution }, ['cumulus_id', 'created_at'])
+    : undefined;
+
   const pdrRecord: PostgresPdr = {
     name: record.pdrName,
     status: record.status,
@@ -41,10 +45,8 @@ export const translateApiPdrToPostgresPdr = async (
       knex,
       { name, version }
     ),
-    execution_cumulus_id: record.execution ? await executionPgModel.getRecordCumulusId(
-      knex,
-      { url: record.execution }
-    ) : undefined,
+    execution_cumulus_id: execution?.cumulus_id,
+    execution_created_at: execution?.created_at,
     progress: record.progress,
     address: record.address,
     pan_sent: record.PANSent,
@@ -85,17 +87,17 @@ export const translatePostgresPdrToApiPdrWithoutDbQuery = ({
   provider: providerPgRecord?.name,
   collectionId: constructCollectionId(collectionPgRecord.name, collectionPgRecord.version),
   status: pdrPgRecord.status,
-  createdAt: pdrPgRecord.created_at.getTime(),
+  createdAt: returnNullOrUndefinedOrDate(pdrPgRecord.created_at)?.getTime(),
   progress: pdrPgRecord.progress,
   execution: executionArn ? getExecutionUrlFromArn(executionArn) : undefined,
   PANSent: pdrPgRecord.pan_sent,
   PANmessage: pdrPgRecord.pan_message,
-  stats: pdrPgRecord.stats,
+  stats: parseIfJson(pdrPgRecord.stats),
   address: pdrPgRecord.address,
   originalUrl: pdrPgRecord.original_url,
-  timestamp: (pdrPgRecord.timestamp ? pdrPgRecord.timestamp.getTime() : undefined),
+  timestamp: returnNullOrUndefinedOrDate(pdrPgRecord.timestamp)?.getTime(),
   duration: pdrPgRecord.duration,
-  updatedAt: pdrPgRecord.updated_at.getTime(),
+  updatedAt: returnNullOrUndefinedOrDate(pdrPgRecord.updated_at)?.getTime(),
 });
 
 /**

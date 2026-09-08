@@ -4,7 +4,7 @@ resource "aws_lambda_function" "change_granule_collection_pg_task" {
   source_code_hash = filebase64sha256("${path.module}/../../tasks/change-granule-collection-pg/dist/webpack/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "ChangeGranuleCollectionPG", 900)
   memory_size      = lookup(var.lambda_memory_sizes, "ChangeGranuleCollectionPG", 1000)
 
@@ -12,11 +12,11 @@ resource "aws_lambda_function" "change_granule_collection_pg_task" {
 
   environment {
     variables = {
-      CMR_ENVIRONMENT                   = var.cmr_environment
-      CMR_HOST                          = var.cmr_custom_host
-      CUMULUS_MESSAGE_ADAPTER_DIR       = "/opt/"
-      stackName                         = var.prefix
-      system_bucket                     = var.system_bucket
+      CMR_ENVIRONMENT             = var.cmr_environment
+      CMR_HOST                    = var.cmr_custom_host
+      CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
+      stackName                   = var.prefix
+      system_bucket               = var.system_bucket
     }
   }
 

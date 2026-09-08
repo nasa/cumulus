@@ -1,5 +1,5 @@
 resource "aws_iam_role" "ecs_cluster_instance" {
-  name = "${var.prefix}_ecs_cluster_instance_role"
+  name                 = "${var.prefix}_ecs_cluster_instance_role"
   assume_role_policy   = data.aws_iam_policy_document.ec2_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
 
@@ -104,7 +104,7 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
   }
 
   statement {
-    actions   = [
+    actions = [
       "dynamodb:DeleteItem",
       "dynamodb:GetItem",
       "dynamodb:PutItem",
@@ -135,7 +135,7 @@ data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
   }
 
   statement {
-    actions   = ["sns:Publish"]
+    actions = ["sns:Publish"]
     resources = [
       module.archive.report_executions_sns_topic_arn,
       module.archive.report_pdrs_sns_topic_arn,
@@ -155,9 +155,9 @@ resource "aws_iam_role_policy" "ecs_cluster_instance" {
 }
 
 resource "aws_iam_role_policy_attachment" "NGAPProtAppInstanceMinimalPolicy" {
-  count = var.deploy_to_ngap ? 1 : 0
+  count      = var.deploy_to_ngap ? 1 : 0
   policy_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/NGAPProtAppInstanceMinimalPolicy"
-  role = aws_iam_role.ecs_cluster_instance.id
+  role       = aws_iam_role.ecs_cluster_instance.id
 }
 
 resource "aws_iam_instance_profile" "ecs_cluster_instance" {
@@ -199,15 +199,15 @@ data "aws_efs_mount_target" "ecs_cluster_instance" {
 
 locals {
   ecs_instance_autoscaling_user_data_config = {
-    cluster_name              = aws_ecs_cluster.default.name
-    container_stop_timeout    = var.ecs_container_stop_timeout,
-    docker_hub_config         = var.ecs_docker_hub_config,
-    docker_volume_create_size = var.ecs_cluster_instance_docker_volume_size - 1,
-    efs_dns_name              = var.ecs_efs_config == null ? null : data.aws_efs_mount_target.ecs_cluster_instance[0].dns_name,
-    efs_mount_point           = var.ecs_efs_config == null ? null : var.ecs_efs_config.mount_point,
+    cluster_name                   = aws_ecs_cluster.default.name
+    container_stop_timeout         = var.ecs_container_stop_timeout,
+    docker_hub_config              = var.ecs_docker_hub_config,
+    docker_volume_create_size      = var.ecs_cluster_instance_docker_volume_size - 1,
+    efs_dns_name                   = var.ecs_efs_config == null ? null : data.aws_efs_mount_target.ecs_cluster_instance[0].dns_name,
+    efs_mount_point                = var.ecs_efs_config == null ? null : var.ecs_efs_config.mount_point,
     include_docker_cleanup_cronjob = var.ecs_include_docker_cleanup_cronjob,
-    region                    = data.aws_region.current.name
-    task_reaper_object        = aws_s3_bucket_object.task_reaper
+    region                         = data.aws_region.current.name
+    task_reaper_object             = aws_s3_bucket_object.task_reaper
   }
 
   security_group_ids = compact(concat(
@@ -220,10 +220,10 @@ locals {
 }
 
 resource "aws_launch_template" "ecs_cluster_instance" {
-  name_prefix   = "${var.prefix}_ecs_cluster_template"
-  key_name      = var.key_name
-  image_id      = var.ecs_cluster_instance_image_id
-  instance_type = var.ecs_cluster_instance_type
+  name_prefix            = "${var.prefix}_ecs_cluster_template"
+  key_name               = var.key_name
+  image_id               = var.ecs_cluster_instance_image_id
+  instance_type          = var.ecs_cluster_instance_type
   vpc_security_group_ids = local.security_group_ids
   block_device_mappings {
     device_name = "/dev/xvdcz"
@@ -329,11 +329,11 @@ resource "aws_cloudwatch_metric_alarm" "ecs_instance_autoscaling_group_cpu_scale
 # Scale out config
 
 resource "aws_autoscaling_policy" "ecs_instance_autoscaling_group_scale_out" {
-  name                    = "${aws_autoscaling_group.ecs_cluster_instance.name}-scale-out"
-  autoscaling_group_name  = aws_autoscaling_group.ecs_cluster_instance.name
-  adjustment_type         = "PercentChangeInCapacity"
-  metric_aggregation_type = "Average"
-  policy_type             = "StepScaling"
+  name                     = "${aws_autoscaling_group.ecs_cluster_instance.name}-scale-out"
+  autoscaling_group_name   = aws_autoscaling_group.ecs_cluster_instance.name
+  adjustment_type          = "PercentChangeInCapacity"
+  metric_aggregation_type  = "Average"
+  policy_type              = "StepScaling"
   min_adjustment_magnitude = 1
 
   step_adjustment {

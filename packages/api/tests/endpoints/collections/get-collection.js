@@ -105,6 +105,8 @@ test('GET returns an existing collection', async (t) => {
     .expect(200);
 
   const expected = {
+    cmrProvider: testCollection.cmr_provider,
+    metricsProvider: testCollection.metrics_provider,
     granuleId: testCollection.granule_id_validation_regex,
     granuleIdExtraction: testCollection.granule_id_extraction_regex,
     sampleFileName: testCollection.sample_file_name,

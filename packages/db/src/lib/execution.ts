@@ -8,8 +8,6 @@ import { PostgresExecutionRecord } from '../types/execution';
 
 const Logger = require('@cumulus/logger');
 
-const { getKnexClient } = require('../connection');
-
 export interface ArnRecord {
   arn: string;
 }
@@ -124,17 +122,16 @@ export const executionArnsFromGranuleIdsAndWorkflowNames = (
  *
  * @param {string} granuleId -  granuleIds
  * @param {string} workflowName - workflow name
- * @param {Knex} testKnex - knex for testing
+ * @param {Knex} knex - DB Client
  * @returns {Promise<string>} - most recent exectutionArn for input parameters.
  * @throws {RecordNotFound}
  */
 export const newestExecutionArnFromGranuleIdWorkflowName = async (
   granuleId: string,
   workflowName: string,
-  testKnex: Knex | undefined
+  knex: Knex
 ): Promise<string> => {
   try {
-    const knex = testKnex ?? await getKnexClient({ env: process.env });
     const executions = await executionArnsFromGranuleIdsAndWorkflowNames(
       knex,
       [granuleId],

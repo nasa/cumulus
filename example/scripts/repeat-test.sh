@@ -38,5 +38,3 @@ do
     rm -f $outputPath
   fi
 done
-
-

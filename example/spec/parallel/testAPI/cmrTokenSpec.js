@@ -21,7 +21,7 @@ describe('When using Earthdata Login Token from CMR', () => {
       username = process.env.EARTHDATA_USERNAME;
       password = process.env.EARTHDATA_PASSWORD;
 
-      cmrObject = new CMR({
+      cmrObject = CMR.getInstance({
         provider: 'provider',
         username,
         password,

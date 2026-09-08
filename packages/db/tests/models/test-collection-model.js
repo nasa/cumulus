@@ -33,7 +33,7 @@ test.after.always(async (t) => {
   });
 });
 
-test.serial('CollectionPgModel.upsert() creates new collection', async (t) => {
+test('CollectionPgModel.upsert() creates new collection', async (t) => {
   const {
     knex,
     collectionPgModel,
@@ -52,7 +52,7 @@ test.serial('CollectionPgModel.upsert() creates new collection', async (t) => {
   );
 });
 
-test.serial('CollectionPgModel.upsert() overwrites a collection record', async (t) => {
+test('CollectionPgModel.upsert() overwrites a collection record', async (t) => {
   const {
     knex,
     collectionPgModel,
@@ -79,4 +79,35 @@ test.serial('CollectionPgModel.upsert() overwrites a collection record', async (
       meta: collectionRecord.meta,
     }
   );
+});
+
+test('CollectionPgModel.getMetricsAndCmrProvider() gets a collection metrics_provider and cmr provider', async (t) => {
+  const {
+    knex,
+    collectionPgModel,
+    collectionRecord,
+  } = t.context;
+  const [dbCollection] = await collectionPgModel.create(knex, collectionRecord);
+  const metricsAndCmrProvider = await collectionPgModel.getMetricsAndCmrProvider(
+    knex,
+    dbCollection.cumulus_id
+  );
+  t.deepEqual(metricsAndCmrProvider, {
+    metrics_provider: collectionRecord.metrics_provider,
+    cmr_provider: collectionRecord.cmr_provider,
+  });
+  const collectionRecord2 = fakeCollectionRecordFactory({
+    cmr_provider: 'adifferentprovider',
+    metrics_provider: 'anyotherstring',
+  });
+
+  const [dbCollections] = await collectionPgModel.create(knex, collectionRecord2);
+  const metricsAndCmrProvider2 = await collectionPgModel.getMetricsAndCmrProvider(
+    knex,
+    dbCollections.cumulus_id
+  );
+  t.deepEqual(metricsAndCmrProvider2, {
+    metrics_provider: collectionRecord2.metrics_provider,
+    cmr_provider: collectionRecord2.cmr_provider,
+  });
 });

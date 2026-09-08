@@ -4,7 +4,6 @@
   "type": "object",
   "required": [
     "bucket",
-    "distribution_endpoint",
     "collection",
     "buckets"
   ],
@@ -35,7 +34,7 @@
     },
     "distribution_endpoint": {
       "type": "string",
-      "description": "The api distribution endpoint"
+      "description": "The api distribution endpoint. No longer consumed by this task; URL construction occurs in update-granules-cmr-metadata-file-links."
     },
     "collection": {
       "type": "object",
@@ -65,9 +64,11 @@
           "title": "Optional Metadata for the Collection",
           "type": "object",
           "additionalProperties": true,
-          "granuleMetadataFileExtension": {
-            "description": "Set to the file extension for task to look for the granule metadata information. If none is specified, the granule CMR metadata or ISO metadata file is used",
-            "type": "string"
+          "properties": {
+            "granuleMetadataFileExtension": {
+              "description": "Set to the file extension for task to look for the granule metadata information. If none is specified, the granule CMR metadata or ISO metadata file is used",
+              "type": "string"
+            }
           }
         }
       }

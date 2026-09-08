@@ -1,33 +1,32 @@
 {
   "name": "@cumulus/ftp-populate-test-lambda",
-  "version": "21.0.0",
+  "version": "22.4.0",
   "description": "FTP Population Utility Lambda",
   "main": "index.js",
   "private": true,
   "engines": {
-    "node": ">=20.12.2"
+    "node": ">=22.21.1"
   },
   "scripts": {
     "build": "rm -rf dist && mkdir dist && cp -R granules ./dist/granules && ../../../node_modules/.bin/webpack",
     "package": "npm run build && (cd dist && node ../../../../bin/zip.js lambda.zip index.js granules)",
     "clean": "rm -rf dist",
     "test": "true",
-    "oldpackage": "rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js node_modules ../../spec/helpers",
     "python-lint": "true"
   },
   "publishConfig": {
     "access": "private"
   },
   "dependencies": {
-    "@cumulus/api": "21.0.0",
-    "@cumulus/api-client": "21.0.0",
-    "@cumulus/common": "21.0.0",
-    "@cumulus/integration-tests": "21.0.0",
-    "@cumulus/logger": "21.0.0",
-    "@cumulus/test-data": "21.0.0",
+    "@cumulus/api": "22.4.0",
+    "@cumulus/api-client": "22.4.0",
+    "@cumulus/common": "22.4.0",
+    "@cumulus/integration-tests": "22.4.0",
+    "@cumulus/logger": "22.4.0",
+    "@cumulus/test-data": "22.4.0",
     "fs-extra": "^9.0.0",
     "jsftp": "https://github.com/jkovarik/jsftp.git#add_288",
-    "lodash": "^4.17.20"
+    "lodash": "^4.18.1"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0"

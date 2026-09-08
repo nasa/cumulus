@@ -29,6 +29,12 @@ test('translatePostgresProviderToApiProvider translates the expected API record'
     allowed_redirects: allowedRedirects,
   };
 
+  const duckDbPostgresProvider = {
+    ...postgresProviderObject,
+    created_at: postgresProviderObject.created_at.toISOString(),
+    updated_at: postgresProviderObject.updated_at.toISOString(),
+  };
+
   const expected = {
     certificateUri: 'fakeUri',
     cmKeyId: 'fakecmId',
@@ -47,8 +53,11 @@ test('translatePostgresProviderToApiProvider translates the expected API record'
     allowedRedirects,
   };
 
-  const result = translatePostgresProviderToApiProvider(postgresProviderObject);
-  t.deepEqual(result, expected);
+  const translation = translatePostgresProviderToApiProvider(postgresProviderObject);
+  t.deepEqual(translation, expected);
+
+  const duckDbTranslation = translatePostgresProviderToApiProvider(duckDbPostgresProvider);
+  t.deepEqual(duckDbTranslation, expected);
 });
 
 test('translatePostgresProviderToApiProvider does not return encrypted key if username and password are not present', (t) => {

@@ -55,6 +55,7 @@ const {
   createRuleTrigger,
   deleteRuleResources,
   updateRuleTrigger,
+  filterRulesByRuleParams,
 } = require('../../../lib/rulesHelpers');
 const { getSnsTriggerPermissionId } = require('../../../lib/snsRuleHelpers');
 
@@ -417,6 +418,65 @@ test('filterRulesByRuleParams filters on provider', (t) => {
     {}
   );
   t.deepEqual(resultsFilterWoProvider, [rule1, rule2, ruleWoProvider]);
+});
+
+test('filterRulesByRuleParams does not filter if allowProviderMismatchOnRuleFilter is set to true', (t) => {
+  const rule1 = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() }, provider: 'fake_provider' });
+  const rule2 = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() }, provider: 'another_fake_provider' });
+  const ruleWoProvider = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() } });
+  const allowProviderMismatchOnRuleFilter = true;
+  delete ruleWoProvider.provider;
+
+  let ruleParamsToSelectRule1 = { provider: rule1.provider, allowProviderMismatchOnRuleFilter };
+
+  const resultsFilterWithProvider = rulesHelpers.filterRulesByRuleParams(
+    [rule1, rule2, ruleWoProvider],
+    ruleParamsToSelectRule1
+  );
+  t.deepEqual(resultsFilterWithProvider, [rule1, rule2, ruleWoProvider]);
+
+  ruleParamsToSelectRule1 = { provider: rule1.provider };
+
+  const resultsFilterWoProvider = rulesHelpers.filterRulesByRuleParams(
+    [rule1, rule2, ruleWoProvider],
+    ruleParamsToSelectRule1
+  );
+  t.deepEqual(resultsFilterWoProvider, [rule1, ruleWoProvider]);
+});
+
+test('filterRulesByRuleParams does not filter if rule.meta.allowProviderMismatchOnRuleFilter is set to true', (t) => {
+  const rule1 = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() }, provider: 'fake_provider' });
+  const allowProviderMismatchOnRuleFilter = true;
+  let rule2 = fakeRuleFactoryV2({
+    meta: {
+      allowProviderMismatchOnRuleFilter,
+    },
+    rule: {
+      type: 'sqs',
+      sourceArn: randomString(),
+    },
+    provider: 'another_fake_provider',
+  });
+
+  const ruleWoProvider = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() } });
+  delete ruleWoProvider.provider;
+
+  let ruleParamsToSelectRule1 = { provider: rule1.provider };
+
+  const resultsFilterWithProvider = rulesHelpers.filterRulesByRuleParams(
+    [rule1, rule2, ruleWoProvider],
+    ruleParamsToSelectRule1
+  );
+  t.deepEqual(resultsFilterWithProvider, [rule1, rule2, ruleWoProvider]);
+
+  ruleParamsToSelectRule1 = { provider: rule1.provider };
+  rule2 = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() }, provider: 'another_fake_provider' });
+
+  const resultsFilterWoProvider = rulesHelpers.filterRulesByRuleParams(
+    [rule1, ruleWoProvider],
+    ruleParamsToSelectRule1
+  );
+  t.deepEqual(resultsFilterWoProvider, [rule1, ruleWoProvider]);
 });
 
 test('getMaxTimeoutForRules returns correct max timeout', (t) => {
@@ -1092,8 +1152,9 @@ test.serial('deleteRuleResources() removes SNS source mappings and permissions',
   const pgRule = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, testKnex);
   const [newPgRule] = await rulePgModel.create(testKnex, pgRule);
 
-  const { subExists } = await checkForSnsSubscriptions(ruleWithTrigger);
+  const { subExists, hasLambdaPermission } = await checkForSnsSubscriptions(ruleWithTrigger);
   t.true(subExists);
+  t.true(hasLambdaPermission);
 
   const { Policy } = await awsServices.lambda().send(new GetPolicyCommand({
     FunctionName: process.env.messageConsumer,
@@ -1103,8 +1164,12 @@ test.serial('deleteRuleResources() removes SNS source mappings and permissions',
 
   await deleteRuleResources(testKnex, ruleWithTrigger);
 
-  const { subExists: subExists2 } = await checkForSnsSubscriptions(ruleWithTrigger);
+  const {
+    subExists: subExists2,
+    hasLambdaPermission: hasLambdaPermission2,
+  } = await checkForSnsSubscriptions(ruleWithTrigger);
   t.false(subExists2);
+  t.false(hasLambdaPermission2);
 
   await t.throwsAsync(
     awsServices.lambda().send(new GetPolicyCommand({
@@ -1218,15 +1283,22 @@ test.serial('checkForSnsSubscriptions returns the correct status of a Rule\'s su
     state: 'ENABLED',
   });
 
+  const subscriptionStatus = await checkForSnsSubscriptions(snsRule);
+
+  t.false(subscriptionStatus.subExists);
+  t.false(subscriptionStatus.hasLambdaPermission);
+  t.falsy(subscriptionStatus.existingSubscriptionArn);
+
   const ruleWithTrigger = await createRuleTrigger(snsRule);
   const pgRule = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, testKnex);
   const [newPgRule] = await rulePgModel.create(testKnex, pgRule);
 
-  const response = await checkForSnsSubscriptions(ruleWithTrigger);
+  const updatedSubscriptionStatus = await checkForSnsSubscriptions(ruleWithTrigger);
 
-  t.is(response.subExists, true);
+  t.true(updatedSubscriptionStatus.subExists);
+  t.true(updatedSubscriptionStatus.hasLambdaPermission);
   // Subscription ARN will be different from but include the Topic ARN
-  t.true(response.existingSubscriptionArn.includes(topic1.TopicArn));
+  t.true(updatedSubscriptionStatus.existingSubscriptionArn.includes(topic1.TopicArn));
 
   t.teardown(() => rulePgModel.delete(testKnex, newPgRule));
 });
@@ -1800,6 +1872,17 @@ test.serial('Creating an enabled SNS rule creates an event source mapping', asyn
   lambdaMock.on(AddPermissionCommand).callsFake(() => {
     mockCalled = true;
   });
+  lambdaMock
+    .on(GetPolicyCommand)
+    .resolves({
+      Policy: JSON.stringify({
+        Statement: [
+          {
+            Sid: 'lambda-permission-id',
+          },
+        ],
+      }),
+    });
 
   await createRuleTrigger(rule);
   const subscribeCalls = snsMock.commandCalls(SubscribeCommand);
@@ -2438,4 +2521,49 @@ test.serial('Enabling a disabled SNS rule and passing rule.arn throws specific e
   t.teardown(() => {
     snsStub.restore();
   });
+});
+
+test('keeps rule when ruleParams is true, short-circuiting rule.meta', (t) => {
+  const rules = [{ rule: {}, provider: 'providerB', meta: { allowProviderMismatchOnRuleFilter: false } }];
+  const ruleParams = { provider: 'providerA', allowProviderMismatchOnRuleFilter: true };
+
+  const result = filterRulesByRuleParams(rules, ruleParams);
+
+  t.is(result.length, 1);
+});
+
+test('keeps rule when ruleParams is false but rule.meta is true (|| behavior)', (t) => {
+  const rules = [{ rule: {}, provider: 'providerB', meta: { allowProviderMismatchOnRuleFilter: true } }];
+  const ruleParams = { provider: 'providerA', allowProviderMismatchOnRuleFilter: false };
+
+  const result = filterRulesByRuleParams(rules, ruleParams);
+
+  t.is(result.length, 1);
+});
+
+test('filters rule when both ruleParams and rule.meta are explicitly false', (t) => {
+  const rules = [{ rule: {}, provider: 'providerB', meta: { allowProviderMismatchOnRuleFilter: false } }];
+  const ruleParams = { provider: 'providerA', allowProviderMismatchOnRuleFilter: false };
+
+  const result = filterRulesByRuleParams(rules, ruleParams);
+
+  t.is(result.length, 0);
+});
+
+test('keeps rule when ruleParams is undefined and rule.meta is true', (t) => {
+  const rules = [{ rule: {}, provider: 'providerB', meta: { allowProviderMismatchOnRuleFilter: true } }];
+  const ruleParams = { provider: 'providerA' }; // undefined flag
+
+  const result = filterRulesByRuleParams(rules, ruleParams);
+
+  t.is(result.length, 1);
+});
+
+test('filters rule when the flag is undefined in both ruleParams and rule.meta', (t) => {
+  const rules = [{ rule: {}, provider: 'providerB' }]; // no meta defined
+  const ruleParams = { provider: 'providerA' }; // no flag defined
+
+  const result = filterRulesByRuleParams(rules, ruleParams);
+
+  t.is(result.length, 0);
 });

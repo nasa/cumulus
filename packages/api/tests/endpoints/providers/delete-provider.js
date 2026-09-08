@@ -179,6 +179,8 @@ test('Attempting to delete a provider with an associated granule does not delete
     granule_id_validation_regex: 'fake',
     granule_id_extraction_regex: 'fake',
     files: {},
+    cmr_provider: 'provider',
+    metrics_provider: 'metrics_provider',
   };
 
   const [pgCollection] = await collectionPgModel.create(

@@ -1,0 +1,33 @@
+{
+  "version":"1.0",
+  "comment":"Unit testing sns msg has files in multiple protocols",
+  "provider": "PODAAC_TEST",
+  "collection": "TEST_MultiProtocol:1",
+  "submissionTime":"2017-09-30T03:42:29.791198Z",
+  "identifier": "123477-abcd-efg0-9876",
+  "product":
+    {
+      "name": "sampleGranuleName001",
+      "dataVersion": "001",
+      "files": [
+        {
+          "comment":"This file is associated with the default bucket listed at the root level",
+          "type": "data",
+          "uri": "as4://bucket_1/prod_20170926T11:30:36/production_file.nc",
+          "name":"production_file.nc",
+          "checksumType": "md5",
+          "checksum": "4241jafkjaj14jasjf",
+          "size": 123456
+        },
+        {
+          "comment":"browse file from http",
+          "type": "browse",
+          "uri": "as4://myserver/http/path/production_http_file.png",
+          "name":"production_http_file.png",
+          "checksumType": "md5",
+          "checksum": "addjd872342bfbeee",
+          "size": 11225
+        }
+      ]
+    }
+}

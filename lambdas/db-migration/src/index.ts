@@ -1,9 +1,13 @@
-import {
-  getKnexClient,
-  migrationDir,
-} from '@cumulus/db';
+import path from 'path';
+import { getKnexClient } from '@cumulus/db';
+import Logger from '@cumulus/logger';
+import { inTestMode } from '@cumulus/common/test-utils';
+
+const logger = new Logger({ sender: '@cumulus/db-migration-lambda' });
 
 export type Command = 'latest' | 'rollback';
+
+const CREATE_FUTURE_PARTITIONS_PROC_NAME = 'create_future_executions_partitions';
 
 export interface HandlerEvent {
   command?: Command,
@@ -14,20 +18,44 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
   let knex;
   try {
     const env = event.env ?? process.env;
-
-    env.migrationDir = migrationDir;
-
     knex = await getKnexClient({ env });
 
     const command = event.command ?? 'latest';
+    const useBootstrapRequested = env.USE_BOOTSTRAP?.toLowerCase() === 'true';
+
+    const cumulusDbDir = inTestMode()
+      ? path.join(path.dirname(require.resolve('@cumulus/db/package.json')), 'dist')
+      : __dirname;
+    const bootstrapDir = path.join(cumulusDbDir, 'migrations-bootstrap');
+    const standardDir = path.join(cumulusDbDir, 'migrations');
 
     switch (command) {
-      case 'latest':
-        await knex.migrate.latest();
+      case 'latest': {
+        // Only use bootstrap if requested AND the database is empty
+        const hasCollections = await knex.schema.hasTable('collections');
+        const selectedDir = (useBootstrapRequested && !hasCollections)
+          ? bootstrapDir
+          : standardDir;
+
+        await knex.migrate.latest({
+          directory: selectedDir,
+          loadExtensions: ['.js'],
+        });
+
+        const totalYearsAhead = Number.parseInt(env.EXECUTIONS_PARTITION_TOTAL_YEARS || '2', 10);
+
+        logger.debug(`Running post-migration task: ${CREATE_FUTURE_PARTITIONS_PROC_NAME}(${totalYearsAhead})`);
+        await knex.raw(`CALL ${CREATE_FUTURE_PARTITIONS_PROC_NAME}(?);`, [totalYearsAhead]);
         break;
-      case 'rollback':
-        await knex.migrate.rollback();
+      }
+      case 'rollback': {
+        // Use standard migration directory which has all patches
+        await knex.migrate.rollback({
+          directory: standardDir,
+          loadExtensions: ['.js'],
+        });
         break;
+      }
       default:
         throw new Error(`Invalid command: ${command}`);
     }

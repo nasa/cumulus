@@ -4,7 +4,10 @@ const got = require('got');
 const sinon = require('sinon');
 const test = require('ava');
 
+const { randomId } = require('@cumulus/common/test-utils');
+const Logger = require('@cumulus/logger');
 const { searchConcept } = require('../searchConcept');
+const { TestConsole } = require('../../logger/tests');
 
 process.env.CMR_ENVIRONMENT = 'SIT';
 
@@ -113,3 +116,39 @@ test.serial(
     stub.restore();
   }
 );
+
+test.serial('searchConcept logs redacted Authorization header on error', async (t) => {
+  const testConsole = new TestConsole();
+
+  const headers = { Authorization: `Bearer ${randomId('secret')}`, 'Client-Id': 'any' };
+  const stub = sinon.stub(got, 'get').throws(new Error('CMR request failed'));
+
+  const writeStub = sinon.stub(Logger.prototype, 'writeLogEvent').callsFake(function writeLogEventFake(level, messageArgs, additionalKeys) {
+    const msg = this.buildLogEventMessage(level, messageArgs, additionalKeys);
+    if (level === 'error') {
+      testConsole.error(msg);
+    } else {
+      testConsole.log(msg);
+    }
+  });
+
+  const searchParams = new URLSearchParams({
+    arrayKey: 'value1',
+    otherKey: 'otherValue',
+  });
+
+  await t.throwsAsync(() =>
+    searchConcept({
+      type: 'granule',
+      searchParams,
+      previousResults: [],
+      headers,
+    }));
+
+  const errorLogs = testConsole.stderrLogEntries;
+  const headerAuthorizationLog = errorLogs.find((log) => log.message.includes('Authorization'));
+  t.true(headerAuthorizationLog.message.includes('"Authorization":"[REDACTED]"'));
+
+  writeStub.restore();
+  stub.restore();
+});

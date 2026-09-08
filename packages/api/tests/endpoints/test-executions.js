@@ -7,14 +7,14 @@ const isNull = require('lodash/isNull');
 const sortBy = require('lodash/sortBy');
 const request = require('supertest');
 const cryptoRandomString = require('crypto-random-string');
-const uuidv4 = require('uuid/v4');
+const { v4: uuidv4 } = require('uuid');
 const sinon = require('sinon');
 
 const {
   createBucket,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const { sns, sqs } = require('@cumulus/aws-client/services');
+const { s3, sns, sqs } = require('@cumulus/aws-client/services');
 const {
   SubscribeCommand,
 } = require('@aws-sdk/client-sns');
@@ -34,6 +34,8 @@ const {
   upsertGranuleWithExecutionJoinRecord,
   fakeAsyncOperationRecordFactory,
   fakeExecutionRecordFactory,
+  fakeReconciliationReportRecordFactory,
+  ReconciliationReportPgModel,
   migrationDir,
   GranulePgModel,
   translateApiGranuleToPostgresGranule,
@@ -181,7 +183,8 @@ test.before(async (t) => {
     name: collectionName,
     version: collectionVersion,
   });
-
+  t.context.metricsProvider = testPgCollection.metrics_provider;
+  t.context.cmrProvider = testPgCollection.cmr_provider;
   const [pgCollection] = await t.context.collectionPgModel.create(
     knex,
     testPgCollection
@@ -248,28 +251,38 @@ test.beforeEach(async (t) => {
       await granulePgModel.create(knex, granule))
   );
 
+  const workflowExecution = await executionPgModel.get(knex, {
+    workflow_name: 'fakeWorkflow',
+    arn: 'arn2',
+  },
+  ['cumulus_id', 'created_at']);
   await upsertGranuleWithExecutionJoinRecord({
     knexTransaction: knex,
     granule: t.context.fakePGGranules[0],
-    executionCumulusId: await executionPgModel.getRecordCumulusId(knex, {
-      workflow_name: 'fakeWorkflow',
-      arn: 'arn2',
-    }),
+    executionCumulusId: workflowExecution.cumulus_id,
+    executionCreatedAt: workflowExecution.created_at,
   });
+
+  const workflow2Execution = await executionPgModel.get(knex, {
+    workflow_name: 'workflow2',
+  },
+  ['cumulus_id', 'created_at']);
   await upsertGranuleWithExecutionJoinRecord({
     knexTransaction: knex,
     granule: t.context.fakePGGranules[0],
-    executionCumulusId: await executionPgModel.getRecordCumulusId(knex, {
-      workflow_name: 'workflow2',
-    }),
+    executionCumulusId: workflow2Execution.cumulus_id,
+    executionCreatedAt: workflow2Execution.created_at,
   });
+  const workflowRunningExecution = await executionPgModel.get(knex, {
+    workflow_name: 'fakeWorkflow',
+    status: 'running',
+  },
+  ['cumulus_id', 'created_at']);
   await upsertGranuleWithExecutionJoinRecord({
     knexTransaction: knex,
     granule: t.context.fakePGGranules[1],
-    executionCumulusId: await executionPgModel.getRecordCumulusId(knex, {
-      workflow_name: 'fakeWorkflow',
-      status: 'running',
-    }),
+    executionCumulusId: workflowRunningExecution.cumulus_id,
+    executionCreatedAt: workflowRunningExecution.created_at,
   });
 });
 
@@ -389,12 +402,12 @@ test('GET returns an existing execution', async (t) => {
     t.context.knex,
     parentExecutionRecord
   );
-  const parentExecutionCumulusId = parentPgExecution.cumulus_id;
 
-  const executionRecord = await fakeExecutionRecordFactory({
+  const executionRecord = fakeExecutionRecordFactory({
     async_operation_cumulus_id: asyncOperationCumulusId,
     collection_cumulus_id: collectionCumulusId,
-    parent_cumulus_id: parentExecutionCumulusId,
+    parent_cumulus_id: parentPgExecution.cumulus_id,
+    parent_created_at: parentPgExecution.created_at,
   });
 
   await t.context.executionPgModel.create(
@@ -550,10 +563,7 @@ test.serial('POST /executions/search-by-granules returns 1 record by default', a
   const response = await request(app)
     .post('/executions/search-by-granules')
     .send({
-      granules: [
-        { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
-        { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-      ],
+      granules: [fakeGranules[0].granuleId, fakeGranules[1].granuleId],
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
@@ -573,10 +583,7 @@ test.serial('POST /executions/search-by-granules supports paging', async (t) => 
   const page1 = await request(app)
     .post('/executions/search-by-granules?limit=2&page=1')
     .send({
-      granules: [
-        { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
-        { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-      ],
+      granules: [fakeGranules[0].granuleId, fakeGranules[1].granuleId],
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
@@ -584,10 +591,7 @@ test.serial('POST /executions/search-by-granules supports paging', async (t) => 
   const page2 = await request(app)
     .post('/executions/search-by-granules?limit=2&page=2')
     .send({
-      granules: [
-        { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
-        { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-      ],
+      granules: [fakeGranules[0].granuleId, fakeGranules[1].granuleId],
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
@@ -609,10 +613,7 @@ test.serial('POST /executions/search-by-granules supports sorting', async (t) =>
   const response = await request(app)
     .post('/executions/search-by-granules?sort_by=arn&order=asc&limit=10')
     .send({
-      granules: [
-        { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
-        { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-      ],
+      granules: [fakeGranules[0].granuleId, fakeGranules[1].granuleId],
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
@@ -628,10 +629,7 @@ test.serial('POST /executions/search-by-granules returns correct executions when
   const response = await request(app)
     .post('/executions/search-by-granules?limit=10')
     .send({
-      granules: [
-        { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
-        { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-      ],
+      granules: [fakeGranules[0].granuleId, fakeGranules[1].granuleId],
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
@@ -711,7 +709,7 @@ test.serial('POST /executions/search-by-granules returns 400 when a query is pro
   t.regex(response.body.message, /Index is required if query is sent/);
 });
 
-test.serial('POST /executions/search-by-granules returns 400 when no granules or query is provided', async (t) => {
+test.serial('POST /executions/search-by-granules returns 400 when no granules or alternative input source is provided', async (t) => {
   const expectedIndex = 'my-index';
 
   const body = {
@@ -723,9 +721,13 @@ test.serial('POST /executions/search-by-granules returns 400 when no granules or
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /One of granules or query is required/);
+    .expect(400,
+      // eslint-disable-next-line max-len
+      /Exactly one of granules, query, granuleInventoryReportName, or s3GranuleIdInputFile must be provided/);
 
-  t.regex(response.body.message, /One of granules or query is required/);
+  t.regex(response.body.message,
+    // eslint-disable-next-line max-len
+    /Exactly one of granules, query, granuleInventoryReportName, or s3GranuleIdInputFile must be provided/);
 });
 
 test.serial('POST /executions/search-by-granules returns 400 when granules is not an array', async (t) => {
@@ -746,7 +748,7 @@ test.serial('POST /executions/search-by-granules returns 400 when granules is no
   t.regex(response.body.message, /granules should be an array of values/);
 });
 
-test.serial('POST /executions/search-by-granules returns 400 when granules is an empty array', async (t) => {
+test.serial('POST /executions/search-by-granules returns 400 when granules is empty and no alternative input source was provided', async (t) => {
   const expectedIndex = 'my-index';
 
   const body = {
@@ -761,45 +763,7 @@ test.serial('POST /executions/search-by-granules returns 400 when granules is an
     .send(body)
     .expect(400);
 
-  t.regex(response.body.message, /no values provided for granules/);
-});
-
-test.serial('POST /executions/search-by-granules returns 400 when granules do not have collectionId', async (t) => {
-  const expectedIndex = 'my-index';
-  const granule = { granuleId: randomId('granuleId') };
-
-  const body = {
-    index: expectedIndex,
-    granules: [granule],
-  };
-
-  const response = await request(app)
-    .post('/executions/search-by-granules')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(body)
-    .expect(400);
-
-  t.regex(response.body.message, new RegExp(`no collectionId provided for ${JSON.stringify(granule)}`));
-});
-
-test.serial('POST /executions/search-by-granules returns 400 when granules do not have granuleId', async (t) => {
-  const expectedIndex = 'my-index';
-  const granule = { collectionId: randomId('granuleId') };
-
-  const body = {
-    index: expectedIndex,
-    granules: [granule],
-  };
-
-  const response = await request(app)
-    .post('/executions/search-by-granules')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(body)
-    .expect(400);
-
-  t.regex(response.body.message, new RegExp(`no granuleId provided for ${JSON.stringify(granule)}`));
+  t.regex(response.body.message, /granules is empty and no alternative input source was provided/);
 });
 
 test.serial('POST /executions/search-by-granules returns 400 when the Metrics ELK stack is not configured', async (t) => {
@@ -827,34 +791,86 @@ test.serial('POST /executions/search-by-granules returns 400 when the Metrics EL
   t.regex(response.body.message, /ELK Metrics stack not configured/);
 });
 
-test.serial('POST /executions/workflows-by-granules returns correct executions when granules array is passed', async (t) => {
-  const { collectionId, fakeGranules, fakePGExecutions } = t.context;
+test.serial('POST /executions/search-by-granules returns correct executions when granule inventory report is passed', async (t) => {
+  const { fakeGranules, fakePGExecutions } = t.context;
+  const key = `${randomId('path')}/${randomId('granuleInventoryReport.csv')}`;
+  const s3Uri = `s3://${process.env.system_bucket}/${key}`;
+
+  const csv = `"granuleUr","collectionId"
+  "${fakeGranules[0].granuleId}","C1"
+  "${fakeGranules[1].granuleId}","C1"
+  `;
+
+  await s3().putObject({
+    Bucket: process.env.system_bucket,
+    Key: key,
+    Body: csv,
+    ContentType: 'text/csv',
+  });
+
+  const report = fakeReconciliationReportRecordFactory({
+    type: 'Granule Inventory',
+    location: s3Uri,
+  });
+
+  const [reportPgRecord] = await new ReconciliationReportPgModel().create(t.context.knex, report);
 
   const response = await request(app)
-    .post('/executions/workflows-by-granules')
+    .post('/executions/search-by-granules?limit=10')
     .send({
-      granules: [
-        { granuleId: fakeGranules[0].granuleId, collectionId },
-        { granuleId: fakeGranules[1].granuleId, collectionId },
-      ],
+      granuleInventoryReportName: reportPgRecord.name,
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
-  t.is(response.body.length, 1);
+  t.is(response.body.results.length, 3);
 
-  response.body.forEach((workflow) => t.deepEqual(
-    workflow,
-    fakePGExecutions
-      .map((fakePGExecution) => fakePGExecution.workflow_name)
-      .find((workflowName) => workflowName === workflow)
+  response.body.results.forEach(async (execution) => t.deepEqual(
+    execution,
+    await translatePostgresExecutionToApiExecution(
+      fakePGExecutions.find((fakePGExecution) => fakePGExecution.arn === execution.arn),
+      t.context.knex
+    )
+  ));
+});
+
+test.serial('POST /executions/search-by-granules returns correct executions when s3GranuleIdInputFile is passed', async (t) => {
+  const { fakeGranules, fakePGExecutions } = t.context;
+  const key = `${randomId('path')}/${randomId('granuleInventoryReport.csv')}`;
+  const s3Uri = `s3://${process.env.system_bucket}/${key}`;
+
+  const testData = `
+  ${fakeGranules[0].granuleId}
+  ${fakeGranules[1].granuleId}
+  `;
+  await s3().putObject({
+    Bucket: process.env.system_bucket,
+    Key: key,
+    Body: testData,
+  });
+
+  const response = await request(app)
+    .post('/executions/search-by-granules?limit=10')
+    .send({
+      s3GranuleIdInputFile: s3Uri,
+    })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
+
+  t.is(response.body.results.length, 3);
+
+  response.body.results.forEach(async (execution) => t.deepEqual(
+    execution,
+    await translatePostgresExecutionToApiExecution(
+      fakePGExecutions.find((fakePGExecution) => fakePGExecution.arn === execution.arn),
+      t.context.knex
+    )
   ));
 });
 
 test.serial('POST /executions/workflows-by-granules returns executions by descending timestamp when a single granule is passed', async (t) => {
   const {
     knex,
-    collectionId,
     executionPgModel,
     fakeGranules,
     fakePGGranules,
@@ -862,20 +878,18 @@ test.serial('POST /executions/workflows-by-granules returns executions by descen
 
   const [mostRecentExecution]
     = await executionPgModel.create(knex, fakeExecutionRecordFactory({ workflow_name: 'newWorkflow' }));
-  const mostRecentExecutionCumulusId = mostRecentExecution.cumulus_id;
 
   await upsertGranuleWithExecutionJoinRecord({
     knexTransaction: knex,
     granule: fakePGGranules[0],
-    executionCumulusId: mostRecentExecutionCumulusId,
+    executionCumulusId: mostRecentExecution.cumulus_id,
+    executionCreatedAt: mostRecentExecution.created_at,
   });
 
   const response = await request(app)
     .post('/executions/workflows-by-granules')
     .send({
-      granules: [
-        { granuleId: fakeGranules[0].granuleId, collectionId },
-      ],
+      granules: [fakeGranules[0].granuleId],
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
@@ -924,6 +938,81 @@ test.serial('POST /executions/workflows-by-granules returns correct workflows wh
   t.is(response.body.length, 2);
 
   t.deepEqual(response.body.sort(), ['fakeWorkflow', 'workflow2']);
+});
+
+test.serial('POST /executions/workflows-by-granules returns correct executions when granule inventory report is passed', async (t) => {
+  const { fakeGranules, fakePGExecutions } = t.context;
+  const key = `${randomId('path')}/${randomId('granuleInventoryReport.csv')}`;
+  const s3Uri = `s3://${process.env.system_bucket}/${key}`;
+
+  const csv = `"granuleUr","collectionId"
+  "${fakeGranules[0].granuleId}","C1"
+  "${fakeGranules[1].granuleId}","C1"
+  `;
+
+  await s3().putObject({
+    Bucket: process.env.system_bucket,
+    Key: key,
+    Body: csv,
+    ContentType: 'text/csv',
+  });
+
+  const report = fakeReconciliationReportRecordFactory({
+    type: 'Granule Inventory',
+    location: s3Uri,
+  });
+
+  const [reportPgRecord] = await new ReconciliationReportPgModel().create(t.context.knex, report);
+
+  const response = await request(app)
+    .post('/executions/workflows-by-granules')
+    .send({
+      granuleInventoryReportName: reportPgRecord.name,
+    })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
+
+  t.is(response.body.length, 1);
+
+  response.body.forEach((workflow) => t.deepEqual(
+    workflow,
+    fakePGExecutions
+      .map((fakePGExecution) => fakePGExecution.workflow_name)
+      .find((workflowName) => workflowName === workflow)
+  ));
+});
+
+test.serial('POST /executions/workflows-by-granules returns correct executions when s3GranuleIdInputFile is passed', async (t) => {
+  const { fakeGranules, fakePGExecutions } = t.context;
+  const key = `${randomId('path')}/${randomId('granuleInventoryReport.csv')}`;
+  const s3Uri = `s3://${process.env.system_bucket}/${key}`;
+
+  const testData = `
+  ${fakeGranules[0].granuleId}
+  ${fakeGranules[1].granuleId}
+  `;
+  await s3().putObject({
+    Bucket: process.env.system_bucket,
+    Key: key,
+    Body: testData,
+  });
+
+  const response = await request(app)
+    .post('/executions/workflows-by-granules')
+    .send({
+      s3GranuleIdInputFile: s3Uri,
+    })
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
+
+  t.is(response.body.length, 1);
+
+  response.body.forEach((workflow) => t.deepEqual(
+    workflow,
+    fakePGExecutions
+      .map((fakePGExecution) => fakePGExecution.workflow_name)
+      .find((workflowName) => workflowName === workflow)
+  ));
 });
 
 test.serial('POST /executions creates a new execution in PostgreSQL with correct timestamps', async (t) => {
@@ -1139,7 +1228,11 @@ test.serial('POST /executions publishes message to SNS topic', async (t) => {
     knex
   );
 
-  t.deepEqual(executionRecord, translatedExecution);
+  t.deepEqual(executionRecord, {
+    ...translatedExecution,
+    metricsProvider: t.context.metricsProvider,
+    cmrProvider: t.context.cmrProvider,
+  });
 });
 
 test.serial('PUT /executions updates the record as expected in PostgreSQL', async (t) => {
@@ -1488,6 +1581,8 @@ test.serial('PUT /executions publishes message to SNS topic', async (t) => {
   );
   t.deepEqual(executionRecord, {
     ...translatedExecution,
+    metricsProvider: t.context.metricsProvider,
+    cmrProvider: t.context.cmrProvider,
     updatedAt: executionRecord.updatedAt,
   });
 });

@@ -46,6 +46,14 @@ test('translatePostgresPdrToApiPdr translates postgres PDR record to API PDR rec
     updated_at: timestamp,
   };
 
+  const duckDbPdrRecord = {
+    ...postgresPdr,
+    created_at: postgresPdr.created_at.toISOString(),
+    updated_at: postgresPdr.updated_at.toISOString(),
+    timestamp: postgresPdr.timestamp.toISOString(),
+    stats: JSON.stringify(postgresPdr.stats),
+  };
+
   const expectedPdr = {
     pdrName: postgresPdr.name,
     provider: fakeProvider.name,
@@ -74,6 +82,19 @@ test('translatePostgresPdrToApiPdr translates postgres PDR record to API PDR rec
 
   t.deepEqual(
     translatedPdrRecord,
+    expectedPdr
+  );
+
+  const duckDbTranslation = await translatePostgresPdrToApiPdr(
+    duckDbPdrRecord,
+    {},
+    fakeCollectionPgModel,
+    fakeProviderPgModel,
+    fakeExecutionPgModel
+  );
+
+  t.deepEqual(
+    duckDbTranslation,
     expectedPdr
   );
 });
@@ -144,12 +165,17 @@ test('translateApiPdrToPostgresPdr converts API PDR to Postgres', async (t) => {
     updatedAt: Date.now(),
   };
 
+  const executionCreatedAt = new Date();
+
   const fakeKnex = {};
   const fakeCollectionPgModel = {
     getRecordCumulusId: () => Promise.resolve(1),
   };
   const fakeExecutionPgModel = {
-    getRecordCumulusId: () => Promise.resolve(2),
+    get: () => Promise.resolve({
+      cumulus_id: 2,
+      created_at: executionCreatedAt,
+    }),
   };
   const fakeProviderPgModel = {
     getRecordCumulusId: () => Promise.resolve(3),
@@ -170,6 +196,7 @@ test('translateApiPdrToPostgresPdr converts API PDR to Postgres', async (t) => {
     timestamp: new Date(record.timestamp),
     collection_cumulus_id: 1,
     execution_cumulus_id: 2,
+    execution_created_at: executionCreatedAt,
     provider_cumulus_id: 3,
   };
 

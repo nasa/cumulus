@@ -48,7 +48,8 @@ const { randomInt } = require('crypto');
  * @param {number} executionCount
  * @param {ExecutionPgModel} model
  * @param {Partial<PostgresExecution>} params
- * @returns {Promise<Array<number>>} - cumulusId for each successfully uploaded execution
+ * @returns {Promise<Array<{cumulus_id: number, created_at: Date}>>} -
+ *   identifying fields for each successfully uploaded execution
  */
 const loadExecutions = async (
   knex,
@@ -60,42 +61,49 @@ const loadExecutions = async (
   if (executionCount === 0) {
     return [];
   }
-  let executionOutputs = [];
   const executions = range(executionCount).map(() => fakeExecutionRecordFactory(
     {
       collection_cumulus_id: collectionCumulusId,
       ...params,
     }
   ));
-  executionOutputs = await model.insert(knex, executions);
+  const executionOutputs = await model.insert(
+    knex,
+    executions,
+    ['cumulus_id', 'created_at']
+  );
 
-  return executionOutputs.map((executionOutput) => executionOutput.cumulus_id);
+  return executionOutputs;
 };
 
 /**
  * upload granuleExecutions corresponding to each pair
- * within list of granuleCumulusIds and executionCumulusIds
+ * within list of granuleCumulusIds and executions
  *
  * @param {Knex} knex
+ * @param {number} collectionCumulusId
  * @param {Array<number>} granuleCumulusIds
- * @param {Array<number>} executionCumulusIds
+ * @param {Array<{cumulus_id: number, created_at: Date}>} executions
  * @param {GranulesExecutionsPgModel} model
  * @returns {Promise<Array<PostgresGranuleExecution>>} - granuleExecutions
  */
 const loadGranulesExecutions = async (
   knex,
+  collectionCumulusId,
   granuleCumulusIds,
-  executionCumulusIds,
+  executions,
   model
 ) => {
-  if (granuleCumulusIds.length === 0 || executionCumulusIds.length === 0) {
+  if (granuleCumulusIds.length === 0 || executions.length === 0) {
     return [];
   }
   const granulesExecutions = granuleCumulusIds.map((granuleCumulusId) => (
-    executionCumulusIds.map((executionCumulusId) => (
+    executions.map((execution) => (
       {
         granule_cumulus_id: granuleCumulusId,
-        execution_cumulus_id: executionCumulusId,
+        collection_cumulus_id: collectionCumulusId,
+        execution_cumulus_id: execution.cumulus_id,
+        execution_created_at: execution.created_at,
       }
     ))
   )).flat();
@@ -145,6 +153,7 @@ const loadGranules = async (
  *
  * @param {Knex} knex
  * @param {number} granuleCumulusId
+ * @param {number} collectionCumulusId
  * @param {number} fileCount
  * @param {FilePgModel} model
  * @param {Partial<PostgresFile>} params
@@ -153,6 +162,7 @@ const loadGranules = async (
 const loadFiles = async (
   knex,
   granuleCumulusId,
+  collectionCumulusId,
   fileCount,
   model,
   params = {}
@@ -163,6 +173,7 @@ const loadFiles = async (
   const files = range(fileCount).map((i) => /** @type {PostgresFile} */(fakeFileRecordFactory({
     bucket: `${i}`,
     granule_cumulus_id: granuleCumulusId,
+    collection_cumulus_id: collectionCumulusId,
     key: randomString(8),
     ...params,
   })));

@@ -1,7 +1,7 @@
 'use strict';
 
 const test = require('ava');
-const uuidv4 = require('uuid/v4');
+const { v4: uuidv4 } = require('uuid');
 
 const { deleteQueue } = require('@cumulus/aws-client/SQS');
 const { createBucket, recursivelyDeleteS3Bucket, s3PutObject } = require('@cumulus/aws-client/S3');

@@ -1,4 +1,4 @@
-const getSnsPermissionIdMaxLength = () => 64;
+const getSnsPermissionIdMaxLength = () => 100;
 const getSnsPermissionIdSuffix = () => 'Permission';
 
 function getSnsTriggerPermissionId(rule) {

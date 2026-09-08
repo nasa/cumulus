@@ -9,6 +9,7 @@ import { BasePgModel } from './base';
 import { ExecutionPgModel } from './execution';
 import { translateDateToUTC } from '../lib/timestamp';
 import { getSortFields } from '../lib/sort';
+import { isCollisionError } from '../lib/errors';
 
 interface RecordSelect {
   cumulus_id: number
@@ -83,9 +84,9 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     params: PostgresGranuleUniqueColumns | RecordSelect
   ): Promise<PostgresGranuleRecord> {
     if (!isRecordSelect(params)) {
-      if (!(params.granule_id && params.collection_cumulus_id)) {
+      if (!params.granule_id) {
         throw new InvalidArgument(
-          `Cannot find granule, must provide either granule_id and collection_cumulus_id or cumulus_id: params(${JSON.stringify(
+          `Cannot find granule, must provide either granule_id or cumulus_id: params(${JSON.stringify(
             params
           )})`
         );
@@ -112,6 +113,83 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     return queryBuilder;
   }
 
+  /**
+   * Helper to conditionally construct the fallback update query builder.
+   *
+   * @private
+   * @param params
+   * @param params.knexOrTrx - Database client or transaction context
+   * @param params.granule - Granule object to write to the database
+   * @param params.updatePayload - Payload for update writes
+   * @param params.writeConstraints - Boolean flag to set if record write constraints apply
+   * @param params.executionCumulusId - Optional execution ID the granule was written from
+   * @param params.executionPgModel - execution PG model class instance
+   * @returns update query
+   */
+  private _buildUpsertUpdateQuery({
+    knexOrTrx,
+    granule,
+    updatePayload,
+    writeConstraints,
+    executionCumulusId,
+    executionPgModel,
+  }: {
+    knexOrTrx: Knex | Knex.Transaction;
+    granule: PostgresGranule;
+    updatePayload: Partial<PostgresGranule> | PostgresGranule;
+    writeConstraints: boolean;
+    executionCumulusId?: number;
+    executionPgModel: ExecutionPgModel;
+  }): Knex.QueryBuilder {
+    // Attempt UPDATE if granule exists
+    const updateQuery = knexOrTrx(this.tableName)
+      .where('granule_id', granule.granule_id)
+      .limit(1)
+      .update(updatePayload)
+      .returning('*');
+
+    if (writeConstraints) {
+      updateQuery.where(
+        knexOrTrx.raw(
+          `${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(granule.created_at!)})`
+        )
+      );
+
+      // In reality, the only place where executionCumulusId should be
+      // undefined is from the data migrations OR a queued granule from reingest
+      // OR a patch API request
+      if (executionCumulusId && (granule.status === 'running' || granule.status === 'queued')) {
+        const exclusionClause = this._buildExclusionClause(
+          executionPgModel,
+          executionCumulusId,
+          knexOrTrx,
+          granule.status
+        );
+        // Only do the upsert if there is no execution that matches the exclusionClause
+        // For running granules, this means the execution does not exist in a state other
+        // than 'running'.  For queued granules, this means that the execution does not
+        // exist at all
+        updateQuery.whereNotExists(exclusionClause);
+      }
+    }
+
+    return updateQuery;
+  }
+
+  /**
+   * Attempts to insert a granule record into the database, safely falling back to an
+   * update query if a primary unique key constraint violation (collision) is trapped.
+   *
+   * @param params
+   * @param params.knexOrTrx - Database client or transaction context
+   * @param params.granule - Granule object to write to the database
+   * @param params.executionCumulusId - Optional execution ID the granule was written from
+   * @param params.executionPgModel - Optional execution PG model class instance
+   * @param params.writeConstraints - Boolean flag to set if record write constraints apply
+   * @returns Array containing the successfully modified or inserted record
+   * @throws If validation constraints fail, if duplicate constraints conflict cross-collections,
+   *         or on other unexpected database errors
+   */
   async upsert({
     knexOrTrx,
     granule,
@@ -125,68 +203,64 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     executionPgModel?: ExecutionPgModel;
     writeConstraints: boolean;
   }) : Promise<PostgresGranuleRecord[]> {
-    if (writeConstraints && (granule.status === 'running' || granule.status === 'queued')) {
-      const upsertQuery = knexOrTrx(this.tableName)
-        .insert(granule)
-        .onConflict(['granule_id', 'collection_cumulus_id'])
-        .merge({
+    const updatePayload
+      = writeConstraints && (granule.status === 'running' || granule.status === 'queued')
+        ? {
           status: granule.status,
           timestamp: granule.timestamp,
           updated_at: granule.updated_at,
           created_at: granule.created_at,
-        });
+        }
+        : granule;
 
-      // If upsert called with optional write constraints
-      if (!granule.created_at) {
-        throw new Error(
-          `Granule upsert called with write constraints but no createdAt set: ${JSON.stringify(granule)}`
-        );
-      }
-      upsertQuery.where(
-        knexOrTrx.raw(
-          `${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(granule.created_at)})`
-        )
-      );
-
-      // In reality, the only place where executionCumulusId should be
-      // undefined is from the data migrations OR a queued granule from reingest
-      // OR a patch API request
-      if (executionCumulusId) {
-        const exclusionClause = this._buildExclusionClause(
-          executionPgModel,
-          executionCumulusId,
-          knexOrTrx,
-          granule.status
-        );
-        // Only do the upsert if there is no execution that matches the exclusionClause
-        // For running granules, this means the execution does not exist in a state other
-        // than 'running'.  For queued granules, this means that the execution does not
-        // exist at all
-        upsertQuery.whereNotExists(exclusionClause);
-      }
-      return await upsertQuery.returning('*');
-    }
-
-    const upsertQuery = knexOrTrx(this.tableName)
-      .insert(granule)
-      .onConflict(['granule_id', 'collection_cumulus_id'])
-      .merge();
-
-    if (writeConstraints) {
-      if (!granule.created_at) {
-        throw new Error(
-          `Granule upsert called with write constraints but no created_at set: ${JSON.stringify(granule)}`
-        );
-      }
-      upsertQuery.where(
-        knexOrTrx.raw(
-          `${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(
-            granule.created_at
-          )})`
-        )
+    // If upsert called with optional write constraints
+    if (writeConstraints && !granule.created_at) {
+      throw new Error(
+        `Granule upsert called with write constraints but no created_at set: ${JSON.stringify(granule)}`
       );
     }
-    return await upsertQuery.returning('*');
+
+    const updateQuery = this._buildUpsertUpdateQuery({
+      knexOrTrx,
+      granule,
+      updatePayload,
+      writeConstraints,
+      executionCumulusId,
+      executionPgModel,
+    });
+
+    try {
+      // isolate insert in savepoint
+      return await knexOrTrx.transaction(async (trx) =>
+        await trx(this.tableName)
+          .insert(granule)
+          .returning('*'));
+    } catch (error) {
+      if (!isCollisionError(error)) throw error;
+
+      // Trigger-raised duplicate, fallback to update
+      try {
+        // Try update inside its own isolated savepoint
+        return await knexOrTrx.transaction(async (trx) =>
+          await updateQuery.transacting(trx)); // may be []
+      } catch (updateError) {
+        // ONLY lookup if update fails due to collision.
+        // Transaction is safe because the savepoint rolled back.
+        if (isCollisionError(updateError)) {
+          const existingGranule = await this.get(knexOrTrx, { granule_id: granule.granule_id });
+
+          if (existingGranule
+            && existingGranule.collection_cumulus_id !== granule.collection_cumulus_id) {
+            throw new Error(
+              `A granule already exists for granuleId: ${granule.granule_id} `
+              + `in a different collection ${existingGranule.collection_cumulus_id}.`
+            );
+          }
+        }
+
+        throw updateError;
+      }
+    }
   }
 
   /**

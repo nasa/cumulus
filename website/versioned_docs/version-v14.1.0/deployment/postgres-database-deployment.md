@@ -95,9 +95,9 @@ You can then [add/commit](https://help.github.com/articles/adding-a-file-to-a-re
 
 To deploy this module, you need to make sure that you have the following steps from the [Cumulus deployment instructions](#prepare-aws-configuration) in similar fashion *for this module*:
 
-- [Set Access Keys](#set-access-keys)
-- [Create the state bucket](#create-the-state-bucket)
-- [Create the locks table](#create-the-locks-table)
+- [Set Access Keys](./README.md#set-access-keys)
+- [Create the state bucket](./README.md#create-the-state-bucket)
+- [Create the locks table](./README.md#create-the-locks-table)
 
 --
 

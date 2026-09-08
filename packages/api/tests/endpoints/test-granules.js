@@ -19,7 +19,6 @@ const {
   fakeProviderRecordFactory,
   FilePgModel,
   generateLocalTestDb,
-  getUniqueGranuleByGranuleId,
   GranulePgModel,
   GranulesExecutionsPgModel,
   localStackConnectionEnv,
@@ -72,6 +71,8 @@ const { version } = require('../../lib/version');
 const {
   createFakeJwtAuthToken,
   fakeAccessTokenFactory,
+  fakeCollectionFactory,
+  fakeFileFactory,
   fakeGranuleFactoryV2,
   setAuthorizedOAuthUsers,
   fakeExecutionFactoryV2,
@@ -103,6 +104,9 @@ process.env.backgroundQueueUrl = randomId('backgroundQueueUrl');
 // import the express app after setting the env variables
 const { app } = require('../../app');
 
+// import addGranules from serveUtils after setting env variables
+const { addCollections, addGranules } = require('../../bin/serveUtils');
+
 async function runTestUsingBuckets(buckets, testFunction) {
   try {
     await createS3Buckets(buckets);
@@ -114,6 +118,7 @@ async function runTestUsingBuckets(buckets, testFunction) {
 
 /**
  * Helper for creating and uploading bucket configuration for 'move' tests.
+ *
  * @returns {Object} with keys of internalBucket, and publicBucket.
  */
 async function setupBucketsConfig() {
@@ -257,6 +262,7 @@ test.before(async (t) => {
   t.context.testExecution = fakeExecutionRecordFactory();
   const [testExecution] = await executionPgModel.create(t.context.knex, t.context.testExecution);
   t.context.testExecutionCumulusId = testExecution.cumulus_id;
+  t.context.testExecutionCreatedAt = testExecution.created_at;
   t.context.collectionCumulusId = pgCollection.cumulus_id;
   t.context.collectionCumulusId2 = pgCollection2.cumulus_id;
 
@@ -278,6 +284,7 @@ test.beforeEach(async (t) => {
   const granuleId1 = t.context.createGranuleId();
   const granuleId2 = t.context.createGranuleId();
   const granuleId3 = t.context.createGranuleId();
+  const granuleId4 = t.context.createGranuleId();
   const timestamp = new Date();
 
   // create fake Postgres granule records
@@ -309,9 +316,8 @@ test.beforeEach(async (t) => {
       timestamp,
       updated_at: timestamp,
     }),
-    // granule with same granule_id as above but different collection_cumulus_id
     fakeGranuleRecordFactory({
-      granule_id: granuleId3,
+      granule_id: granuleId4,
       status: 'failed',
       collection_cumulus_id: t.context.collectionCumulusId2,
       duration: 52.235,
@@ -325,6 +331,7 @@ test.beforeEach(async (t) => {
         knexTransaction: t.context.knex,
         granule,
         executionCumulusId: t.context.testExecutionCumulusId,
+        executionCreatedAt: t.context.testExecutionCreatedAt,
         granulePgModel: t.context.granulePgModel,
       }))
   );
@@ -553,9 +560,9 @@ test.serial('PATCH reingests a granule with granules in payload', async (t) => {
   t.is(body.action, 'reingest');
   t.true(body.warning.includes('overwritten'));
 
-  const updatedPgGranule = await getUniqueGranuleByGranuleId(
+  const updatedPgGranule = await t.context.granulePgModel.get(
     t.context.knex,
-    t.context.fakePGGranules[0].granule_id
+    { granule_id: t.context.fakePGGranules[0].granule_id }
   );
   t.is(updatedPgGranule.status, 'queued');
 });
@@ -591,9 +598,9 @@ test.serial('PATCH reingests a granule without granules in payload', async (t) =
   t.is(body.action, 'reingest');
   t.true(body.warning.includes('overwritten'));
 
-  const updatedPgGranule = await getUniqueGranuleByGranuleId(
+  const updatedPgGranule = await t.context.granulePgModel.get(
     t.context.knex,
-    t.context.fakePGGranules[0].granule_id
+    { granule_id: t.context.fakePGGranules[0].granule_id }
   );
   t.is(updatedPgGranule.status, t.context.fakePGGranules[0].status);
 });
@@ -645,9 +652,9 @@ test.serial('PATCH applies an in-place workflow to an existing granule', async (
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'applyWorkflow inPlaceWorkflow');
 
-  const updatedPgGranule = await getUniqueGranuleByGranuleId(
+  const updatedPgGranule = await t.context.granulePgModel.get(
     t.context.knex,
-    t.context.fakePGGranules[0].granule_id
+    { granule_id: t.context.fakePGGranules[0].granule_id }
   );
 
   t.is(updatedPgGranule.status, 'queued');
@@ -681,7 +688,10 @@ test.serial('PATCH removes a granule from CMR', async (t) => {
     t.is(body.action, 'removeFromCmr');
 
     // Should have updated the Postgres granule
-    const updatedPgGranule = await getUniqueGranuleByGranuleId(t.context.knex, granuleId);
+    const updatedPgGranule = await t.context.granulePgModel.get(
+      t.context.knex,
+      { granule_id: granuleId }
+    );
     t.is(updatedPgGranule.published, false);
     t.is(updatedPgGranule.cmrLink, undefined);
   } finally {
@@ -1285,6 +1295,7 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
   const postgresNewGranuleFiles = newGranule.files.map((file) => {
     const translatedFile = translateApiFiletoPostgresFile(file);
     translatedFile.granule_cumulus_id = postgresGranule.cumulus_id;
+    translatedFile.collection_cumulus_id = postgresGranule.collection_cumulus_id;
     return translatedFile;
   });
   await Promise.all(
@@ -1396,6 +1407,7 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
   const postgresNewGranuleFiles = newGranule.files.map((file) => {
     const translatedFile = translateApiFiletoPostgresFile(file);
     translatedFile.granule_cumulus_id = postgresGranule.cumulus_id;
+    translatedFile.collection_cumulus_id = postgresGranule.collection_cumulus_id;
     return translatedFile;
   });
   await Promise.all(
@@ -1751,6 +1763,7 @@ test.serial('PATCH updates an existing granule in postgres', async (t) => {
     executionUrl,
     knex,
     testExecutionCumulusId,
+    testExecutionCreatedAt,
   } = t.context;
   const timestamp = Date.now();
   const oldQueryFields = {
@@ -1759,6 +1772,7 @@ test.serial('PATCH updates an existing granule in postgres', async (t) => {
   const { newPgGranule } = await createGranuleAndFiles({
     dbClient: knex,
     executionCumulusId: testExecutionCumulusId,
+    executionCreatedAt: testExecutionCreatedAt,
     granuleParams: {
       status: 'running',
       execution: executionUrl,
@@ -1819,6 +1833,7 @@ test.serial('PATCH executes successfully with no non-required-field-updates (tes
   const { newPgGranule, apiGranule } = await createGranuleAndFiles({
     dbClient: knex,
     executionCumulusId: executionPgRecord.cumulus_id,
+    executionCreatedAt: executionPgRecord.created_at,
     granuleParams: {
       status: 'running',
       execution: executionUrl,
@@ -1856,6 +1871,7 @@ test.serial('PATCH does not update non-current-timestamp undefined fields for ex
     knex,
     executionPgRecord,
     testExecutionCumulusId,
+    testExecutionCreatedAt,
   } = t.context;
 
   const originalUpdateTimestamp = Date.now();
@@ -1866,6 +1882,7 @@ test.serial('PATCH does not update non-current-timestamp undefined fields for ex
   } = await createGranuleAndFiles({
     dbClient: knex,
     executionCumulusId: testExecutionCumulusId,
+    executionCreatedAt: testExecutionCreatedAt,
     granuleParams: {
       beginningDateTime: '2022-01-18T14:40:00.000Z',
       cmrLink: 'example.com',
@@ -1892,7 +1909,9 @@ test.serial('PATCH does not update non-current-timestamp undefined fields for ex
 
   await granulesExecutionsPgModel.create(knex, {
     granule_cumulus_id: newPgGranule.cumulus_id,
+    collection_cumulus_id: newPgGranule.collection_cumulus_id,
     execution_cumulus_id: executionPgRecord.cumulus_id,
+    execution_created_at: executionPgRecord.created_at,
   });
   const updatedGranule = {
     granuleId: apiGranule.granuleId,
@@ -1937,6 +1956,7 @@ test.serial('PATCH nullifies expected fields for existing granules', async (t) =
     knex,
     executionPgRecord,
     testExecutionCumulusId,
+    testExecutionCreatedAt,
   } = t.context;
 
   const originalUpdateTimestamp = Date.now();
@@ -1946,6 +1966,7 @@ test.serial('PATCH nullifies expected fields for existing granules', async (t) =
   const { newPgGranule, apiGranule } = await createGranuleAndFiles({
     dbClient: knex,
     executionCumulusId: testExecutionCumulusId,
+    executionCreatedAt: testExecutionCreatedAt,
     granuleParams: {
       beginningDateTime: '2022-01-18T14:40:00.000Z',
       cmrLink: 'example.com',
@@ -2184,12 +2205,14 @@ test.serial('PATCH replaces an existing granule in all data stores with correct 
     executionUrl,
     knex,
     testExecutionCumulusId,
+    testExecutionCreatedAt,
   } = t.context;
   const {
     newPgGranule,
   } = await createGranuleAndFiles({
     dbClient: knex,
     executionCumulusId: testExecutionCumulusId,
+    executionCreatedAt: testExecutionCreatedAt,
     granuleParams: {
       status: 'running',
       createdAt: Date.now(),
@@ -2229,10 +2252,12 @@ test.serial('PATCH replaces an existing granule with a granule that violates mes
     executionUrl,
     knex,
     testExecutionCumulusId,
+    testExecutionCreatedAt,
   } = t.context;
   const { newPgGranule, apiGranule } = await createGranuleAndFiles({
     dbClient: knex,
     executionCumulusId: testExecutionCumulusId,
+    executionCreatedAt: testExecutionCreatedAt,
     granuleParams: {
       status: 'completed',
       createdAt: Date.now(),
@@ -2271,12 +2296,14 @@ test.serial('PATCH publishes an SNS message after a successful granule update', 
     executionUrl,
     knex,
     testExecutionCumulusId,
+    testExecutionCreatedAt,
   } = t.context;
   const {
     newPgGranule,
   } = await createGranuleAndFiles({
     dbClient: knex,
     executionCumulusId: testExecutionCumulusId,
+    executionCreatedAt: testExecutionCreatedAt,
     granuleParams: {
       status: 'running',
       createdAt: Date.now(),
@@ -2320,7 +2347,11 @@ test.serial('PATCH publishes an SNS message after a successful granule update', 
   const snsMessageBody = JSON.parse(Messages[0].Body);
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
-  t.deepEqual(publishedMessage.record, translatedGranule);
+  t.deepEqual(publishedMessage.record, {
+    ...translatedGranule,
+    metricsProvider: t.context.testPgCollection.metrics_provider,
+    cmrProvider: t.context.testPgCollection.cmr_provider,
+  });
   t.is(publishedMessage.event, 'Update');
 });
 
@@ -2329,11 +2360,13 @@ test.serial("create() sets a default createdAt value for passed granule if it's 
     executionUrl,
     knex,
     testExecutionCumulusId,
+    testExecutionCreatedAt,
   } = t.context;
 
   const { apiGranule } = await createGranuleAndFiles({
     dbClient: knex,
     executionCumulusId: testExecutionCumulusId,
+    executionCreatedAt: testExecutionCreatedAt,
     granuleParams: {
       status: 'running',
       execution: executionUrl,
@@ -2368,11 +2401,13 @@ test.serial("patch() sets a default createdAt value for new granule if it's not 
     executionUrl,
     knex,
     testExecutionCumulusId,
+    testExecutionCreatedAt,
   } = t.context;
 
   const { apiGranule } = await createGranuleAndFiles({
     dbClient: knex,
     executionCumulusId: testExecutionCumulusId,
+    executionCreatedAt: testExecutionCreatedAt,
     granuleParams: {
       status: 'running',
       execution: executionUrl,
@@ -2407,6 +2442,7 @@ test.serial('PATCH() does not write to DynamoDB/SNS if writing to PostgreSQL fai
     executionUrl,
     knex,
     testExecutionCumulusId,
+    testExecutionCreatedAt,
   } = t.context;
   const {
     newPgGranule,
@@ -2418,6 +2454,7 @@ test.serial('PATCH() does not write to DynamoDB/SNS if writing to PostgreSQL fai
       collectionId: t.context.collectionId,
     },
     executionCumulusId: testExecutionCumulusId,
+    executionCreatedAt: testExecutionCreatedAt,
   });
 
   const fakeGranulePgModel = {
@@ -2476,10 +2513,11 @@ test.serial('PATCH() does not write to DynamoDB/SNS if writing to PostgreSQL fai
 });
 
 test.serial('PATCH rolls back PostgreSQL records and does not write to SNS if writing to Postgres fails', async (t) => {
-  const { executionUrl, knex, testExecutionCumulusId } = t.context;
+  const { executionUrl, knex, testExecutionCumulusId, testExecutionCreatedAt } = t.context;
   const { newPgGranule, apiGranule } = await createGranuleAndFiles({
     dbClient: knex,
     executionCumulusId: testExecutionCumulusId,
+    executionCreatedAt: testExecutionCreatedAt,
     granuleParams: {
       collectionId: t.context.collectionId,
       status: 'running',
@@ -2757,7 +2795,9 @@ test.serial('PATCH can set running granule status to queued', async (t) => {
   const pgGranule = (await t.context.granulePgModel.create(t.context.knex, runningGranule))[0];
   await granulesExecutionsPgModel.create(t.context.knex, {
     granule_cumulus_id: pgGranule.cumulus_id,
+    collection_cumulus_id: pgGranule.collection_cumulus_id,
     execution_cumulus_id: t.context.testExecutionCumulusId,
+    execution_created_at: t.context.testExecutionCreatedAt,
   });
 
   const response = await request(app)
@@ -3149,6 +3189,7 @@ test.serial('PUT replaces an existing granule in all data stores, removing exist
   } = await createGranuleAndFiles({
     dbClient: knex,
     executionCumulusId: executionPgRecord.cumulus_id,
+    executionCreatedAt: executionPgRecord.created_at,
     granuleParams: {
       beginningDateTime: new Date().toISOString(),
       cmrLink: 'example.com',
@@ -3477,4 +3518,95 @@ test.serial('PATCH returns 201 (granule creation) for version value greater than
     .send({ granuleId, collectionId: t.context.collectionId, producerGranuleId: randomId('producerGranuleId'), status: 'completed' })
     .expect(201);
   t.is(response.status, 201);
+});
+
+test.serial('ServeUtils.addGranules adds associated files to Postgres', async (t) => {
+  const { collectionPgModel, knex } = t.context;
+  const collectionName = randomString();
+  const collectionVersion = '006';
+
+  const fakePgCollection = fakeCollectionFactory({
+    name: collectionName,
+    version: collectionVersion,
+  });
+
+  await addCollections([fakePgCollection], knex);
+
+  const [pgCollection] = await collectionPgModel.search(
+    t.context.knex, { name: collectionName, version: collectionVersion }
+  );
+
+  const newCollectionId = constructCollectionId(pgCollection.name, pgCollection.version);
+
+  const testPgExecution = fakeExecutionRecordFactory({
+    collection_cumulus_id: pgCollection.cumulus_id,
+  });
+
+  const executionPgRecord = await executionPgModel.create(
+    knex,
+    testPgExecution
+  );
+
+  const newGranuleId = randomId();
+
+  const newGranule = fakeGranuleFactoryV2({
+    granuleId: newGranuleId,
+    status: 'failed',
+    collectionId: newCollectionId,
+    execution: executionPgRecord[0].url,
+    published: false,
+    files: [
+      fakeFileFactory({
+        fileName: `${newGranuleId}.hdf`,
+        updated_at: new Date().toISOString(),
+        bucket: `${newCollectionId}--bucket`,
+        key: `${newCollectionId}${newGranuleId}/key-hdf.pem`,
+        path: `${newCollectionId}/${newGranuleId}`,
+        source: `s3://${newCollectionId}--bucket/${collectionName}___${collectionVersion}/.cmr.xml`,
+      }),
+    ],
+  });
+
+  await addGranules([newGranule], knex);
+
+  const [pgGranule] = await t.context.granulePgModel.search(
+    t.context.knex, { granule_id: newGranule.granuleId }
+  );
+  t.truthy(pgGranule, 'Granule should exist in Postgres');
+
+  // Fetch associated files
+  const files = await filePgModel.search(
+    t.context.knex, { granule_cumulus_id: pgGranule.cumulus_id }
+  );
+
+  t.is(files.length, newGranule.files.length, 'All files should be created in Postgres');
+  newGranule.files.forEach((file, idx) => {
+    t.is(files[idx].bucket, file.bucket);
+    t.is(files[idx].key, file.key);
+    t.is(files[idx].file_name, file.fileName);
+  });
+
+  // Test granule with no files
+  const newGranuleId2 = randomId();
+
+  const newGranule2 = fakeGranuleFactoryV2({
+    granuleId: newGranuleId2,
+    status: 'failed',
+    collectionId: newCollectionId,
+    execution: executionPgRecord[0].url,
+    published: false,
+    files: [],
+  });
+
+  await addGranules([newGranule2], knex);
+
+  const [pgGranule2] = await t.context.granulePgModel.search(
+    t.context.knex, { granule_id: newGranule2.granuleId }
+  );
+  t.truthy(pgGranule2, 'Granule should exist in Postgres');
+
+  const files2 = await filePgModel.search(
+    t.context.knex, { granule_cumulus_id: pgGranule2.cumulus_id }
+  );
+  t.is(files2.length, 0, 'No files should be created in Postgres');
 });

@@ -209,7 +209,7 @@ describe('The Queue Granules workflow triggered with a database-schema-compliant
         const executionSearchResult = await searchExecutionsByGranules({
           prefix: config.stackName,
           payload: {
-            granules: [record],
+            granules: [granule.granuleId],
           },
           query: {
             limit: '2',

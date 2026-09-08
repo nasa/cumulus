@@ -23,6 +23,7 @@ const {
 } = require('@cumulus/message/Providers');
 
 /**
+* @typedef {import('knex').Knex} Knex
 * @typedef {import('@cumulus/db').PostgresCollectionRecord} PostgresCollectionRecord
 **/
 
@@ -72,7 +73,7 @@ const getAsyncOperationCumulusId = async (
   }
 };
 
-const getParentExecutionCumulusId = async (
+const getParentExecution = async (
   parentExecutionArn,
   knex,
   executionPgModel = new ExecutionPgModel()
@@ -82,11 +83,12 @@ const getParentExecutionCumulusId = async (
       log.info('There is no parent execution ARN to lookup on the message, skipping');
       return undefined;
     }
-    return await executionPgModel.getRecordCumulusId(
+    return await executionPgModel.get(
       knex,
       {
         arn: parentExecutionArn,
-      }
+      },
+      ['cumulus_id', 'created_at']
     );
   } catch (error) {
     if (isFailedLookupError(error)) {
@@ -138,12 +140,44 @@ const getCollectionCumulusId = async (
 };
 
 /**
+ * retrieves the collection configured cmr_provider
+ *
+ * @param {number} collectionCumulusId -
+ * The name and version of
+ * the collection, formatted as 'name__version'.
+ * @param {Knex} knex - An instance of a Knex database client.
+ * @param {CollectionPgModel} [collectionPgModel=new CollectionPgModel()] - An instance of the
+ *  CollectionPgModel class.
+ * @returns {Promise<{metricsProvider: string, cmrProvider: string}>} - A promise that resolves
+ *  to the Cumulus ID of the collection, or undefined if the collection name/version
+ *  is not provided or if the lookup fails.
+ *
+ * @async
+ * @throws {Error} Throws an error if there is a problem with the database lookup
+ * that is not a failed lookup.
+ */
+const getCollectionMetricsAndCmrProvider = async (
+  collectionCumulusId,
+  knex,
+  collectionPgModel = new CollectionPgModel()
+) => {
+  const {
+    metrics_provider: metricsProvider,
+    cmr_provider: cmrProvider,
+  } = await collectionPgModel.getMetricsAndCmrProvider(knex, collectionCumulusId);
+  return {
+    metricsProvider,
+    cmrProvider,
+  };
+};
+
+/**
  * Looks up an Provider's cumulus_id by providerId.
  *
  * @param {string} [providerId = ''] - Full url of stepfunction execution
  * @param {Knex} knex - knex Client
- * @param {Object} providerPgModel - Instance of the provider database model
- * @returns {integer} - RDS internal cumulus_id
+ * @param {ProviderPgModel} providerPgModel - Instance of the provider database model
+ * @returns {Promise<number>} - RDS internal cumulus_id
  */
 const getProviderCumulusId = async (
   providerId,
@@ -176,14 +210,14 @@ const getMessageProviderCumulusId = async (
 };
 
 /**
- * Looks up an Execution's cumulus_id by executionUrl.
+ * Looks up an Execution by executionUrl.
  *
  * @param {string} [executionUrl = ''] - Full url of stepfunction execution
  * @param {Knex} knex - knex Client
  * @param {Object} executionPgModel - instance of the exection database model
- * @returns {integer|undefined} - RDS internal cumulus_id
+ * @returns {Promise<import('@cumulus/db').PostgresExecutionRecord>} The returned record
  */
-const getExecutionCumulusId = async (
+const getExecution = async (
   executionUrl = '',
   knex,
   executionPgModel = new ExecutionPgModel()
@@ -193,9 +227,10 @@ const getExecutionCumulusId = async (
       log.info('There is no execution URL to lookup, skipping');
       return undefined;
     }
-    return await executionPgModel.getRecordCumulusId(
+    return await executionPgModel.get(
       knex,
-      { url: executionUrl }
+      { url: executionUrl },
+      ['cumulus_id', 'created_at']
     );
   } catch (error) {
     if (isFailedLookupError(error)) {
@@ -229,10 +264,11 @@ const isStatusActiveState = (status) => status === 'running' || status === 'queu
 module.exports = {
   isPostRDSDeploymentExecution,
   getAsyncOperationCumulusId,
-  getExecutionCumulusId,
-  getParentExecutionCumulusId,
+  getExecution,
+  getParentExecution,
   getProviderCumulusId,
   getCollectionCumulusId,
+  getCollectionMetricsAndCmrProvider,
   getMessageProviderCumulusId,
   isStatusFinalState,
   isStatusActiveState,

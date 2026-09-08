@@ -136,7 +136,7 @@ async function getCollectionEntry(config, metadata, isUmmG) {
   });
 
   // Query CMR for collection and retrieve entry title
-  const cmrInstance = new CMR(cmrSettings);
+  const cmrInstance = CMR.getInstance(cmrSettings);
 
   const searchParams = getCmrSearchParams({
     datasetId,
@@ -144,7 +144,7 @@ async function getCollectionEntry(config, metadata, isUmmG) {
     versionId,
   });
 
-  const result = await cmrInstance.searchCollections(searchParams);
+  const result = await cmrInstance.searchCollections(searchParams, cmrSettings.provider);
 
   // Verify that we have a valid result. If we don't then something is badly wrong and we
   // should halt. Either the code is faulty or the provider is trying to ingest granules

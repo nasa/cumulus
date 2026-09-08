@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": {
+    "$ref": "https://raw.githubusercontent.com/podaac/cloud-notification-message-schema/refs/tags/v1.6.1/cumulus_sns_schema.json"
+  }
+}

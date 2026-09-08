@@ -67,7 +67,7 @@ async function ingestConcept(
     if (statusCode >= 500 && statusCode < 600) {
       throw new CMRInternalError(errorMessage);
     }
-    throw new Error(errorMessage);
+    throw Object.assign(new Error(errorMessage), { statusCode, cause: error });
   }
 }
 export = ingestConcept;

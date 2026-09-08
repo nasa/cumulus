@@ -193,6 +193,8 @@
           "task_config": {
             "buckets": "{$.meta.buckets}",
             "distribution_endpoint": "{$.meta.distribution_endpoint}",
+            "distribution_endpoint_per_cmr_provider": "{$.meta.distribution_endpoint_per_cmr_provider}",
+            "cmr_provider": "{$.meta.cmr.provider}",
             "cumulus_message": {
               "outputs": [
                 {

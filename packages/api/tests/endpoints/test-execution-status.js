@@ -311,11 +311,13 @@ test.before(async (t) => {
     knexTransaction: knex,
     granule: t.context.fakePGGranules[0],
     executionCumulusId: executionPgRecordId,
+    executionCreatedAt: pgExecution.created_at,
   });
   await upsertGranuleWithExecutionJoinRecord({
     knexTransaction: knex,
     granule: t.context.fakePGGranules[0],
     executionCumulusId: expiredExecutionPgRecordId,
+    executionCreatedAt: createdExpiredExecutionRecord.created_at,
   });
 });
 

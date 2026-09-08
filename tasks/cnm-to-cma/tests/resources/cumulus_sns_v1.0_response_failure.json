@@ -1,0 +1,14 @@
+{
+  "version": "1.0",
+  "provider": "PODAAC_SWOT",
+  "collection": "SWOT_Prod_l2:1",
+  "processCompleteTime":"2017-09-30T03:45:29.791198Z",
+  "submissionTime":"2017-09-30T03:42:29.791198Z",
+  "receivedTime":"2017-09-30T03:42:31.634552Z",
+  "identifier": "1234-abcd-efg0-9876",
+  "response": {
+    "status":"FAILURE",
+    "errorCode": "VALIDATION_ERROR",
+    "errorMessage": "File [cumulus-dev-a4d38f59-5e57-590c-a2be-58640db02d91/prod_20170926T11:30:36/production_file.nc] did not match gve checksum value."
+  }
+}

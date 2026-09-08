@@ -16,30 +16,51 @@ function determineIntegrationTestStackName(cb) {
 
   // uses github name
   const stacks = {
+    'adtisdal-ASDC': 'atisdale-ci',
     'Charles Huang': 'ch-ci',
-    'Edwin Fenollal': 'ef-ci',
-    'Filip Graniczny': 'fg-ci',
-    'Jenny Liu': 'jl-rds',
-    jennyhliu: 'jl-rds',
-    kkelly51: 'kk-int',
-    'Katherine Kelly': 'kk-int',
-    'Jennifer Tran': 'jtran-int',
-    'Jonathan Kovarik': 'jk',
+    'Brandon Lokey': 'blokey-ci',
+    'Bryan Wexler': 'bwexler-ci',
+    'Charles Collins': 'ccollins-ci',
+    'Chris Durbin': 'cdd-ci',
+    'Curtis Banh': 'cbanh-ci',
+    dhudelson: 'dh-ci',
+    'dnorris-nasa': 'dnorris-ci',
     etcart: 'ecarton-ci',
     ecarton: 'ecarton-ci',
-    nasamoduyebo: 'mao-ci',
+    eyen: 'eyen-ci',
+    'Filip Graniczny': 'fg-ci',
+    'James Norton': 'jn-ci',
+    'Jenny Liu': 'jl-rds',
+    jennyhliu: 'jl-rds',
+    'Jonathan Kovarik': 'jk',
+    kkelly51: 'kk-int',
+    'Katherine Kelly': 'kk-int',
+    'Mason Yates': 'mason-t-yates-ci',
+    mckadesorensen: 'dms-opex-sbx-ci',
+    mikedorfman: 'mikedorfman-ci',
     'Nate Pauzenga': 'np-ci',
     'Naga Nages': 'nnaga-ci',
-    vpnguye2: 'vkn-ci',
-    'Roger Kwarteng': 'rkwarten-ci',
     'Paul Pilone': 'ppilone-ci',
+    'Robert Swanson': 'rs-ci',
+    'Rohan Weeden': 'reweeden-ci',
     'Tim Clark': 'teclark-ci',
-    'Bryan Wexler': 'bwexler-ci',
-    'Curtis Banh': 'cbanh-ci',
+    wisdomaj: 'awisdom-ci',
+    'Yonggang Liu': 'yliu10-ci',
   };
 
-  return git('.').log({ '--max-count': '1' }, (e, r) => {
-    const author = r.latest.author_name;
+  return git('.').log({ '--max-count': '10' }, (e, r) => {
+    // Find the first commit not authored by pre-commit-ci[bot]
+    const commits = r.all || [r.latest];
+    const firstNonBotCommit = commits.find(
+      (commit) => commit.author_name !== 'pre-commit-ci[bot]'
+    );
+
+    if (!firstNonBotCommit) {
+      console.error('No non-bot commits found, using default stack');
+      return cb('cumulus-from-pr');
+    }
+
+    const author = firstNonBotCommit.author_name;
 
     console.error(`Selecting build stack based on author name: "${author}"`);
 

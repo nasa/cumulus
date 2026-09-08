@@ -14,7 +14,7 @@ resource "aws_lambda_function" "provision_database" {
   source_code_hash = filebase64sha256("${path.module}/dist/webpack/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.db_provision.arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   memory_size      = lookup(var.lambda_memory_sizes, "ProvisionPostgresDatabase", 512)
   timeout          = lookup(var.lambda_timeouts, "ProvisionPostgresDatabase", 500)
   environment {
@@ -112,13 +112,13 @@ data "aws_iam_policy_document" "db_provision" {
 }
 
 data "aws_lambda_invocation" "provision_database" {
-  depends_on    = [
+  depends_on = [
     aws_lambda_function.provision_database,
     aws_iam_role.db_provision
   ]
   function_name = aws_lambda_function.provision_database.function_name
   input = jsonencode({
-    prefix = var.prefix,
+    prefix             = var.prefix,
     rootLoginSecret    = var.rds_admin_access_secret_arn,
     userLoginSecret    = aws_secretsmanager_secret.db_credentials.name
     dbPassword         = var.rds_user_password

@@ -72,9 +72,17 @@ export class SftpClient {
 
   async end(): Promise<void> {
     if (this.connected) {
-      await this.sftpClient.end();
-
-      this.connected = false;
+      try {
+        await this.sftpClient.end();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (!message.includes('No response from server')) {
+          throw error;
+        }
+        log.warn(`SFTP client end ignored: ${message}`);
+      } finally {
+        this.connected = false;
+      }
     }
   }
 
@@ -147,18 +155,28 @@ export class SftpClient {
 
     const sftpReadStream = await this.sftp.createReadStream(remotePath);
 
-    const result = await S3.promiseS3Upload({
-      params: {
-        Bucket: bucket,
-        Key: key,
-        Body: sftpReadStream,
-        ContentType: mime.lookup(key) || undefined,
-      },
-    });
+    try {
+      const result = await S3.promiseS3Upload({
+        params: {
+          Bucket: bucket,
+          Key: key,
+          Body: sftpReadStream,
+          ContentType: mime.lookup(key) || undefined,
+        },
+      });
 
-    log.info(`Finished copying ${remoteUrl} to ${s3uri}`);
+      log.info(`Finished copying ${remoteUrl} to ${s3uri}`);
 
-    return { s3uri, etag: result.ETag };
+      return { s3uri, etag: result.ETag };
+    } finally {
+      // Explicitly destroy the SFTP read stream so the SFTP channel is
+      // torn down before end() is called.
+      sftpReadStream.once('error', (err: Error) => {
+        const message = err instanceof Error ? err.message : String(err);
+        log.warn(`SFTP read stream cleanup error (ignored): ${message}`);
+      });
+      sftpReadStream.destroy();
+    }
   }
 
   logProgress(total_transferred: number, chunk: number, total: number): void {

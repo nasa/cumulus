@@ -15,7 +15,6 @@ const {
   fakeExecutionRecordFactory,
   ExecutionPgModel,
   localStackConnectionEnv,
-  translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
 const { fakeGranuleRecordFactory, fakeCollectionRecordFactory } = require('@cumulus/db/dist');
 
@@ -31,17 +30,15 @@ async function setupDataStoreData(granules, executions, t) {
 
   const collection = fakeCollectionRecordFactory({
     name: 'MOD11A1',
-    granuleIdExtraction: '(MOD11A1\\.(.*))\\.hdf',
-    granuleId: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$',
-    dataType: 'MOD11A1',
+    granule_id_extraction_regex: '(MOD11A1\\.(.*))\\.hdf',
+    granule_id_validation_regex: '^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$',
     process: 'modis',
     version: '006',
-    sampleFileName: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
-    id: 'MOD11A1',
+    sample_file_name: 'MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
   });
   const collectionInserted = await collectionModel.create(
     knex,
-    translateApiCollectionToPostgresCollection(collection)
+    collection
   );
   let pgGranules = [];
   if (granules.length > 0) {

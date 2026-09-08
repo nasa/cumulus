@@ -1,0 +1,46 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 5.100, < 6.0.0"
+    }
+  }
+}
+
+resource "aws_security_group" "no_ingress_all_egress" {
+
+  name   = "${var.prefix}-replication-ecs-no-ingress-all-egress"
+  vpc_id = var.vpc_id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  lifecycle {
+    # This prevents the "In Use" error by creating a new one
+    # before trying to kill the old one during updates
+    create_before_destroy = true
+  }
+
+  tags = var.tags
+}
+
+resource "aws_ecs_cluster" "default" {
+  name = "${var.prefix}-CumulusIcebergReplicationECSCluster"
+  tags = var.tags
+}
+
+data "aws_caller_identity" "current" {}
+
+resource "aws_security_group_rule" "efs_nfs_inbound" {
+  type                     = "ingress"
+  from_port                = 2049
+  to_port                  = 2049
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.no_ingress_all_egress.id
+  security_group_id        = aws_security_group.no_ingress_all_egress.id
+  description              = "Allow NFS traffic for EFS"
+}

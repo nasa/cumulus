@@ -61,9 +61,9 @@ resource "aws_iam_role_policy" "lambda_processing_access_fake_s3_provider" {
 }
 
 data "aws_iam_policy_document" "lzards_api_client_test_processing_role_get_secrets" {
-  count         = length(var.launchpad_passphrase) == 0 ? 0 : 1
+  count = length(var.launchpad_passphrase) == 0 ? 0 : 1
   statement {
-    actions   = ["secretsmanager:GetSecretValue"]
+    actions = ["secretsmanager:GetSecretValue"]
     resources = [
       aws_secretsmanager_secret.lzards_api_client_test_launchpad_passphrase.arn,
     ]

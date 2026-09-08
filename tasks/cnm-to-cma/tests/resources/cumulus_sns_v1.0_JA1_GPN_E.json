@@ -1,0 +1,29 @@
+{
+  "version": "1.4",
+  "provider": "NASA/JPL/PO.DAAC",
+  "collection": "JASON-1_L2_OST_GPN_E",
+  "submissionTime": "2020-11-20T05:56:37.396264Z",
+  "identifier": "f6595030-0342-4750-982d-42db2f68deca",
+  "product": {
+    "name": "JA1_GPN_2PeP001_002_20020115_060706_20020115_070316.nc",
+    "files": [
+      {
+        "uri": "s3://podaac-ops-cumulus-staging/f6595030-0342-4750-982d-42db2f68deca/store/jason1/open/L2/gdr_netcdf_e/c001/JA1_GPN_2PeP001_002_20020115_060706_20020115_070316.nc",
+        "checksum": "fcf863f73fb3ab1a1de47db96440e8f8",
+        "size": 3683868,
+        "type": "data",
+        "name": "JA1_GPN_2PeP001_002_20020115_060706_20020115_070316.nc",
+        "checksumType": "md5"
+      },
+      {
+        "uri": "s3://podaac-ops-cumulus-staging/f6595030-0342-4750-982d-42db2f68deca/store/jason1/open/L2/gdr_netcdf_e/c001/JA1_GPN_2PeP001_002_20020115_060706_20020115_070316.nc.md5",
+        "checksum": "f648734a7d36bbf5df1322d8131a96f4",
+        "size": 88,
+        "type": "metadata",
+        "name": "JA1_GPN_2PeP001_002_20020115_060706_20020115_070316.nc.md5",
+        "checksumType": "md5"
+      }
+    ],
+    "dataVersion": "E"
+  }
+}

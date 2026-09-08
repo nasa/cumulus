@@ -13,6 +13,7 @@ const {
   constructDistributionUrl,
   getDistributionBucketMapKey,
   fetchDistributionBucketMap,
+  resolveDistributionEndpoint,
 } = require('..');
 
 test.before(async (t) => {
@@ -125,4 +126,59 @@ test.serial('fetchDistributionBucketMap fetches bucket map with env vars', async
   process.env.system_bucket = t.context.system_bucket;
   const bucketMap = await fetchDistributionBucketMap();
   t.deepEqual(bucketMap, t.context.bucketMap);
+});
+
+test('resolveDistributionEndpoint returns mapped endpoint when cmrProvider is in map', (t) => {
+  const endpointMap = {
+    PROV1: 'https://prov1.example',
+    PROV2: 'https://prov2.example',
+  };
+  t.is(
+    resolveDistributionEndpoint('PROV1', endpointMap, 'https://default.example'),
+    'https://prov1.example'
+  );
+});
+
+test('resolveDistributionEndpoint falls back to defaultEndpoint when cmrProvider is not in map', (t) => {
+  const endpointMap = { PROV1: 'https://prov1.example' };
+  t.is(
+    resolveDistributionEndpoint('UNKNOWN', endpointMap, 'https://default.example'),
+    'https://default.example'
+  );
+});
+
+test('resolveDistributionEndpoint falls back to defaultEndpoint when endpointMap is undefined', (t) => {
+  t.is(
+    resolveDistributionEndpoint('PROV1', undefined, 'https://default.example'),
+    'https://default.example'
+  );
+});
+
+test('resolveDistributionEndpoint falls back to defaultEndpoint when endpointMap is empty', (t) => {
+  t.is(
+    resolveDistributionEndpoint('PROV1', {}, 'https://default.example'),
+    'https://default.example'
+  );
+});
+
+test('resolveDistributionEndpoint falls back to defaultEndpoint when cmrProvider is undefined', (t) => {
+  const endpointMap = { PROV1: 'https://prov1.example' };
+  t.is(
+    resolveDistributionEndpoint(undefined, endpointMap, 'https://default.example'),
+    'https://default.example'
+  );
+});
+
+test('resolveDistributionEndpoint throws InvalidArgument when no map entry and no default', (t) => {
+  t.throws(
+    () => resolveDistributionEndpoint('UNKNOWN', { PROV1: 'https://prov1.example' }, undefined),
+    { instanceOf: InvalidArgument }
+  );
+});
+
+test('resolveDistributionEndpoint throws InvalidArgument when cmrProvider undefined and no default', (t) => {
+  t.throws(
+    () => resolveDistributionEndpoint(undefined, undefined, undefined),
+    { instanceOf: InvalidArgument }
+  );
 });

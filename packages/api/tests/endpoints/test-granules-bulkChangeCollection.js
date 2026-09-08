@@ -136,6 +136,7 @@ test.beforeEach(async (t) => {
   const granuleId1 = t.context.createGranuleId();
   const granuleId2 = t.context.createGranuleId();
   const granuleId3 = t.context.createGranuleId();
+  const granuleId4 = t.context.createGranuleId();
 
   // create fake Postgres granule records
   t.context.fakePGGranules = [
@@ -163,9 +164,8 @@ test.beforeEach(async (t) => {
       duration: 52.235,
       timestamp: new Date(Date.now()),
     }),
-    // granule with same granule_id as above but different collection_cumulus_id
     fakeGranuleRecordFactory({
-      granule_id: granuleId3,
+      granule_id: granuleId4,
       status: 'failed',
       collection_cumulus_id: t.context.collectionCumulusId2,
       duration: 52.235,

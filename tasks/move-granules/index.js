@@ -556,7 +556,6 @@ async function moveFilesForAllGranules({
  * @param {object} event.config - the config object
  * @param {string} event.config.bucket - AWS S3 bucket that contains the granule files
  * @param {object} event.config.buckets - Buckets config
- * @param {string} event.config.distribution_endpoint - distribution endpoint for the api
  * @param {Collection} event.config.collection - collection configuration
  * @param {boolean} [event.config.moveStagedFiles=true] - set to false to skip moving files
  * @param {number} [event.config.s3MultipartChunksizeMb] - S3 multipart upload chunk size in MB

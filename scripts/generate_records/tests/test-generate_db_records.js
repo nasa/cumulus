@@ -37,7 +37,7 @@ test.before(async (t) => {
     })
   );
   const providerPgModel = new ProviderPgModel();
-  providerPgModel.create(
+  await providerPgModel.create(
     t.context.knex,
     fakeProviderRecordFactory({ name: 'provider_test' })
   );
@@ -46,7 +46,7 @@ test.after.always(async (t) => {
   await destroyLocalTestDb({
     knex: t.context.knex,
     knexAdmin: t.context.knexAdmin,
-    tesetDbName: t.context.testDbName,
+    testDbName: t.context.testDbName,
   });
 });
 
@@ -197,7 +197,7 @@ test.serial("parseArgs() fails when executionsPerGranule doesn't follow a:b form
   process.argv = argv;
 });
 
-test('uploadDataBatch() uploads a batch of entries verified to be in the database', async (t) => {
+test.serial('uploadDataBatch() uploads a batch of entries verified to be in the database', async (t) => {
   const providerPgModel = new ProviderPgModel();
   const collectionPgModel = new CollectionPgModel();
 
@@ -255,7 +255,7 @@ test('uploadDataBatch() uploads a batch of entries verified to be in the databas
   }));
 });
 
-test('uploadDBGranules() uploads a pile of entries', async (t) => {
+test.serial('uploadDBGranules() uploads a pile of entries', async (t) => {
   const providerPgModel = new ProviderPgModel();
   const collectionPgModel = new CollectionPgModel();
 

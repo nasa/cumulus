@@ -1,0 +1,11 @@
+stage = "sit/uat/prod"
+prefix = ""
+lambda_security_group_ids = ["sg-xxx"]
+lambda_subnet_ids = ["subnet-xxx", "subnet-yyy"]
+resource_identifier = ""
+submit_to_gibs = "true"
+system_bucket = "example-internal"
+aws_profile = ""
+region = "us-west-2"
+bignbit_edl_password = ""
+bignbit_edl_username = ""

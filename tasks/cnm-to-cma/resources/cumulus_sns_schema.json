@@ -1,0 +1,275 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "file": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "The type of file. science files (netcdf, HDF, binary) should use the 'data' type. More can be added if need and consensus demand.",
+          "type": "string",
+          "enum": [
+            "data",
+            "browse",
+            "metadata",
+            "ancillary",
+            "linkage"
+          ]
+        },
+        "subtype": {
+          "description": "An optional, specific implmentation of the file::type. e.g. NetCDF for a file of type 'data'",
+          "type": "string"
+        },
+        "uri": {
+          "description": "the URI of the file (s3://...)",
+          "type": "string"
+        },
+        "name": {
+          "description": "The human readable filename that this file represents. ",
+          "type": "string"
+        },
+        "checksumType": {
+          "description  ": "Type of the checksum (e.g. md5). Optional. If no checksumType is defined for a file, it is assumed to be md5",
+          "type": "string",
+          "enum": [
+            "SHA512",
+            "SHA256",
+            "SHA2",
+            "SHA1",
+            "md5"
+          ]
+        },
+        "checksum": {
+          "description": "Checksum of the file.",
+          "type": "string"
+        },
+        "size": {
+          "description": "Size, in bytes, of the file.",
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "uri",
+        "size",
+        "name"
+      ]
+    },
+    "filegroup": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "string id of the filegroup by which all files are associated."
+        },
+        "files": {
+          "description": "array of files that make up this product",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/file"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "files"
+      ]
+    },
+    "collection": {
+      "description": "The collection short name and version.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "collection short name."
+        },
+        "version": {
+          "type": "string",
+          "description": "collection version."
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ]
+    }
+  },
+  "title": "Cloud Notification Message (cnm) 1.2 ",
+  "description": "A message format to trigger or respond to processing. Version 1.2",
+  "type": "object",
+  "properties": {
+    "version": {
+      "description": "The CNM Version used. e.g. '1.3'",
+      "type": "string",
+      "enum": [
+        "1.0",
+        "1.1",
+        "1.2",
+        "1.3",
+        "1.4",
+        "1.4.1",
+        "1.5",
+        "1.5.1",
+        "1.6.0",
+        "1.6.1-alpha.0"
+      ]
+    },
+    "receivedTime": {
+      "description": "Time message was received by the ingest system",
+      "type": "string",
+      "format": "date-time"
+    },
+    "processCompleteTime": {
+      "description": "The time processing completed by the receiving entity.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "submissionTime": {
+      "description": "The time the message was created (and presumably sent) to the publication mechanism.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "identifier": {
+      "description": "Unique identifier for the message as a whole. It is the senders responsibility to ensure uniqueness. This identifier can be used in response messages to provide tracability.",
+      "type": "string"
+    },
+    "collection": {
+      "description": "The collection to which these granules will belong.",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/collection"
+        }
+      ]
+    },
+    "provider": {
+      "description": "the name of the provider (e.g. SIP, SDS, etc. ) producing these files.",
+      "type": "string"
+    },
+    "trace": {
+      "description": "Information on the message or who is sending it.",
+      "type": "string"
+    },
+    "response": {
+      "description": "The response message type sent. Can be a success message or error message. Akin to both the PAN and PDRD",
+      "type": "object",
+      "properties": {
+        "status": {
+          "description": "Successful or error.",
+          "type": "string",
+          "enum": [
+            "SUCCESS",
+            "FAILURE"
+          ]
+        },
+        "ingestionMetadata": {
+          "description": "Object defining ingestion metadata, like CMR Concept IDs, URLS, etc",
+          "type": "object",
+          "properties": {
+            "catalogId": {
+              "description": "Identifier for catalog",
+              "type": "string"
+            },
+            "catalogUrl": {
+              "description": "URL of catalog entry",
+              "type": "string"
+            }
+          }
+        },
+        "errorCode": {
+          "description": "Error message. Success messages can be ignored.",
+          "type": "string",
+          "enum": [
+            "VALIDATION_ERROR",
+            "PROCESSING_ERROR",
+            "TRANSFER_ERROR"
+          ]
+        },
+        "errorMessage": {
+          "description": "The message error for the failure that occured.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "status"
+      ]
+    },
+    "product": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "Identifier/name of the product",
+          "type": "string"
+        },
+        "dataVersion": {
+          "description": "Version of this product",
+          "type": "string"
+        },
+        "dataProcessingType": {
+          "description": "The type of data processing stream that generated the product",
+          "type": "string",
+          "enum": [
+            "forward",
+            "reprocessing"
+          ]
+        },
+        "files": {
+          "description": "array of files that make up this product",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/file"
+          }
+        },
+        "filegroups": {
+          "description": "array of filegroups that make up this product",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/filegroup"
+          }
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "name",
+            "files"
+          ]
+        },
+        {
+          "required": [
+            "name",
+            "filegroups"
+          ]
+        }
+      ]
+    }
+  },
+  "oneOf": [
+    {
+      "required": [
+        "version",
+        "submissionTime",
+        "collection",
+        "identifier",
+        "product"
+      ],
+      "not": {
+        "required": [
+          "response"
+        ]
+      }
+    },
+    {
+      "required": [
+        "version",
+        "receivedTime",
+        "processCompleteTime",
+        "submissionTime",
+        "identifier",
+        "collection",
+        "response"
+      ]
+    }
+  ]
+}

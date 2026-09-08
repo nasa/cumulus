@@ -33,11 +33,11 @@ variable "tags" {
 
 variable "rds_user_access_secret_arn" {
   description = "AWS Secrets Manager secret ARN containing a JSON string of DB credentials (containing at least host, password, port as keys)"
-  type = string
+  type        = string
 }
 
 variable "rds_security_group_id" {
-  type = string
+  type    = string
   default = ""
 }
 
@@ -48,18 +48,55 @@ variable "vpc_id" {
 
 variable "db_migration_lambda_timeout" {
   description = "Timeout in seconds for the database schema migration lambda.   Defaults to 900 seconds"
-  type = number
-  default = 900
+  type        = number
+  default     = 900
 }
 
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
-  type = map(number)
-  default = {}
+  type        = map(number)
+  default     = {}
 }
 
 variable "lambda_memory_sizes" {
   description = "Configurable map of memory sizes for lambdas"
-  type = map(number)
-  default = {}
+  type        = map(number)
+  default     = {}
+}
+
+variable "db_partition_config" {
+  type = object({
+    # By adding optional(type, default), Terraform handles the null fallback automatically
+    executions_total_years       = optional(number, 2)
+    granules_count               = optional(number, 64)
+    files_count                  = optional(number, 256)
+    granules_global_unique_count = optional(number, 16)
+    files_global_unique_count    = optional(number, 64)
+  })
+  description = <<EOT
+    Configuration for database table partitioning:
+    - executions_total_years: How many years worth of quarterly partitions to generate ahead of time for 'executions'.
+    - granules_count: The number of hash/bigint-based partitions to create for the 'granules' table.
+    - files_count: The number of hash/bigint-based partitions to create for the 'files' table.
+    - granules_global_unique_count: The number of hash/bigint-based partitions to create for the 'granules_global_unique' table.
+    - files_global_unique_count: The number of hash/bigint-based partitions to create for the 'files_global_unique' table.
+  EOT
+
+  # Force Terraform to drop incoming null values and use the default block instead
+  nullable = false
+
+  # Fallback if the user completely omits the db_partition_config block
+  default = {
+    executions_total_years       = 2
+    granules_count               = 64
+    files_count                  = 256
+    granules_global_unique_count = 16
+    files_global_unique_count    = 64
+  }
+}
+
+variable "use_bootstrap" {
+  description = "If true, builds the schema from scratch using the bootstrap directory (full declarations) instead of incremental patches. Only runs on fresh databases."
+  type        = bool
+  default     = false
 }

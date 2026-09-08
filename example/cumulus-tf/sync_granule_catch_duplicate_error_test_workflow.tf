@@ -10,7 +10,7 @@ module "sync_granule_catch_duplicate_error_test" {
   state_machine_definition = templatefile(
     "${path.module}/sync_granule_catch_duplicate_error_test_workflow.asl.json",
     {
-      sync_granule_task_arn: module.cumulus.sync_granule_task.task_arn
+      sync_granule_task_arn : module.cumulus.sync_granule_task.task_arn
     }
   )
 }

@@ -5,7 +5,7 @@ resource "aws_lambda_function" "post_to_cmr_task" {
   source_code_hash = filebase64sha256("${path.module}/../../tasks/post-to-cmr/dist/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "PostToCmr", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "PostToCmr", 512)
 
@@ -35,7 +35,7 @@ resource "aws_lambda_function" "post_to_cmr_task" {
 }
 
 resource "aws_cloudwatch_log_group" "post_to_cmr_task" {
-  name = "/aws/lambda/${var.prefix}-PostToCmr"
+  name              = "/aws/lambda/${var.prefix}-PostToCmr"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "PostToCmr", var.default_log_retention_days)
-  tags = var.tags
+  tags              = var.tags
 }

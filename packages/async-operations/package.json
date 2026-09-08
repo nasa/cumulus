@@ -1,18 +1,18 @@
 {
   "name": "@cumulus/async-operations",
-  "version": "21.0.0",
+  "version": "22.4.0",
   "description": "Cumulus Core internal async operations module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "engines": {
-    "node": ">=20.12.2"
+    "node": ">=22.21.1"
   },
   "scripts": {
     "clean": "git clean -d -x -e node_modules -f",
     "test": "../../node_modules/.bin/ava",
     "test:ci": "../../scripts/run_package_ci_unit.sh",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "prepare": "npm run tsc",
+    "build": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "tsc:watch": "../../node_modules/.bin/tsc -w",
@@ -30,20 +30,18 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@aws-sdk/client-ecs": "^3.621.0",
-    "@aws-sdk/client-lambda": "^3.621.0",
-    "@cumulus/aws-client": "21.0.0",
-    "@cumulus/db": "21.0.0",
-    "@cumulus/errors": "21.0.0",
-    "@cumulus/es-client": "21.0.0",
-    "@cumulus/logger": "21.0.0",
-    "@cumulus/types": "21.0.0",
+    "@aws-sdk/client-ecs": "^3.993.0",
+    "@aws-sdk/client-lambda": "^3.993.0",
+    "@cumulus/aws-client": "22.4.0",
+    "@cumulus/db": "22.4.0",
+    "@cumulus/errors": "22.4.0",
+    "@cumulus/es-client": "22.4.0",
+    "@cumulus/logger": "22.4.0",
+    "@cumulus/types": "22.4.0",
     "knex": "2.4.1",
-    "uuid": "8.3.2"
+    "uuid": "^11.1.1"
   },
   "devDependencies": {
-    "@cumulus/common": "21.0.0",
-    "@types/aws-sdk": "2.7.0",
-    "@types/uuid": "^8.0.0"
+    "@cumulus/common": "22.4.0"
   }
 }

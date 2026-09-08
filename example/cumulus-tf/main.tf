@@ -15,6 +15,12 @@ provider "aws" {
   region  = var.region
   profile = var.aws_profile
 
+  default_tags {
+    tags = {
+      Deployment = var.prefix
+    }
+  }
+
   ignore_tags {
     key_prefixes = ["gsfc-ngap"]
   }
@@ -25,17 +31,23 @@ provider "aws" {
   region  = "us-west-2"
   profile = var.aws_profile
 
+  default_tags {
+    tags = {
+      Deployment = var.prefix
+    }
+  }
+
   ignore_tags {
     key_prefixes = ["gsfc-ngap"]
   }
 }
 
 locals {
-  tags                            = merge(var.tags, { Deployment = var.prefix })
-  protected_bucket_names          = [for k, v in var.buckets : v.name if v.type == "protected"]
-  public_bucket_names             = [for k, v in var.buckets : v.name if v.type == "public"]
-  rds_security_group              = lookup(data.terraform_remote_state.data_persistence.outputs, "rds_security_group", "")
-  rds_credentials_secret_arn      = lookup(data.terraform_remote_state.data_persistence.outputs, "database_credentials_secret_arn", "")
+  tags                       = merge(var.tags, { Deployment = var.prefix })
+  protected_bucket_names     = [for k, v in var.buckets : v.name if v.type == "protected"]
+  public_bucket_names        = [for k, v in var.buckets : v.name if v.type == "public"]
+  rds_security_group         = lookup(data.terraform_remote_state.data_persistence.outputs, "rds_security_group", "")
+  rds_credentials_secret_arn = lookup(data.terraform_remote_state.data_persistence.outputs, "database_credentials_secret_arn", "")
 
   vpc_id     = var.vpc_id != null ? var.vpc_id : data.aws_vpc.application_vpc[0].id
   subnet_ids = length(var.lambda_subnet_ids) > 0 ? var.lambda_subnet_ids : data.aws_subnets.subnet_ids[0].ids
@@ -77,30 +89,30 @@ module "cumulus" {
 
   bucket_map_key = var.bucket_map_key
   throttled_queues = [{
-    url = aws_sqs_queue.throttled_queue.id
+    url             = aws_sqs_queue.throttled_queue.id
     execution_limit = 30
   }]
 
-  vpc_id            = var.vpc_id != null ? var.vpc_id : data.aws_vpc.application_vpc[0].id
+  vpc_id = var.vpc_id != null ? var.vpc_id : data.aws_vpc.application_vpc[0].id
 
   lambda_subnet_ids   = local.subnet_ids
   lambda_timeouts     = var.lambda_timeouts
   lambda_memory_sizes = var.lambda_memory_sizes
 
-  rds_security_group                     = local.rds_security_group
-  rds_user_access_secret_arn             = local.rds_credentials_secret_arn
-  rds_connection_timing_configuration    = var.rds_connection_timing_configuration
+  rds_security_group                  = local.rds_security_group
+  rds_user_access_secret_arn          = local.rds_credentials_secret_arn
+  rds_connection_timing_configuration = var.rds_connection_timing_configuration
 
   async_operation_image = "${data.aws_ecr_repository.async_operation.repository_url}:${var.async_operation_image_version}"
 
-  ecs_cluster_instance_image_id   = data.aws_ssm_parameter.ecs_image_id.value
-  ecs_cluster_instance_subnet_ids = length(var.ecs_cluster_instance_subnet_ids) == 0 ? local.subnet_ids : var.ecs_cluster_instance_subnet_ids
-  ecs_cluster_min_size            = 2
-  ecs_cluster_desired_size        = 2
-  ecs_cluster_max_size            = 3
+  ecs_cluster_instance_image_id      = data.aws_ssm_parameter.ecs_image_id.value
+  ecs_cluster_instance_subnet_ids    = length(var.ecs_cluster_instance_subnet_ids) == 0 ? local.subnet_ids : var.ecs_cluster_instance_subnet_ids
+  ecs_cluster_min_size               = 2
+  ecs_cluster_desired_size           = 2
+  ecs_cluster_max_size               = 3
   ecs_include_docker_cleanup_cronjob = var.ecs_include_docker_cleanup_cronjob
-  key_name                        = var.key_name
-  ecs_custom_sg_ids               = var.ecs_custom_sg_ids
+  key_name                           = var.key_name
+  ecs_custom_sg_ids                  = var.ecs_custom_sg_ids
 
   urs_url             = "https://uat.urs.earthdata.nasa.gov"
   urs_client_id       = var.urs_client_id
@@ -122,6 +134,7 @@ module "cumulus" {
   cmr_oauth_provider = var.cmr_oauth_provider
 
   default_s3_multipart_chunksize_mb = var.default_s3_multipart_chunksize_mb
+  sync_granule_s3_jitter_max_ms     = var.sync_granule_s3_jitter_max_ms
 
   launchpad_api         = var.launchpad_api
   launchpad_certificate = var.launchpad_certificate
@@ -139,7 +152,7 @@ module "cumulus" {
   orca_api_uri = module.orca.orca_api_deployment_invoke_url
 
   orca_lambda_copy_to_archive_arn = module.orca.orca_lambda_copy_to_archive_arn
-  orca_sfn_recovery_workflow_arn = module.orca.orca_sfn_recovery_workflow_arn
+  orca_sfn_recovery_workflow_arn  = module.orca.orca_sfn_recovery_workflow_arn
 
   saml_entity_id                  = var.saml_entity_id
   saml_assertion_consumer_service = var.saml_assertion_consumer_service
@@ -151,37 +164,20 @@ module "cumulus" {
   system_bucket = var.system_bucket
   buckets       = var.buckets
 
-  dynamo_tables = merge(data.terraform_remote_state.data_persistence.outputs.dynamo_tables, var.optional_dynamo_tables)
-  default_log_retention_days = var.default_log_retention_days
+  dynamo_tables                    = merge(data.terraform_remote_state.data_persistence.outputs.dynamo_tables, var.optional_dynamo_tables)
+  default_log_retention_days       = var.default_log_retention_days
   cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
 
   report_sns_topic_subscriber_arns = var.report_sns_topic_subscriber_arns
 
   # Archive API settings
-  token_secret = var.token_secret
-  archive_api_users = [
-    "acyu",
-    "chuang14",
-    "ds_jennifertran",
-    "ecarton",
-    "efenollal",
-    "filipgraniczny",
-    "jasmine",
-    "jennyhliu",
-    "jmccoy_uat",
-    "kkelly",
-    "kovarik",
-    "mobrien84",
-    "nnageswa",
-    "npauzenga",
-    "vnguyen",
-    "rkwarten"
-  ]
+  token_secret      = var.token_secret
+  archive_api_users = var.archive_api_users
 
-  archive_api_url             = var.archive_api_url
-  archive_api_port            = var.archive_api_port
-  private_archive_api_gateway = var.private_archive_api_gateway
-  api_gateway_stage           = var.api_gateway_stage
+  archive_api_url                  = var.archive_api_url
+  archive_api_port                 = var.archive_api_port
+  private_archive_api_gateway      = var.private_archive_api_gateway
+  api_gateway_stage                = var.api_gateway_stage
   archive_api_reserved_concurrency = var.api_reserved_concurrency
 
   # Thin Egress App settings. Uncomment to use TEA.
@@ -196,19 +192,21 @@ module "cumulus" {
 
 
   # DLA Recovery Tool Task settings
-  dead_letter_recovery_cpu = var.dead_letter_recovery_cpu
+  dead_letter_recovery_cpu    = var.dead_letter_recovery_cpu
   dead_letter_recovery_memory = var.dead_letter_recovery_memory
 
 
   # Cumulus Distribution settings. Remove/comment to use TEA
   tea_external_api_endpoint = module.cumulus_distribution.api_uri
 
+  tea_distribution_url_per_cmr_provider = var.tea_distribution_url_per_cmr_provider
+
   deploy_cumulus_distribution = var.deploy_cumulus_distribution
 
   # S3 credentials endpoint
-  sts_credentials_lambda_function_arn = data.aws_lambda_function.sts_credentials.arn
+  sts_credentials_lambda_function_arn   = data.aws_lambda_function.sts_credentials.arn
   sts_policy_helper_lambda_function_arn = data.aws_lambda_function.sts_policy_helper.arn
-  cmr_acl_based_credentials = true
+  cmr_acl_based_credentials             = true
 
   additional_log_groups_to_elk = var.additional_log_groups_to_elk
 
@@ -216,6 +214,24 @@ module "cumulus" {
   workflow_configurations = var.workflow_configurations
 
   tags = local.tags
+
+  # For message consumer lambdas in order to disable rule/message mismatches
+  allow_provider_mismatch_on_rule_filter = var.allow_provider_mismatch_on_rule_filter
+
+  # Iceberg API configuration
+  deploy_iceberg_api                        = var.deploy_iceberg_api
+  iceberg_api_cpu                           = var.iceberg_api_cpu
+  iceberg_api_memory                        = var.iceberg_api_memory
+  cumulus_iceberg_api_image_version         = var.cumulus_iceberg_api_image_version
+  cumulus_iceberg_api_image_repository_url  = var.cumulus_iceberg_api_image_repository_url
+  api_service_autoscaling_min_capacity      = var.api_service_autoscaling_min_capacity
+  api_service_autoscaling_max_capacity      = var.api_service_autoscaling_max_capacity
+  api_service_autoscaling_target_cpu        = var.api_service_autoscaling_target_cpu
+  iceberg_s3_bucket                         = var.iceberg_s3_bucket
+  iceberg_namespace                         = var.iceberg_namespace
+  iceberg_health_check_grace_period_seconds = var.iceberg_health_check_grace_period_seconds
+  duckdb_max_pool_size                      = var.duckdb_max_pool_size
+  duckdb_pool_rebuild_interval_seconds      = var.duckdb_pool_rebuild_interval_seconds
 }
 
 resource "aws_security_group" "no_ingress_all_egress" {

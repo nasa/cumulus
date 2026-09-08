@@ -447,6 +447,7 @@ test.serial('orcaReconciliationReportForGranules reports discrepancy of granule 
         pgFiles.map(async (f) => await filePgModel.create(knex, {
           ...f,
           granule_cumulus_id: pgRecord[0].cumulus_id,
+          collection_cumulus_id: pgRecord[0].collection_cumulus_id,
         }))
       );
     })

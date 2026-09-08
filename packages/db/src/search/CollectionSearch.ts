@@ -14,7 +14,7 @@ import { TableNames } from '../tables';
 
 const log = new Logger({ sender: '@cumulus/db/CollectionSearch' });
 
-type Statuses = {
+export type Statuses = {
   queued: number,
   completed: number,
   failed: number,
@@ -22,11 +22,11 @@ type Statuses = {
   total: number,
 };
 
-type StatsRecords = {
+export type StatsRecords = {
   [key: number]: Statuses,
 };
 
-interface CollectionRecordApi extends CollectionRecord {
+export interface CollectionRecordApi extends CollectionRecord {
   stats?: Statuses,
 }
 
@@ -93,8 +93,7 @@ export class CollectionSearch extends BaseSearch {
     subQuery
       .clear('select')
       .select(1)
-      .where(`${granulesTable}.collection_cumulus_id`, knex.raw(`${this.tableName}.cumulus_id`))
-      .limit(1);
+      .where(`${granulesTable}.collection_cumulus_id`, knex.raw(`${this.tableName}.cumulus_id`));
     return subQuery;
   }
 
@@ -129,7 +128,7 @@ export class CollectionSearch extends BaseSearch {
    * @param knex - knex for the stats query
    * @returns the collection's granules status' aggregation
    */
-  private async retrieveGranuleStats(collectionCumulusIds: number[], knex: Knex)
+  protected async retrieveGranuleStats(collectionCumulusIds: number[], knex: Knex)
     : Promise<StatsRecords> {
     const granulesTable = TableNames.granules;
     let statsQuery = knex(granulesTable);
@@ -144,7 +143,7 @@ export class CollectionSearch extends BaseSearch {
 
     statsQuery
       .select(`${granulesTable}.collection_cumulus_id`, `${granulesTable}.status`)
-      .count('*')
+      .count('* as count')
       .groupBy(`${granulesTable}.collection_cumulus_id`, `${granulesTable}.status`)
       .whereIn(`${granulesTable}.collection_cumulus_id`, collectionCumulusIds);
 

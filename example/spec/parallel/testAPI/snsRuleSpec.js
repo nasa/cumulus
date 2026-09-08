@@ -16,7 +16,6 @@ const {
   cleanupCollections,
   removeRuleAddedParams,
 } = require('@cumulus/integration-tests');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   deleteRule,
   getRule,
@@ -37,6 +36,7 @@ const { findExecutionArn } = require('@cumulus/integration-tests/Executions');
 const { randomId } = require('@cumulus/common/test-utils');
 const { getSnsTriggerPermissionId } = require('@cumulus/api/lib/snsRuleHelpers');
 
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const {
   waitForRuleInList,
 } = require('../../helpers/ruleUtils');
@@ -74,6 +74,7 @@ describe('The SNS-type rule', () => {
   let lambdaStep;
   let newTopicArn;
   let newValueTopicName;
+  let snsExistingSubscriptionTopicName;
   let createdRule;
   let ruleName;
   let snsMessage;
@@ -81,7 +82,6 @@ describe('The SNS-type rule', () => {
   let snsTopicArn;
   let testSuffix;
   let updatedRule;
-  let helloWorldExecutionArn;
   let beforeAllFailed;
   let testId;
 
@@ -96,6 +96,7 @@ describe('The SNS-type rule', () => {
       ruleName = timestampedName('SnsRuleIntegrationTestRule');
       const snsTopicName = timestampedName(`${config.stackName}_SnsRuleIntegrationTestTopic`);
       newValueTopicName = timestampedName(`${config.stackName}_SnsRuleValueChangeTestTopic`);
+      snsExistingSubscriptionTopicName = timestampedName(`${config.stackName}_SnsExistingSubscriptionTestTopic`);
       consumerName = `${config.stackName}-messageConsumer`;
 
       executionNamePrefix = randomId('prefix');
@@ -147,7 +148,6 @@ describe('The SNS-type rule', () => {
       // the case where the deletion test did not properly clean this up.
     }
 
-    await deleteExecution({ prefix: config.stackName, executionArn: helloWorldExecutionArn });
     await cleanupCollections(config.stackName, config.bucket, collectionsDir,
       testSuffix);
   });
@@ -202,6 +202,8 @@ describe('The SNS-type rule', () => {
   });
 
   describe('when an SNS message is published', () => {
+    let helloWorldExecutionArn;
+
     beforeAll(async () => {
       if (beforeAllFailed) return;
       try {
@@ -223,6 +225,10 @@ describe('The SNS-type rule', () => {
       } catch (error) {
         beforeAllFailed = error;
       }
+    });
+
+    afterAll(async () => {
+      await waitForExecutionAndDelete(config.stackName, helloWorldExecutionArn, 'completed');
     });
 
     it('triggers the workflow', () => {
@@ -366,7 +372,8 @@ describe('The SNS-type rule', () => {
     beforeAll(async () => {
       if (beforeAllFailed) return;
       try {
-        const { TopicArn } = await createSnsTopic(newValueTopicName);
+        const { TopicArn } = await createSnsTopic(snsExistingSubscriptionTopicName);
+        newTopicArn = TopicArn;
         const subscriptionParams = {
           TopicArn,
           Protocol: 'lambda',
@@ -394,9 +401,65 @@ describe('The SNS-type rule', () => {
       }
     });
 
-    it('uses the existing subscription', () => {
+    it('uses the existing subscription', async () => {
       if (beforeAllFailed) fail(beforeAllFailed);
       expect(putRule.rule.arn).toEqual(subscriptionArn);
+      expect(await getNumberOfTopicSubscriptions(newTopicArn)).toBeGreaterThan(0);
+    });
+
+    it('adds the new policy', async () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
+      const { Policy } = await lambda().send(new GetPolicyCommand({ FunctionName: consumerName }));
+      const { Statement } = JSON.parse(Policy);
+      expect(Statement.some((s) => s.Sid === getSnsTriggerPermissionId(putRule))).toBeTrue();
+    });
+  });
+
+  describe('when an SNS message is published to the new topic', () => {
+    let helloWorldExecutionArn;
+
+    beforeAll(async () => {
+      if (beforeAllFailed) return;
+      try {
+        const messagePublishTime = Date.now() - 1000 * 30;
+
+        await sns().send(new PublishCommand({ TopicArn: newTopicArn, Message: snsMessage }));
+
+        console.log('originalPayload.testId', testId);
+        helloWorldExecutionArn = await findExecutionArn(
+          config.stackName,
+          (execution) =>
+            get(execution, 'originalPayload.testId') === testId,
+          {
+            timestamp__from: messagePublishTime,
+            'originalPayload.testId': testId,
+          },
+          { timeout: 60 }
+        );
+      } catch (error) {
+        beforeAllFailed = error;
+      }
+    });
+
+    afterAll(async () => {
+      await waitForExecutionAndDelete(config.stackName, helloWorldExecutionArn, 'completed');
+    });
+
+    it('triggers the workflow', () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
+      expect(helloWorldExecutionArn).toBeDefined();
+    });
+
+    it('passes the message as payload', async () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
+      const executionInput = await lambdaStep.getStepInput(helloWorldExecutionArn, 'HelloWorld');
+      expect(executionInput.payload).toEqual(JSON.parse(snsMessage));
+    });
+
+    it('results in an execution with the correct prefix', () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
+      const executionName = helloWorldExecutionArn.split(':').reverse()[0];
+      expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
     });
   });
 

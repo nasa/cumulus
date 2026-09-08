@@ -1,5 +1,6 @@
 _book
 .bootstrapSha
+.coverage
 .DS_Store
 .env
 .envrc
@@ -15,6 +16,7 @@ _book
 *.code-workspace
 *.html
 *.map
+*.pyc
 **/.tern-port
 /.tern-project
 /example/app/efs-cf.yml
@@ -50,3 +52,5 @@ yarn.lock
 *.tsbuildinfo
 unit-logs/
 test_output.txt
+__pycache__/
+*.egg-info/

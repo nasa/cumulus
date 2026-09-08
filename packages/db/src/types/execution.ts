@@ -11,13 +11,14 @@ export interface PostgresExecution {
   final_payload?: object | null,
   original_payload?: object | null,
   parent_cumulus_id?: number | null,
+  parent_created_at?: Date | null,
   status?: ExecutionRecordStatus,
   tasks?: object | null,
   timestamp?: Date | null,
   updated_at?: Date | null,
   url?: string | null,
   workflow_name?: string | null,
-  archived: boolean
+  archived?: boolean
 }
 
 export interface PostgresExecutionRecord extends PostgresExecution {

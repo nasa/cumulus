@@ -58,6 +58,12 @@ declare -a param_list=(
   "bamboo_USE_TERRAFORM_ZIPS"
   "bamboo_VERSION_FLAG"
   "bamboo_CUMULUS_BASE_IMAGE"
+  "bamboo_DEPLOY_ICEBERG_API"
+  "bamboo_ICEBERG_IMAGE_REPOSITORY_URL"
+  "bamboo_ICEBERG_IMAGE_WAIT_TIMEOUT_SECONDS"
+  "bamboo_ICEBERG_IMAGE_WAIT_INTERVAL_SECONDS"
+  "bamboo_DEPLOY_ICEBERG_REPLICATION"
+  "bamboo_DEBEZIUM_VERSION"
 )
 
 ## Strip 'bamboo_SECRET_' from secret keys
@@ -175,7 +181,7 @@ echo GIT_PR is $GIT_PR
 ## Exporting the commit message as an env variable to be brought in
 ## for yes/no toggles on build
 if [[ -z $COMMIT_MESSAGE ]]; then
-  COMMIT_MESSAGE=$(git log --pretty='format:%Creset%s' -1)
+  COMMIT_MESSAGE="$(git log --pretty='format:%Creset%s' -1)"
   export COMMIT_MESSAGE
   echo export COMMIT_MESSAGE=\""$COMMIT_MESSAGE"\" >> .bamboo_env_vars
 fi
@@ -202,3 +208,19 @@ else
 fi
 export CUMULUS_UNIT_TEST_DATA=/tmp/cumulus_unit_test_data
 export TS_BUILD_CACHE_FILE=ts-build-cache.tgz
+
+## Function to set ICEBERG_IMAGE_VERSION
+set_iceberg_image_version() {
+  echo "***Bamboo plan revision: $bamboo_plan_revision"
+  ICEBERG_IMAGE_VERSION=$(echo $bamboo_plan_revision | cut -c1-7)
+
+  # Fallback is used when other CI steps not necessarily setting the $bamboo_plan_revision env variable
+  # and also we may want to be able to run the deploy script locally with a default image version
+  if [[ -z $ICEBERG_IMAGE_VERSION ]]; then
+    echo "Warning: ICEBERG_IMAGE_VERSION is not set. Falling back to 'latest'." >&2
+    ICEBERG_IMAGE_VERSION='latest'
+  fi
+
+  echo "***ICEBERG_IMAGE_VERSION: $ICEBERG_IMAGE_VERSION"
+  export ICEBERG_IMAGE_VERSION
+}

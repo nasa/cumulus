@@ -39,9 +39,13 @@ export const getWorkflow = async (params: {
  */
 export const getWorkflows = async (params: {
   prefix: string,
+  query?: {
+    fields?: string[],
+    [key: string]: string | string[] | undefined
+  },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, callback = invokeApi } = params;
+  const { prefix, query, callback = invokeApi } = params;
 
   return await callback({
     prefix: prefix,
@@ -49,6 +53,7 @@ export const getWorkflows = async (params: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: '/workflows',
+      queryStringParameters: query,
     },
   });
 };

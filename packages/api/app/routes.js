@@ -22,7 +22,6 @@ const schemas = require('../endpoints/schemas');
 const stats = require('../endpoints/stats');
 const version = require('../endpoints/version');
 const workflows = require('../endpoints/workflows');
-const dashboard = require('../endpoints/dashboard');
 const deadLetterArchive = require('../endpoints/dead-letter-archive');
 const { launchpadProtectedAuth } = require('./launchpadAuth');
 const launchpadSaml = require('../endpoints/launchpadSaml');
@@ -97,7 +96,6 @@ if (launchpadProtectedAuth()) {
   router.get('/saml/login', launchpadSaml.login);
   router.post('/saml/auth', launchpadSaml.auth);
   router.get('/token', launchpadSaml.samlToken);
-  // disabled for now
   router.post('/refresh', launchpadSaml.refreshEndpoint);
 } else {
   log.info('Using token authentication');
@@ -106,8 +104,6 @@ if (launchpadProtectedAuth()) {
 }
 router.delete('/token/:token', token.deleteTokenEndpoint);
 router.delete('/tokenDelete/:token', token.deleteTokenEndpoint);
-
-router.use('/dashboard', dashboard);
 
 // Catch and send the error message down (instead of just 500: internal server error)
 router.use(defaultErrorHandler);

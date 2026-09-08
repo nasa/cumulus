@@ -1,5 +1,7 @@
+import isObject from 'lodash/isObject';
 import omit from 'lodash/omit';
 import { toSnake } from 'snake-camel';
+import { returnNullOrUndefinedOrDate } from '@cumulus/common/util';
 import { ApiAsyncOperation } from '@cumulus/types/api/async_operations';
 import Logger from '@cumulus/logger';
 import { PostgresAsyncOperation } from '../types/async_operation';
@@ -68,10 +70,12 @@ export const translatePostgresAsyncOperationToApiAsyncOperation = (
     description: pgAsyncOperation.description,
     operationType: pgAsyncOperation.operation_type,
     status: pgAsyncOperation.status,
-    output: pgAsyncOperation.output ? JSON.stringify(pgAsyncOperation.output) : undefined,
+    output: isObject(pgAsyncOperation.output)
+      ? JSON.stringify(pgAsyncOperation.output)
+      : pgAsyncOperation.output,
     taskArn: pgAsyncOperation.task_arn,
-    createdAt: pgAsyncOperation.created_at ? pgAsyncOperation.created_at.getTime() : undefined,
-    updatedAt: pgAsyncOperation.updated_at ? pgAsyncOperation.updated_at.getTime() : undefined,
+    createdAt: returnNullOrUndefinedOrDate(pgAsyncOperation.created_at)?.getTime(),
+    updatedAt: returnNullOrUndefinedOrDate(pgAsyncOperation.created_at)?.getTime(),
   };
   return apiAsyncOperation;
 };

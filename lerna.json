@@ -1,24 +1,4 @@
 {
-  "lerna": "3.20.2",
-  "version": "21.0.0",
-  "packages": [
-    "example",
-    "example/lambdas/*",
-    "example/scripts/*",
-    "lambdas/*",
-    "packages/*",
-    "packages/api/ecs/async-operation",
-    "tasks/*",
-    "tf-modules/*",
-    "tf-modules/internal/*",
-    "scripts/unit-error-analysis/*",
-    "scripts/*"
-  ],
-  "command": {
-    "bootstrap": {
-      "npmClientArgs": [
-        "--no-package-lock"
-      ]
-    }
-  }
+  "$schema": "node_modules/lerna/schemas/lerna-schema.json",
+  "version": "22.4.0"
 }

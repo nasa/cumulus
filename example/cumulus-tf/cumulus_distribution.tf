@@ -1,20 +1,20 @@
 locals {
   distribution_api_gateway_stage = "dev"
-  bucket_map_file_name = fileexists("${path.module}/cumulus_distribution/bucket_map.yaml") ? "${path.module}/cumulus_distribution/bucket_map.yaml" : "${path.module}/cumulus_distribution/bucket_map.yaml.tmpl"
+  bucket_map_file_name           = fileexists("${path.module}/cumulus_distribution/bucket_map.yaml") ? "${path.module}/cumulus_distribution/bucket_map.yaml" : "${path.module}/cumulus_distribution/bucket_map.yaml.tmpl"
 }
 
 resource "aws_s3_bucket_object" "bucket_map_yaml_distribution" {
-  bucket  = var.system_bucket
-  key     = "${var.prefix}/cumulus_distribution/bucket_map.yaml"
+  bucket = var.system_bucket
+  key    = "${var.prefix}/cumulus_distribution/bucket_map.yaml"
   content = templatefile(local.bucket_map_file_name, {
     protected_buckets = local.protected_bucket_names,
-    public_buckets = local.public_bucket_names
+    public_buckets    = local.public_bucket_names
   })
-  etag    = md5(templatefile(local.bucket_map_file_name, {
+  etag = md5(templatefile(local.bucket_map_file_name, {
     protected_buckets = local.protected_bucket_names,
-    public_buckets = local.public_bucket_names
+    public_buckets    = local.public_bucket_names
   }))
-  tags    = var.tags
+  tags = var.tags
 }
 
 module "cumulus_distribution" {

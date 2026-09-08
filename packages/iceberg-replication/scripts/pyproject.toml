@@ -1,0 +1,23 @@
+[project]
+name = "iceberg-utils"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "pyarrow>=23.0.1",
+    "pyiceberg[glue,pyiceberg-core,s3fs]>=0.11.1",
+    "pyspark>=3.5,<4.0",
+    "requests>=2.32.5",
+]
+
+[dependency-groups]
+dev = [
+    "aiosqlite>=0.20",
+    "psycopg2-binary>=2.9",
+    "pytest>=9.0.2",
+    "pytest-mock>=3.15.1",
+    "requests-mock>=1.12.1",
+    "sqlalchemy>=2.0",
+]
+
+[tool.uv]
+package = false

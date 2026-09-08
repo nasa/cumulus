@@ -24,9 +24,9 @@ interface ExecutionRecord extends BaseRecord, PostgresExecutionRecord {
  * Class to build and execute db search query for executions
  */
 export class ExecutionSearch extends BaseSearch {
-  constructor(event: QueryEvent) {
+  constructor(event: QueryEvent, enableEstimate = true) {
     // estimate the table rowcount by default
-    if (event?.queryStringParameters?.estimateTableRowCount !== 'false') {
+    if (enableEstimate && event?.queryStringParameters?.estimateTableRowCount !== 'false') {
       set(event, 'queryStringParameters.estimateTableRowCount', 'true');
     }
     super(event, 'execution');
@@ -85,8 +85,7 @@ export class ExecutionSearch extends BaseSearch {
       searchQuery.select({ parentArn: `${executionsTable}_parent.arn` });
     }
 
-    const countQuery = knex(this.tableName)
-      .count('*');
+    const countQuery = this.baseCountQuery(knex);
 
     if (this.searchCollection()) {
       countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);

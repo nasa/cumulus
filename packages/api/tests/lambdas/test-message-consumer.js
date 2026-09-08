@@ -43,9 +43,10 @@ test.beforeEach((t) => {
 test.afterEach.always((t) => {
   t.context.sandbox.restore();
   t.context.snsMock.reset();
+  delete process.env.allowProviderMismatchOnRuleFilter;
 });
 
-test('handler correctly processes mixed record types and handles errors via fallback', async (t) => {
+test.serial('handler correctly processes mixed record types and handles errors via fallback', async (t) => {
   const { fetchEnabledRulesStub, queueMessageStub, snsMock, messageConsumer } = t.context;
 
   const collection = {
@@ -138,7 +139,7 @@ test('handler correctly processes mixed record types and handles errors via fall
   t.is(queueMessageStub.callCount, 3);
 });
 
-test('handler processes records only when record and rule have matching provider', async (t) => {
+test.serial('handler processes records only when record and rule have matching provider', async (t) => {
   const { fetchEnabledRulesStub, queueMessageStub, messageConsumer } = t.context;
 
   const collection = {
@@ -204,4 +205,86 @@ test('handler processes records only when record and rule have matching provider
   t.deepEqual(results, [[true], [true], []]);
   t.true(fetchEnabledRulesStub.calledOnce);
   t.is(queueMessageStub.callCount, 2);
+});
+
+test.serial('handler processes records with mismatched rule/message providers when lambda var allowProviderMismatchOnRuleFilter is set to true', async (t) => {
+  const { fetchEnabledRulesStub, queueMessageStub, messageConsumer } = t.context;
+  process.env.allowProviderMismatchOnRuleFilter = true;
+  const collection = {
+    name: 'ABC',
+    version: '1.2.3',
+  };
+  const provider = randomString();
+
+  const ruleWithProvider = {
+    collection,
+    provider,
+    rule: {
+      type: 'kinesis',
+      value: randomString(),
+    },
+    state: 'ENABLED',
+  };
+
+  fetchEnabledRulesStub.returns(Promise.resolve([ruleWithProvider]));
+
+  const messageWithProvider = {
+    EventSource: 'aws:kinesis',
+    kinesis: {
+      data: Buffer.from(JSON.stringify({
+        collection: collection.name,
+        provider,
+        product: {
+          dataVersion: collection.version,
+        },
+      })).toString('base64'),
+    },
+  };
+
+  const messageWoProvider = {
+    EventSource: 'aws:kinesis',
+    kinesis: {
+      data: Buffer.from(JSON.stringify({
+        collection: collection.name,
+        product: {
+          dataVersion: collection.version,
+        },
+      })).toString('base64'),
+    },
+  };
+
+  const messageWithWrongProvider1 = {
+    EventSource: 'aws:kinesis',
+    kinesis: {
+      data: Buffer.from(JSON.stringify({
+        collection: collection.name,
+        provider: randomString(),
+        product: {
+          dataVersion: collection.version,
+        },
+      })).toString('base64'),
+    },
+  };
+
+  const messageWithWrongProvider2 = {
+    EventSource: 'aws:kinesis',
+    kinesis: {
+      data: Buffer.from(JSON.stringify({
+        collection: collection.name,
+        provider: randomString(), // doesn't match rule
+        product: {
+          dataVersion: collection.version,
+        },
+      })).toString('base64'),
+    },
+  };
+
+  const results = await messageConsumer.handler(
+    { Records: [messageWithProvider, messageWoProvider,
+      messageWithWrongProvider1, messageWithWrongProvider2] }
+  );
+
+  t.deepEqual(results, [[true], [true], [true], [true]]);
+  t.true(fetchEnabledRulesStub.calledOnce);
+  t.is(queueMessageStub.callCount, 4);
 });

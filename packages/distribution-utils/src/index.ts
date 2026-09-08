@@ -38,3 +38,19 @@ export function constructDistributionUrl(
   const urlPath = urljoin(bucketPath, fileKey);
   return urljoin(distributionEndpoint, urlPath);
 }
+
+export function resolveDistributionEndpoint(
+  cmrProvider: string | undefined,
+  endpointMap: Record<string, string> | undefined,
+  defaultEndpoint?: string
+): string {
+  if (cmrProvider && endpointMap && endpointMap[cmrProvider]) {
+    return endpointMap[cmrProvider];
+  }
+  if (defaultEndpoint) {
+    return defaultEndpoint;
+  }
+  throw new InvalidArgument(
+    `Cannot resolve distribution endpoint: no entry for cmrProvider="${cmrProvider}" and no default endpoint configured`
+  );
+}

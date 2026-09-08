@@ -3,7 +3,7 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
-const uuidv4 = require('uuid/v4');
+const { v4: uuidv4 } = require('uuid');
 
 const {
   ExecutionPgModel,
@@ -11,6 +11,8 @@ const {
   destroyLocalTestDb,
   migrationDir,
   translatePostgresExecutionToApiExecution,
+  fakeCollectionRecordFactory,
+  CollectionPgModel,
 } = require('@cumulus/db');
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { sns, sqs } = require('@cumulus/aws-client/services');
@@ -166,6 +168,7 @@ test('buildExecutionRecord builds correct record for "running" execution', (t) =
 
   const now = new Date();
   const updatedAt = Date.now();
+  const parentExecutionCreatedAt = new Date();
   const record = buildExecutionRecord({
     cumulusMessage,
     now,
@@ -173,6 +176,7 @@ test('buildExecutionRecord builds correct record for "running" execution', (t) =
     asyncOperationCumulusId: 1,
     collectionCumulusId: 2,
     parentExecutionCumulusId: 3,
+    parentExecutionCreatedAt,
   });
 
   t.deepEqual(
@@ -190,6 +194,7 @@ test('buildExecutionRecord builds correct record for "running" execution', (t) =
       async_operation_cumulus_id: 1,
       collection_cumulus_id: 2,
       parent_cumulus_id: 3,
+      parent_created_at: parentExecutionCreatedAt,
       created_at: new Date(cumulusMessage.cumulus_meta.workflow_start_time),
       timestamp: now,
       updated_at: new Date(updatedAt),
@@ -342,13 +347,18 @@ test.serial('writeExecutionRecordFromMessage() does not publish an SNS messagee 
     QueueUrl,
   } = t.context;
 
-  const knexStub = sinon.stub(knex, 'insert').returns({
-    insert: () => {
-      throw new Error('execution RDS error');
-    },
-  });
+  const error = new Error('execution RDS error');
 
-  t.teardown(() => knexStub.restore());
+  const queryBuilderMock = {
+    insert: sinon.stub().throws(error),
+    returning: sinon.stub(), // never reached
+  };
+
+  const trxMock = sinon.stub().returns(queryBuilderMock);
+
+  const knexStub = {
+    transaction: sinon.stub().callsFake((cb) => cb(trxMock)),
+  };
 
   await t.throwsAsync(
     writeExecutionRecordFromMessage({ cumulusMessage, knex: knexStub }),
@@ -596,7 +606,11 @@ test.serial('writeExecutionRecordFromMessage() successfully publishes an SNS mes
 
   t.is(executionRecord.arn, executionArn);
   t.is(executionRecord.status, cumulusMessage.meta.status);
-  t.deepEqual(executionRecord, translatedExecution);
+  t.deepEqual(executionRecord, {
+    ...translatedExecution,
+    metricsProvider: '',
+    cmrProvider: '',
+  });
 });
 
 test.serial('writeExecutionRecordFromApi() successfully publishes an SNS message', async (t) => {
@@ -628,5 +642,47 @@ test.serial('writeExecutionRecordFromApi() successfully publishes an SNS message
 
   t.is(executionRecord.arn, executionArn);
   t.is(executionRecord.status, cumulusMessage.meta.status);
-  t.deepEqual(executionRecord, translatedExecution);
+  t.deepEqual(executionRecord, {
+    ...translatedExecution,
+    metricsProvider: '',
+    cmrProvider: '',
+  });
+});
+
+test.serial('writeExecutionRecordFromMessage() successfully publishes an SNS message with a collection and metricsProvider', async (t) => {
+  const {
+    cumulusMessage,
+    executionArn,
+    executionPgModel,
+    knex,
+    QueueUrl,
+  } = t.context;
+  const collection = fakeCollectionRecordFactory({ metrics_provider: 'thisisamission', cmr_provider: 'thisisaprovider' });
+  const collectionPgModel = new CollectionPgModel();
+  const [collectionRecord] = await collectionPgModel.create(t.context.knex, collection);
+  await writeExecutionRecordFromMessage({
+    cumulusMessage,
+    collectionCumulusId: collectionRecord.cumulus_id,
+    knex,
+  });
+
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 });
+
+  t.is(Messages.length, 1);
+
+  const snsMessage = JSON.parse(Messages[0].Body);
+  const executionRecord = JSON.parse(snsMessage.Message);
+  const pgRecord = await executionPgModel.get(knex, { arn: executionArn });
+  const translatedExecution = await translatePostgresExecutionToApiExecution(
+    pgRecord,
+    knex
+  );
+
+  t.is(executionRecord.arn, executionArn);
+  t.is(executionRecord.status, cumulusMessage.meta.status);
+  t.deepEqual(executionRecord, {
+    ...translatedExecution,
+    metricsProvider: collection.metrics_provider,
+    cmrProvider: collection.cmr_provider,
+  });
 });

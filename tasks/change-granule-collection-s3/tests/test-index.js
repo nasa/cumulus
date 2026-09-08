@@ -1001,6 +1001,7 @@ test('updateCMRData', async (t) => {
         },
       },
       distribution_endpoint: 'https://something.api.us-east-1.amazonaws.com',
+      targetCollection: { cmrProvider: 'TEST_PROV' },
     }
   );
 
@@ -1099,6 +1100,113 @@ test('updateCMRData', async (t) => {
     '/file-staging/subdir/' +
     'MOD11A1.A2017200.h19v04.006.2017201090725.ummg.cmr.json'
   ));
+});
+
+test.serial('updateCMRData uses per-cmr-provider distribution endpoint when env var map matches targetCollection.cmrProvider', async (t) => {
+  const originalEnv = process.env.DISTRIBUTION_ENDPOINT_PER_CMR_PROVIDER;
+  process.env.DISTRIBUTION_ENDPOINT_PER_CMR_PROVIDER = JSON.stringify({
+    PROV1: 'https://prov1.example.com',
+    PROV2: 'https://prov2.example.com',
+  });
+  try {
+    const granules = [dummyGetGranule('base_xml_granule', t)];
+    const cmrFiles = granulesToCmrFileObjects(granules, isCMRFile);
+    await promiseS3Upload({
+      params: {
+        Bucket: cmrFiles[0].bucket,
+        Key: cmrFiles[0].key,
+        Body: fs.createReadStream('tests/data/meta.cmr.xml'),
+      },
+    });
+    const cmrFilesByGranuleid = keyBy(cmrFiles, 'granuleId');
+    const CMRObjectsByGranuleId = {};
+    CMRObjectsByGranuleId[cmrFiles[0].granuleId] = await metadataObjectFromCMRFile(
+      `s3://${cmrFiles[0].bucket}/${cmrFiles[0].key}`
+    );
+
+    const updatedCMRData = await updateCMRData(
+      granules,
+      CMRObjectsByGranuleId,
+      cmrFilesByGranuleid,
+      {
+        cmrGranuleUrlType: 'distribution',
+        buckets: {
+          internal: { name: t.context.stagingBucket, type: 'internal' },
+          private: { name: t.context.privateBucket, type: 'private' },
+          protected: { name: t.context.protectedBucket, type: 'protected' },
+          public: { name: t.context.publicBucket, type: 'public' },
+        },
+        distribution_endpoint: 'https://default.example.com',
+        targetCollection: { cmrProvider: 'PROV1' },
+      }
+    );
+
+    const onlineAccessURLs = updatedCMRData[
+      'MOD11A1.A2017200.h19v04.006.2017201090724'
+    ].Granule.OnlineAccessURLs.OnlineAccessURL.map((u) => u.URL);
+    t.true(onlineAccessURLs.some((url) => url.startsWith('https://prov1.example.com/')),
+      'OnlineAccessURLs should use the per-provider host');
+    t.false(onlineAccessURLs.some((url) => url.startsWith('https://default.example.com/')),
+      'OnlineAccessURLs should not use the default host');
+  } finally {
+    if (originalEnv === undefined) {
+      delete process.env.DISTRIBUTION_ENDPOINT_PER_CMR_PROVIDER;
+    } else {
+      process.env.DISTRIBUTION_ENDPOINT_PER_CMR_PROVIDER = originalEnv;
+    }
+  }
+});
+
+test.serial('updateCMRData falls back to distribution_endpoint when targetCollection.cmrProvider is not in env var map', async (t) => {
+  const originalEnv = process.env.DISTRIBUTION_ENDPOINT_PER_CMR_PROVIDER;
+  process.env.DISTRIBUTION_ENDPOINT_PER_CMR_PROVIDER = JSON.stringify({
+    PROV1: 'https://prov1.example.com',
+  });
+  try {
+    const granules = [dummyGetGranule('base_xml_granule', t)];
+    const cmrFiles = granulesToCmrFileObjects(granules, isCMRFile);
+    await promiseS3Upload({
+      params: {
+        Bucket: cmrFiles[0].bucket,
+        Key: cmrFiles[0].key,
+        Body: fs.createReadStream('tests/data/meta.cmr.xml'),
+      },
+    });
+    const cmrFilesByGranuleid = keyBy(cmrFiles, 'granuleId');
+    const CMRObjectsByGranuleId = {};
+    CMRObjectsByGranuleId[cmrFiles[0].granuleId] = await metadataObjectFromCMRFile(
+      `s3://${cmrFiles[0].bucket}/${cmrFiles[0].key}`
+    );
+
+    const updatedCMRData = await updateCMRData(
+      granules,
+      CMRObjectsByGranuleId,
+      cmrFilesByGranuleid,
+      {
+        cmrGranuleUrlType: 'distribution',
+        buckets: {
+          internal: { name: t.context.stagingBucket, type: 'internal' },
+          private: { name: t.context.privateBucket, type: 'private' },
+          protected: { name: t.context.protectedBucket, type: 'protected' },
+          public: { name: t.context.publicBucket, type: 'public' },
+        },
+        distribution_endpoint: 'https://default.example.com',
+        targetCollection: { cmrProvider: 'UNKNOWN_PROV' },
+      }
+    );
+
+    const onlineAccessURLs = updatedCMRData[
+      'MOD11A1.A2017200.h19v04.006.2017201090724'
+    ].Granule.OnlineAccessURLs.OnlineAccessURL.map((u) => u.URL);
+    t.true(onlineAccessURLs.some((url) => url.startsWith('https://default.example.com/')),
+      'OnlineAccessURLs should fall back to default host');
+  } finally {
+    if (originalEnv === undefined) {
+      delete process.env.DISTRIBUTION_ENDPOINT_PER_CMR_PROVIDER;
+    } else {
+      process.env.DISTRIBUTION_ENDPOINT_PER_CMR_PROVIDER = originalEnv;
+    }
+  }
 });
 
 test.serial('changeGranuleCollectionS3 should parse fileName if not given in files', async (t) => {

@@ -1,0 +1,64 @@
+name: Lint
+
+on:
+  pull_request:
+
+jobs:
+  eslint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: package.json
+
+      - run: npm install --only=dev
+
+      - run: npm run eslint
+
+  markdownlint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: package.json
+
+      - run: npm install --only=dev
+
+      - run: npm run lint-md
+
+  npm-package-json-lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: package.json
+
+      - run: npm install --only=dev
+
+      - run: npm run lint-package-json
+
+  ruff-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/ruff-action@v3
+        with:
+          version-file: pyproject.toml
+          args: check --output-format=github
+
+  ruff-format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/ruff-action@v3
+        with:
+          version-file: pyproject.toml
+          args: format --diff --output-format=github

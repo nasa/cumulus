@@ -20,5 +20,7 @@
       "bucket": "internal",
       "type": "metadata"
     }
-  ]
+  ],
+  "cmrProvider": "CUMULUS",
+  "metricsProvider": "CUMULUS"
 }

@@ -4,7 +4,7 @@ resource "aws_lambda_function" "change_granule_collection_s3_task" {
   source_code_hash = filebase64sha256("${path.module}/../../tasks/change-granule-collection-s3/dist/webpack/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "ChangeGranuleCollectionS3", 900)
   memory_size      = lookup(var.lambda_memory_sizes, "ChangeGranuleCollectionS3", 1000)
 
@@ -12,13 +12,14 @@ resource "aws_lambda_function" "change_granule_collection_s3_task" {
 
   environment {
     variables = {
-      CMR_ENVIRONMENT                   = var.cmr_environment
-      CMR_HOST                          = var.cmr_custom_host
-      DISTRIBUTION_ENDPOINT             = var.distribution_url
-      CUMULUS_MESSAGE_ADAPTER_DIR       = "/opt/"
-      default_s3_multipart_chunksize_mb = var.default_s3_multipart_chunksize_mb
-      stackName                         = var.prefix
-      system_bucket                     = var.system_bucket
+      CMR_ENVIRONMENT                        = var.cmr_environment
+      CMR_HOST                               = var.cmr_custom_host
+      DISTRIBUTION_ENDPOINT                  = var.distribution_url
+      DISTRIBUTION_ENDPOINT_PER_CMR_PROVIDER = jsonencode(var.distribution_url_per_cmr_provider)
+      CUMULUS_MESSAGE_ADAPTER_DIR            = "/opt/"
+      default_s3_multipart_chunksize_mb      = var.default_s3_multipart_chunksize_mb
+      stackName                              = var.prefix
+      system_bucket                          = var.system_bucket
     }
   }
 

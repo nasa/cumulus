@@ -83,13 +83,9 @@ Resources:
       SecurityGroupIngress:
         - IpProtocol: "-1"
           CidrIp: "0.0.0.0/0"
-          FromPort: 0
-          ToPort: 0
       SecurityGroupEgress:
         - IpProtocol: "-1"
           CidrIp: "0.0.0.0/0"
-          FromPort: 0
-          ToPort: 0
       VpcId: !Ref VpcId
 
   LaunchTemplate:

@@ -1,6 +1,6 @@
 'use strict';
 
-const Ajv = require('ajv');
+const Ajv = require('ajv').default;
 const get = require('lodash/get');
 const set = require('lodash/set');
 const { sns } = require('@cumulus/aws-client/services');
@@ -28,7 +28,7 @@ const {
 function validateMessage(event, originalMessageSource, messageSchema) {
   if (originalMessageSource === 'sns') return Promise.resolve(event);
 
-  const ajv = new Ajv({ allErrors: true });
+  const ajv = new Ajv({ allErrors: true, strict: false });
   const validate = ajv.compile(messageSchema);
   return validate(event);
 }
@@ -141,6 +141,7 @@ async function processRecord(record, fromSNS, enabledRules) {
         ...lookupCollectionInEvent(eventObject),
         sourceArn: get(parsed, 'eventSourceARN'),
         provider: lookupProviderInEvent(eventObject),
+        allowProviderMismatchOnRuleFilter: process.env.allowProviderMismatchOnRuleFilter === 'true',
       };
     } catch (error) {
       log.error('Caught error parsing JSON:', error);

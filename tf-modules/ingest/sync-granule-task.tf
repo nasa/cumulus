@@ -5,7 +5,7 @@ resource "aws_lambda_function" "sync_granule_task" {
   source_code_hash = filebase64sha256("${path.module}/../../tasks/sync-granule/dist/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "SyncGranule", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "SyncGranule", 1024)
 
@@ -16,6 +16,7 @@ resource "aws_lambda_function" "sync_granule_task" {
       stackName                   = var.prefix
       system_bucket               = var.system_bucket
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
+      S3_JITTER_MAX_MS            = var.sync_granule_s3_jitter_max_ms
     }
   }
 
@@ -33,7 +34,7 @@ resource "aws_lambda_function" "sync_granule_task" {
 }
 
 resource "aws_cloudwatch_log_group" "sync_granule_task" {
-  name = "/aws/lambda/${var.prefix}-SyncGranule"
+  name              = "/aws/lambda/${var.prefix}-SyncGranule"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "SyncGranule", var.default_log_retention_days)
-  tags = var.tags
+  tags              = var.tags
 }

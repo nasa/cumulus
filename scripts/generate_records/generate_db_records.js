@@ -80,10 +80,16 @@ const uploadDataBatch = async ({
   const fileCumulusIds = [];
   for (const granuleCumulusId of granuleCumulusIds) {
     fileCumulusIds.push(
-      await loadFiles(knex, granuleCumulusId, filesPerGranule, models.fileModel)
+      await loadFiles(
+        knex,
+        granuleCumulusId,
+        collectionCumulusId,
+        filesPerGranule,
+        models.fileModel
+      )
     );
   }
-  const executionCumulusIds = await loadExecutions(
+  const executions = await loadExecutions(
     knex,
     collectionCumulusId,
     executionsPerBatch,
@@ -91,14 +97,15 @@ const uploadDataBatch = async ({
   );
   await loadGranulesExecutions(
     knex,
+    collectionCumulusId,
     granuleCumulusIds,
-    executionCumulusIds,
+    executions,
     models.geModel
   );
   return {
     granuleCumulusIds,
     fileCumulusIds: fileCumulusIds.flat(),
-    executionCumulusIds,
+    executionCumulusIds: executions.map((e) => e.cumulus_id),
   };
 };
 

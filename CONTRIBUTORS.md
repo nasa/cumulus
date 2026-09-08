@@ -5,12 +5,16 @@
 * Adithya Krishna
 * Aimee Barciauskas
 * Alin Vlad
+* Allan Yu
 * Andrew Pawloski
 * Anthony Lukach
 * Anthony Ortega
+* Bradley J. Hazuka
+* Brandon Lokey
 * Brian Tennity
 * Bryan Wexler
 * Charles Huang
+* Chris Durbin
 * Chuck Daniels
 * Curtis Banh
 * Dan Pilone
@@ -33,6 +37,7 @@
 * Marc Huffnagle
 * Mark Boyd
 * Mark Schwab
+* Mason Yates
 * Matt Savoie
 * Menno Van Diermen
 * Michael Dorfman
@@ -44,12 +49,16 @@
 * Patrick Quinn
 * Paul Pilone
 * Phil Osip
+* Robert Swanson
+* Rohan Weeden
 * Sara Chaparro Diaz
 * Sean Quinlan
 * Seth Vincent
 * Slav Korolev
 * Snyk bot
+* Theodore Reuter
 * Tim Clark
 * Tobias Nießen
 * Vanh Khuyen Nguyen
 * Vanh Nguyen
+* Yonggang Liu

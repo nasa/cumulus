@@ -52,7 +52,10 @@ const {
   fakeOrcaGranuleFactory,
 } = require('../../lib/testUtils');
 const {
-  handler: unwrappedHandler, reconciliationReportForGranules, reconciliationReportForGranuleFiles,
+  handler: unwrappedHandler,
+  reconciliationReportForGranules,
+  reconciliationReportForGranuleFiles,
+  reconciliationReportForCollections,
 } = require('../../lambdas/create-reconciliation-report');
 const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEvent');
 const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
@@ -193,6 +196,8 @@ async function generateRandomGranules(t, {
   const matchingColls = range(collectionRange).map(() => ({
     name: randomId('name'),
     version: randomId('vers'),
+    cmrProvider: randomId('prov'),
+    metricsProvider: randomId('metricsProvider'),
   }));
   const { collections: postgresCollections } =
     await storeCollectionsWithGranuleToPostgres(matchingColls, t.context);
@@ -204,12 +209,13 @@ async function generateRandomGranules(t, {
     range(granuleRange).map(() => fakeGranuleRecordFactory({
       collection_cumulus_id: collectionCumulusId,
     })),
-    ['cumulus_id', 'granule_id']
+    ['cumulus_id', 'collection_cumulus_id', 'granule_id']
   );
   const files = range(fileRange).map((i) => ({
     bucket: dataBuckets[i % dataBuckets.length],
     key: randomId('key', 10),
     granule_cumulus_id: pgGranules[i].cumulus_id,
+    collection_cumulus_id: pgGranules[i].collection_cumulus_id,
   }));
 
   // Store the files to S3 and postgres
@@ -223,10 +229,27 @@ async function generateRandomGranules(t, {
       .map((cmrCollection) => ({
         umm: { ShortName: cmrCollection.name, Version: cmrCollection.version },
       }));
+
+    const collectionsByProvider = new Map();
+    for (const c of matchingColls) {
+      const list = collectionsByProvider.get(c.cmrProvider) ?? [];
+      list.push({ umm: { ShortName: c.name, Version: c.version } });
+      collectionsByProvider.set(c.cmrProvider, list);
+    }
+
     CMR.prototype.searchConcept.restore();
     const cmrSearchStub = sinon.stub(CMR.prototype, 'searchConcept');
-    cmrSearchStub.withArgs('collections').onCall(0).resolves(cmrCollections);
-    cmrSearchStub.withArgs('collections').onCall(1).resolves([]);
+
+    cmrSearchStub.withArgs('collections').callsFake((_concept, params) => {
+      const pageNum = Number(params?.get?.('page_num') ?? '1');
+      if (pageNum > 1) return [];
+
+      const provider = params?.get?.('provider_short_name');
+      if (provider) return collectionsByProvider.get(provider) ?? [];
+
+      return cmrCollections;
+    });
+
     cmrSearchStub.withArgs('granules').resolves([]);
   }
 
@@ -292,6 +315,8 @@ const setupDatabaseAndCMRForTests = async ({ t, params = {} }) => {
     numExtraPgCollections = randomBetween(5, 10),
     numExtraPgCollectionsOutOfRange = randomBetween(5, 10),
     numExtraCmrCollections = randomBetween(5, 10),
+    matchingCollectionsOverride,
+    extraCmrCollectionsOverride, // for deterministic checks instead of random properties
   } = params;
 
   const startTimestamp = new Date('2020-06-01T00:00:00.000Z').getTime();
@@ -300,17 +325,22 @@ const setupDatabaseAndCMRForTests = async ({ t, params = {} }) => {
   const monthLater = moment(endTimestamp).add(1, 'month').valueOf();
 
   // Create collections that are in sync pg/CMR during the time period
-  const matchingCollections = range(numMatchingCollections).map((r) => ({
-    ...requiredStaticCollectionFields,
-    name: randomId(`name${r}-`),
-    version: randomId('vers'),
-    updatedAt: randomTimeBetween(startTimestamp, endTimestamp),
-  }));
+  const matchingCollections = matchingCollectionsOverride ?? range(numMatchingCollections)
+    .map((r) => ({
+      ...requiredStaticCollectionFields,
+      name: randomId(`name${r}-`),
+      version: randomId('vers'),
+      cmrProvider: randomId('prov'),
+      metricsProvider: randomId('metricsProvider'),
+      updatedAt: randomTimeBetween(startTimestamp, endTimestamp),
+    }));
   // Create collections in sync pg/CMR outside of the timestamps range
   const matchingCollectionsOutsideRange = range(numMatchingCollectionsOutOfRange).map((r) => ({
     ...requiredStaticCollectionFields,
     name: randomId(`name${r}-`),
     version: randomId('vers'),
+    cmrProvider: randomId('prov'),
+    metricsProvider: randomId('metricsProvider'),
     updatedAt: randomTimeBetween(monthEarlier, startTimestamp - 1),
   }));
   // Create collections in pg only within the timestamp range
@@ -318,6 +348,8 @@ const setupDatabaseAndCMRForTests = async ({ t, params = {} }) => {
     ...requiredStaticCollectionFields,
     name: randomId(`extraPg${r}-`),
     version: randomId('vers'),
+    cmrProvider: randomId('prov'),
+    metricsProvider: randomId('metricsProvider'),
     updatedAt: randomTimeBetween(startTimestamp, endTimestamp),
   }));
   // Create collections in pg only outside of the timestamp range
@@ -325,15 +357,23 @@ const setupDatabaseAndCMRForTests = async ({ t, params = {} }) => {
     ...requiredStaticCollectionFields,
     name: randomId(`extraPg${r}-`),
     version: randomId('vers'),
+    cmrProvider: randomId('prov'),
+    metricsProvider: randomId('metricsProvider'),
     updatedAt: randomTimeBetween(endTimestamp + 1, monthLater),
   }));
   // create extra cmr collections that fall inside of the range.
-  const extraCmrCollections = range(numExtraCmrCollections).map((r) => ({
-    ...requiredStaticCollectionFields,
-    name: randomId(`extraCmr${r}-`),
-    version: randomId('vers'),
-    updatedAt: randomTimeBetween(startTimestamp, endTimestamp),
-  }));
+  // Reuses a provider already known to postgres, since fetchCMRCollections only
+  // queries CMR for providers pulled from postgres, a brand new provider would
+  // never be found this way (that gap is instead caught downstream at ingestion).
+  const extraCmrCollections = extraCmrCollectionsOverride ?? range(numExtraCmrCollections)
+    .map((r) => ({
+      ...requiredStaticCollectionFields,
+      name: randomId(`extraCmr${r}-`),
+      version: randomId('vers'),
+      cmrProvider: matchingCollections[r % matchingCollections.length].cmrProvider,
+      metricsProvider: randomId('metricsProvider'),
+      updatedAt: randomTimeBetween(startTimestamp, endTimestamp),
+    }));
 
   const cmrCollections = sortBy(
     matchingCollections
@@ -344,11 +384,28 @@ const setupDatabaseAndCMRForTests = async ({ t, params = {} }) => {
     umm: { ShortName: collection.name, Version: collection.version },
   }));
 
-  // Stub CMR searchConcept that filters on inputParams if present.
+  const collectionsByProvider = new Map();
+  for (const c of matchingCollections
+    .concat(matchingCollectionsOutsideRange)
+    .concat(extraCmrCollections)) {
+    const list = collectionsByProvider.get(c.cmrProvider) ?? [];
+    list.push({ umm: { ShortName: c.name, Version: c.version } });
+    collectionsByProvider.set(c.cmrProvider, list);
+  }
+
+  // stub CMR and mock return calls to get back collections and filters on input params if present
   CMR.prototype.searchConcept.restore();
   const cmrSearchStub = sinon.stub(CMR.prototype, 'searchConcept');
-  cmrSearchStub.withArgs('collections').onCall(0).resolves(cmrCollections);
-  cmrSearchStub.withArgs('collections').onCall(1).resolves([]);
+
+  cmrSearchStub.withArgs('collections').callsFake((_concept, parameters) => {
+    const pageNum = Number(parameters?.get?.('page_num') ?? '1');
+    if (pageNum > 1) return [];
+
+    const provider = parameters?.get?.('provider_short_name');
+    if (provider) return collectionsByProvider.get(provider) ?? [];
+
+    return cmrCollections;
+  });
   cmrSearchStub.withArgs('granules').resolves([]);
 
   const { collections: createdCollections, granules: collectionGranules } =
@@ -619,11 +676,13 @@ test.serial('Generates valid reconciliation report when there are extra internal
     bucket: sample(dataBuckets),
     key: randomString(),
     granule_cumulus_id: extraFileGranule1.cumulus_id,
+    collection_cumulus_id: extraFileGranule1.collection_cumulus_id,
   };
   const extraDbFile2 = {
     bucket: sample(dataBuckets),
     key: randomString(),
     granule_cumulus_id: extraFileGranule2.cumulus_id,
+    collection_cumulus_id: extraFileGranule2.collection_cumulus_id,
   };
 
   await t.context.filePgModel.insert(t.context.knex, [extraDbFile1, extraDbFile2]);
@@ -690,12 +749,14 @@ test.serial('Generates valid reconciliation report when internally, there are bo
   }));
   const pgGranules = await granulePgModel.insert(
     knex,
-    granules
+    granules,
+    ['cumulus_id', 'collection_cumulus_id']
   );
   const matchingFiles = range(10).map((i) => ({
     bucket: sample(dataBuckets),
     key: randomId('key'),
     granule_cumulus_id: pgGranules[i].cumulus_id,
+    collection_cumulus_id: pgGranules[i].collection_cumulus_id,
   }));
 
   const extraS3File1 = { bucket: sample(dataBuckets), key: randomString() };
@@ -705,12 +766,14 @@ test.serial('Generates valid reconciliation report when internally, there are bo
     bucket: sample(dataBuckets),
     key: randomString(),
     granule_cumulus_id: pgGranules[10].cumulus_id,
+    collection_cumulus_id: pgGranules[10].collection_cumulus_id,
     granule_id: granules[10].granule_id,
   };
   const extraDbFile2 = {
     bucket: sample(dataBuckets),
     key: randomString(),
     granule_cumulus_id: pgGranules[11].cumulus_id,
+    collection_cumulus_id: pgGranules[11].collection_cumulus_id,
     granule_id: granules[11].granule_id,
   };
 
@@ -874,12 +937,14 @@ test.serial(
     }));
     const pgGranules = await granulePgModel.insert(
       knex,
-      granules
+      granules,
+      ['cumulus_id', 'collection_cumulus_id']
     );
     const files = range(10).map((i) => ({
       bucket: sample(dataBuckets),
       key: randomId('key'),
       granule_cumulus_id: pgGranules[i].cumulus_id,
+      collection_cumulus_id: pgGranules[i].collection_cumulus_id,
     }));
 
     // Store the files to S3 and DynamoDB
@@ -1092,12 +1157,11 @@ test.serial(
     const setupVars = await setupDatabaseAndCMRForTests({ t });
 
     const testCollection = [
-      setupVars.extraCmrCollections[3],
+      setupVars.extraCmrCollections[2],
       setupVars.matchingCollections[2],
       setupVars.extraPgCollections[1],
     ];
     const collectionId = testCollection.map((c) => constructCollectionId(c.name, c.version));
-    console.log(`testCollection: ${JSON.stringify(collectionId)}`);
 
     const event = {
       systemBucket: t.context.systemBucket,
@@ -1481,6 +1545,7 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
     granuleInCmr,
     bucketsConfig,
     distributionBucketMap,
+    distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
   });
   t.is(report.okCount, matchingFilesInDb.length + privateFilesInDb.length);
 
@@ -1595,6 +1660,7 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
     granuleInCmr,
     bucketsConfig,
     distributionBucketMap,
+    distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
   });
 
   t.is(report.okCount, matchingFilesInDb.length + privateFilesInDb.length);
@@ -1698,7 +1764,11 @@ test.serial('reconciliationReportForGranuleFiles does not fail if no distributio
   };
 
   const report = await reconciliationReportForGranuleFiles({
-    granuleInDb, granuleInCmr, bucketsConfig, distributionBucketMap,
+    granuleInDb,
+    granuleInCmr,
+    bucketsConfig,
+    distributionBucketMap,
+    distEndpoint: process.env.DISTRIBUTION_ENDPOINT,
   });
   t.is(report.okCount, matchingFilesInDb.length + privateFilesInDb.length);
 
@@ -1850,6 +1920,7 @@ test.serial('A valid ORCA Backup reconciliation report is generated', async (t) 
       filePgModel.create(knex, {
         ...translateApiFiletoPostgresFile(file),
         granule_cumulus_id: pgGranuleRecord[0].cumulus_id,
+        collection_cumulus_id: pgGranuleRecord[0].collection_cumulus_id,
       }))
   );
 
@@ -1919,18 +1990,37 @@ test.serial('Inventory reconciliation report JSON is formatted', async (t) => {
   const matchingColls = range(10).map(() => ({
     name: randomId('name'),
     version: randomId('vers'),
+    cmrProvider: randomId('prov'),
+    metricsProvider: randomId('metricsProvider'),
   }));
 
-  const cmrCollections = sortBy(matchingColls, ['name', 'version'])
-    .map((collection) => ({
-      umm: { ShortName: collection.name, Version: collection.version },
-    }));
+  const cmrCollectionsByProvider = new Map(
+    matchingColls.map((c) => [
+      c.cmrProvider, { umm: { ShortName: c.name, Version: c.version } },
+    ])
+  );
+  const testProviders = [];
+  matchingColls.map((collection) => testProviders.push(collection.cmrProvider));
 
   CMR.prototype.searchConcept.restore();
   const cmrSearchStub = sinon.stub(CMR.prototype, 'searchConcept');
-  cmrSearchStub.withArgs('collections').onCall(0).resolves(cmrCollections);
-  cmrSearchStub.withArgs('collections').onCall(1).resolves([]);
-  cmrSearchStub.withArgs('granules').resolves([]);
+  const seenProviders = new Set();
+  cmrSearchStub.callsFake((type, params) => {
+    if (type !== 'collections') return [];
+
+    const provider = params.get('provider_short_name');
+
+    // CMRSearchConceptQueue paginates until it receives an empty array back,
+    // so each provider must only return results on its first page request.
+    if (seenProviders.has(provider)) return [];
+    seenProviders.add(provider);
+
+    // dynamically make sure we return right object if a given provider is used
+    if (testProviders.includes(provider)) {
+      return [cmrCollectionsByProvider.get(provider)];
+    }
+    return [];
+  });
 
   await storeCollectionsWithGranuleToPostgres(matchingColls, t.context);
 
@@ -2010,3 +2100,180 @@ test.serial('Internal reconciliation report type throws an error', async (t) => 
     { message: 'Internal Reconciliation Reports are no longer valid' }
   );
 });
+
+// This is checking that a collection specific provider overrides the env cmr provider
+// showing that we properly use the getCmrSettings with the cmr_provider from the collection record
+test.serial('per-collection cmr_providers override global ENV provider', async (t) => {
+  const orginalProvider = process.env.cmr_provider;
+  const collectionName = 'test-provider-collection';
+  const collectionVersion = '001';
+  const collectionId = constructCollectionId(collectionName, collectionVersion);
+
+  const collectionProvider = 'collection_provider';
+
+  const envProvider = 'env_provider';
+  process.env.cmr_provider = envProvider;
+
+  // env cleanup
+  t.teardown(() => {
+    if (process.env.cmr_provider === undefined) delete process.env.cmr_provider;
+    else process.env.provider = orginalProvider;
+  });
+
+  const matchingCollections = [
+    {
+      ...requiredStaticCollectionFields,
+      name: collectionName,
+      version: collectionVersion,
+      cmrProvider: collectionProvider,
+      metricsProvider: 'metricsA',
+      updatedAt: Date.parse('2020-06-10T00:00:00.000Z'),
+    },
+  ];
+
+  await setupDatabaseAndCMRForTests({
+    t,
+    params: {
+      matchingCollectionsOverride: matchingCollections,
+    },
+  });
+
+  CMR.prototype.searchConcept.restore();
+  const cmrSearchStub = sinon.stub(CMR.prototype, 'searchConcept');
+  cmrSearchStub.withArgs('granules').onCall(0).resolves([]);
+
+  // need to define bucketsConfig, distributionBucketMap, recReportParams
+  await reconciliationReportForGranules({
+    collectionId: collectionId,
+    bucketsConfig: new BucketsConfig({}),
+    distributionBucketMap: {},
+    recReportParams: { knex: t.context.knex },
+  });
+
+  sinon.assert.calledWithMatch(
+    cmrSearchStub,
+    'granules',
+    sinon.match.instanceOf(URLSearchParams),
+    'umm_json',
+    false
+  );
+  const granulesCall = cmrSearchStub.getCalls().find((call) => call.args[0] === 'granules');
+  t.truthy(granulesCall);
+  t.is(granulesCall.args[1].get('provider_short_name'), collectionProvider);
+  t.not(granulesCall.args[1].get('provider_short_name'), envProvider);
+});
+
+// uses collection IDs pulled from PG to get providers and then query CMR by provider
+test.serial(
+  'one way reconciliaton uses provider specific calls to CMR to get collections',
+  async (t) => {
+    const originalProvider = process.env.cmr_provider;
+
+    const envProvider = 'env-provider';
+    process.env.cmr_provider = envProvider;
+
+    // env cleanup
+    t.teardown(() => {
+      if (originalProvider === undefined) delete process.env.cmr_provider;
+      else process.env.cmr_provider = originalProvider;
+    });
+
+    const matchingCollections = [
+      {
+        ...requiredStaticCollectionFields,
+        name: 'test-collection',
+        version: '001',
+        cmrProvider: 'fake-provider',
+        metricsProvider: 'metricsA',
+        updatedAt: Date.parse('2020-06-10T00:00:00.000Z'),
+      },
+      {
+        ...requiredStaticCollectionFields,
+        name: 'another-test-collection',
+        version: '001',
+        cmrProvider: 'another-fake-provider',
+        metricsProvider: 'metricsA',
+        updatedAt: Date.parse('2020-06-10T00:00:00.000Z'),
+      },
+    ];
+
+    const extraCmrCollections = [
+      {
+        ...requiredStaticCollectionFields,
+        name: 'test-cmr-only-collection',
+        version: '002',
+        cmrProvider: 'fake-cmr-only-provider',
+        metricsProvider: 'metricsA',
+        updatedAt: Date.parse('2020-06-10T00:00:00.000Z'),
+      },
+      {
+        ...requiredStaticCollectionFields,
+        name: 'another-test-cmr-only-collection',
+        version: '002',
+        cmrProvider: 'another-fake-cmr-only-provider',
+        metricsProvider: 'metricsA',
+        updatedAt: Date.parse('2020-06-10T00:00:00.000Z'),
+      },
+    ];
+
+    await setupDatabaseAndCMRForTests({
+      t,
+      params: {
+        matchingCollectionsOverride: matchingCollections,
+        extraCmrCollectionsOverride: extraCmrCollections,
+      },
+    });
+
+    CMR.prototype.searchConcept.restore();
+    const cmrSearchStub = sinon.stub(CMR.prototype, 'searchConcept');
+    const seenProviders = new Set();
+    cmrSearchStub.callsFake((type, params) => {
+      if (type !== 'collections') return [];
+
+      const provider = params.get('provider_short_name');
+
+      // CMRSearchConceptQueue paginates until it receives an empty array back,
+      // so each provider must only return results on its first page request.
+      if (seenProviders.has(provider)) return [];
+      seenProviders.add(provider);
+
+      if (provider === 'fake-provider') {
+        return [{ umm: { ShortName: 'test-collection', Version: '001' } }];
+      }
+      if (provider === 'another-fake-provider') {
+        return [{ umm: { ShortName: 'another-test-collection', Version: '001' } }];
+      }
+      return [];
+    });
+
+    const collectionReport = await reconciliationReportForCollections({
+      knex: t.context.knex,
+      startTimestamp: '2020-06-01T00:00:00.000Z',
+      endTimestamp: '2020-07-01T00:00:00.000Z',
+    });
+
+    sinon.assert.calledWithMatch(
+      cmrSearchStub,
+      'collections',
+      sinon.match.instanceOf(URLSearchParams),
+      'umm_json',
+      false
+    );
+
+    const queriedProviders = cmrSearchStub.getCalls()
+      .filter((call) => call.args[0] === 'collections')
+      .map((call) => call.args[1].get('provider_short_name'));
+
+    // Expected future behavior: query CMR once per collection provider and merge results.
+    // expected to query with providers in both pg + CMR
+    t.true(queriedProviders.includes('fake-provider'));
+    t.true(queriedProviders.includes('another-fake-provider'));
+
+    // expected to not pick up collections exclusively in CMR with one way check
+    // that starts by pulling providers from PG
+    t.false(queriedProviders.includes('fake-cmr-only-provider'));
+    t.false(queriedProviders.includes('another-fake-cmr-only-provider'));
+
+    t.is(collectionReport.okCollections.length, 2);
+  }
+);

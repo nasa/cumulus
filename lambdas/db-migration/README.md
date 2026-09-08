@@ -1,10 +1,6 @@
 # @cumulus/db-migration-lambda
 
-## Creating a new migration
-
-```sh
-  npx knex migrate:make migration_name
-```
+This Lambda manages the PostgreSQL schema for the RDS instance, acting as the primary orchestrator for both initialization and maintenance.
 
 ## Note about Webpack compilation
 

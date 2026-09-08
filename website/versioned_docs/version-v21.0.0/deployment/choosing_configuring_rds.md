@@ -26,7 +26,7 @@ load.
 
 On the other hand, serverless databases are designed precisely to **scale in response to load**.
 While the ability of serverless databases to scale is quite useful, there can be complexity in
-setting the scaling configuration to achieve the best results. Recommendations for Aurora serverless database scaling configuration are provided in the section [below](#recommended-scaling-configuration-for-aurora-serverless).
+setting the scaling configuration to achieve the best results. Recommendations for Aurora serverless database scaling configuration are provided in the section [below](#aurora-serverless-v2-capacity-range).
 
 To decide whether a provisioned or a serverless database is appropriate for your ingest
 operations, you should consider the pattern of your data ingests.

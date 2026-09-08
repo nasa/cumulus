@@ -93,6 +93,16 @@ module.exports.collection = {
   description: 'Cumulus-api Collection Table schema',
   type: 'object',
   properties: {
+    cmrProvider: {
+      title: 'CMRProvider',
+      description: 'cmr provider corresponding to this collection',
+      type: 'string',
+    },
+    metricsProvider: {
+      title: 'metricsProvider',
+      description: 'metricsProvider disambiguating which metrics index this is routed to',
+      type: 'string',
+    },
     name: {
       title: 'Name',
       description: 'Collection short_name registered with the CMR',
@@ -486,6 +496,10 @@ module.exports.rule = {
         visibilityTimeout: {
           description: 'VisibilityTimeout in seconds for the inflight messages, for sqs-type rule only.  Default to the visibility timeout of the SQS queue when the rule is created.',
           type: 'number',
+        },
+        allowProviderMismatchOnRuleFilter: {
+          description: 'Allow provider mismatch on rule filter',
+          type: 'boolean',
         },
       },
       additionalProperties: true,

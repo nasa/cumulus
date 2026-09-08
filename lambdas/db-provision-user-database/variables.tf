@@ -1,42 +1,42 @@
 variable "rds_security_group" {
-  type = string
+  type        = string
   description = "Security group that allow access to the db cluster"
 }
 
 variable "vpc_id" {
-  type = string
+  type        = string
   description = "The VPC the deployment is in"
 }
 
 variable "prefix" {
-  type = string
+  type        = string
   description = "'prefix' for the deployment ecosystem (Core deployment, data persistence deployment, etc)"
 }
 
 variable "subnet_ids" {
-  type = list(string)
+  type        = list(string)
   description = "Subnets to assign to the database provisioning lambda"
 }
 
 variable "rds_user_password" {
   description = "Password to set for RDS db user"
-  type = string
+  type        = string
 }
 
 variable "rds_admin_access_secret_arn" {
   description = "AWS Secrets Manager secret arn containing a JSON string of DB credentials (containing at least host, password, port as keys)"
-  type = string
+  type        = string
 }
 
 variable "rds_connection_timing_configuration" {
   description = "Cumulus rds connection timeout retry timing object -- these values map to knex.js's internal use of  https://github.com/vincit/tarn.js/ for connection acquisition"
-  type = map(number)
+  type        = map(number)
   default = {
-      acquireTimeoutMillis: 400000
-      createRetryIntervalMillis: 30000,
-      createTimeoutMillis: 20000,
-      idleTimeoutMillis: 1000,
-      reapIntervalMillis: 1000,
+    acquireTimeoutMillis : 400000
+    createRetryIntervalMillis : 30000,
+    createTimeoutMillis : 20000,
+    idleTimeoutMillis : 1000,
+    reapIntervalMillis : 1000,
   }
 }
 
@@ -47,9 +47,9 @@ variable "tags" {
 }
 
 variable "permissions_boundary_arn" {
-  type    = string
+  type        = string
   description = "Optional permissions boundary for lambda role bounds"
-  default = null
+  default     = null
 }
 
 variable "dbRecreation" {
@@ -60,12 +60,12 @@ variable "dbRecreation" {
 
 variable "lambda_memory_sizes" {
   description = "Configurable map of memory sizes for lambdas"
-  type = map(number)
-  default = {}
+  type        = map(number)
+  default     = {}
 }
 
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
-  type = map(number)
-  default = {}
+  type        = map(number)
+  default     = {}
 }

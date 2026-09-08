@@ -71,7 +71,7 @@ data "aws_iam_policy_document" "step_policy" {
       "ecs:DescribeTasks",
       "events:PutTargets",
       "events:PutRule",
-      "events:DescribeRule", 
+      "events:DescribeRule",
       "autoscaling:Describe*",
       "cloudwatch:*",
       "logs:*",
@@ -79,7 +79,8 @@ data "aws_iam_policy_document" "step_policy" {
       "iam:GetPolicy",
       "iam:GetPolicyVersion",
       "iam:GetRole",
-      "iam:PassRole"
+      "iam:PassRole",
+      "states:StartExecution"
     ]
     resources = ["*"]
   }

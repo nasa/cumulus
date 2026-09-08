@@ -1,5 +1,5 @@
 locals {
-  lambda_path      = "${path.module}/dist/webpack/lambda.zip"
+  lambda_path = "${path.module}/dist/webpack/lambda.zip"
 }
 resource "aws_lambda_function" "migration_helper_async_operation" {
   function_name    = "${var.prefix}-migrationHelperAsyncOperation"
@@ -7,7 +7,7 @@ resource "aws_lambda_function" "migration_helper_async_operation" {
   filename         = local.lambda_path
   source_code_hash = filebase64sha256(local.lambda_path)
   handler          = "index.handler"
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "migrationHelperAsyncOperation", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "migrationHelperAsyncOperation", 512)
 

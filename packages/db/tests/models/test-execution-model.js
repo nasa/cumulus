@@ -296,7 +296,9 @@ test('ExecutionPgModel.delete() deletes execution and granule/execution join rec
     const [executionCreateResponse] = await executionPgModel.create(trx, executionRecord);
     await granulesExecutionsPgModel.create(trx, {
       execution_cumulus_id: executionCreateResponse.cumulus_id,
+      execution_created_at: executionCreateResponse.created_at,
       granule_cumulus_id: granuleCumulusId,
+      collection_cumulus_id: pgGranule.collection_cumulus_id,
     });
     return executionCreateResponse.cumulus_id;
   });

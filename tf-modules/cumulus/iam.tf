@@ -48,6 +48,7 @@ data "aws_iam_policy_document" "lambda_processing_policy" {
       "kinesis:ListStreams",
       "kinesis:PutRecord",
       "lambda:GetFunction",
+      "lambda:GetPolicy",
       "lambda:invokeFunction",
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
@@ -192,4 +193,3 @@ resource "aws_iam_role" "ecs_task_role" {
   assume_role_policy   = data.aws_iam_policy_document.ecs_task_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
 }
-

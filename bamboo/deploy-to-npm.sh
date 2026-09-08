@@ -24,7 +24,7 @@ echo "Publishing packages to NPM with version=${VERSION} and tag=${NPM_TAG}"
 export npm_config_unsafe_perm=true
 
 if [[ $SKIP_NPM_PUBLISH != true ]]; then
-  ./node_modules/.bin/lerna publish \
+  NODE_OPTIONS="--require $(pwd)/scripts/tar_shim.cjs" ./node_modules/.bin/lerna publish \
     "${VERSION}" \
     --no-git-tag-version \
     --no-push \

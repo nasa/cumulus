@@ -46,7 +46,7 @@ test.before(async (t) => {
   t.context.concurrency = 60;
   process.env.dbMaxPool = 60;
   t.context.totalGranules = 2000;
-  t.context.granuleFiles = 10;
+  t.context.granuleFiles = 200;
 
   t.context.testDbName = `writeGranules_${cryptoRandomString({ length: 10 })}`;
   t.context.stepFunctionUtils = {
@@ -133,6 +133,7 @@ test.beforeEach(async (t) => {
     execution
   );
   t.context.executionCumulusId = pgExecution.cumulus_id;
+  t.context.executionCreatedAt = pgExecution.created_at;
   t.context.executionUrl = pgExecution.url;
 
   const [pgProvider] = await t.context.providerPgModel.create(
@@ -208,11 +209,12 @@ test.after.always(async (t) => {
 // This test is a performance test designed to run with a large number of messages
 // in a memory constrained test environment, it is not intended to run as part of
 // the normal unit test suite.
-test('writeGranulesFromMessage operates on 2k granules with 10 files each within 1GB of ram when concurrency is set to 60 and db connections are set to 60', async (t) => {
+test('writeGranulesFromMessage operates on 2k granules with 200 files each within 1GB of ram when concurrency is set to 60 and db connections are set to 60', async (t) => {
   const {
     cumulusMessages,
     knex,
     executionCumulusId,
+    executionCreatedAt,
     providerCumulusId,
     stepFunctionUtils,
   } = t.context;
@@ -222,6 +224,7 @@ test('writeGranulesFromMessage operates on 2k granules with 10 files each within
   await pSettle(cumulusMessages.map((cumulusMessage) => () => writeGranulesFromMessage({
     cumulusMessage,
     executionCumulusId,
+    executionCreatedAt,
     providerCumulusId,
     knex,
     testOverrides: { stepFunctionUtils },

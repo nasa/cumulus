@@ -25,5 +25,7 @@
   "meta": {
     "uniquifyGranuleId": true,
     "hashLength": 6
-  }
+  },
+  "cmrProvider": "CUMULUS",
+  "metricsProvider": "CUMULUS"
 }

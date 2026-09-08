@@ -5,6 +5,7 @@ const range = require('lodash/range');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
+  destroyLocalTestDb,
   CollectionPgModel,
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
@@ -132,6 +133,13 @@ test.before(async (t) => {
     knex,
     t.context.pdrs
   );
+});
+
+test.after.always(async (t) => {
+  await destroyLocalTestDb({
+    ...t.context,
+    testDbName,
+  });
 });
 
 test('PdrSearch returns 10 PDR records by default', async (t) => {

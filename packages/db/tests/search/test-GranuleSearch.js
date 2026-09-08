@@ -1,10 +1,16 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const omit = require('lodash/omit');
 const range = require('lodash/range');
+const sinon = require('sinon');
 
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { sleep } = require('@cumulus/common');
 const {
+  translatePostgresGranuleToApiGranuleWithoutDbQuery,
+} = require('../../dist/translate/granules');
+const {
+  destroyLocalTestDb,
   CollectionPgModel,
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
@@ -110,6 +116,9 @@ test.before(async (t) => {
     'error.Error': 'CumulusMessageAdapterExecutionError',
     lastUpdateDateTime: '2020-03-18T10:00:00.000Z',
     processingEndDateTime: '2020-03-16T10:00:00.000Z',
+    'queryFields.cnm.receivedTime': '2020-03-18T21:11:20.802Z',
+    'queryFields.cnm.processCompleteTime': '2020-03-18T21:12:30.916Z',
+    'queryFields.cnm.product.name': 'cnm_product_name',
     productVolume: '6000',
     timeToArchive: '700.29',
     timeToPreprocess: '800.18',
@@ -126,9 +135,8 @@ test.before(async (t) => {
   };
 
   t.context.granulePgModel = new GranulePgModel();
-  t.context.pgGranules = await t.context.granulePgModel.insert(
-    knex,
-    range(100).map((num) => fakeGranuleRecordFactory({
+  t.context.granules = range(100).map((num) => fakeGranuleRecordFactory(
+    {
       granule_id: t.context.granuleIds[num],
       collection_cumulus_id: (num % 2)
         ? t.context.collectionCumulusId : t.context.collectionCumulusId2,
@@ -152,31 +160,47 @@ test.before(async (t) => {
       status: !(num % 2) ? t.context.granuleSearchFields.status : 'completed',
       updated_at: new Date(t.context.granuleSearchFields.timestamp + (num % 2) * 1000),
       archived: Boolean(num % 2),
-    }))
-  );
+      query_fields: num === 50
+        ? {
+          cnm: {
+            receivedTime: t.context.granuleSearchFields['queryFields.cnm.receivedTime'],
+            processCompleteTime:
+              t.context.granuleSearchFields['queryFields.cnm.processCompleteTime'],
+            product: {
+              name: t.context.granuleSearchFields['queryFields.cnm.product.name'],
+            },
+          },
+        }
+        : undefined,
+    }
+  ));
+
+  t.context.pgGranules = await t.context.granulePgModel.insert(knex, t.context.granules);
 
   const filePgModel = new FilePgModel();
-  await filePgModel.insert(
-    knex,
-    t.context.pgGranules.map((granule) => fakeFileRecordFactory(
-      {
-        granule_cumulus_id: granule.cumulus_id,
-        path: 'a.txt',
-        checksum_type: 'md5',
-      }
-    ))
-  );
-  await filePgModel.insert(
-    knex,
-    t.context.pgGranules.map((granule) => fakeFileRecordFactory(
-      {
-        granule_cumulus_id: granule.cumulus_id,
-        path: 'b.txt',
-        checksum_type: 'sha256',
-      }
-    ))
-  );
+  t.context.files = t.context.pgGranules
+    .flatMap((granule, i) => [
+      fakeFileRecordFactory(
+        {
+          cumulus_id: i,
+          granule_cumulus_id: granule.cumulus_id,
+          collection_cumulus_id: t.context.granules[i].collection_cumulus_id,
+          path: 'a.txt',
+          checksum_type: 'md5',
+        }
+      ),
+      fakeFileRecordFactory(
+        {
+          cumulus_id: i + 100,
+          granule_cumulus_id: granule.cumulus_id,
+          collection_cumulus_id: t.context.granules[i].collection_cumulus_id,
+          path: 'b.txt',
+          checksum_type: 'sha256',
+        }
+      ),
+    ]);
 
+  await filePgModel.insert(knex, t.context.files);
   const executionPgModel = new ExecutionPgModel();
   const granuleExecutionPgModel = new GranulesExecutionsPgModel();
 
@@ -184,13 +208,16 @@ test.before(async (t) => {
     knex,
     t.context.pgGranules.map((_, i) => fakeExecutionRecordFactory({
       url: `earlierUrl${i}`,
-    }))
+    })),
+    ['cumulus_id', 'created_at']
   );
   await granuleExecutionPgModel.insert(
     knex,
     t.context.pgGranules.map((granule, i) => ({
       granule_cumulus_id: granule.cumulus_id,
+      collection_cumulus_id: t.context.granules[i].collection_cumulus_id,
       execution_cumulus_id: executionRecords[i].cumulus_id,
+      execution_created_at: executionRecords[i].created_at,
     }))
   );
   executionRecords = [];
@@ -200,7 +227,8 @@ test.before(async (t) => {
       knex,
       [fakeExecutionRecordFactory({
         url: `laterUrl${i}`,
-      })]
+      })],
+      ['cumulus_id', 'created_at']
     );
     executionRecords.push(executionRecord);
     //ensure that timestamp in execution record is distinct
@@ -211,16 +239,27 @@ test.before(async (t) => {
     knex,
     t.context.pgGranules.map((granule, i) => ({
       granule_cumulus_id: granule.cumulus_id,
+      collection_cumulus_id: t.context.granules[i].collection_cumulus_id,
       execution_cumulus_id: executionRecords[i].cumulus_id,
+      execution_created_at: executionRecords[i].created_at,
     }))
   );
   await granuleExecutionPgModel.insert(
     knex,
     t.context.pgGranules.map((granule, i) => ({
       granule_cumulus_id: granule.cumulus_id,
+      collection_cumulus_id: t.context.granules[i].collection_cumulus_id,
       execution_cumulus_id: executionRecords[99 - i].cumulus_id,
+      execution_created_at: executionRecords[99 - i].created_at,
     }))
   );
+});
+
+test.after.always(async (t) => {
+  await destroyLocalTestDb({
+    ...t.context,
+    testDbName,
+  });
 });
 
 test('GranuleSearch returns 10 granule records by default', async (t) => {
@@ -933,6 +972,48 @@ test('GranuleSearch estimates the rowcount of the table by default', async (t) =
   t.is(response.results?.length, 50);
 });
 
+test('GranuleSearch calls getEstimatedRowcount for table count when estimateTableRowCount is enabled', async (t) => {
+  const { knex } = t.context;
+
+  const queryStringParameters = {
+    limit: 50,
+  };
+
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+
+  const estimateStub = sinon.stub(dbSearch, 'getEstimatedRowcount')
+    .resolves(9999);
+
+  const response = await dbSearch.query(knex);
+
+  t.true(estimateStub.calledOnce);
+
+  t.true(
+    estimateStub.calledWithMatch({
+      knex,
+    })
+  );
+
+  t.is(response.meta.count, 9999);
+  t.is(response.results.length, 50);
+});
+
+test('GranuleSearch does not estimate rowcount when disabled', async (t) => {
+  const { knex } = t.context;
+
+  const dbSearch = new GranuleSearch({
+    queryStringParameters: {
+      estimateTableRowCount: 'false',
+    },
+  });
+
+  const estimateSpy = sinon.spy(dbSearch, 'getEstimatedRowcount');
+
+  await dbSearch.query(knex);
+
+  t.true(estimateSpy.notCalled);
+});
+
 test('GranuleSearch only returns count if countOnly is set to true', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
@@ -1035,7 +1116,7 @@ test('GranuleSearch with includeFullRecord true retrieves granules, files and ex
 test('GranuleSearch with archived: true pulls only archive granules', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
-    archived: true,
+    archived: 'true',
   };
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
@@ -1047,11 +1128,188 @@ test('GranuleSearch with archived: true pulls only archive granules', async (t) 
 test('GranuleSearch with archived: false pulls only non-archive granules', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
-    archived: false,
+    archived: 'false',
   };
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
   response.results.forEach((granuleRecord) => {
     t.is(granuleRecord.archived, false);
   });
+});
+
+test.serial('GranuleSearch supports term search on nested json field', async (t) => {
+  const { knex } = t.context;
+  const dbRecord = t.context.granules[50];
+  const granuleCumulusId = t.context.pgGranules[50].cumulus_id;
+  const queryStringParameters = {
+    limit: 200,
+    'queryFields.cnm.receivedTime': t.context.granuleSearchFields['queryFields.cnm.receivedTime'],
+    'queryFields.cnm.processCompleteTime': t.context.granuleSearchFields['queryFields.cnm.processCompleteTime'],
+    'queryFields.cnm.product.name__not': 'abc',
+    includeFullRecord: 'true',
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const { results, meta } = await dbSearch.query(knex);
+  t.is(meta.count, 1);
+  t.is(results?.length, 1);
+
+  const expectedApiRecord = translatePostgresGranuleToApiGranuleWithoutDbQuery({
+    granulePgRecord: dbRecord,
+    collectionPgRecord: t.context.testPgCollection2,
+    executionUrls: [{ url: 'laterUrl50' }],
+    files: t.context.files.filter((file) => file.granule_cumulus_id === granuleCumulusId),
+    pdr: t.context.pdr,
+    providerPgRecord: t.context.provider,
+  });
+
+  // float fields won't match exactly
+  const omitFields = ['createdAt', 'duration', 'timeToArchive'];
+  t.deepEqual(omit(results?.[0], omitFields), omit(expectedApiRecord, omitFields));
+  t.truthy(results?.[0]?.createdAt);
+});
+
+test.serial('GranuleSearch supports terms search on nested json field', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    'queryFields.cnm.product.name__in': [t.context.granuleSearchFields['queryFields.cnm.product.name'], 'abc'].join(','),
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const { results, meta } = await dbSearch.query(knex);
+  t.is(meta.count, 1);
+  t.is(results?.length, 1);
+});
+
+test.serial('GranuleSearch supports existence checks and sorting for nested JSON fields', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    'queryFields.cnm.product.name__exists': 'true',
+    'queryFields.cnm.product.random__exists': 'false',
+    sort_by: 'queryFields.cnm.product.name',
+    order: 'asc',
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const { results, meta } = await dbSearch.query(knex);
+  t.is(meta.count, 1);
+  t.is(results?.length, 1);
+});
+
+test('GranuleSearch prepends collection_cumulus_id to sort order for single collection queries', (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    collectionId: 'abc___V01',
+    sort_key: ['-updatedAt'],
+  };
+
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const { searchQuery } = dbSearch.buildSearch(knex);
+  const sql = searchQuery.toSQL().sql;
+
+  t.true(sql.includes('order by "granules"."collection_cumulus_id" asc, "granules"."updated_at" desc'));
+});
+
+test('GranuleSearch prepends collection_cumulus_id to sort order for multi-collection queries', (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    collectionId__in: ['abc___V01', 'efg___002'].join(','),
+    sort_key: ['-updatedAt'],
+  };
+
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const { searchQuery } = dbSearch.buildSearch(knex);
+  const sql = searchQuery.toSQL().sql;
+
+  t.true(sql.includes('order by "granules"."collection_cumulus_id" asc, "granules"."updated_at" desc'));
+});
+
+test('GranuleSearch does not prepend collection_cumulus_id to sort order when query is not collection-filtered', (t) => {
+  const { knex } = t.context;
+
+  const queryStringParameters = {
+    sort_key: ['-updatedAt'],
+  };
+
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+
+  const { searchQuery } = dbSearch.buildSearch(knex);
+  const sql = searchQuery.toSQL().sql;
+
+  t.false(sql.includes('"granules"."collection_cumulus_id" asc'));
+
+  t.true(sql.includes('order by "granules"."updated_at" desc'));
+});
+
+test('GranuleSearch orders results by collection_cumulus_id first, then other fields for single-collection queries', async (t) => {
+  const { knex } = t.context;
+
+  const queryStringParameters = {
+    limit: 200,
+    collectionId: t.context.collectionId,
+    sort_key: ['-updatedAt'],
+  };
+
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+
+  t.is(response.meta.count, 50);
+  const results = response.results || [];
+  t.is(results.length, 50);
+
+  for (let i = 1; i < results.length; i += 1) {
+    const previous = results[i - 1];
+    const current = results[i];
+
+    t.is(current.collectionId, t.context.collectionId);
+
+    // verify ordering by updated_at desc
+    t.true(
+      new Date(previous.updatedAt).getTime()
+        >= new Date(current.updatedAt).getTime()
+    );
+  }
+});
+
+test('GranuleSearch orders results by collection_cumulus_id first, then other fields for multi-collection queries', async (t) => {
+  const { knex } = t.context;
+
+  const queryStringParameters = {
+    limit: 200,
+    collectionId__in: [
+      t.context.collectionId2,
+      t.context.collectionId,
+    ].join(','),
+    status: t.context.granuleSearchFields.status,
+    sort_key: ['-updatedAt'],
+  };
+
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+
+  const results = response.results || [];
+  t.is(results.length, 50);
+
+  for (let i = 1; i < results.length; i += 1) {
+    const previous = results[i - 1];
+    const current = results[i];
+
+    const sameCollection =
+      previous.collectionId === current.collectionId;
+
+    if (!sameCollection) {
+      // verify primary ordering by collection_cumulus_id.
+      // the API response does not expose collection_cumulus_id directly,
+      // so use the known insertion order from the test setup:
+      // t.context.collectionId was created before t.context.collectionId2,
+      // therefore its collection_cumulus_id should sort first.
+      t.true(previous.collectionId === t.context.collectionId);
+      t.true(current.collectionId === t.context.collectionId2);
+    } else {
+      // verify secondary ordering by updated_at desc within same collection
+      t.true(
+        new Date(previous.updatedAt).getTime()
+          >= new Date(current.updatedAt).getTime()
+      );
+    }
+  }
 });

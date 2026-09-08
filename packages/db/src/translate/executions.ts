@@ -6,7 +6,7 @@ import isNull from 'lodash/isNull';
 import { RecordDoesNotExist } from '@cumulus/errors';
 import { ApiExecution, ApiExecutionRecord } from '@cumulus/types/api/executions';
 import Logger from '@cumulus/logger';
-import { removeNilProperties, returnNullOrUndefinedOrDate } from '@cumulus/common/util';
+import { parseIfJson, removeNilProperties, returnNullOrUndefinedOrDate } from '@cumulus/common/util';
 import { ValidationError } from '@cumulus/errors';
 import { constructCollectionId, deconstructCollectionId } from '@cumulus/message/Collections';
 import { PostgresExecution, PostgresExecutionRecord } from '../types/execution';
@@ -35,10 +35,10 @@ export const translatePostgresExecutionToApiExecutionWithoutDbQuery = ({
     status: executionRecord.status,
     arn: executionRecord.arn,
     duration: executionRecord.duration,
-    error: executionRecord.error,
-    tasks: executionRecord.tasks,
-    originalPayload: executionRecord.original_payload,
-    finalPayload: executionRecord.final_payload,
+    error: parseIfJson(executionRecord.error),
+    tasks: parseIfJson(executionRecord.tasks),
+    originalPayload: parseIfJson(executionRecord.original_payload),
+    finalPayload: parseIfJson(executionRecord.final_payload),
     type: executionRecord.workflow_name,
     execution: executionRecord.url,
     cumulusVersion: executionRecord.cumulus_version,
@@ -46,9 +46,9 @@ export const translatePostgresExecutionToApiExecutionWithoutDbQuery = ({
     collectionId,
     parentArn,
     archived: executionRecord.archived,
-    createdAt: executionRecord.created_at.getTime(),
-    updatedAt: executionRecord.updated_at.getTime(),
-    timestamp: executionRecord.timestamp?.getTime(),
+    createdAt: returnNullOrUndefinedOrDate(executionRecord.created_at)?.getTime(),
+    updatedAt: returnNullOrUndefinedOrDate(executionRecord.updated_at)?.getTime(),
+    timestamp: returnNullOrUndefinedOrDate(executionRecord.timestamp)?.getTime(),
   };
   return <ApiExecutionRecord>removeNilProperties(translatedRecord);
 };
@@ -172,16 +172,18 @@ export const translateApiExecutionToPostgresExecutionWithoutNilsRemoved = async 
 
   // If we have a parentArn, try a lookup in Postgres. If there's a match, set the parent_cumulus_id
   if (!isNil(apiRecord.parentArn)) {
-    let parentId;
+    let parent;
 
     try {
-      parentId = await executionPgModel.getRecordCumulusId(
+      parent = await executionPgModel.get(
         knex,
-        { arn: apiRecord.parentArn }
+        { arn: apiRecord.parentArn },
+        ['cumulus_id', 'created_at']
       );
 
-      if (parentId !== undefined) {
-        translatedRecord.parent_cumulus_id = parentId;
+      if (parent !== undefined) {
+        translatedRecord.parent_cumulus_id = parent.cumulus_id;
+        translatedRecord.parent_created_at = parent.created_at;
       }
     } catch (error) {
       if (error instanceof RecordDoesNotExist) {

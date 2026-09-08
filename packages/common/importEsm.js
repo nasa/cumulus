@@ -13,4 +13,21 @@ const importGot = async () => {
   return got;
 };
 
-module.exports = { importGot };
+/**
+ * Asynchronously imports the 'archiver' module.
+ *
+ * This function uses dynamic imports to import the ESM-only 'archiver' module at runtime.
+ * This should be used for importing the non-compat module in to CommonJS TS/webpacked
+ * modules.
+ *
+ * TODO: this should be removed when we switch to using ESM modules in the zip.js script.
+ *
+ * @returns {Promise<Function>} A promise that resolves to the 'archiver' function.
+ * @throws {Error} If an error occurs while importing the module.
+ */
+const importArchiver = async () => {
+  const { ZipArchive } = await import('archiver');
+  return ZipArchive;
+};
+
+module.exports = { importGot, importArchiver };

@@ -6,32 +6,783 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v22.4.0] 2026-09-02
+
+### Fixed
+
+- **CUMULUS-5455**
+  - Added an npm override forcing `pacote` to `^21.5.1` to address a high-severity ReDoS vulnerability:
+  https://github.com/advisories/GHSA-w4pp-8pjf-rmxw (CVE-2026-9496). `pacote` is npm's package-fetching
+  library and is not used by Cumulus code directly — it enters the dependency tree only as a build-time
+  transitive dependency of `lerna`, the tool used to build and publish the Core monorepo. It is not
+  included in any published `@cumulus/*` package, deployed Lambda/task bundle, or the Cumulus API. This
+  change is internal to the Core build/CI process: no impact to deployed stacks, workflow code, or
+  ingest operations, and no action or redeployment is required by DAACs or migration teams. Anyone
+  building Core from source picks up the fix automatically on their next `npm install`.
+
+### Added
+
+- **CUMULUS-5309**
+  - Support cross account SQS queues by extracting the owner account ID from the URL and using that in validation of queues.
+
+- **CUMULUS-5256**
+  - Add orphan file cleanup to Iceberg tables
+
+- **CUMULUS-5012**
+  - Adding a SECURITY.md file that contains NASA's official guidance on reporting vulnerabilities
+
+### Changed
+
+- **CUMULUS-5316**
+  - Update Iceberg API documentation
+  - Give AWS_PROFILE precedence over AWS_DEFAULT_PROFILE in cumulus aws client and Iceberg API
+  - Rename Iceberg API reconciliation reports and async operations route paths to match Cumulus API
+
+- **CUMULUS-4511**
+  - Enable reconciliaton reports to use collection provided cmr_provider when necessary when
+    making CMR calls.
+
+- **async-operations-update**
+  - Update Async Operation container to new version 59, `cumuluss/async-operation:59`. Users should update their references to `async-operation` with the new version.
+
+## [v22.3.5] 2026-08-14
+
+### Fixed
+
+- **CUMULUS-5026**
+  - Fix boolean logic for allowProviderMismatch flag to handle true evaluations correctly
+
+### Changed
+
+- **CUMULUS-5217**
+  - Fix Iceberg API image build failure in github workflow
+
+- **CUMULUS-5033**
+  - Catch crashed spark server and restart for Iceberg
+
+- **CUMULUS-5112**
+  - Change Iceberg API image release tagging to be based on lerna.json update
+
+## [v22.3.4] 2026-07-21
+
+### Changed
+
+- **CUMULUS-5033**
+  - Catch crashed spark server and restart for Iceberg
+
+## [v22.3.3] 2026-07-14
+
+### Fixed
+
+- **CUMULUS-5033**
+  - Fix bootstrap service to handle empty RDS tables
+  - Add SQL to grant privileges to allow disabling replication
+  - Change Iceberg setup code to correctly compute the number of workers based on CPU
+  - Remove unused terraform resource for Iceberg API
+  - Add variable to enable/disable iceberg deployment in example
+
+## [v22.3.2] 2026-07-09
+
+### Fixed
+
+- **CSD-121**
+  - Updates the CMR.js CMR client object to *not* store the CMR provider and update all class methods to require
+    a provider method parameter.    Update all tasks/related callers to provide expected input
+
+## [v22.3.1] 2026-07-07
+
+### Updated
+
+- Bumped `archiver` version and corresponding updates to `bin/zip.js` to address CVE-2026-13149.
+
+## [v22.3.0] 2026-06-29
+
+#### Migration Notes
+
+- **CUMULUS-4982**
+  - You **must** completely stop all data ingestion workloads before initiating this deployment.
+  - If your database contains an estimated **1 million or more rows** in either the
+    `granules_global_unique` or `files_global_unique` tables, you must manually execute the data
+    migration script immediately following the stack deployment. Please follow the instructions found in the
+    [Data migration to partitioned global unique tables documentation](https://nasa.github.io/cumulus/docs/next/upgrade-notes/data-migration-to-partitioned-global-unique-tables).
+
+### Added
+
+- **CUMULUS-4842**
+  - Added database procedures to provision future quarterly execution partitions and delete expired
+    partitions older than the retention window. The create_future_executions_partitions procedure
+    is now executed automatically by the DB migration Lambda handler post-migration.
+- **CUMULUS-4986**
+  - Added `storage_type` variable to `tf-modules/cumulus-rds-tf` module with default value `aurora`.
+
+### Changed
+
+- **CUMULUS-4982**
+  - Converted granules_global_unique and files_global_unique tables to HASH partitioned tables
+
+### Fixed
+
+- **CUMULUS-5005**
+  - Remove unused /dashboard API endpoint
+- **CUMULUS-4952**
+  - Fixed the SchemaSpy command to generate database schemas correctly.
+
+## [v22.2.5] 2026-06-19
+
+### Fixed
+
+- **CUMULUS-4694**
+  - Fixed iceberg terraform output value
+
+## [v22.2.4] 2026-06-18
+
+### Added
+
+- **CUMULUS-4520**
+  - Add Iceberg design and troubleshooting documentation
+
+### Changed
+
+- **CSD-99**
+  - Changed the `CMR` class to a singleton
+  - Changed `cmr-utils` functions that call the `CMR` class functions to retry upon 401 authentication failures
+  - Added functions `checkRefreshLaunchpadToken` and `refreshLaunchpadToken` to the `CMR` class to be invoked upon a 401 authentication failure which removes and/or retrieves a valid launchpad token
+  - Added functions to the `launchpad-auth` package which adds a lock file for token creation, removes an invalid token, and checks s3 for the token and lock file
+
+### Fixed
+
+- **CUMULUS-4694**
+  - Fixed issue with references to `module.cluster` in the Iceberg replication terraform code
+
+## [v22.2.3] 2026-06-15
+
+### Added
+
+- **CUMULUS-4694**
+  - Add flag to enable/disable iceberg replication
+
+### Changed
+
+- **CUMULUS-4918**
+  - Add release number tag to Iceberg APi image if applicable
+- **CUMULUS-4953**
+  - Shorten Iceberg API load balancer name suffix to accommodate a longer prefix
+
+## [v22.2.2] 2026-06-15
+
+### Fixed
+
+- **CSD-113**
+  - Fixed issue with with bulk granule deletion where CMR records were not being removed
+
+## [v22.2.1] 2026-06-04
+
+- **CSD-111**
+  - Add requester-pays to all relevant aws-client S3 calls
+
+## [v22.2.0] 2026-06-04
+
+### Added
+
+- **CUMULUS-4866**
+  - Add metrics_provider to pg database collection model
+  - Add metrics_provider to iceberg schema
+  - Add metrics_provider to sns outputs to creation/update/delete executions, granules, pdrs
+- **CUMULUS-4873**
+  - Add initial module for BigNBit.
+- **CUMULUS-4891**
+  - Add scripts to build Iceberg replication docker images and push them to ECR as part of the build process
+- **CUMULUS-4894**
+  - Added a test to the db-migration lambda to validate that schemas generated via the bootstrap
+    migration and standard migrations are consistent and produce identical database schemas.
+
+### Changed
+
+- **CUMULUS-4866**
+  - Add ifNotExists in db migration script to prevent breakage on update with pre-migration work
+- **CUMULUS-4694**
+  - Change replication tasks to use proper region
+- **CUMULUS-4882**
+  - Updated the triggers on the granules table to track collection updates and introduced a
+    `cumulus.allow_collection_update` setting to authorize cross-collection shifts.
+  - Modified `@cumulus/api` `granule.updateBatchGranulesCollection` method to use a transaction-scoped
+    `SET LOCAL cumulus.allow_collection_update = 'true'` flag to safely authorize bulk collection updates.
+  - Optimized `@cumulus/db` `granule.upsert` and `@cumulus/api/lib` `write-granule` to perform
+    cross-collection collision checks only on actual unique constraint conflicts during ingest.
+  - Updated the `db_partition_config` variable in `tf-modules/data-persistence` to accept null
+    values, automatically fall back to defaults, and pass resolved fallback values to the child module.
+- **CUMULUS-4891**
+  - Force build/push of iceberg replication images when merging to master
+- **CUMULUS-4912**
+  - Move Iceberg API image build from Bamboo to github workflow
+
+## [v22.1.1] 2026-05-28
+
+### Added
+
+- **CUMULUS-4891**
+  - Add scripts to build Iceberg replication docker images and push them to ECR as part of the build process
+- **CUMULUS-4898**
+  - Add Iceberg API documentation page to Cumulus Documentation
+    Once released, the Iceberg API doc should be at: https://nasa.github.io/cumulus/docs/next/deployment/iceberg-api
+- **CUMULUS-4866**
+  - Add cmrProvider to sns output granules, executions, pdrs
+- **CUMULUS-4883**
+  - Add script to build Iceberg API docker image and push it to ECR as part of the build process
+- **CUMULUS-4705**
+  - Add Fargate task to cleanup old Iceberg table snapshots on a schedule
+- **CUMULUS-4711**
+  - Add integration tests for iceberg API
+- **CUMULUS-4664**
+  - A single Cumulus deployment can now serve granule data download links across multiple TEA hosts,
+    choosing the correct host per granule based on the collection's CMR provider. This makes it possible to
+    consolidate several Cumulus deployments into one while preserving the public download URLs that end users
+    and CMR records already depend on.
+  - Operators configure routing with a new `tea_distribution_url_per_cmr_provider` terraform variable,
+    which is a map from CMR provider to TEA base URL. Collections whose CMR provider is not in the map fall
+    back to the existing single `tea_distribution_url`, so single-deployment configurations continue to work unchanged.
+  - One precondition for consolidating deployments is that every S3 bucket name in the merged bucket map must be globally unique.
+- **CUMULUS-4873**
+  - Set max_locks_per_transaction database parameter to 256 to support better performance with new partitioning setup.
+- **CUMULUS-4873**
+  - Add initial module for BigNBit.
+
+### Changed
+
+- **CUMULUS-4776** Split iceberg replication into separate services and add support for partitioned tables
+- **async-operations-update**
+  - Update Async Operation container to new version 57, `cumuluss/async-operation:57`. Users should update their references to `async-operation` with the new version.
+
+## [v22.0.0] 2026-05-12
+
+### Breaking Changes
+
+- **CUMULUS-4780**
+  - Database Partitioning: The database schema has been rebuilt using a partitioned structure.
+  - Incompatibility: Because the table structures have fundamentally changed, existing databases
+    cannot be updated. A fresh database is required.
+
+### Added
+
+- **CUMULUS-4829**
+  - Add background job to refresh stale DuckDB connections for iceberg API
+- **CUMULUS-4815**
+  - Add support for file-related searches to go to the files_table in iceberg
+- **CUMULUS-4709**
+  - Fix stale connections problem in iceberg API
+- **CUMULUS-4710**
+  - Implement list of stats route in iceberg search api
+  - Add warming up of duckdb connections
+- **CUMULUS-4708**
+  - Implement list of executions route in iceberg search api
+- **CUMULUS-4707**
+  - Implement list of granules route in iceberg search api
+- **CUMULUS-4534**
+  - collection db model has added non-optional cmr_provider field
+  - update requires db-migration to add cmr_provider to collection model
+- **CUMULUS-4706**
+  - Define and serve the iceberg search api routes through the iceberg api server.
+- **CUMULUS-4606**
+  - Add terraform module and example deployment for RDS to Iceberg replication Fargate cluster
+    and associated service/task.
+- **CUMULUS-4558**
+  - Added provisioning ECS Fargate infrastructure for cumulus api using terraform.
+- **CUMULUS-4557**
+  - Make a containerized iceberg api that can be deployed to ECS.
+- **async-operations-update**
+  - Update Async Operation container to new version 56, `cumuluss/async-operation:56`. Users should update their references to `async-operation` with the new version.
+- **CUMULUS-4780**
+  - Implemented partitioned schema for the consolidated database tables.
+- **CUMULUS-4804**
+  - Updated application logic to ensure compatibility with partitioned database schemas.
+- **CUMULUS-4839**
+  - Updated `@cumulus/db/search` `GranuleSearch` query builder to prepend the partition key
+    `collection_cumulus_id` to sort orders when collection filters are present.
+
+### Changed
+- **CUMULUS-4789** Update Docusaurus to latest version - 3.10
+
+- **CSD-104**
+  - `PVLNumeric` now stores the original string value as `rawValue` before converting to `Number()`, preserving precision for large numeric strings.
+  - Fixed `PDRParsingError` when a PDR contains an MD5 `FILE_CKSUM_VALUE` that is an unquoted all-decimal string (e.g. `73806951753129206387143405718909`). The PVL parser previously classified such values as numeric, causing precision loss via JavaScript's `Number()` conversion. The original string is now preserved via `PVLNumeric.rawValue` and used for MD5 checksum validation.
+  - MD5 checksum values are now validated as 32-character hex strings, providing a clearer error message for values that are not valid MD5 hashes.
+
+- **CUMULUS-4576** Upgrade Cumulus to use the latest version of TEA (3.0.0)
+  ** UPGRADE NOTE: When upgrading the TEA module version, use a two-phase apply to prevent rollback failures
+  caused by Terraform destroying old lambda S3 objects before the CloudFormation stack update completes.
+
+  #### Migration Notes
+
+  All core tasks that enqueue messages to launch workflows are updated to use collection defined cmrProvider. Any daac/consolidation tasks which perform the same function need to ensure they do the same.
+
+  Phase 1 — upload new S3 objects and update CF stack (keeps old S3 objects intact as rollback targets if the CF update fails):
+   ````
+   terraform apply \
+     -target=module.thin_egress_app.aws_s3_object.cloudformation_template \
+     -target=module.thin_egress_app.aws_s3_object.lambda_source \
+     -target=module.thin_egress_app.aws_s3_object.lambda_code_dependency_archive \
+     -target=module.thin_egress_app.aws_s3_bucket.lambda_source \
+     -target=module.thin_egress_app.aws_cloudformation_stack.thin_egress_app \
+     -var-file=env/sandbox.tfvars
+   ````
+  Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
+  ````
+  terraform apply -var-file=env/sandbox.tfvars
+  ````
+
+- **CUMULUS-4788**
+  - split replication service into multiple services, one for each replication table group
+- **CUMULUS-4534**
+  - collection translate functions pass cmr_provider/cmrProvider back and forth
+  - sf-scheduler lambda function uses collection cmr_provider to fill provider in cmr section of message template meta
+  - enqueueParsePdrMessage, enqueueGranuleIngestMessage, enqueueWorkflowMessage also use collection cmr_provider to fill provider in cmr section of message template meta
+  - enqueueWorkflowMessage (used in queue-workflow task) uses collection cmr_provider to fill provider in cmr section of message template meta
+  - enqueueParsePdrMessage (used in queue-pdrs task) uses collection cmr_provider to fill provider in cmr section of message template meta
+  - enqueueGranuleIngestMessage (used in queue-granules task) uses collection cmr_provider to fill provider in cmr section of message template meta
+- **CUMULUS-4567**
+  - Add SQL and TypeScript migration files to alter the executions_cumulus_id sequence type.
+
+### Fixed
+
+- **Security Vulnerabilities**
+  - Upgraded package `lodash` to version 4.18.1.
+  - Updated package overrides to address CVEs GHSA-43fc-jf86-j433 and GHSA-r5fr-rjxr-66jc.
+  - added a `webpack` override to `/website/package.json` due to docusaurus conflicts
+  - Upgraded package `uuid` to version ^11.1.1.
+  - Upgraded package `tmp` to address https://github.com/advisories/GHSA-ph9p-34f9-6g65
+- **CSD-100**
+  - made changes to the `PrivateApiLambda` and `ApiEndpoints` lambdas to ensure the environment variables
+    are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported
+- **CUMULUS-4606**
+  - Added prefix to IAM resource names to prevent collisions from multiple deployments in sandbox environment
+- **CUMULUS-4844**
+  - Fixed `@cumulus/db` `BaseSearch.shouldEstimateRowcount()` to compare against SQL generated
+    by `baseCountQuery()` instead of a hardcoded query string, ensuring accurate detection of table count queries.
+- **CUMULUS-4874**
+  - Fixed `@cumulus/api` `endpoints/rules/patchRule` to delete old Kinesis and SNS resources prior
+    to allocating new resources.
+  - Refactored `@cumulus/api` `addSnsTrigger` to verify active Lambda permissions before adding permission.
+  - Updated snsRuleSpec.js integration test to verify that the updated rule with an existing
+    subscription topic correctly triggers workflows.
+  - Updated `packages/test-data` .nc mock granule files to match the checksums defined in their
+    signal validation files.
+
+## [v21.3.5] 2026-06-02
+
+Please note changes in 21.3.5 may not yet be released in future versions, as this is a backport and patch release on the 21.3.x series of releases. Updates that are included in the future will have a corresponding CHANGELOG entry in future releases..
+
+### Changed
+
+- **CSD-99**
+  - Changed the `CMR` class to a singleton
+  - Changed `cmr-utils` functions that call the `CMR` class functions to retry upon 401 authentication failures
+  - Added functions `checkRefreshLaunchpadToken` and `refreshLaunchpadToken` to the `CMR` class to be invoked upon a 401 authentication failure which removes and/or retrieves a valid launchpad token
+  - Added functions to the `launchpad-auth` package which adds a lock file for token creation, removes an invalid token, and checks s3 for the token and lock file
+
+### Fixed
+
+- **CUMULUS-4874**
+  - Fixed `@cumulus/api` `endpoints/rules/patchRule` to delete old Kinesis and SNS resources prior
+    to allocating new resources.
+  - Refactored `@cumulus/api` `addSnsTrigger` to verify active Lambda permissions before adding permission.
+  - Updated snsRuleSpec.js integration test to verify that the updated rule with an existing
+    subscription topic correctly triggers workflows.
+  - Updated `packages/test-data` .nc mock granule files to match the checksums defined in their
+    signal validation files.
+
+## [v21.3.4] 2026-05-12
+
+Please note changes in 21.3.4 may not yet be released in future versions, as this is a backport and patch release on the 21.3.x series of releases. Updates that are included in the future will have a corresponding CHANGELOG entry in future releases..
+
+- **CSD-102**
+  - Refactored `aws_s3_bucket_lifecycle_configuration` to support user-defined rules via Terraform variables.
+  - Included configuration examples for `aws_s3_bucket_lifecycle_configuration` in the [documentation](https://nasa.github.io/cumulus/docs/configuration/lifecycle-policies).
+- **CSD-104**
+  - `PVLNumeric` now stores the original string value as `rawValue` before converting to `Number()`, preserving precision for large numeric strings.
+  - Fixed `PDRParsingError` when a PDR contains an MD5 `FILE_CKSUM_VALUE` that is an unquoted all-decimal string (e.g. `73806951753129206387143405718909`). The PVL parser previously classified such values as numeric, causing precision loss via JavaScript's `Number()` conversion. The original string is now preserved via `PVLNumeric.rawValue` and used for MD5 checksum validation.
+  - MD5 checksum values are now validated as 32-character hex strings, providing a clearer error message for values that are not valid MD5 hashes.
+- **CUMULUS-4566**
+  - Added logging for failed granules with granules writes vs just having an aggregate error, for better tracking of failures
+- **CUMULUS-4789**
+  - Update Docusaurus to latest version - 3.10
+- **async-operations-update**
+  - Updated Async Operation container to new version 57, `cumuluss/async-operation:57`. Users should update their references to `async-operation` with the new version.
+
+### Fixed
+
+- **Security Vulnerabilities**
+  - Upgraded package `uuid` to version ^11.1.1.
+- **CUMULUS-4844**
+  - Fixed `@cumulus/db` `BaseSearch.shouldEstimateRowcount()` to compare against SQL generated
+    by `baseCountQuery()` instead of a hardcoded query string, ensuring accurate detection of table count queries.
+
+## [v21.3.3] 2026-04-10
+
+- Upgraded package `lodash` to version 4.18.1.
+
+- **CUMULUS-4576** Upgrade Cumulus to use the latest version of TEA (3.0.0)
+  ** UPGRADE NOTE: When upgrading the TEA module version, use a two-phase apply to prevent rollback failures
+  caused by Terraform destroying old lambda S3 objects before the CloudFormation stack update completes.
+
+ Phase 1 — upload new S3 objects and update CF stack (keeps old S3 objects intact as rollback targets if the CF update fails):
+   ````terraform apply \
+     -target=module.thin_egress_app.aws_s3_object.cloudformation_template \
+     -target=module.thin_egress_app.aws_s3_object.lambda_source \
+     -target=module.thin_egress_app.aws_s3_object.lambda_code_dependency_archive \
+     -target=module.thin_egress_app.aws_s3_bucket.lambda_source \
+     -target=module.thin_egress_app.aws_cloudformation_stack.thin_egress_app \
+     -var-file=env/sandbox.tfvars
+   ````
+ Phase 2 — full apply to clean up old S3 objects and apply remaining changes:
+````terraform apply -var-file=env/sandbox.tfvars````
+
+### Changed
+
+- **CSD-100**
+  - made changes to the `PrivateApiLambda` and `ApiEndpoints` lambdas to ensure the environment variables
+    are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported
+- **CUMULUS-4567**
+  - Add SQL and TypeScript migration files to alter the executions_cumulus_id sequence type.
+
+## [v21.3.2] 2026-03-20
+
 ### Migration Notes
 
-- This release updates all core integration deployments to target [cumulus-message-adapter v1.5.0](https://github.com/nasa/cumulus-message-adapter/releases/tag/v1.5.0).  It is suggested that users update their deployment to utilize the updated CMA.  Updates are *not* required for compatibility in custom lambdas.
+- **CUMULUS-4395 Core CnmResponse task lambda log group import**
+  - The lambda function name and log group name for this task are
+  `<prefix>-CnmResponse` which might conflict with the non-core version of
+  the task if you set that up in your terraform. In order to successfully deploy
+  the core task you may need to either:
+    - Delete the existing lambda and log group or
+    - Import the existing lambda and/or log group to allow terraform to modify
+    them.
+    ```
+    terraform import module.cumulus.module.ingest.module.cnm_response_task.aws_cloudwatch_log_group.cnm_response_task /aws/lambda/<prefix>-CnmResponse
+    terraform import module.cumulus.module.ingest.module.cnm_response_task.aws_lambda_function.cnm_response_task arn:aws:lambda:us-east-1:<account-number>:function:<prefix>-CnmResponse
+    ```
+
+    **NOTE: For cumulus core developer ci stacks you only need to import the log
+    group, since the lambda deployed in the example/cumulus-tf directory will be
+    renamed automatically.**
 
 ### Notable Changes
 
+- **CSD-85**
+  - Changed `update-granules-cmr-metadata-file-links` task config to accept a variable `excludeDataGranule`
+    for whether or not to add or update a `Granule.DataGranule` to the granule's metadata, for users who do not want one added or updated from what their granule metadata already is (defaults to `false`). See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
+
+- **CSD-91**
+  - Added a task config var to update-granules-cmr-metadata-file-links `updateGranuleIdentifiers` for whether or not to update the Granule metadata's identifiers and `GranuleUR`, defaults to true. See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
+
+### Breaking Changes
+
+- **CUMULUS-4107**
+  - Changed "_doc" type to "undefined" for ElasticSearch v8.x query parameter . The ES client will omit undefined values from the request. This doesn't touch the other callers.
+- **CUMULUS-4473**
+  - Updated Granules Bulk Operations API endpoints to accept a list of granuleIds instead of
+    granule objects in the payload.
+  - Updated `/executions/search-by-granules` and `/executions/workflows-by-granules` endpoints
+    to accept granuleIds instead of granule objects in the payload.
+
+### Added
+
+- **CUMULUS-4564**
+  - Added private_api_lambda_arn as an output in the Cumulus terraform module
+
+- **CUMULUS-4473**
+  - Updated Granules Bulk Operations API endpoints to support `granuleInventoryReportName` and
+    `s3GranuleIdInputFile` in the payload. `batchSize` added as an optional parameter for
+    processing granules from the file options.
+- **CUMULUS-4388**
+  - Added cnm_to_cma task (lambda).
+  - Original cnm_to_cma was written in Java.  Converted to Python.
+- **CUMULUS-4382**
+  - Migrated the granule-invalidator task to the `tasks` directory as part of a coreification task in support of providing rolling archive functionality.
+- **CUMULUS-4385**
+  - Added supporting Terraform for the granule-invalidator task that allows it to be included in the Cumulus terraform zipfile and deployed with Cumulus.
+  - Hard-coded values for architecture and python version which will later be dynamically referenced by a top-level build config.
+- **CUMULUS-4394**
+  - Added python code for CnmResponse task adapted from https://github.com/podaac/cumulus-cnm-response-task
+- **CUMULUS-4395**
+  - Added supporting Terraform for the CnmResponse task that allows it to be included in the Cumulus terraform zipfile and deployed with Cumulus.
+- **CUMULUS-4352**
+  - Implemented multi-part download support for checksum computation in addMissingFileChecksums task.
+- **CUMULUS-4542**
+  - Created the `aws-api-proxy` coreified task, which provides the functionality to post a list of CNM messages to a specified SNS topic.
+- **CUMULUS-4517**
+  - Added the `@cumulus/db/s3search` module to enable Cumulus record search via S3-backed tables.
+    The S3Search subclasses inherit from search/BaseSearch, allowing them to reuse existing query
+    logic while executing search queries on DuckDB and providing custom record translation.
+  - Updated the `@cumulus/db/search` module to build queries compatible with both PostgreSQL and DuckDB.
+  - Updated the `@cumulus/db/search` module to support searching on nested JSON fields.
+  - Updated the `@cumulus/db/translate` `translatePostgres*Record*ToApi*Record*` functions to
+    correctly handle query results from both PostgreSQL and DuckDB.
+- **CUMULUS-4543**
+  - Added supporting Terraform for the aws_api_proxy task
+  - Added aws_api_proxy output to the Cumulus Terraform module
+- **CUMULUS-4544**
+  - Added integration tests for the aws_api_proxy task
+- **CUMULUS-4545**
+  - Created integration tests for get_cnm task
+- **CUMULUS-4546**
+  - Created IaC needed to support get_cnm task
+- **CUMULUS-4547**
+  - Added get_cnm task to tasks directory
+- **CUMULUS-4400**
+  - Added integration testing for CnmResponse task.
+  - Updated example workflows to include the exception message in the
+  `WorkflowFailed` state.
+- **CUMULUS-4427**
+  - Added pdr-cleanup task into cumulus core from ASDC
+- **CUMULUS-4563**
+  - Added a Github action to generate requirements.txt files from coreified uv.lock files
+
+### Changed
+
+- **CUMULUS-4473**
+  - Updated Granules Bulk Operations return consistent output formats across different bulk opertions
+    (previously, some bulk operation aggregated errors while others returned per-granule errors)
+  - Removed the `getUniqueGranuleByGranuleId` and `getGranuleByUniqueColumns` functions from the
+    `@cumulus/db` package, since a single granule record can be retrieved using a unique `granule_id`.
+- **CUMULUS-4384**
+  - Added granule-invalidator workflow deployment and tests to the example deployment.
+  - Resolved several integration issues with the granule-invalidator lambda.
+  - Updated packaging script for granule-invalidator to use `uv pip install` instead of `uv sync`.
+  - Added `private_api_lambda_arn` output to the archive module and `private_api_lambda_arn` variable to the ingest module.
+- **CUMULUS-4472**
+  - added `concurrency` utilization by `pMap` for granule `bulkOperations` `applyWorkflowToGranule`, which previously was missing
+  - allow `concurrency` and `maxDbConnections` to be passed into granule `bulkOperations` and `bulkReingest` endpoints, which previously was only available for `bulkDelete`
+  - updated enforcement of granule bulk operations endpoints to accept exactly one of `granules, query, granuleInventoryReportName, or s3GranuleIdInputFile`
+- **CSD-85**
+  - Changed `update-granules-cmr-metadata-file-links` task config to accept a variable `excludeDataGranule`
+    for whether or not to add or update a `Granule.DataGranule` to the granule's metadata, for users who do not want one added or updated from what their granule metadata already is (defaults to `false`). See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
+- **CUMULUS-4570**
+  - Update corified tasks to use the common cumulus-task module
+  - Rename tasks to use PascalCase and update casing of acronyms to match existing core tasks
+    | old | new
+    | --- | ---
+    | aws-api-proxy | AwsApiProxy
+    | CNMToCMA | CnmToCma
+    | granule-invalidator-task | GranuleInvalidator
+- **CUMULUS-4599**
+  - Added the ability to easily modify version numbers for all python packages in order to keep them in sync with the Cumulus version.
+- **CUMULUS-4562**
+  - Upgraded lerna to v9.
+  - Updated monorepo configuration and root package.json to align with Lerna v9.
+  - Removed prepare scripts from all package-level package.json files to prevent unintended lifecycle execution during install.
+  - Updated CI (Docker + Bamboo) to ensure compatibility with the new Lerna version.
+  - Applied necessary dependency and script adjustments across affected packages.
+  - Updated the markdownlint-cli package and fixed linting errors or disabled specific rules.
+  - Fixed security vulnerabilities related to minimatch, uuid, fast-xml-parser packages etc.
+  - Replaced legacy querystring module with URLSearchParams.
+- **CSD-91**
+  - Added a task config var to update-granules-cmr-metadata-file-links `updateGranuleIdentifiers` for whether or not to update the Granule metadata's identifiers and `GranuleUR`, defaults to true. See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
+
+### Fixed
+
+- **CUMULUS-4564**
+  - hotfix for a terraform deployment issue found in the granule invalidator workflow causing the PrivateApiLambda to not be recreated
+- **CUMULUS-4516**
+  - Updated sftp-client to explicitly tear down stream in sftp-client/syncFromS3
+  - Updated sftp-client to warn/log on `No response from server` errors in `end` method
+- **CUMULUS-4608**
+  - Fixed bug where workflow list endpoint /workflows would error if a workflow field was undefined.   The API response now returns null for undefined fields and the sort method converts the value to string before sorting.
+- **CUMULUS-4566**
+  - Updated AJV to ^8.18.0
+    - Updated task components to resolve malformed/errant task schemas in the following lambdas:
+      - SyncGranules
+      - SendPan
+      - QueueGranules
+      - MoveGranules
+      - LzardsBackup
+      - ChangeGranuleCollectionS3
+  - Update aws-sdk versions to ^3.993.0
+
+## [v21.3.1] 2026-02-16
+
+### Added
+
+- **CUMULUS-4498**
+  - Added `states:StartExecution` action to the `<prefix>-steprole` IAM role.
+
+### Changed
+
+- **CUMULUS-4514**
+  - Pinned fast-xml-parser at 5.3.4 for @aws-sdk/xml-builder due to a security vulnerability.
+
+## [v21.3.0] 2026-01-26
+
+### Migration Notes
+
+Please complete the following steps before upgrading Cumulus.
+
+- **CUMULUS-4459 New index added to the granules table to improve Dashboard performance**
+  - The fix introduced in CUMULUS-4459 requires a manual database update in the production environment.
+  This step ensures the new index is created successfully, even in the unlikely event that the database-migration
+  Lambda function did not complete the index creation before timing out.
+
+  Please follow the standard procedures for running a production database migration, and execute the following SQL to create the index:
+
+  ```text
+  CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_collection_updated_idx ON granules (collection_cumulus_id, updated_at);
+  ```
+- **CUMULUS-4313**
+  - Update Async Operation container to new version 55, `cumuluss/async-operation:55`. Users should update their references to `async-operation` with the new version.
+  - Updated lerna dev-dependency to v8
+  - Added CI shim script to allow `lerna publish` to work with tar pinned to `^7.5.3`
+
+### Notable Changes
+
+- **CUMULUS-4459**
+  - Added new index to the granules table to improve Dashboard performance.
+- **CUMULUS-4446**
+  - Updated all node lambdas/Core build environments to utilize node v22.
+  - Updated cma-js dependency to 2.4.0
+- **CUMULUS-3574**
+  - Granule file writes are now atomic. Previously, some granule files could be written even if others failed;
+    now, if any granule file fails, none are written.
+- **CUMULUS-4087**
+  - Updated /refresh token endpoint and other functions to support automatic extension of cumulus dashboard user sessions by using iat claims and extending token expiration time. `MAX_SESSION_DURATION` environment variable defaults to 12 hours but can be overriden.
+- **CUMULUS-4272**
+  - The `tf-modules/cumulus-rds-tf` module now allows specifying an existing security group.
+    This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
+    reusing their existing security group, ensuring compatibility with existing
+    `data-persistence-tf` and `cumulus-tf` modules.
+
+### Added
+
+- **CUMULUS-4300**
+  - Added a new rate-limited consumer class in the Node/TypeScript code to control how many executions are submitted per second across multiple queues - helping improve and smooth out step function submission.
+    - Created a new ConsumerRateLimited class that is able to submit executions at a specified, even maximum rate as defined by rateLimitPerSecond. In order to enforce this limit across all throttled queues, this class accepts a list of queue URLs instead of a single throttled queue URL. Unlike its non-rate-limited counterpart, to simplify configuration, this new class does not limit the number of messages staged - that can now be indirectly controlled by increasing or decreasing the rate.
+    - Added calls to the new ConsumerRateLimited class in sf-starter.js in the handleRateLimitedEvent function. This uses the incrementAndDispatch dispatcher.
+    - Added a new Lambda named "sqs2sfThrottleRateLimited" that can be called with a list of queueURLs in an EventBridge scheduled rule.
+    - Added sqs2sfThrottleRateLimited_lambda_function_arn outputs to both ingest and cumulus modules.
+- **CUMULUS-4411**
+  - The `tf-modules/cumulus-rds-tf` module now supports enabling RDS slow query logging in CloudWatch.
+    By setting `db_log_min_duration_ms` to a positive value (in milliseconds) and `enabled_cloudwatch_logs_exports`
+    to `["postgresql"]`, RDS will log and export any database queries that take longer than that threshold.
+    The module also configures the required RDS extensions and parameters necessary for slow query instrumentation.
+
+### Changed
+
+- **CSD-82**
+  - Updated `/workflows/list` endpoint to accept `countOnly`, `prefix`, `infix`, `fields`, `limit`, and `order` query string params
+- **CUMULUS-4374**
+  - Updated example python Lambdas to utilize `uv` as their package manager. This change removes references to
+    pipenv. Developers should migrate to using `uv` to manage python dependencies and virtual envs which may
+    require reinstalling python libraries. This change also updates the names of the example python task services
+    because of a deployment race condition. These services are only used for integration tests.
+- **CUMULUS-4387**
+  - Updated linting scripts to include `ruff` and `mypy` and enable lint rules in repo level
+  `pyproject.toml` file.
+- **CUMULUS-4406**
+  - Changed the `limit` variable inside the pdr-status-check task from an input variable to a config variable
+- **CUMULUS-4430**
+  - Updated GitHub Actions to run `ruff` linting on PRs.
+  - Updated GitHub Actions to run `eslint`, `markdownlint`, and `npm-package-json-lint` on PRs.
+- **CUMULUS-4433**
+  - Adds pre-commit config and hooks to the repository. Developers are encouraged to install pre-commit and read
+  the [pre-commit setup docs](./docs/development/pre-commit-setup.md) to ensure they have the correct setup.
+- **CUMULUS-4438**
+  - Made `min_capacity` and `max_capacity` configurable in example/rds-cluster-tf
+  - Made `archive_api_users` configurable in example/cumulus-tf
+- **CSD-61**
+  - Updated writeGranuleFromApi() endpoint to allow createdAt and updatedAt fields to be null.
+- **CUMULUS-4436**
+  - Created new documentation files for language best practices `docs/development/python-best-practices.md` and `docs/development/typescript-best-practices.md`.
+  - Updated documentation file `docs/development/quality-and-coverage.md` to be more repo wide and reference language best practices.
+  - Updated `docs/adding-a-task.md` to include instructions and expectations when adding a task.
+- **OTHER**
+  - Corrected misspelling in README.md related to installing `uv`.
+  - Added override for `tar` in package.json.
+
+### Fixed
+
+- **CUMULUS-4486**
+  - Fixed a small bug with `rulesHelpers` in which `rule.rule.meta.allowProviderMismatchOnRuleFilter` was erroring due to
+    database validation errors to instead refer to `rule.meta.allowProviderMismatchOnRuleFilter`
+  - Added `allowProviderMismatchOnRuleFilter` to the `meta` field of `rules` in `/api/lib/schemas`s
+- **CUMULUS-4458**
+  - Fixed a small bug with `message_consumer` lambda env and function variable names to match so the lambda env var `allowProviderMismatchOnRuleFilter` can be properly used when set
+
+## [v21.2.1] 2025-03-17
+
+### Notable Changes
+- **CSD-85**
+  - Changed `update-granules-cmr-metadata-file-links` task config to accept a variable `excludeDataGranule`
+    for whether or not to add or update a `Granule.DataGranule` to the granule's metadata, for users who do not want one added or updated from what their granule metadata already is (defaults to `false`). See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
+
+- **CSD-91**
+  - Added a task config var to update-granules-cmr-metadata-file-links `updateGranuleIdentifiers` for whether or not to update the Granule metadata's identifiers and `GranuleUR`, defaults to true. See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
+
+### Changed
+
+- **CSD-85**
+  - Changed `update-granules-cmr-metadata-file-links` task config to accept a variable `excludeDataGranule`
+    for whether or not to add or update a `Granule.DataGranule` to the granule's metadata, for users who do not want one added or updated from what their granule metadata already is (defaults to `false`). See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
+
+- **CSD-91**
+  - Added a task config var to update-granules-cmr-metadata-file-links `updateGranuleIdentifiers` for whether or not to update the Granule metadata's identifiers and `GranuleUR`, defaults to true. See [update-granules-cmr-metadata-file-links](https://github.com/nasa/cumulus/tree/master/tasks/update-granules-cmr-metadata-file-links#readme) for more details.
+
+## [v21.2.0] 2025-12-06
+
+### Migration Notes
+
+- This release updates all core integration deployments to target [cumulus-message-adapter v2.0.5](https://github.com/nasa/cumulus-message-adapter/releases/tag/v2.0.5).  It is suggested that users update their deployment to utilize the updated CMA.  Updates are *not* required for compatibility in custom lambdas.
+
+### Notable Changes
+
+- **CUMULUS-3574**
+  - Granule file writes are now atomic. Previously, some granule files could be written even if others failed;
+    now, if any granule file fails, none are written.
 - **CUMULUS-4124**
   When these changes are deployed, if no action is taken to reconfigure the cron, it will run once per day in the early morning, archiving
 
   - 100k granules
   - 100k executions
   - that are more than 1 year old.
-  
+
   Being archived changes nothing about the record except to set a boolean flag (archived=true). this behavior can be reconfigured or turned off entirely. see features/record_archival.md for more details.
+- **CUMULUS-4272**
+  - The `tf-modules/cumulus-rds-tf` module now allows specifying an existing security group.
+    This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
+    reusing their existing security group, ensuring compatibility with existing
+    `data-persistence-tf` and `cumulus-tf` modules.
 
 ### Added
 
+- **CUMULUS-4032**
+  - Added S3 jitter functionality to prevent AWS S3 SlowDown errors during high-concurrency operations
+  - Added `sync_granule_s3_jitter_max_ms` Terraform variable to configure random jitter delay (0-59000ms) for SyncGranule task
+  - S3 operations in `@cumulus/aws-client` now support optional jitter via `S3_JITTER_MAX_MS` environment variable
+  - Jitter is applied to: `headObject`, `putObject`, `copyObject`, `getObject`, `downloadS3File`, `promiseS3Upload`, and `multipartCopyObject`
 - **CUMULUS-4124**
   - Add api endpoint `granules/archive` to archive granules
   - Add api endpoint `executions/archive` to archive executions
   - Task lambda to call above api endpoints with configuration
   - Add cron scheduler to call above endpoints and archive old records
+- **CUMULUS-4272**
+  - Added `input_security_group_id` variable to `tf-modules/cumulus-rds-tf` module to allow
+    specifying an existing security group when creating or restoring an Aurora PostgreSQL RDS cluster.
+- **CUMULUS-4354**
+  - Added an optional terraform-configurable lambda level env variable `allow_provider_mismatch_on_rule_filter` to `message-consumer` and `sqs-message-consumer` to check
+  whether to consider rule/message provider mismatches
+  - Added a `rule.meta.allowProviderMismatchOnRuleFilter` check to `filterRulesByRuleParams` as a rule-level fallback to check whether to consider rule/message provider mismatches for the specific rule
 
 ### Changed
 
-
+- **CUMULUS-3574**
+  - Updated `@cumulus/api/lib/writeRecords/write-granules` to write all granule files in a single batch.
+- **CUMULUS-4188**
+  - Updated `example/cumulus-tf/orca.tf` to use v10.1.5
+- **CUMULUS-4244**
+  - Improve logging for Ingest Granules
+    - Upgrade log level from debug to error for 403/401 errors
+    - Add detailed error context (status code, error type, bucket, key)
+    - Add actionable remediation suggestions for permission issues
+    - Add try-catch in write-granules.js for better error context
+- **CUMULUS-4271**
+  - Updated release instructions to include schema updates
 - **CUMULUS-4155**
   - Update Cumulus integration tests to utilize:
     - Cumulus Message Adapter: v2.0.5
@@ -47,8 +798,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-4200**
   - updated metrics_es_host terraform variable description and validation
   - Users should ensure that the metrics_es_host does not include `https://`
-- **CUMULUS-4242**
-  - Skipped lzards api response assertions from lzards integration tests due to lzards api changes
 - **CUMULUS-4252**
   - Fixed `@aws-client/S3` unit test failures caused by stricter validation introduced in
     `@aws-sdk/lib-storage@3.896.0`
@@ -63,6 +812,260 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Moved `@cumulus/api/lib/utils.errorify` function to `@cumulus/errors` and updated it to remove circular reference
   - Used `errorify` instead of `JSON.stringify` for AWS errors
   - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
+
+### Fixed
+
+- **CUMULUS-4346**
+  - Updated package overrides for dev env to use `glob` "^11.1.0" to address reported CVE
+- **CUMULUS-4279**
+  - Updated the `ProvisionPostgresDatabase` Lambda to grant `create` and `usage` privileges
+    on the public schema of the user database to the database user.
+    This change is required because, starting with PostgreSQL 15, new databases assign ownership
+    of the public schema to the pg_database_owner role. Existing clusters upgraded from versions
+    prior to v15 preserve the previous ownership of the public schema.
+- **CUMULUS-4275**
+  - Fixed unit tests broken by updated HTTP error messages in got
+- **CUMULUS-4325**
+  - Fixed ECHO10 XML DataGranule element ordering to comply with CMR XSD schema requirements
+    - Updated `@cumulus/cmrjs` to use Map for guaranteed element ordering in
+      `updateEcho10XMLGranuleUrAndGranuleIdentifier`
+    - Modified integration test helpers to use `js2xmlparser` instead of `xml2js.Builder`
+      for correct XML serialization
+    - Added unit tests to verify ECHO10 schema element ordering
+    - Resolves CMR validation error when ProducerGranuleId appears out of sequence
+
+## [v21.0.0-echo10] 2025-11-19 - [BACKPORT]
+
+## Migration Notes
+
+Please note that this release is an out-of-cycle release, you cannot upgrade from it to the next release in the v21.0.x release series due to CUMULUS-4325 not being present in v21.0.1+.    Upgrades from this release should be done with care to ensure the target release includes these updates, either to a release following 21.1.0 *or* a release in 21.0.x series that includes CUMULUS-4325.
+
+v21.0.0 documentation should be used for this release.
+
+### Fixed
+
+- **CUMULUS-4356**
+  - Pin build-related lerna transitive dependency `make-fetch-happen` to 14.0.3 pending lerna upgrade/refactor
+  - Pin `npm-packlist`/`read-package-json` `glob` dependency to 8.1.0 pending lerna upgrade/refactor
+- **CUMULUS-4325**
+  - Fixed ECHO10 XML DataGranule element ordering to comply with CMR XSD schema requirements
+    - Updated `@cumulus/cmrjs` to use Map for guaranteed element ordering in
+      `updateEcho10XMLGranuleUrAndGranuleIdentifier`
+    - Modified integration test helpers to use `js2xmlparser` instead of `xml2js.Builder`
+      for correct XML serialization
+    - Added unit tests to verify ECHO10 schema element ordering
+    - Resolves CMR validation error when ProducerGranuleId appears out of sequence
+- **CUMULUS-4275**
+  - Fixed unit tests broken by updated HTTP error messages in got
+- **CUMULUS-4242**
+  - Updated @cumulus/lizards-api-client to include configured provider via `lzards_provider` env var in all queries
+  - Updated LZARDS integration tests to work with updated API client query requirements for API version 1.5.25
+
+- **CUMULUS-4059**
+  - Added new non-null column `producer_granule_id` to Postgres `granules`
+    table.
+  - Added `producerGranuleId` property to `granule` record schema.
+  - Updated `@cumulus` api/db/message packages to handle `producer_granule_id`
+    and `producerGranuleId`.
+  - Updated `@cumulus/api/lib/writeGranulesFromMessage` to set producerGranuleId
+    = granuleId if not set.
+  - Updated `queue-granules` task to set producerGranuleId = granuleId if not
+    set.
+- **CUMULUS-4061**
+  - Added GenerateUniqueGranuleId to @cumulus/ingest for use in generating a
+    hashed/'uniquified' granuleID
+- **CUMULUS-4062**
+  - Added `producerGranuleId` to `LzardsBackup` task component and lambda input/output schema
+  - Updated `LzardsBackup` task component to submit `producerGranuleId` for storage in the lzards record as a key in the `metadata` object.
+- **CUMULUS-4069**
+  - Added migration script and instructions to add the producer_granule_id column
+    to the granules table and populate it in the production environment.
+- **CUMULUS-4072**
+  - Updated `parse-pdr` task component to have the following behaviors:
+    - Always populate producerGranuleId from the incoming parsed granuleId
+    - If `uniquifyGranuleId` configuration value is set to true, parse-PDR will
+      update the granuleId for all found granules to have a unique granule hash
+      appended to the existing ID
+    - Updated `parse-pdr` such that if the `uniquifyGranuleId` configuration
+      parameter is not set to `true` , and a duplicate granuleId is created as
+      part of the output after passing the `granuleIdFilter`, the task will
+      throw with an error.
+  - Added `ingestFromPdrWithUniqueGranuleIdsSpec.js` to the spec tests to
+    demonstrate the ingest workflow works as expected with unique granuleIds and
+    producerGranuleIds set.
+- **CUMULUS-4073**
+  - Adds AddUniqueGranuleId task to `ingest` terraform module for deployment
+  with Core. This task will update a payload of existing granules to have
+  'uniquified' IDs and preserve the original identifier in the
+  `producerGranuleId` field
+- **CUMULUS-4074**
+  - Updated `IngestGranuleSuccessSpec`/`IngestUMMGSuccessSpec` to validate
+    producerGranuleId is populated in CMR post ingest
+  - Updated IngestGranuleSuccessSpec to include a `producerGranuleId` in the default test case
+  - Added ticket-relevant typing doc/ts-check updates to
+    `@cumulus/cmrjs/cmr-utils`
+  - Updated `updateCMRMetadata` to take `updateGranuleIdentifiers` configuration
+    flag/`producerGranuleId` such that that routine now will modify the CMR
+    metadata object with the correct `GranuleUR`/`ProducerGranuleId` values in
+    the CMR metadata.
+  - Added unit test/refactored mocks to use direct injection for `cmr-utils`
+  - Added `getCmrMetadata` helper to `@cumulus/integration-tests` to allow
+    access to the full CMR metadata object for verification of record metadata
+    fields
+  - Added `ApiFileGranuleIdOptional` to `@cumulus/types/api` for cases where an
+    ApiFile is being generated and refactored existing code to use this type
+    instead of custom relaxed typing
+  - Updates `update-granules-cmr-metadata-file-links` to use the updated `cmrjs`
+    logic to set producerGranuleId identifiers in the CMR metadata, either equal
+    to granuleId or the `producerGranuleID` set on the granule.
+  - Updates `@cumulus/tasks/sync-granule/GranuleFetcher` to allow and pass through an
+    incoming `granule.producerGranuleId`
+- **CUMULUS-4077**
+  - Updated `@cumulus/api/lib/ingest.reingestGranule` to only update the original granule
+    to 'queued' if the original payload contains the granule. This avoids a situation
+    where the original granule is updated to 'queued', but the reingest workflow
+    creates a new granule, leaving the original granule stuck in 'queued'.
+- **CUMULUS-4078**
+  - Added `getGranuleIdAndCollectionIdFromFile` query method to `@cumulus/db` to
+    retrieve granule and collection metadata from a file's S3 location.
+  - Added new API route `GET /granules/files/get_collection_and_granule_id/:bucket/:key` in `@cumulus/api` to
+    return the granule ID and collection ID associated with a file.
+  - Added `getFileGranuleAndCollectionByBucketAndKey` method to
+    `@cumulus/api-client/granules` to allow use of new endpoint.
+  - Added integration and unit tests for the new DB query, API endpoint, and
+    client method.
+  - Updated `move-granules` task to validate cross-collection file collisions
+    using the new lookup logic when `checkCrossCollectionCollisions` is enabled.
+  - Update `@cumulus/db` to add getGranuleIdAndCollectionIdFromFile query method
+- **CUMULUS-4079**
+  - Added duplicate granule handling and related feature documentation, and updated related documentation to match
+  - Added `update-granules-cmr-metadata-file-links` task README
+- **CUMULUS-4080**
+  - Add documentation for duplicate granule handling and, specifically, Collection configuration for duplicates.
+  - Update `urlPathTemplate` to allow falling back from one null/undefined interpolated value to a second argument
+- **CUMULUS-4082**
+  - Updated example deployment to deploy `cnmResponse` lambda version
+    3.1.0-alpha.2-SNAPSHOT which utilizes `producerGranuleId`.
+  - Updated example deployment to deploy `cnmToGranule` lambda version 2.1.0.
+  - Added `FakeProcessing` task configuration `matchFilesWithProducerGranuleId`
+    to determine if the generated cmr file names should match
+    `granuleId` or `producerGranuleId`
+  - Updated `AddUniqueGranuleId` task configuration `hashLength` to accept
+    additional types and removed the use of `hashDepth`.
+  - Updated `FilesToGranules` task configuration
+    `matchFilesWithProducerGranuleId` to accept additional types.
+  - Updated `ParsePdr` task configuration `hashLength` to accept additional
+    types.
+  - Fixed `tf-modules/cumulus` `AddUniqueGranuleId` task output.
+  - Updated example deployment workflow `CNMExampleWorkflow` to uniquify
+    granuleIds based on collection configuration
+  - Added `KinesisTestTriggerWithUniqueGranuleIdsSpec.js` to the spec test to
+    demonstrate that the CNM ingest workflow ingests granules with unique
+    granuleIds and producerGranuleIds set, and that CnmResponse sends responses
+    using producerGranuleIds
+- **CUMULUS-4085**
+  - Added config option for files-to-granules task to use `producerGranuleId`
+    when mapping files to their granules.
+- **CUMULUS-4089**
+  - Add integration testing for duplicate granule workflows. This includes new
+    specs and workflows in the `ingestGranule`, `discoverGranules`,
+    `lzardsBackup`, `cnmWorkflow`, and `orca` specs.
+- **CUMULUS-4110**
+  - Added the `workflow_configurations` variable to the `tf-modules/ingest` and
+    `tf-modules/cumulus` modules.
+    The property `sf_event_sqs_to_db_records_types` has been added to
+    `workflow_template.json` under the `cumulus_meta` field to control which record
+    types should be written to the database during different workflow execution statuses.
+    Currently, both "execution" and "pdr" must be written to the database, so the
+    record type list must include both.
+  - Updated the `SfSqsReport` task to set `meta.reportMessageSource` in the Cumulus message.
+  - Updated the `@cumulus/api/sfEventSqsToDbRecords` lambda to determine which
+    record types ("execution", "granule", "pdr") should be written to the database based on the
+    `cumulus_meta.sf_event_sqs_to_db_records_types` and `meta.reportMessageSource` fields.
+    By default, all record types will be written to the database.
+  - Added `@cumulus/api/lib.writeRecords.writeGranuleExecutionAssociationsFromMessage`
+    to write granule-execution associations from message.
+  - Updated the `@cumulus/integration-tests` `cmr.generateAndStoreCmrXml` to
+    apply `matchFilesWithProducerGranuleId` when generaing `OnlineAccessURL`.
+- **CUMULUS-4119**
+  - Added assertions in `KinesisTestTriggerWithUniqueGranuleIdsSpec` to cover "duplicate"
+    Granules in separate Collections.
+- **CUMULUS-4162**
+  - Added an optional `includeTimestampHashKey` parameter to the `generateUniqueGranuleId` function in the `@cumulus/ingest/granule`, with a default value of `false`.
+  - Added an optional `includeTimestampHashKey` configuration to the `add-unique-granuleId` and `parse-pdr tasks`, also with a default value of `false`.
+  - Added a documentation page titled `"Generate Unique GranuleId"` to explain the algorithm for generating unique `granuleIds`.
+- **CUMULUS-4028**
+  - Update AddUniqueGranuleId task to output the input payload in addition to the modified granules.
+  - Added 'unique' version of ingest_and_publish granule workflow for 'uniquiy' feature ingest tests
+- **CUMULUS-4209**
+  - Updated the `producer_granule_id` migration script to disable autovacuum before the
+    migration and re-enable it afterward to improve performance.
+- **CUMULUS-4205**
+  - Add S3 Replicator lambda ARN to s3-replicator outputs
+
+## [v21.0.1] 2025-10-16
+
+### Changed
+
+- **CUMULUS-4191**
+  - Updated `messageConsumer` and `sqsMessageConsumer` Lambdas to apply rule filtering
+    based on the provider from the record message.
+  - Updated `messageConsumer` lambda handler to async/await style
+
+- **CUMULUS-4242**
+  - Updated @cumulus/lizards-api-client to include configured provider via `lzards_provider` env var in all queries
+  - Updated LZARDS integration tests to work with updated API client query requirements for API version 1.5.25
+
+- **CUMULUS-4252**
+  - Fixed `@aws-client/S3` unit test failures caused by stricter validation introduced in
+    `@aws-sdk/lib-storage@3.896.0`
+
+- **CUMULUS-4254**
+  - Moved `@cumulus/api/lib/utils.errorify` function to `@cumulus/errors` and updated it to remove circular reference
+  - Used `errorify` instead of `JSON.stringify` for AWS errors
+  - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
+
+## [v20.3.3] 2025-04-13 [BACKPORT]
+
+Please note changes in 20.3.3 may not yet be released in future versions, as this is a backport and patch release on the 20.3.x series of releases. Updates that are included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Fixed
+
+- Upgraded package `lodash` to version 4.18.1.
+- **CSD-100**
+  - made changes to the `PrivateApiLambda` and `ApiEndpoints` lambdas to ensure the environment variables
+    are loaded after the handler invocation to circumvent `InvalidSignatureException` errors that were being reported
+
+## [v20.3.2] 2025-12-04 [BACKPORT]
+
+Please note changes in 20.3.2 may not yet be released in future versions, as this is a backport and patch release on the 20.3.x series of releases. Updates that are included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Added
+
+- **CUMULUS-4354**
+  - Added an optional terraform-configurable lambda level env variable `allow_provider_mismatch_on_rule_filter` to `message-consumer` and `sqs-message-consumer` to check
+  whether to consider rule/message provider mismatches
+  - Added a `rule.meta.allowProviderMismatchOnRuleFilter` check to `filterRulesByRuleParams` as a rule-level fallback to check
+  whether to consider rule/message provider mismatches for the specific rule
+
+### Changed
+
+- **CUMULUS-4272**
+  - The `tf-modules/cumulus-rds-tf` module now allows specifying an existing security group.
+    This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
+    reusing their existing security group, ensuring compatibility with existing
+    `data-persistence-tf` and `cumulus-tf` modules.
+
+### Fixed
+
+- **CUMULUS-4279**
+  - Updated the `ProvisionPostgresDatabase` Lambda to grant `create` and `usage` privileges
+    on the public schema of the user database to the database user.
+    This change is required because, starting with PostgreSQL 15, new databases assign ownership
+    of the public schema to the pg_database_owner role. Existing clusters upgraded from versions
+    prior to v15 preserve the previous ownership of the public schema.
+- **CUMULUS-4275**
+  - Fixed unit tests broken by updated HTTP error messages in got
 
 ## [v20.3.1] 2025-10-14
 
@@ -85,6 +1088,41 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Moved `@cumulus/api/lib/utils.errorify` function to `@cumulus/errors` and updated it to remove circular reference
   - Used `errorify` instead of `JSON.stringify` for AWS errors
   - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
+
+## [v20.2.3] 2025-12-01
+
+Please note changes in 20.2.3 may not yet be released in future versions, as this is a backport and patch release on the 20.2.x series of releases. Updates that are included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Notable Changes
+
+- **CUMULUS-4272**
+  - The `tf-modules/cumulus-rds-tf` module now allows specifying an existing security group.
+    This enhancement enables DAACs to migrate their existing RDS deployments to Aurora while
+    reusing their existing security group, ensuring compatibility with existing
+    `data-persistence-tf` and `cumulus-tf` modules.
+
+### Fixed
+
+- **CUMULUS-4279**
+  - Updated the `ProvisionPostgresDatabase` Lambda to grant `create` and `usage` privileges
+    on the public schema of the user database to the database user.
+    This change is required because, starting with PostgreSQL 15, new databases assign ownership
+    of the public schema to the pg_database_owner role. Existing clusters upgraded from versions
+    prior to v15 preserve the previous ownership of the public schema.
+- **CUMULUS-4275**
+  - Fixed unit tests broken by updated HTTP error messages in got
+
+### Added
+
+- **CUMULUS-4272**
+  - Added `input_security_group_id` variable to `tf-modules/cumulus-rds-tf` module to allow
+    specifying an existing security group when creating or restoring an Aurora PostgreSQL RDS cluster.
+
+- **CUMULUS-4354**
+  - Added an optional terraform-configurable lambda level env variable `allow_provider_mismatch_on_rule_filter` to `message-consumer` and `sqs-message-consumer` to check
+  whether to consider rule/message provider mismatches
+  - Added a `rule.meta.allowProviderMismatchOnRuleFilter` check to `filterRulesByRuleParams` as a rule-level fallback to check
+  whether to consider rule/message provider mismatches for the specific rule
 
 ## [v20.2.2] 2025-10-08
 
@@ -114,13 +1152,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Migration Notes
 
-#### CUMULUS-4069 Update granules table to include producer_granule_id column
-
 Please follow the instructions before upgrading Cumulus
+
+#### CUMULUS-4069 Update granules table to include producer_granule_id column
 
 - The updates in CUMULUS-4069 require a manual update to the PostgreSQL database
   in the production environment. Please follow the instructions in
   [Update granules to include producer_granule_id](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-granules-to-include-producer_granule_id)
+
+#### CUMULUS-4123 Update granules table to include archived column
+
+- The updates in CUMULUS-4123 require a manual update to the PostgreSQL database, please follow the instructions in [Record Archival](https://nasa.github.io/cumulus/docs/next/features/record_archival) and [Archived Column Indexing](https://nasa.github.io/cumulus/docs/next/upgrade-notes/archived_column_indexing)
 
 ### Breaking Changes
 
@@ -276,11 +1318,16 @@ Please follow the instructions before upgrading Cumulus
 - **CUMULUS-4119**
   - Added assertions in `KinesisTestTriggerWithUniqueGranuleIdsSpec` to cover "duplicate"
     Granules in separate Collections.
+- **CUMULUS-4123**
+  - add "archived" column to granules and executions tables
+  - add "archived" field to associated data types and schemas
+  - add docs/upgrade-notes/archived_column_indexing.md docs page for database upgrade
+  - add docs/features/record_archival.md docs page for explanation
 - **CUMULUS-4162**
   - Added an optional `includeTimestampHashKey` parameter to the `generateUniqueGranuleId` function in the `@cumulus/ingest/granule`, with a default value of `false`.
   - Added an optional `includeTimestampHashKey` configuration to the `add-unique-granuleId` and `parse-pdr tasks`, also with a default value of `false`.
   - Added a documentation page titled `"Generate Unique GranuleId"` to explain the algorithm for generating unique `granuleIds`.
-- **CUMULUS-4028**
+- **CUMULUS-4208**
   - Update AddUniqueGranuleId task to output the input payload in addition to the modified granules.
   - Added 'unique' version of ingest_and_publish granule workflow for 'uniquiy' feature ingest tests
 - **CUMULUS-4209**
@@ -295,6 +1342,29 @@ Please follow the instructions before upgrading Cumulus
 
 - **CUMULUS-4205**
   - Add S3 Replicator lambda ARN to s3-replicator outputs
+
+## [v20.3.1] 2025-10-14  - [BACKPORT]
+
+### Changed
+
+- **CUMULUS-4191**
+  - Updated `messageConsumer` and `sqsMessageConsumer` Lambdas to apply rule filtering
+    based on the provider from the record message.
+  - Updated `messageConsumer` lambda handler to async/await style
+
+- **CUMULUS-4242**
+  - Updated @cumulus/lizards-api-client to include configured provider via `lzards_provider` env var in all queries
+  - Updated LZARDS integration tests to work with updated API client query requirements for API version 1.5.25
+
+- **CUMULUS-4252**
+  - Fixed `@aws-client/S3` unit test failures caused by stricter validation introduced in
+    `@aws-sdk/lib-storage@3.896.0`
+
+- **CUMULUS-4254**
+  - Moved `@cumulus/api/lib/utils.errorify` function to `@cumulus/errors` and updated it to remove circular reference
+  - Used `errorify` instead of `JSON.stringify` for AWS errors
+  - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
+
 
 ## [v20.3.0] 2025-08-18
 
@@ -329,6 +1399,28 @@ Please follow the instructions before upgrading Cumulus
   - Fix broken CreateReconciliationReportSpec test cleanup
 - **CUMULUS-4170**
   - Upgrade Node Docker image from buster to bullseye for a compatible debian version
+
+## [v20.2.2] 2025-10-08 - [BACKPORT]
+
+### Changed
+
+- **CUMULUS-4191**
+  - Updated `messageConsumer` and `sqsMessageConsumer` Lambdas to apply rule filtering
+    based on the provider from the record message.
+  - Updated `messageConsumer` lambda handler to async/await style
+
+- **CUMULUS-4242**
+  - Updated @cumulus/lizards-api-client to include configured provider via `lzards_provider` env var in all queries
+  - Updated LZARDS integration tests to work with updated API client query requirements for API version 1.5.25
+
+- **CUMULUS-4252**
+  - Fixed `@aws-client/S3` unit test failures caused by stricter validation introduced in
+    `@aws-sdk/lib-storage@3.896.0`
+
+- **CUMULUS-4254**
+  - Moved `@cumulus/api/lib/utils.errorify` function to `@cumulus/errors` and updated it to remove circular reference
+  - Used `errorify` instead of `JSON.stringify` for AWS errors
+  - Added required `collection` field to lzards api request in `LzardsBackupSpec` integration test to fix the bug in `CUMULUS-4242`
 
 ## [v20.2.1] 2025-08-14
 
@@ -370,11 +1462,6 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
 
 - **CUMULUS-4108**
   - Added standalone lambda function code to scan and terminate old instances when they pass their 90 day expiration
-- **CUMULUS-4123**
-  - add "archived" column to granules and executions tables
-  - add "archived" field to associated data types and schemas
-  - add docs/upgrade-notes/archived_column_indexing.md docs page for database upgrade
-  - add docs/features/record_archival.md docs page for explanation
 - **CUMULUS-3945**
   - Upgrade Aurora Postgresql engine from 13.12 to 17.4
 - **CUMULUS-4020**
@@ -1078,7 +2165,7 @@ degraded execution table operations.
 ### Fixed
 
 - **CUMULUS-3817**
-  - updated applicable @aws-sdk dependencies to 3.621.0 to remove inherited vulnerability from fast-xml-parser
+  - updated applicable @aws-sdk dependencies to 3.993.0 to remove inherited vulnerability from fast-xml-parser
 - **CUMULUS-3320**
   - Execution database deletions by `cumulus_id` should have greatly improved
     performance as a table scan will no longer be required for each record
@@ -6290,6 +7377,10 @@ the [release page](https://github.com/nasa/cumulus/releases)
   - Added `@cumulus/api-client/reconciliationReports`
 - **CUMULUS-1999**
   - Updated `@cumulus/common/util.deprecate()` so that only a single deprecation notice is printed for each name/version combination
+- **CUMULUS-4112**
+  - Updated `serveUtils.addGranules` to include writing granule files.
+- **CSD-84**
+  - Update error logging in `@cumulus/packages/cmr-client/searchConcept` to redact the authorization header value.
 
 ### Fixed
 
@@ -8979,11 +10070,37 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-
-[Unreleased]: https://github.com/nasa/cumulus/compare/v21.0.0...HEAD
-[v21.0.0]: https://github.com/nasa/cumulus/compare/v20.3.1...v21.0.0
+[Unreleased]: https://github.com/nasa/cumulus/compare/v22.4.0...HEAD
+[v22.3.5]: https://github.com/nasa/cumulus/compare/v22.3.5...v22.4.0
+[v22.3.5]: https://github.com/nasa/cumulus/compare/v22.3.4...v22.3.5
+[v22.3.4]: https://github.com/nasa/cumulus/compare/v22.3.3...v22.3.4
+[v22.3.3]: https://github.com/nasa/cumulus/compare/v22.3.2...v22.3.3
+[v22.3.2]: https://github.com/nasa/cumulus/compare/v22.3.1...v22.3.2
+[v22.3.1]: https://github.com/nasa/cumulus/compare/v22.3.0...v22.3.1
+[v22.3.0]: https://github.com/nasa/cumulus/compare/v22.2.5...v22.3.0
+[v22.2.5]: https://github.com/nasa/cumulus/compare/v22.2.4...v22.2.5
+[v22.2.4]: https://github.com/nasa/cumulus/compare/v22.2.3...v22.2.4
+[v22.2.3]: https://github.com/nasa/cumulus/compare/v22.2.2...v22.2.3
+[v22.2.2]: https://github.com/nasa/cumulus/compare/v22.2.1...v22.2.2
+[v22.2.1]: https://github.com/nasa/cumulus/compare/v22.2.0...v22.2.1
+[v22.2.0]: https://github.com/nasa/cumulus/compare/v22.1.1...v22.2.0
+[v22.1.1]: https://github.com/nasa/cumulus/compare/v22.0.0...v22.1.1
+[v22.0.0]: https://github.com/nasa/cumulus/compare/v21.3.5...v22.0.0
+[v21.3.5]: https://github.com/nasa/cumulus/compare/v21.3.4...v21.3.5
+[v21.3.4]: https://github.com/nasa/cumulus/compare/v21.3.3...v21.3.4
+[v21.3.3]: https://github.com/nasa/cumulus/compare/v21.3.2...v21.3.3
+[v21.3.2]: https://github.com/nasa/cumulus/compare/v21.3.1...v21.3.2
+[v21.3.1]: https://github.com/nasa/cumulus/compare/v21.3.0...v21.3.1
+[v21.3.0]: https://github.com/nasa/cumulus/compare/v21.2.1...v21.3.0
+[v21.2.1]: https://github.com/nasa/cumulus/compare/v21.2.0...v21.2.1
+[v21.2.0]: https://github.com/nasa/cumulus/compare/v21.0.1...v21.2.0
+[v21.0.1]: https://github.com/nasa/cumulus/compare/v21.0.0...v21.0.1
+[v21.0.0]: https://github.com/nasa/cumulus/compare/v20.3.3...v21.0.0
+[v20.3.3]: https://github.com/nasa/cumulus/compare/v20.3.2...v20.3.3
+[v20.3.2]: https://github.com/nasa/cumulus/compare/v20.3.1...v20.3.2
 [v20.3.1]: https://github.com/nasa/cumulus/compare/v20.3.0...v20.3.1
-[v20.3.0]: https://github.com/nasa/cumulus/compare/v20.2.2...v20.3.0
+[v20.3.0]: https://github.com/nasa/cumulus/compare/v20.2.3...v20.3.0
+[v20.2.3]: https://github.com/nasa/cumulus/compare/v20.2.2...v20.2.3
 [v20.2.2]: https://github.com/nasa/cumulus/compare/v20.2.1...v20.2.2
 [v20.2.1]: https://github.com/nasa/cumulus/compare/v20.2.0...v20.2.1
 [v20.2.0]: https://github.com/nasa/cumulus/compare/v20.1.2...v20.2.0

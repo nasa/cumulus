@@ -1,7 +1,7 @@
 data "aws_iam_policy_document" "replay_sqs_messages_policy" {
 
   statement {
-    actions   = [
+    actions = [
       "s3:GetObject",
       "s3:PutObject",
       "s3:DeleteObject"
@@ -28,12 +28,12 @@ data "aws_iam_policy_document" "replay_sqs_messages_policy" {
     resources = ["*"]
   }
 
-    statement {
-      actions = [
-        "sqs:SendMessage",
-        "sqs:GetQueueUrl",
-      ]
-      resources = ["arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*"]
+  statement {
+    actions = [
+      "sqs:SendMessage",
+      "sqs:GetQueueUrl",
+    ]
+    resources = ["arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*"]
   }
 }
 
@@ -57,14 +57,14 @@ resource "aws_lambda_function" "replay_sqs_messages" {
   function_name    = "${var.prefix}-replaySqsMessages"
   role             = aws_iam_role.replay_sqs_messages_role.arn
   handler          = "index.handler"
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   timeout          = lookup(var.lambda_timeouts, "replaySqsMessages", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "replaySqsMessages", 512)
 
   environment {
     variables = {
-      system_bucket                = var.system_bucket
-      stackName                    = var.prefix
+      system_bucket = var.system_bucket
+      stackName     = var.prefix
     }
   }
 
@@ -83,7 +83,7 @@ resource "aws_lambda_function" "replay_sqs_messages" {
 }
 
 resource "aws_cloudwatch_log_group" "replay_sqs_messages" {
-  name = "/aws/lambda/${var.prefix}-replaySqsMessages"
+  name              = "/aws/lambda/${var.prefix}-replaySqsMessages"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "replaySqsMessages", var.default_log_retention_days)
-  tags = var.tags
+  tags              = var.tags
 }

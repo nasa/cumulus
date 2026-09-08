@@ -5,7 +5,28 @@ These scripts (generate_db_records.js and generate_db_executions.js) are meant t
 ## Installation
 This can be installed with npm install in this directory (or will be installed as a part of cumulus when installing the whole of cumulus-core)
 
-generate_db_records.js and generate_db_executions.js are tested to run with both node v16.19.0 and v20.12.2
+generate_db_records.js and generate_db_executions.js are tested to run with both node v20/v22
+
+## Database Connection Environment Variables
+The following environment variables must be set in order for the script to connect to the database. For example:
+```sh
+PG_HOST=localhost \
+PG_PORT=9202 \
+PG_USER=dbuser \
+PG_PASSWORD=password \
+PG_DATABASE=prefix_db \
+node ./generate_db_records.js command_arguments
+```
+
+If you encounter the error `knex failed on attempted connection error: no pg_hba.conf entry for host`, you may need to enable SSL for the database connection.
+Set the following environment variables to force the client to use SSL/TLS and skip certificate validation:
+
+```sh
+NODE_TLS_REJECT_UNAUTHORIZED=0 \
+PGSSLMODE=require \
+```
+
+Set KNEX_DEBUG=true to enable debug logging and help diagnose connection issues.
 
 ## generate_db_records.js
 This is the default script for uploading bulk data to a cumulus database. it is granule oriented, handling files, executions and granule-executions with respect to granules and as such is well optimized for most database mocking applications. Its performance is dependent on there being a significant number (>= concurrency) of granules in order to parallelize well, and so will be sub-optimal for uploading only files, executions etc.
@@ -13,7 +34,7 @@ This is the default script for uploading bulk data to a cumulus database. it is 
 ### Configuration
 the script can be configured either through command line arguments or environment variables (or both), preferring command line arguments if both are supplied
 
-| Argument    | Environment | Default | Description | 
+| Argument    | Environment | Default | Description |
 | --- | :----: | :----: | ---: |
 | --collections <br>-c | COLLECTIONS | 1 | number of collections. number of granules will be <br> for *each* collection, not divided among them |
 | --granulesK <br> -g| GRANULES_K | 10 | number of granules, in thousands |
@@ -29,10 +50,9 @@ This script is designed up upload a large number of executions. it will also add
 ### Configuration
 the script can be configured either through command line arguments or environment variables (or both), preferring command line arguments if both are supplied
 
-| Argument    | Environment | Default | Description | 
+| Argument    | Environment | Default | Description |
 | --- | :----: | :----: | ---: |
 | --collections <br>-c | COLLECTIONS | 1 | number of collections. number of executions will be <br> for *each* collection, not divided among them |
 | --executionsK <br> -g| EXECUTIONS_K | 10 | number of executions, in thousands |
 | --concurrency <br> -C | CONCURRENCY | 1 | how many threads of parallelization <br> concurrency should usually be >100 |
 | --swallowErrors <br> -s|SWALLOW_ERRORS| true | swallow and move on from data data upload errors |
-

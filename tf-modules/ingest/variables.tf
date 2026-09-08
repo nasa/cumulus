@@ -54,18 +54,30 @@ variable "cumulus_message_adapter_lambda_layer_version_arn" {
 
 variable "custom_queues" {
   description = "Map of SQS queue identifiers to queue URLs"
-  type    = list(object({ id = string, url = string }))
-  default = []
+  type        = list(object({ id = string, url = string }))
+  default     = []
 }
 
 variable "default_s3_multipart_chunksize_mb" {
   description = "default S3 multipart upload chunk size in MB"
-  type = number
-  default = 256
+  type        = number
+  default     = 256
+}
+
+variable "allow_provider_mismatch_on_rule_filter" {
+  description = "optional variable to be used in message_consumer lambdas for disabling rule/message provider mismatches"
+  type        = bool
+  default     = false
 }
 
 variable "distribution_url" {
   type = string
+}
+
+variable "distribution_url_per_cmr_provider" {
+  description = "Map of CMR provider short_name to distribution endpoint URL. Used in consolidated deployments to route distribution URLs per Collection.cmrProvider. Falls back to distribution_url for any provider not listed."
+  type        = map(string)
+  default     = {}
 }
 
 variable "dynamo_tables" {
@@ -94,7 +106,7 @@ variable "lzards_launchpad_certificate" {
 }
 
 variable "launchpad_passphrase" {
-  type = string
+  type    = string
   default = ""
 }
 
@@ -153,6 +165,11 @@ variable "system_bucket" {
   type = string
 }
 
+variable "private_api_lambda_arn" {
+  description = "The ARN of the private API lambda function"
+  type        = string
+}
+
 variable "tags" {
   description = "Tags to be applied to managed resources"
   type        = map(string)
@@ -161,20 +178,20 @@ variable "tags" {
 
 variable "lambda_memory_sizes" {
   description = "Configurable map of memory sizes for lambdas"
-  type = map(number)
-  default = {}
+  type        = map(number)
+  default     = {}
 }
 
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
-  type = map(number)
-  default = {}
+  type        = map(number)
+  default     = {}
 }
 
 variable "throttled_queues" {
   description = "Array of configuration for custom queues with execution limits"
-  type    = list(object({
-    url = string,
+  type = list(object({
+    url             = string,
     execution_limit = number
   }))
   default = []
@@ -186,33 +203,44 @@ variable "vpc_id" {
 }
 
 variable "cloudwatch_log_retention_periods" {
-  type = map(number)
+  type        = map(number)
   description = "Optional retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"
-  default = {}
+  default     = {}
 }
 
 variable "default_log_retention_days" {
-  type = number
-  default = 30
+  type        = number
+  default     = 30
   description = "Optional default value that user chooses for their log retention periods"
 }
 
+variable "sync_granule_s3_jitter_max_ms" {
+  description = "Maximum random jitter in milliseconds to apply before S3 operations in SyncGranule task (0-59000). Set to 0 to disable jitter."
+  type        = number
+  default     = 0
+
+  validation {
+    condition     = var.sync_granule_s3_jitter_max_ms >= 0 && var.sync_granule_s3_jitter_max_ms <= 59000
+    error_message = "sync_granule_s3_jitter_max_ms must be between 0 and 59000 milliseconds."
+  }
+}
+
 variable "sqs_message_consumer_watcher_message_limit" {
-  type = number
-  default = 500
+  type        = number
+  default     = 500
   description = <<EOF
-    Number of messages the SQS message consumer Lambda will attempt to read from SQS in a single execution. 
+    Number of messages the SQS message consumer Lambda will attempt to read from SQS in a single execution.
     Note that increasing this value may result in a direct increase/decrease in triggered workflows. Users should
-    only adjust this value with the understanding of how it will impact the number of queued workflows in their 
+    only adjust this value with the understanding of how it will impact the number of queued workflows in their
     system.
   EOF
 }
 
 variable "sqs_message_consumer_watcher_time_limit" {
-  type = number
-  default = 60
+  type        = number
+  default     = 60
   description = <<EOF
-    Number of seconds the SQS message consumer Lambda will remain active and polling for new messages. Note that this value 
+    Number of seconds the SQS message consumer Lambda will remain active and polling for new messages. Note that this value
     should be less than the overall Lambda invocation timeout or else the Lambda may be terminated while still actively
     polling SQS. This value should be adjusted in conjunction with sqs_message_consumer_watcher_message_limit.
   EOF
@@ -259,13 +287,13 @@ variable "workflow_configurations" {
 
   validation {
     condition = alltrue([
-      for workflow in (
+      for workflow in(
         var.workflow_configurations.sf_event_sqs_to_db_records_types == null
         ? []
         : keys(var.workflow_configurations.sf_event_sqs_to_db_records_types)
       ) :
       alltrue([
-        for status in (
+        for status in(
           keys(var.workflow_configurations.sf_event_sqs_to_db_records_types[workflow])
         ) :
         contains(["running", "completed", "failed"], status) &&

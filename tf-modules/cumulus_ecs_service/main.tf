@@ -8,8 +8,8 @@ terraform {
 }
 
 locals {
-  cluster_name        = reverse(split("/", var.cluster_arn))[0]
-  full_name           = "${var.prefix}-${var.name}"
+  cluster_name = reverse(split("/", var.cluster_arn))[0]
+  full_name    = "${var.prefix}-${var.name}"
 }
 
 data "aws_region" "current" {}
@@ -39,8 +39,8 @@ resource "aws_ecs_task_definition" "default" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group  = aws_cloudwatch_log_group.default.name
-          awslogs-region = data.aws_region.current.name
+          awslogs-group         = aws_cloudwatch_log_group.default.name
+          awslogs-region        = data.aws_region.current.name
           awslogs-stream-prefix = var.name
         }
       }
@@ -59,7 +59,7 @@ resource "aws_ecs_task_definition" "default" {
 }
 
 resource "aws_cloudwatch_log_subscription_filter" "default" {
-  count = var.log_destination_arn != null ? 1 : 0
+  count           = var.log_destination_arn != null ? 1 : 0
   name            = "${local.full_name}-default"
   destination_arn = var.log_destination_arn
   log_group_name  = aws_cloudwatch_log_group.default.name

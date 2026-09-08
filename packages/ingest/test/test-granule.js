@@ -106,6 +106,7 @@ test.beforeEach(async (t) => {
   await S3.s3PutObject(params);
   await filePgModel.create(t.context.knex, {
     granule_cumulus_id: granuleCumulusId,
+    collection_cumulus_id: t.context.collectionCumulusId,
     bucket: internalBucket,
     key,
   });
@@ -488,6 +489,7 @@ test('moveGranuleFile moves a granule file and updates postgres', async (t) => {
   await S3.s3PutObject(params);
   await filePgModel.create(t.context.knex, {
     granule_cumulus_id: granuleCumulusId,
+    collection_cumulus_id: t.context.collectionCumulusId,
     bucket,
     key,
   });
@@ -517,6 +519,7 @@ test('moveGranuleFile moves a granule file and updates postgres', async (t) => {
 
   const pgFile = await filePgModel.search(t.context.knex, {
     granule_cumulus_id: granuleCumulusId,
+    collection_cumulus_id: t.context.collectionCumulusId,
     file_name: key,
   });
 

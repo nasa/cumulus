@@ -1,6 +1,9 @@
 {
   "default": true,
   "line-length": false,
+  "table-pipe-style": false,
+  "descriptive-link-text": false,
+  "table-column-style": false,
   "no-duplicate-header": false,
   "no-duplicate-heading": false,
   "ol-prefix": { "style": "ordered" },

@@ -29,6 +29,7 @@ export interface SQSMessage extends Message {
 }
 
 export const getQueueNameFromUrl = (queueUrl: string) => queueUrl.split('/').pop();
+export const getQueueOwnerAccountFromUrl = (queueUrl: string) => queueUrl.split('/')[queueUrl.split('/').length - 2];
 
 export const getQueueUrl = (sourceArn: string, queueName: string) => {
   const arnParts = sourceArn.split(':');
@@ -45,8 +46,11 @@ export const getQueueUrlByName = async (queueName: string) => {
 /**
  * Create an SQS Queue.  Properly handles localstack queue URLs
  */
-export async function createQueue(QueueName: string) {
-  const command = new CreateQueueCommand({ QueueName });
+export async function createQueue(QueueName: string, Attributes?: Record<string, string>) {
+  const command = new CreateQueueCommand({
+    QueueName,
+    ...(Attributes && { Attributes }),
+  });
 
   const createQueueResponse = await sqs().send(command)
     .catch((error) => {
@@ -181,12 +185,16 @@ export const deleteSQSMessage = (QueueUrl: string, ReceiptHandle: string) => {
  */
 export const sqsQueueExists = async (queueUrl: string) => {
   const QueueName = getQueueNameFromUrl(queueUrl);
+  const QueueAccount = getQueueOwnerAccountFromUrl(queueUrl);
 
   if (!QueueName) {
     throw new Error(`Unable to determine QueueName from ${queueUrl}`);
   }
 
-  const command = new GetQueueUrlCommand({ QueueName });
+  const command = new GetQueueUrlCommand({
+    QueueName: QueueName,
+    QueueOwnerAWSAccountId: QueueAccount,
+  });
 
   try {
     await sqs().send(command);
