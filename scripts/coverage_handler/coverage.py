@@ -313,7 +313,7 @@ coverage runs 'nyc npm test' and sets thresholds in the local nyc config
         )
     if args.merge:
         mergeCoverage()
-        
+
 
 
 if __name__ == "__main__":
