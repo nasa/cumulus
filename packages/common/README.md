@@ -20,12 +20,12 @@ Cumulus is a cloud-based data ingest, archive, distribution and management proto
   setup, testing, and credential management, code should obtain AWS client
   objects from helpers in this module.
 * [@cumulus/common/concurrency](./concurrency.js) - Utilities for writing concurrent code
-* [@cumulus/common/errors](./errors.js) - Classes for thrown errors
-* [@cumulus/common/log](./log.js) - muting or potentially shipping logs to
+* [@cumulus/common/errors](./src/errors.ts) - Classes for thrown errors
+* [@cumulus/common/log](./src/log.ts) - muting or potentially shipping logs to
   alternative locations
 * [@cumulus/common/string](./docs/API.md#module_string) - Utilities for
   manipulating strings
-* [@cumulus/common/test-utils](./test-utils.js) - Utilities for writing tests
+* [@cumulus/common/test-utils](./src/test-utils.ts) - Utilities for writing tests
 * [@cumulus/common/URLUtils](./docs/API.md#module_URLUtils) - a collection of
   utilities for working with URLs
 * [@cumulus/common/util](./docs/API.md#module_util) - Other misc general
