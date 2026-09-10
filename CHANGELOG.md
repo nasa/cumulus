@@ -20,6 +20,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   ingest operations, and no action or redeployment is required by DAACs or migration teams. Anyone
   building Core from source picks up the fix automatically on their next `npm install`.
 
+- **CUMULUS-5516**
+  - Updated markdownlint-cli version to mitigate vulnerability
+
 ### Added
 
 - **CUMULUS-5309**

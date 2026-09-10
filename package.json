@@ -150,7 +150,7 @@
     "latest-version": "^9.0.0",
     "lerna": "^9.0.5",
     "lodash": "^4.18.1",
-    "markdownlint-cli": "^0.47.0",
+    "markdownlint-cli": "^0.49.1",
     "md5": "^2.2.1",
     "mime-types": "^2.1.22",
     "moment": "^2.30.1",
@@ -199,6 +199,7 @@
     "minimatch@9": "^9.0.9",
     "minimatch@10": "^10.2.6",
     "pacote": "^21.5.1",
+    "smol-toml": "^1.1.1",
     "request": {
       "qs": "^6.14.1"
     },
