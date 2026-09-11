@@ -295,7 +295,7 @@ test.serial('getCumulusMessageFromExecutionEvent() returns the failed execution 
   t.deepEqual(message, expectedMessage);
 });
 
-test('getFailedStepName() returns the name of the most recent TaskStateEntered event prior to the Failed event. Ignoring any that TaskStateEntered that happen after the failed event.', (t) => {
+test('getFailedStepName() returns the name of the most recent TaskStateEntered event prior to the Failed event in case of LambdaFunctionFailed. Ignoring any that TaskStateEntered that happen after the failed event.', (t) => {
   const randomFailedStepName = randomFailedStepNameFn();
   const events = [
     {
@@ -359,6 +359,85 @@ test('getFailedStepName() returns the name of the most recent TaskStateEntered e
   t.is(actual, expected);
 });
 
+test('getFailedStepName() returns the name of the most recent TaskStateEntered event prior to the Failed event in case of TaskFailure. Ignoring any that TaskStateEntered that happen after the failed event.', (t) => {
+  const randomFailedStepName = randomFailedStepNameFn();
+  const events = [
+    {
+      type: 'TaskStateEntered',
+      id: 2,
+      previousEventId: 0,
+      stateEnteredEventDetails: {
+        name: randomFailedStepName,
+      },
+    },
+    {
+      type: 'TaskScheduled',
+      id: 3,
+      previousEventId: 2,
+      lambdaFunctionScheduledEventDetails: {
+        inputDetails: [],
+      },
+    },
+    {
+      type: 'TaskStarted',
+      id: 4,
+      previousEventId: 3,
+    },
+    {
+      type: 'TaskSubmitted',
+      id: 5,
+      previousEventId: 22,
+    },
+    {
+      type: 'TaskFailed',
+      id: 6,
+      previousEventId: 5,
+      taskFailedEventDetails: {
+        resourceType: 'ecs',
+        resource: 'runTask.waitForTaskToken',
+        error: 'ThisIsTheTaskFailureWeAreTesting',
+        cause: 'bad_things',
+      },
+    },
+    {
+      type: 'TaskStateExited',
+      id: 7,
+      previousEventId: 6,
+    },
+    {
+      type: 'TaskStateEntered',
+      id: 7,
+      previousEventId: 8,
+      stateEnteredEventDetails: {
+        name: 'ALaterSuccessfulTaskEntered',
+      },
+    },
+    {
+      type: 'LambdaFunctionScheduled',
+      id: 9,
+      previousEventId: 8,
+    },
+  ];
+
+  const failedEvent = {
+    type: 'TaskFailed',
+    id: 6,
+    previousEventId: 5,
+    taskFailedEventDetails: {
+      resourceType: 'ecs',
+      resource: 'runTask.waitForTaskToken',
+      error: 'ThisIsTheTaskFailureWeAreTesting',
+      cause: 'bad_things',
+    },
+  };
+
+  const expected = randomFailedStepName;
+  const actual = getFailedStepName(events, failedEvent);
+  console.log(actual);
+
+  t.is(actual, expected);
+});
+
 test('getFailedStepName() returns UnknownFailedStepName if no TaskStateEntered events exist before the failed id.', (t) => {
   const events = [
     {
@@ -389,6 +468,81 @@ test('getFailedStepName() returns UnknownFailedStepName if no TaskStateEntered e
   const actual = getFailedStepName(events, 5);
 
   t.is(actual, expected);
+});
+
+test('lastFailedEventStep() returns the event for a failed TaskFailed', (t) => {
+  const events = [
+    {
+      type: 'TaskStateEntered',
+      id: 2,
+      previousEventId: 0,
+      stateEnteredEventDetails: {
+        name: 'randomFailedStepName',
+      },
+    },
+    {
+      type: 'TaskScheduled',
+      id: 3,
+      previousEventId: 2,
+      lambdaFunctionScheduledEventDetails: {
+        inputDetails: [],
+      },
+    },
+    {
+      type: 'TaskStarted',
+      id: 4,
+      previousEventId: 3,
+    },
+    {
+      type: 'TaskSubmitted',
+      id: 5,
+      previousEventId: 22,
+    },
+    {
+      type: 'TaskFailed',
+      id: 6,
+      previousEventId: 5,
+      taskFailedEventDetails: {
+        resourceType: 'ecs',
+        resource: 'runTask.waitForTaskToken',
+        error: 'ThisIsTheTaskFailureWeAreTesting',
+        cause: 'bad_things',
+      },
+    },
+    {
+      type: 'TaskStateExited',
+      id: 7,
+      previousEventId: 6,
+    },
+    {
+      type: 'TaskStateEntered',
+      id: 7,
+      previousEventId: 8,
+      stateEnteredEventDetails: {
+        name: 'ALaterSuccessfulTaskEntered',
+      },
+    },
+    {
+      type: 'LambdaFunctionScheduled',
+      id: 9,
+      previousEventId: 8,
+    },
+  ];
+
+  const expected = {
+    type: 'TaskFailed',
+    id: 6,
+    previousEventId: 5,
+    taskFailedEventDetails: {
+      resourceType: 'ecs',
+      resource: 'runTask.waitForTaskToken',
+      error: 'ThisIsTheTaskFailureWeAreTesting',
+      cause: 'bad_things',
+    },
+  };
+
+  const actual = lastFailedEventStep(events);
+  t.deepEqual(actual, expected);
 });
 
 test('lastFailedEventStep() returns the event for a failed lambda.', (t) => {
