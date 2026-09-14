@@ -1051,7 +1051,7 @@ const writeGranulesFromMessage = async ({
   testOverrides = {}, // Used only for test mocks
 }) => {
   if (!messageHasGranules(cumulusMessage)) {
-    log.info('No granules to write, skipping writeGranulesFromMessage');
+    log.info(`No granules to write in ${JSON.stringify(cumulusMessage)}, skipping writeGranulesFromMessage`);
     return undefined;
   }
 
