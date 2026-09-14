@@ -205,7 +205,7 @@
     "serialize-javascript": "^7.0.3",
     "smol-toml": "^1.7.1",
     "nx": {
-      "smol-toml": "^1.71."
+      "smol-toml": "^1.71.1"
     },
     "tar": "^7.5.8",
     "tmp": "^0.2.6"
