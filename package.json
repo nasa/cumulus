@@ -150,7 +150,7 @@
     "latest-version": "^9.0.0",
     "lerna": "^9.0.5",
     "lodash": "^4.18.1",
-    "markdownlint-cli": "^0.48.0",
+    "markdownlint-cli": "^0.49.1",
     "md5": "^2.2.1",
     "mime-types": "^2.1.22",
     "moment": "^2.30.1",
@@ -204,6 +204,9 @@
     },
     "serialize-javascript": "^7.0.3",
     "smol-toml": "^1.7.1",
+    "nx": {
+      "smol-toml": "^1.71."
+    },
     "tar": "^7.5.8",
     "tmp": "^0.2.6"
   },
