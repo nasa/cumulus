@@ -202,7 +202,7 @@ export class AthenaQueryClient {
       }));
       log.info(`response (${typeof response}) from GetQueryResults: ${JSON.stringify(response)}`);
       data.concat(await this.mapData(response.ResultSet));
-    } 
+    }
     return data;
   }
 

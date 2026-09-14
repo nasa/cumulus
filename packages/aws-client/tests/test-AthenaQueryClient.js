@@ -138,7 +138,7 @@ test.serial('query() initiates a query, waits for it to finish, and returns the 
       },
     },
   };
-  
+
   athenaClientMock.on(GetQueryExecutionCommand).resolves({
     abridgedResponse
   });
