@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **CSD-25**
+  - Fixed a long running intermittant issue where graules in PG were stuck in 'running' state in PG
+    from a 'failed' step function execution, due to a failure to correctly lookup failed ECS tasks,
+    leading to no final granule update call made to PG.  Adding ECS `TaskFailed` to the checks ensures
+    the correct failure point is identified.  Moving forwards failed ECS tasks that were not correctly
+    reporting granule status should now update.
+
 ## [v22.4.0] 2026-09-02
 
 ### Fixed
