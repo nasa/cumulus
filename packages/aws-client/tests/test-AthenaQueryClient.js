@@ -8,13 +8,13 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
-const { AthenaClient, StartQueryExecutionCommand } = require('@aws-sdk/client-athena');
+const { AthenaClient, StartQueryExecutionCommand, GetQueryExecutionCommand, GetQueryResultsCommand } = require('@aws-sdk/client-athena');
 
 // TODO: remove mock
 const { mockClient } = require('aws-sdk-client-mock');
-const athenaClientMock = mockClient(AthenaClient);
 
 const { AthenaQueryClient } = require('../AthenaQueryClient');
+const athenaClientMock = mockClient(AthenaClient);
 
 const {
   createBucket,
@@ -32,11 +32,9 @@ test.before(async (t) => {
 
   t.context.db = `${randomString()}_testdb`;
 
-  // TODO: update clint once localstack is replaced
   t.context.client = new AthenaQueryClient({
     ClientConfig: {
       region: 'us-east-1',
-      endpoint: 'http://localhost:4566',
       credentials: {
         accessKeyId: 'test',
         secretAccessKey: 'test',
@@ -55,24 +53,19 @@ test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.Bucket);
 });
 
-// TODO: update test once localstack is replced
 test('startQueryExecution() initiates a query and receives a QueryExecutionId response', async (t) => {
   athenaClientMock.on(StartQueryExecutionCommand).resolves({
-    queryId: '12345-abcde-67890',
+    QueryExecutionId: '12345-abcde-67890',
   });
   const tableName = `${randomString()}_table`;
-  const client = new AthenaClient({ region: 'us-east-1' });
-  const command = new StartQueryExecutionCommand({
-    QueryString: `CREATE TABLE IF NOT EXISTS ${tableName}
-( bucket string, key string, version_id string, is_latest boolean, is_delete_marker boolean);`,
-  });
+  const tableQuery = `CREATE TABLE IF NOT EXISTS ${tableName}
+( bucket string, key string, version_id string, is_latest boolean, is_delete_marker boolean);`;
 
-  const response = await client.send(command);
-  t.is(response.queryId, '12345-abcde-67890');
+  const queryId = await t.context.client.startQueryExecution(tableQuery);
+  t.is((typeof queryId), 'string');
 });
 
-// TODO: fix this test once localstack is replaced
-test.skip('mapData returns data in the expected format', (t) => {
+test('mapData returns data in the expected format', (t) => {
   const testBucket = 'daac-public-bucket';
   const testKey = `${randomString()}`;
 
@@ -107,8 +100,7 @@ test.skip('mapData returns data in the expected format', (t) => {
   t.deepEqual(expected, mappedResult);
 });
 
-// TODO: fix this test once localstack is replaced
-test.skip('mapData() returns expected result when ResultSet is empty', (t) => {
+test('mapData() returns expected result when ResultSet is empty', (t) => {
   // responses have emtpy ResultSet.Rows from queries like create tables or views
   const response = {
     UpdateCount: 0,
@@ -119,11 +111,45 @@ test.skip('mapData() returns expected result when ResultSet is empty', (t) => {
   t.deepEqual([], mappedResult);
 });
 
-// TODO: update test once localstack is replced
-test.skip('query() initiates a query, waits for it to finish, and returns the mapped response', async (t) => {
+test.serial('query() initiates a query, waits for it to finish, and returns the mapped response', async (t) => {
   // could not get ministack duckdb to find a table to perform operations on it,
   // even after verifying a create table query succeeeded
   // so using the mocked db version of Athena in ministack, which returns mock data
+  athenaClientMock.on(StartQueryExecutionCommand).resolves({
+    QueryExecutionId: '12345-abcde-67890',
+  });
+
+  const stub = sinon.stub(t.context.client, 'query')
+    .callsFake(() => Promise.resolve([{ result: 'mock_value' }]));
+
+  const abridgedResponse = {
+    QueryExecution: {
+      QueryExecutionId: '1234-abcd-5678-efgh',
+      Query: '',
+      ResultConfiguration: {
+        OutputLocation: `s3://${t.context.Bucket}/`,
+      },
+      QueryExecutionContext: {
+        Database: t.context.db,
+      },
+      Status: {
+        State: 'SUCCEEDED',
+        SubmissionDateTime: new Date().toISOString(),
+      },
+    },
+  };
+  
+  athenaClientMock.on(GetQueryExecutionCommand).resolves({
+    abridgedResponse
+  });
+
+  athenaClientMock.on(GetQueryResultsCommand).resolves({
+    ResultSet: ['mock_value']
+  });
+
+  sinon.stub(t.context.client, 'getQueryExecution')
+    .callsFake(() => Promise.resolve(abridgedResponse));
+
   const expected = [{ result: 'mock_value' }];
 
   const dbQuery = `CREATE DATABASE IF NOT EXISTS ${t.context.db}`;
@@ -150,8 +176,7 @@ test.skip('query() initiates a query, waits for it to finish, and returns the ma
   t.deepEqual(results, expected);
 });
 
-// TODO: fix this test once localstack is replaced
-test.skip('checkQueryExecutionStateAndGetData throws when getQueryExecution returns with a CANCELLED state', async (t) => {
+test.serial('checkQueryExecutionStateAndGetData throws when getQueryExecution returns with a CANCELLED state', async (t) => {
   const tableName = `${randomString()}_table`;
   const tableQuery = `CREATE TABLE IF NOT EXISTS ${tableName}
   ( bucket string, key string, version_id string, is_latest boolean, is_delete_marker boolean);`;
@@ -191,8 +216,7 @@ test.skip('checkQueryExecutionStateAndGetData throws when getQueryExecution retu
   );
 });
 
-// TODO: fix this test once localstack is replaced
-test.skip('checkQueryExecutionStateAndGetData throws when getQueryExecution returns with a FAILED state', async (t) => {
+test.serial('checkQueryExecutionStateAndGetData throws when getQueryExecution returns with a FAILED state', async (t) => {
   const tableName = `${randomString()}_table`;
   const tableQuery = `CREATE TABLE IF NOT EXISTS ${tableName}
 ( bucket string, key string, version_id string, is_latest boolean, is_delete_marker boolean);`;

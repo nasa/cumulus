@@ -191,7 +191,19 @@ export class AthenaQueryClient {
       QueryExecutionId,
     }));
     log.info(`response (${typeof response}) from GetQueryResults: ${JSON.stringify(response)}`);
-    return this.mapData(response.ResultSet);
+
+    let nextToken = response.NextToken || ''
+    let data = await this.mapData(response.ResultSet);
+
+    while (nextToken !== undefined && nextToken !== '') {
+      const response = await this.client.send(new GetQueryResultsCommand({
+        QueryExecutionId,
+        NextToken: nextToken
+      }));
+      log.info(`response (${typeof response}) from GetQueryResults: ${JSON.stringify(response)}`);
+      data.concat(await this.mapData(response.ResultSet));
+    } 
+    return data;
   }
 
   /**
