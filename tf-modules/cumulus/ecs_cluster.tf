@@ -269,6 +269,9 @@ resource "aws_autoscaling_group" "ecs_cluster_instance" {
   }
   lifecycle {
     create_before_destroy = true
+    ignore_changes        = [
+      enabled_metrics
+    ]
   }
 
   tag {
