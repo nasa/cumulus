@@ -119,8 +119,8 @@ test.serial('query() initiates a query, waits for it to finish, and returns the 
     QueryExecutionId: '12345-abcde-67890',
   });
 
-  const stub = sinon.stub(t.context.client, 'query')
-    .callsFake(() => Promise.resolve([{ result: 'mock_value' }]));
+  // const stub = sinon.stub(t.context.client, 'query')
+  //   .callsFake(() => Promise.resolve([{ result: 'mock_value' }]));
 
   const abridgedResponse = {
     QueryExecution: {
@@ -140,11 +140,11 @@ test.serial('query() initiates a query, waits for it to finish, and returns the 
   };
 
   athenaClientMock.on(GetQueryExecutionCommand).resolves({
-    abridgedResponse
+    abridgedResponse,
   });
 
   athenaClientMock.on(GetQueryResultsCommand).resolves({
-    ResultSet: ['mock_value']
+    ResultSet: ['mock_value'],
   });
 
   sinon.stub(t.context.client, 'getQueryExecution')

@@ -187,21 +187,25 @@ export class AthenaQueryClient {
    * @returns {Array} Array of Objects
    */
   private async getQueryResults(QueryExecutionId: string): Promise<MappedData> {
+    let data = [] as MappedData;
     const response = await this.client.send(new GetQueryResultsCommand({
       QueryExecutionId,
     }));
     log.info(`response (${typeof response}) from GetQueryResults: ${JSON.stringify(response)}`);
 
-    let nextToken = response.NextToken || ''
-    let data = await this.mapData(response.ResultSet);
+    let nextToken = response.NextToken || '';
+    data = data.concat(await this.mapData(response.ResultSet));
 
     while (nextToken !== undefined && nextToken !== '') {
-      const response = await this.client.send(new GetQueryResultsCommand({
+      // eslint-disable-next-line no-await-in-loop
+      const nextResponse = await this.client.send(new GetQueryResultsCommand({
         QueryExecutionId,
-        NextToken: nextToken
+        NextToken: nextToken,
       }));
-      log.info(`response (${typeof response}) from GetQueryResults: ${JSON.stringify(response)}`);
-      data.concat(await this.mapData(response.ResultSet));
+      log.info(`response (${typeof nextResponse}) from GetQueryResults: ${JSON.stringify(nextResponse)}`);
+      nextToken = nextResponse.NextToken || '';
+      // eslint-disable-next-line no-await-in-loop
+      data = data.concat(await this.mapData(nextResponse.ResultSet));
     }
     return data;
   }
