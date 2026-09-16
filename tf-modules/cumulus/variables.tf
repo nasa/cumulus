@@ -696,12 +696,6 @@ variable "archive_records_config" {
 
 # Iceberg API Configuration
 
-variable iceberg_admin_list {
-  type        = list(string)
-  default     = ["none"]
-  description = "list of iceberg admin usernames"
-}
-
 variable "deploy_iceberg_api" {
   description = "Whether to deploy the Iceberg API"
   type        = bool
