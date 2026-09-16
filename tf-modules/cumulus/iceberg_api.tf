@@ -35,3 +35,10 @@ module "iceberg_api" {
   duckdb_max_pool_size                      = var.duckdb_max_pool_size
   duckdb_pool_rebuild_interval_seconds      = var.duckdb_pool_rebuild_interval_seconds
 }
+
+resource "aws_ssm_parameter" "iceberg_admin_list_param" {
+  description = "A list of iceberg admin usernames"
+  name        = "${var.prefix}-iceberg_admins_list"
+  type        = "StringList"
+  value       = join(",", var.iceberg_admin_list)
+}
