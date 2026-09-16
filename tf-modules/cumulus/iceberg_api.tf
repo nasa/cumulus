@@ -40,5 +40,6 @@ resource "aws_ssm_parameter" "iceberg_admin_list_param" {
   description = "A list of iceberg admin usernames"
   name        = "${var.prefix}-iceberg_admins_list"
   type        = "StringList"
+  # Length check prevents build failure when the variable isn't populated.  SSM parameters cannot be empty.
   value       = length(var.iceberg_admin_list) > 0 ? join(",", var.iceberg_admin_list) : "none"
 }

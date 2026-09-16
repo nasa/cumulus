@@ -698,7 +698,7 @@ variable "archive_records_config" {
 
 variable iceberg_admin_list {
   type        = list(string)
-  default     = []
+  default     = ["none"]
   description = "list of iceberg admin usernames"
 }
 

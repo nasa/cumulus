@@ -20,7 +20,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Added CI deployment config to support mthorste's dev stack
 
 - **CUMULUS-5370**
-  - Introduced SSM parameter store defining iceberg admin users list
+  - Introduced SSM parameter store defining iceberg admin users list.  This parameter is populated in the cumulus-tf module by means of configuring a variable in the CNSLD-cumulus repo environment stages.
 
 ## [v22.4.0] 2026-09-02
 
