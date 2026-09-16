@@ -1,16 +1,15 @@
 'use strict';
 
 // TODO: Remove this comment when localstack is replaced:
-// Athena client tests are unable to run in localstack local environment.
-// Once localstack is replaced these tests will need to be updated to use
-// local AWS instances. This work is outside the scope of CUMULUS-4954.
+// Athena client tests are unable to run using localstack local environment.
+// Once localstack is replaced, these tests will need to be updated to use
+// local AWS instances. This work should be completed in CUMULUS-5307.
 
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
-const { AthenaClient, StartQueryExecutionCommand, GetQueryExecutionCommand, GetQueryResultsCommand } = require('@aws-sdk/client-athena');
+const { AthenaClient, StartQueryExecutionCommand, GetQueryExecutionCommand } = require('@aws-sdk/client-athena');
 
-// TODO: remove mock
 const { mockClient } = require('aws-sdk-client-mock');
 
 const { AthenaQueryClient } = require('../AthenaQueryClient');
@@ -119,9 +118,6 @@ test.serial('query() initiates a query, waits for it to finish, and returns the 
     QueryExecutionId: '12345-abcde-67890',
   });
 
-  // const stub = sinon.stub(t.context.client, 'query')
-  //   .callsFake(() => Promise.resolve([{ result: 'mock_value' }]));
-
   const abridgedResponse = {
     QueryExecution: {
       QueryExecutionId: '1234-abcd-5678-efgh',
@@ -143,9 +139,8 @@ test.serial('query() initiates a query, waits for it to finish, and returns the 
     abridgedResponse,
   });
 
-  athenaClientMock.on(GetQueryResultsCommand).resolves({
-    ResultSet: ['mock_value'],
-  });
+  sinon.stub(t.context.client, 'getQueryResults')
+    .callsFake(() => Promise.resolve([{ result: 'mock_value' }]));
 
   sinon.stub(t.context.client, 'getQueryExecution')
     .callsFake(() => Promise.resolve(abridgedResponse));
