@@ -19,6 +19,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Added CI deployment config to support mthorste's dev stack
 
+- **CUMULUS-5370**
+  - Introduced SSM parameter store defining iceberg admin users list
+
 ## [v22.4.0] 2026-09-02
 
 ### Fixed
