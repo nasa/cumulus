@@ -12,11 +12,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - The `instanceMeta` API endpoint now returns `icebergAdmins`, the list of iceberg admin
     usernames read from the `${prefix}-iceberg_admins_list` SSM parameter created by the
     `rds-iceberg-replication` module. An empty list is returned if the parameter does not exist.
-  - The `rds-iceberg-replication` module now only creates the `${prefix}-iceberg_admins_list`
-    SSM parameter when `iceberg_admin_list` is non-empty, instead of storing a `none` placeholder.
   - Added an `ssm()` service and `SSM.getParameterValue()` helper to `@cumulus/aws-client`
-  - Granted the API lambda role `ssm:GetParameter` on the iceberg admin list parameter in the
-    `archive` module
 
 ## [v22.4.1] 2026-09-14
 
