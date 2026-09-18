@@ -21,7 +21,7 @@ async function getIcebergAdmins() {
   const parameterName = `${process.env.stackName}-iceberg_admins_list`;
   try {
     const value = await getParameterValue(parameterName);
-    if (!value ) return [];
+    if (!value) return [];
     return value.split(',').map((admin) => admin.trim()).filter((admin) => admin);
   } catch (error) {
     if (error.name === 'ParameterNotFound') {
