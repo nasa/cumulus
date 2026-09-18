@@ -15,14 +15,6 @@ data "aws_ssm_parameter" "private_ca" {
   name = "ngap_private_ca_arn"
 }
 
-resource "aws_ssm_parameter" "iceberg_admin_list_param" {
-  description = "A list of iceberg admin usernames"
-  name        = "${var.prefix}-iceberg_admins_list"
-  type        = "StringList"
-  # Length check prevents build failure when the variable isn't populated.  SSM parameters cannot be empty.
-  value       = length(var.iceberg_admin_list) > 0 ? join(",", var.iceberg_admin_list) : "none"
-}
-
 resource "aws_cloudwatch_log_group" "iceberg_api" {
   name              = "/ecs/${var.prefix}-iceberg-api"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "IcebergApi", var.default_log_retention_days)

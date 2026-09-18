@@ -29,12 +29,6 @@ variable "api_config_secret_arn" {
   type        = string
 }
 
-variable iceberg_admin_list {
-  type        = list(string)
-  default     = ["none"]
-  description = "list of iceberg admin usernames"
-}
-
 variable "iceberg_api_cpu" {
   description = "CPU allocation for Iceberg API ECS task"
   type        = number
