@@ -28,6 +28,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     the correct failure point is identified.  Moving forwards failed ECS tasks that were not correctly
     reporting granule status should now update.
 
+### Added
+
+- Added CI deployment config to support mthorste's dev stack
+
 ## [v22.4.0] 2026-09-02
 
 ### Fixed
