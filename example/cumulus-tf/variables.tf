@@ -647,3 +647,9 @@ variable "cumulus_iceberg_api_image_repository_url" {
   type        = string
   default     = null
 }
+
+variable "cross_acount_test_sqs_arn" {
+  description = "The cross account SQS ARN used for cross account SQS triggering"
+  type        = string
+  default     = null
+}
