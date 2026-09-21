@@ -7,8 +7,12 @@
 
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const sinon = require('sinon');
-const { AthenaClient, StartQueryExecutionCommand, GetQueryExecutionCommand } = require('@aws-sdk/client-athena');
+const {
+  AthenaClient,
+  StartQueryExecutionCommand,
+  GetQueryExecutionCommand,
+  GetQueryResultsCommand,
+} = require('@aws-sdk/client-athena');
 
 const { mockClient } = require('aws-sdk-client-mock');
 
@@ -45,7 +49,7 @@ test.before(async (t) => {
 });
 
 test.afterEach.always(() => {
-  sinon.restore();
+  athenaClientMock.reset();
 });
 
 test.after.always(async (t) => {
@@ -111,17 +115,18 @@ test('mapData() returns expected result when ResultSet is empty', (t) => {
 });
 
 test.serial('query() initiates a query, waits for it to finish, and returns the mapped response', async (t) => {
-  // could not get ministack duckdb to find a table to perform operations on it,
-  // even after verifying a create table query succeeeded
-  // so using the mocked db version of Athena in ministack, which returns mock data
-  athenaClientMock.on(StartQueryExecutionCommand).resolves({
-    QueryExecutionId: '12345-abcde-67890',
-  });
+  // create db
+  const dbQuery = `CREATE DATABASE IF NOT EXISTS ${t.context.db}`;
 
-  const abridgedResponse = {
+  const startCreateDbResponse = { QueryExecutionId: '12345-abcde-67890' };
+  athenaClientMock.on(StartQueryExecutionCommand).resolves(
+    startCreateDbResponse
+  );
+
+  const createDbResponse = {
     QueryExecution: {
-      QueryExecutionId: '1234-abcd-5678-efgh',
-      Query: '',
+      QueryExecutionId: '12345-abcde-67890',
+      Query: `CREATE DATABASE IF NOT EXISTS ${t.context.db}`,
       ResultConfiguration: {
         OutputLocation: `s3://${t.context.Bucket}/`,
       },
@@ -134,39 +139,150 @@ test.serial('query() initiates a query, waits for it to finish, and returns the 
       },
     },
   };
+  athenaClientMock.on(GetQueryExecutionCommand).resolves(
+    createDbResponse
+  );
 
-  athenaClientMock.on(GetQueryExecutionCommand).resolves({
-    abridgedResponse,
-  });
+  const createQueryResponse = {
+    ResultSet: { Rows: [], ResultSetMetadata: { ColumnInfo: [] } },
+  };
+  athenaClientMock.on(GetQueryResultsCommand).resolves(
+    createQueryResponse
+  );
 
-  sinon.stub(t.context.client, 'getQueryResults')
-    .callsFake(() => Promise.resolve([{ result: 'mock_value' }]));
+  await t.context.client.query(dbQuery);
 
-  sinon.stub(t.context.client, 'getQueryExecution')
-    .callsFake(() => Promise.resolve(abridgedResponse));
-
-  const expected = [{ result: 'mock_value' }];
-
-  const dbQuery = `CREATE DATABASE IF NOT EXISTS ${t.context.db}`;
-  const dbResponse = await t.context.client.query(dbQuery);
-  console.log(`data after createDb: ${JSON.stringify(dbResponse)}`);
-
-  const tableName = `${randomString()}_table`;
   // create table
+  const tableName = `${randomString()}_table`;
   const tableQuery = `CREATE TABLE IF NOT EXISTS ${tableName}
   ( bucket string, key string, version_id string, is_latest boolean, is_delete_marker boolean);`;
 
+  const startCreateTableResponse = { QueryExecutionId: '1234-abcd-5678-efgh' };
+  athenaClientMock.on(StartQueryExecutionCommand).resolves(
+    startCreateTableResponse
+  );
+
+  const createTableResponse = {
+    QueryExecution: {
+      QueryExecutionId: '1234-abcd-5678-efgh',
+      Query: `CREATE DATABASE IF NOT EXISTS ${t.context.db}
+( bucket string, key string, version_id string, is_latest boolean, is_delete_marker boolean);`,
+      ResultConfiguration: {
+        OutputLocation: `s3://${t.context.Bucket}/`,
+      },
+      QueryExecutionContext: {
+        Database: t.context.db,
+      },
+      Status: {
+        State: 'SUCCEEDED',
+        SubmissionDateTime: new Date().toISOString(),
+      },
+    },
+  };
+  athenaClientMock.on(GetQueryExecutionCommand).resolves(
+    createTableResponse
+  );
+  // create table get query results will be the same
+
   await t.context.client.query(tableQuery);
 
+  // populate table
   const testBucket = 'daac-public-bucket';
   const testKey = `${randomString()}`;
-  // populate table
+
   const addDataQuery = `INSERT INTO ${tableName} VALUES ('${testBucket}', '${testKey}', '', true, false);`;
+
+  const startAddDataResponse = { QueryExecutionId: '2345-ijkl-6789-mnop' };
+  athenaClientMock.on(StartQueryExecutionCommand).resolves(
+    startAddDataResponse
+  );
+
+  const addDataResponse = {
+    QueryExecution: {
+      QueryExecutionId: '2345-ijkl-6789-mnop',
+      Query: `INSERT INTO ${tableName} VALUES ('${testBucket}', '${testKey}', '', true, false);`,
+      ResultConfiguration: {
+        OutputLocation: `s3://${t.context.Bucket}/`,
+      },
+      QueryExecutionContext: {
+        Database: t.context.db,
+      },
+      Status: {
+        State: 'SUCCEEDED',
+        SubmissionDateTime: new Date().toISOString(),
+      },
+    },
+  };
+  athenaClientMock.on(GetQueryExecutionCommand).resolves(
+    addDataResponse
+  );
+
+  // not sure what the add Data response for get query results will be
+  // but for now assuming it will be the same as the create queries
   await t.context.client.query(addDataQuery);
 
-  // get data
+  // query to get data
   const getDataQuery = `SELECT * FROM ${tableName};`;
+
+  const startGetDataResponse = { QueryExecutionId: '3456-qrst-7890-uvwx' };
+  athenaClientMock.on(StartQueryExecutionCommand).resolves(
+    startGetDataResponse
+  );
+
+  const getDataExecutionResponse = {
+    QueryExecution: {
+      QueryExecutionId: '3456-qrst-7890-uvwx',
+      Query: `SELECT * FROM ${tableName};`,
+      ResultConfiguration: {
+        OutputLocation: `s3://${t.context.Bucket}/`,
+      },
+      QueryExecutionContext: {
+        Database: t.context.db,
+      },
+      Status: {
+        State: 'SUCCEEDED',
+        SubmissionDateTime: new Date().toISOString(),
+      },
+    },
+  };
+  athenaClientMock.on(GetQueryExecutionCommand).resolves(
+    getDataExecutionResponse
+  );
+
+  const getDataResultsResponse = {
+    UpdateCount: 0,
+    ResultSet: {
+      Rows: [
+        {
+          Data: [
+            { VarCharValue: 'bucket' },
+            { VarCharValue: 'key' },
+            { VarCharValue: 'version_id' },
+            { VarCharValue: 'is_latest' },
+            { VarCharValue: 'is_delete_marker' },
+          ],
+        },
+        {
+          Data: [
+            { VarCharValue: testBucket },
+            { VarCharValue: testKey },
+            {},
+            { VarCharValue: true },
+            { VarCharValue: false },
+          ],
+        },
+      ],
+    },
+  };
+  athenaClientMock.on(GetQueryResultsCommand).resolves(
+    getDataResultsResponse
+  );
+
   const results = await t.context.client.query(getDataQuery);
+
+  const expected = [
+    { bucket: testBucket, key: testKey, version_id: '', is_latest: true, is_delete_marker: false },
+  ];
 
   t.deepEqual(results, expected);
 });
