@@ -63,6 +63,7 @@
     "@cumulus/hello-world": "22.4.1",
     "@cumulus/ingest": "22.4.1",
     "@cumulus/integration-tests": "22.4.1",
+    "@cumulus/logger": "22.4.1",
     "@cumulus/message": "22.4.1",
     "@cumulus/move-granules": "22.4.1",
     "@cumulus/parse-pdr": "22.4.1",
