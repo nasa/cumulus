@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Adding CI deploying config to support treuter's CI stack
+
 ## [v22.4.1] 2026-09-14
 
 ### Fixed
