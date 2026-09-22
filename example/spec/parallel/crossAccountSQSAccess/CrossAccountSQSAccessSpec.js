@@ -3,6 +3,7 @@
 const {
   SQSClient,
   SendMessageCommand,
+  GetQueueAttributesCommand,
 } = require('@aws-sdk/client-sqs');
 
 const {
@@ -61,6 +62,17 @@ describe('Create SQS rule that exists in a cross-account configuration via the C
         prefix: config.stackName,
         rule: sqsRule,
       });
+      log.debug(`Cross-account rule created ${JSON.stringify({
+        name: sqsRule.name,
+        statusCode: fetchedRule.statusCode,
+        state: fetchedRule.state,
+        workflow: fetchedRule.workflow,
+        ruleType: fetchedRule.rule?.type,
+        ruleValue: fetchedRule.rule?.value,
+        queueUrl: fetchedRule.queueUrl,
+        stackName: config.stackName,
+        createdAt: new Date().toISOString(),
+      })}`);
 
       // Fetch the rule to verify it was configured correctly'
       fetchedRule = await rulesApi.getRule({
@@ -76,10 +88,27 @@ describe('Create SQS rule that exists in a cross-account configuration via the C
       };
 
       log.debug(`Sending message to queue ${queueUrl}`);
-      await sqsClient.send(new SendMessageCommand({
+      const sendResult = await sqsClient.send(new SendMessageCommand({
         QueueUrl: queueUrl,
         MessageBody: JSON.stringify(expectedPayload),
       }));
+      const queueAttributes = await sqsClient.send(
+        new GetQueueAttributesCommand({
+          QueueUrl: queueUrl,
+          AttributeNames: [
+            'ApproximateNumberOfMessages',
+            'ApproximateNumberOfMessagesNotVisible',
+          ],
+        })
+      );
+
+      log.debug(`Cross-account SQS send completed ${JSON.stringify({
+        queueUrl,
+        messageId: sendResult.MessageId,
+        testId: expectedPayload.testId,
+        sentAt: new Date().toISOString(),
+        queueAttributes: queueAttributes.Attributes,
+      })}`);
 
       // 3. Wait for the workflow execution triggered by the SQS message
       log.debug(`Waiting for execution of ${sqsRule.workflow} triggered by SQS message`);
