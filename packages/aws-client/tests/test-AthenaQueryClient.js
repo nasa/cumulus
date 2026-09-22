@@ -403,18 +403,51 @@ test.serial('checkQueryExecutionStateAndGetData throws when getQueryExecution re
   const tableQuery = `CREATE TABLE IF NOT EXISTS ${tableName}
 ( bucket string, key string, version_id string, is_latest boolean, is_delete_marker boolean);`;
 
-  await t.context.client.query(tableQuery);
-
   const testBucket = 'daac-public-bucket';
   const testKey = `${randomString()}`;
   const addDataQuery = `INSERT INTO ${tableName} VALUES ('${testBucket}', '${testKey}', '', true, false);`;
 
+  const startCreateTableResponse = { QueryExecutionId: '1234-abcd-5678-efgh' };
+  athenaClientMock.on(StartQueryExecutionCommand).resolves(
+    startCreateTableResponse
+  );
+  const addDataResponse = {
+    QueryExecution: {
+      QueryExecutionId: '2345-ijkl-6789-mnop',
+      Query: `INSERT INTO ${tableName} VALUES ('${testBucket}', '${testKey}', '', true, false);`,
+      ResultConfiguration: {
+        OutputLocation: `s3://${t.context.Bucket}/`,
+      },
+      QueryExecutionContext: {
+        Database: t.context.db,
+      },
+      Status: {
+        State: 'SUCCEEDED',
+        SubmissionDateTime: new Date().toISOString(),
+      },
+    },
+  };
+  athenaClientMock.on(GetQueryExecutionCommand).resolves(
+    addDataResponse
+  );
+
+  const createQueryResponse = {
+    ResultSet: { Rows: [], ResultSetMetadata: { ColumnInfo: [] } },
+  };
+  athenaClientMock.on(GetQueryResultsCommand).resolves(
+    createQueryResponse
+  );
+
+  await t.context.client.query(tableQuery);
+
   await t.context.client.query(addDataQuery);
 
-  const abridgedResponse = {
+  const getDataQuery = `SELECT * FROM ${tableName};`;
+
+  const getDataExecutionResponse = {
     QueryExecution: {
-      QueryExecutionId: '1234-abcd-5678-efgh',
-      Query: '',
+      QueryExecutionId: '2345-ijkl-6789-mnop',
+      Query: `INSERT INTO ${tableName} VALUES ('${testBucket}', '${testKey}', '', true, false);`,
       ResultConfiguration: {
         OutputLocation: `s3://${t.context.Bucket}/`,
       },
@@ -425,14 +458,12 @@ test.serial('checkQueryExecutionStateAndGetData throws when getQueryExecution re
         State: 'FAILED',
         StateChangeReason: 'some failure reason',
         SubmissionDateTime: new Date().toISOString(),
-      },
+              },
     },
   };
-
-  sinon.stub(t.context.client, 'getQueryExecution')
-    .callsFake(() => Promise.resolve(abridgedResponse));
-
-  const getDataQuery = `SELECT * FROM ${tableName};`;
+  athenaClientMock.on(GetQueryExecutionCommand).resolves(
+    getDataExecutionResponse
+  );
 
   await t.throwsAsync(
     t.context.client.query(getDataQuery),
