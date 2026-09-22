@@ -89,5 +89,5 @@ yliu10-tf:
 blokey:
   bucket: blokey-internal
 
-tr-sbx:
-  bucket: cumulus-test-sandbox-internal
+tr-ci:
+  bucket: treuter-internal

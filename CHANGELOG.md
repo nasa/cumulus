@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-5443**
   - Adding integration test to validate the ability to use cross account SQS queues to trigger workflows.
 
+- Adding CI deploying config to support treuter's CI stack
+
 ## [v22.4.1] 2026-09-14
 
 ### Fixed

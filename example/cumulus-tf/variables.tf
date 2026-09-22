@@ -377,6 +377,7 @@ variable "archive_api_users" {
     "npauzenga",
     "reweeden",
     "terrafirma13",
+    "treuter",
     "yliu10"
   ]
 }
