@@ -10,7 +10,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-5570**
   - Bumped ajv to v8.15.0 due to vulnerability CVE-2026-93690 (reported in Snyk)
-  - Test
 
 ## [v22.4.1] 2026-09-14
 
