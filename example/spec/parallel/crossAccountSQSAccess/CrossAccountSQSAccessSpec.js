@@ -58,27 +58,18 @@ describe('Create SQS rule that exists in a cross-account configuration via the C
       };
 
       // Post the rule to the Cumulus API
-      await rulesApi.postRule({
+      const postedRule = await rulesApi.postRule({
         prefix: config.stackName,
         rule: sqsRule,
       });
-      log.debug(`Cross-account rule created ${JSON.stringify({
-        name: sqsRule.name,
-        statusCode: fetchedRule.statusCode,
-        state: fetchedRule.state,
-        workflow: fetchedRule.workflow,
-        ruleType: fetchedRule.rule?.type,
-        ruleValue: fetchedRule.rule?.value,
-        queueUrl: fetchedRule.queueUrl,
-        stackName: config.stackName,
-        createdAt: new Date().toISOString(),
-      })}`);
+      log.debug(`Cross-account rule created ${JSON.stringify(postedRule)}`);
 
       // Fetch the rule to verify it was configured correctly'
       fetchedRule = await rulesApi.getRule({
         prefix: config.stackName,
         ruleName: sqsRule.name,
       });
+      log.debug(`Cross-account rule fetched ${JSON.stringify(fetchedRule)}`);
       expect(fetchedRule.statusCode).toEqual(200);
       fetchedRule = JSON.parse(fetchedRule.body);
 
@@ -162,9 +153,5 @@ describe('Create SQS rule that exists in a cross-account configuration via the C
 
     // Verify it ran the expected workflow
     expect(execution.stateMachineArn.split('-').at(-1)).toEqual(sqsRule.workflow);
-
-    // // As a double check, verify our specific test payload ID made it into the execution record
-    // const executionStr = JSON.stringify(execution);
-    // expect(executionStr.includes(expectedPayload.testId)).toBeTrue();
   });
 });
