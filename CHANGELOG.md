@@ -6,7 +6,50 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v22.4.1] 2026-09-14
+
+### Fixed
+
+- **CSD-258**
+  - Fixed a long running intermittant issue where graules in PG were stuck in 'running' state in PG
+    from a 'failed' step function execution, due to a failure to correctly lookup failed ECS tasks,
+    leading to no final granule update call made to PG.  Adding ECS `TaskFailed` to the checks ensures
+    the correct failure point is identified.  Moving forwards failed ECS tasks that were not correctly
+    reporting granule status should now update.
+
+## [v22.4.0] 2026-09-02
+
+### Fixed
+
+- **CSD-25**
+  - Fixed a long running intermittant issue where graules in PG were stuck in 'running' state in PG
+    from a 'failed' step function execution, due to a failure to correctly lookup failed ECS tasks,
+    leading to no final granule update call made to PG.  Adding ECS `TaskFailed` to the checks ensures
+    the correct failure point is identified.  Moving forwards failed ECS tasks that were not correctly
+    reporting granule status should now update.
+
 ### Added
+
+- Added CI deployment config to support mthorste's dev stack
+
+## [v22.4.0] 2026-09-02
+
+### Fixed
+
+- **CUMULUS-5455**
+  - Added an npm override forcing `pacote` to `^21.5.1` to address a high-severity ReDoS vulnerability:
+  https://github.com/advisories/GHSA-w4pp-8pjf-rmxw (CVE-2026-9496). `pacote` is npm's package-fetching
+  library and is not used by Cumulus code directly — it enters the dependency tree only as a build-time
+  transitive dependency of `lerna`, the tool used to build and publish the Core monorepo. It is not
+  included in any published `@cumulus/*` package, deployed Lambda/task bundle, or the Cumulus API. This
+  change is internal to the Core build/CI process: no impact to deployed stacks, workflow code, or
+  ingest operations, and no action or redeployment is required by DAACs or migration teams. Anyone
+  building Core from source picks up the fix automatically on their next `npm install`.
+
+### Added
+
+- **CUMULUS-5309**
+  - Support cross account SQS queues by extracting the owner account ID from the URL and using that in validation of queues.
 
 - **CUMULUS-5256**
   - Add orphan file cleanup to Iceberg tables
@@ -21,9 +64,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Give AWS_PROFILE precedence over AWS_DEFAULT_PROFILE in cumulus aws client and Iceberg API
   - Rename Iceberg API reconciliation reports and async operations route paths to match Cumulus API
 
-- **CUMULUS-4511**
+- **CUMULUS-4541**
   - Enable reconciliaton reports to use collection provided cmr_provider when necessary when
     making CMR calls.
+
+- **async-operations-update**
+  - Update Async Operation container to new version 59, `cumuluss/async-operation:59`. Users should update their references to `async-operation` with the new version.
 
 ## [v22.3.5] 2026-08-14
 
@@ -10050,7 +10096,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v22.3.5...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v22.4.1...HEAD
+[v22.4.1]: https://github.com/nasa/cumulus/compare/v22.4.0...v22.4.1
+[v22.4.0]: https://github.com/nasa/cumulus/compare/v22.3.5...v22.4.0
 [v22.3.5]: https://github.com/nasa/cumulus/compare/v22.3.4...v22.3.5
 [v22.3.4]: https://github.com/nasa/cumulus/compare/v22.3.3...v22.3.4
 [v22.3.3]: https://github.com/nasa/cumulus/compare/v22.3.2...v22.3.3

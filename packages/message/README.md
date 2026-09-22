@@ -116,7 +116,9 @@ the failed task Id.  HistoryEvent ids are numbered sequentially, starting at
 one.</p>
 </dd>
 <dt><a href="#lastFailedEventStep">lastFailedEventStep(events)</a> ⇒ <code>Array.&lt;HistoryEvent&gt;</code> | <code>undefined</code></dt>
-<dd><p>Finds all failed execution events and returns the last one in the list.</p>
+<dd><p>Finds all failed execution events and returns the last one in the list.
+Looks for a failed lambda execution (LambdaFunctionFailed),
+failed ECS Task (TaskFailed) or an external worker (ActivityFailed)</p>
 </dd>
 <dt><a href="#getFailedExecutionMessage">getFailedExecutionMessage(inputCumulusMessage, getExecutionHistoryFunction)</a> ⇒ <code>Object</code></dt>
 <dd><p>Get message to use for publishing failed execution notifications.</p>
@@ -555,6 +557,8 @@ one.
 
 ### lastFailedEventStep(events) ⇒ <code>Array.&lt;HistoryEvent&gt;</code> \| <code>undefined</code>
 Finds all failed execution events and returns the last one in the list.
+Looks for a failed lambda execution (LambdaFunctionFailed),
+failed ECS Task (TaskFailed) or an external worker (ActivityFailed)
 
 **Kind**: global function
 **Returns**: <code>Array.&lt;HistoryEvent&gt;</code> \| <code>undefined</code> - - the last lambda or activity that failed in the
