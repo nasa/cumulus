@@ -327,6 +327,8 @@ test.serial('withCmrLaunchpadTokenRefreshRetry does not retry for non-launchpad 
 });
 
 test.serial('withCmrLaunchpadTokenRefreshRetry passes through non-401 errors without retry', async (t) => {
+  process.env.CMR_RETRIES = '0';
+  t.teardown(() => delete process.env.CMR_RETRIES);
   const cmr = CMR.getInstance({
     clientId: 'clientId',
     oauthProvider: 'launchpad',
@@ -352,7 +354,9 @@ test.serial('withCmrLaunchpadTokenRefreshRetry passes through non-401 errors wit
   t.false(refreshSpy.called);
 });
 
-test.serial('withCmrLaunchpadTokenRefreshRetry refreshes launchpad token on 401 and retries successfully', async (t) => {
+test.serial('withCmrLaunchpadTokenRefreshRetry does not retry on 401 by default', async (t) => {
+  process.env.CMR_RETRIES = '0';
+  t.teardown(() => delete process.env.CMR_RETRIES);
   const cmr = CMR.getInstance({
     clientId: 'clientId',
     oauthProvider: 'launchpad',
@@ -362,10 +366,34 @@ test.serial('withCmrLaunchpadTokenRefreshRetry refreshes launchpad token on 401 
     certificate: 'cert',
   });
 
-  const refreshStub = sinon.stub(cmr, 'checkRefreshLaunchpadToken')
-    .callsFake(() => {
-      cmr.token = 'valid-token';
-    });
+  const refreshStub = sinon.stub(cmr, 'checkRefreshLaunchpadToken');
+  t.teardown(() => refreshStub.restore());
+
+  const unauthorizedError = Object.assign(new Error('Unauthorized'), { statusCode: 401 });
+  const operation = sinon.stub().rejects(unauthorizedError);
+
+  const error = await t.throwsAsync(() => cmr.withCmrLaunchpadTokenRefreshRetry(operation), {
+    is: unauthorizedError,
+  });
+
+  t.is(operation.callCount, 1);
+  t.false(refreshStub.called);
+  t.is(error, unauthorizedError);
+});
+
+test.serial('withCmrLaunchpadTokenRefreshRetry retries errors the configured number of times without refreshing', async (t) => {
+  process.env.CMR_RETRIES = '1';
+  t.teardown(() => delete process.env.CMR_RETRIES);
+  const cmr = CMR.getInstance({
+    clientId: 'clientId',
+    oauthProvider: 'launchpad',
+    token: 'invalid-token',
+    passphrase: 'passphrase',
+    api: 'api',
+    certificate: 'cert',
+  });
+
+  const refreshStub = sinon.stub(cmr, 'checkRefreshLaunchpadToken');
   t.teardown(() => refreshStub.restore());
 
   const operation = sinon.stub();
@@ -376,11 +404,12 @@ test.serial('withCmrLaunchpadTokenRefreshRetry refreshes launchpad token on 401 
 
   t.is(result, 'success');
   t.is(operation.callCount, 2);
-  t.true(refreshStub.calledOnce);
-  t.is(cmr.token, 'valid-token');
+  t.false(refreshStub.called);
 });
 
-test.serial('withCmrLaunchpadTokenRefreshRetry exhausts retries and throws an error with preserved statusCode and cause', async (t) => {
+test.serial('withCmrLaunchpadTokenRefreshRetry exhausts configured retries', async (t) => {
+  process.env.CMR_RETRIES = '2';
+  t.teardown(() => delete process.env.CMR_RETRIES);
   const cmr = CMR.getInstance({
     clientId: 'clientId',
     oauthProvider: 'launchpad',
@@ -390,21 +419,18 @@ test.serial('withCmrLaunchpadTokenRefreshRetry exhausts retries and throws an er
     certificate: 'cert',
   });
 
-  const refreshStub = sinon.stub(cmr, 'checkRefreshLaunchpadToken').resolves();
+  const refreshStub = sinon.stub(cmr, 'checkRefreshLaunchpadToken');
   t.teardown(() => refreshStub.restore());
 
   const originalError = Object.assign(new Error('Unauthorized'), { statusCode: 401 });
   const operation = sinon.stub().rejects(originalError);
-
-  const retries = 2;
   const error = await t.throwsAsync(
-    () => cmr.withCmrLaunchpadTokenRefreshRetry(operation, retries),
-    { message: /CMR launchpad authentication failed after 3 attempts/ }
+    () => cmr.withCmrLaunchpadTokenRefreshRetry(operation),
+    { name: 'CMRRetryExhaustedError' }
   );
 
-  t.is(operation.callCount, retries + 1);
-  t.is(refreshStub.callCount, retries);
-  t.is(error.statusCode, 401);
+  t.is(operation.callCount, 3);
+  t.false(refreshStub.called);
   t.is(error.cause, originalError);
 });
 

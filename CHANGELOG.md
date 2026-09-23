@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **CSD-299**
+  - Removed token regeneration in response to CMR 401 errors. During recent load tests, this behavior, combined with an overly aggressive retry strategy, contributed to overwhelming CMR. This change partially reverts CSD-99, which introduced token regeneration on 401 responses to address an issue where EDL cached invalid tokens. Because the underlying EDL caching issue has since been resolved, token regeneration on 401 responses is no longer necessary.
+  - Updated CMR retries to explicitly use exponential backoff. This defaults to 3 retries, with a backoff factor of 2 and a minTimeout of 5s.  This leads to retries at 5, 10 and 20 seconds with total lambda duration of up to 35 seconds of wait.
+
+### Added
+- **CSD-299**
+  - Added a new `CMRRetryExhaustedError` error type.  This error should be detectable by StepFunctions, allowing for specific retry behavior to be used in situations where CMR interaction is the culprit of the error.
+
 ## [v22.4.1] 2026-09-14
 
 ### Fixed

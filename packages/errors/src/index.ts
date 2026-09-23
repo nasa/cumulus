@@ -108,6 +108,11 @@ export const CMRMetaFileNotFound = createErrorType('CMRMetaFileNotFound');
 export const CMRInternalError = createErrorType('CMRInternalError');
 
 /**
+ * CMR operation failed after exhausting its configured retries
+ */
+export const CMRRetryExhaustedError = createErrorType('CMRRetryExhaustedError');
+
+/**
  * Distribution bucket map is missing a configured value for a distribution bucket
  */
 export const MissingBucketMap = createErrorType('MissingBucketMap');
