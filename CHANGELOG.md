@@ -9,10 +9,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-5369**
-  - The `instanceMeta` API endpoint now returns `icebergAdmins`, the list of iceberg admin
+  - The `instanceMeta` API endpoint now returns `icebergAdmins`, a list of iceberg admin
     usernames read from the `${prefix}-iceberg_admins_list` SSM parameter created by the
     `rds-iceberg-replication` module. An empty list is returned if the parameter does not exist.
-  - Added an `ssm()` service and `SSM.getParameterValue()` helper to `@cumulus/aws-client`
+  - Added an `ssm()` service and `SSM.getParameterValue()` helper to `@cumulus/aws-client` to facilitate
+    this retrieval.
 
 ## [v22.4.1] 2026-09-14
 
