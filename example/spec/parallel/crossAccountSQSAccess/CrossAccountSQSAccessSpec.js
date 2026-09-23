@@ -24,6 +24,10 @@ const log = new Logger({
 });
 
 describe('Create SQS rule that exists in a cross-account configuration via the Cumulus API', () => {
+  // this test is set up as 'opt-in'.  Because we only have a single queue available in the cross-account
+  // single queue availablility means that [prefix]-sqsMessageConsumer lambdas in different stacks are
+  // pulling messages from the same queue, preventing a given stack getting the message it expected as
+  // another stack alreaady took the message
   let config;
   let sqsClient;
   let queueUrl; // Assumes this is created or retrieved prior to the rule creation
@@ -32,15 +36,17 @@ describe('Create SQS rule that exists in a cross-account configuration via the C
   let execution;
   let expectedPayload;
   let beforeAllError;
-  let inspectedExecutionCount = 0;
 
   beforeAll(async () => {
     try {
       config = await loadConfig();
+      if (!config.crossAccountSqsTestQueueUrl) {
+        return;
+      }
       process.env.stackName = config.stackName;
 
       sqsClient = new SQSClient({ region: process.env.AWS_REGION || 'us-east-1' });
-      queueUrl = 'https://sqs.us-east-1.amazonaws.com/226009925001/cumulus-sandbox-cross-account-sqsTestQueue';
+      queueUrl = config.crossAccountSqsTestQueueUrl;
 
       log.debug(`Referencing cross-account SQS queue: ${queueUrl}`);
 
@@ -109,21 +115,13 @@ describe('Create SQS rule that exists in a cross-account configuration via the C
         workflowName: sqsRule.workflow,
         stackName: config.stackName,
         bucket: config.bucket,
+        // Custom find function: checks if the unique testId is anywhere in the execution payload/meta
         findExecutionFn: (executionToCheck, params) => {
           const payloadString = JSON.stringify(executionToCheck);
-          const matches = payloadString.includes(params.testId);
-          if (inspectedExecutionCount < 10) {
-            log.debug(`Inspected workflow execution ${JSON.stringify({
-              execution: executionToCheck,
-              testId: params.testId,
-              matches,
-            })}`);
-            inspectedExecutionCount += 1;
-          }
-          return matches;
+          return payloadString.includes(params.testId);
         },
         findExecutionFnParams: { testId: expectedPayload.testId },
-        startTask: 'HelloWorld',
+        startTask: 'HelloWorld', // Replace with the actual first step of your HelloWorldWorkflow
       });
     } catch (error) {
       console.error('Error in beforeAll:', error);
@@ -147,6 +145,10 @@ describe('Create SQS rule that exists in a cross-account configuration via the C
   });
 
   it('successfully creates the SQS rule pointing to the cross-account queue URL', () => {
+    if (!config.crossAccountSqsTestQueueUrl) {
+      pending('Cross-account SQS test is not configured for this stack');
+      return;
+    }
     if (beforeAllError) throw SetupError;
 
     expect(fetchedRule).toBeDefined();
@@ -156,6 +158,10 @@ describe('Create SQS rule that exists in a cross-account configuration via the C
   });
 
   it('triggers a workflow execution because of the message placed on the cross account queue', () => {
+    if (!config.crossAccountSqsTestQueueUrl) {
+      pending('Cross-account SQS test is not configured for this stack');
+      return;
+    }
     if (beforeAllError) throw SetupError;
 
     expect(execution).toBeDefined();
