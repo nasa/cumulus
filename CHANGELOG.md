@@ -10,7 +10,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-5443**
   - Adding integration test to validate the ability to use cross account SQS queues to trigger workflows.
-
+    Due to infra complexity of cross account targeting and multiple lambdas that would poll the same cross-account
+    SQS queue, 'stealing' messages intended for a different stack, this is an 'opt-in' test that will only run in CI
+    if targeting tr-ci stack.
+- **CUMULUS-5369**
+  - The `instanceMeta` API endpoint now returns `icebergAdmins`, a list of iceberg admin
+    usernames read from the `${prefix}-iceberg_admins_list` SSM parameter created by the
+    `rds-iceberg-replication` module. An empty list is returned if the parameter does not exist.
+  - Added an `ssm()` service and `SSM.getParameterValue()` helper to `@cumulus/aws-client` to facilitate
+    this retrieval.
 - Adding CI deploying config to support treuter's CI stack
 
 ## [v22.4.1] 2026-09-14
