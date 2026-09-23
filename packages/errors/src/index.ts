@@ -108,9 +108,9 @@ export const CMRMetaFileNotFound = createErrorType('CMRMetaFileNotFound');
 export const CMRInternalError = createErrorType('CMRInternalError');
 
 /**
- * CMR operation failed after exhausting its configured retries
+ * CMR operation failed
  */
-export const CMRRetryExhaustedError = createErrorType('CMRRetryExhaustedError');
+export const CMRCallFailedError = createErrorType('CMRCallFailedError');
 
 /**
  * Distribution bucket map is missing a configured value for a distribution bucket

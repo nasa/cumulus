@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 - **CSD-299**
-  - Added a new `CMRRetryExhaustedError` error type.  This error should be detectable by StepFunctions, allowing for specific retry behavior to be used in situations where CMR interaction is the culprit of the error.
+  - Added a new `CMRCallFailedError` error type. This error is thrown for CMR failures after the configured retry attempts, including failures on the first attempt, and should be detectable by StepFunctions for CMR-specific retry behavior.
 
 ## [v22.4.1] 2026-09-14
 

@@ -1,7 +1,7 @@
 import pRetry from 'p-retry';
 import get from 'lodash/get';
 import got, { Headers } from 'got';
-import { CMRInternalError, CMRRetryExhaustedError } from '@cumulus/errors';
+import { CMRCallFailedError, CMRInternalError } from '@cumulus/errors';
 import { getValidLaunchpadToken } from '@cumulus/launchpad-auth';
 import Logger from '@cumulus/logger';
 import * as secretsManagerUtils from '@cumulus/aws-client/SecretsManager';
@@ -233,21 +233,26 @@ export class CMR {
   ): Promise<T> {
     const retries = getCmrRetries();
     try {
-      return await pRetry(operation, {
+      return await pRetry(async (attemptNumber) => {
+        const startTime = Date.now();
+        try {
+          return await operation();
+        } finally {
+          log.info(`CMR call completed, attempt ${attemptNumber}`);
+          log.info(`CMR call duration ${Date.now() - startTime}ms`);
+        }
+      }, {
         retries,
         minTimeout: 5000,
         factor: 2,
       });
     } catch (error) {
-      if (retries > 0) {
-        throw Object.assign(
-          new CMRRetryExhaustedError(
-            `CMR operation failed after ${retries + 1} attempts: ${error.message}`
-          ),
-          { cause: error }
-        );
-      }
-      throw error;
+      throw Object.assign(
+        new CMRCallFailedError(
+          `CMR operation failed after ${retries + 1} attempts: ${error.message}`
+        ),
+        { cause: error }
+      );
     }
   }
 

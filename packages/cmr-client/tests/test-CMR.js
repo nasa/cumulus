@@ -347,14 +347,14 @@ test.serial('withCmrLaunchpadTokenRefreshRetry passes through non-401 errors wit
 
   await t.throwsAsync(
     () => cmr.withCmrLaunchpadTokenRefreshRetry(operation),
-    { message: 'Bad Request' }
+    { name: 'CMRCallFailedError' }
   );
 
   t.is(operation.callCount, 1);
   t.false(refreshSpy.called);
 });
 
-test.serial('withCmrLaunchpadTokenRefreshRetry does not retry on 401 by default', async (t) => {
+test.serial('withCmrLaunchpadTokenRefreshRetry wraps a first-attempt failure', async (t) => {
   process.env.CMR_RETRIES = '0';
   t.teardown(() => delete process.env.CMR_RETRIES);
   const cmr = CMR.getInstance({
@@ -373,12 +373,12 @@ test.serial('withCmrLaunchpadTokenRefreshRetry does not retry on 401 by default'
   const operation = sinon.stub().rejects(unauthorizedError);
 
   const error = await t.throwsAsync(() => cmr.withCmrLaunchpadTokenRefreshRetry(operation), {
-    is: unauthorizedError,
+    name: 'CMRCallFailedError',
   });
 
   t.is(operation.callCount, 1);
   t.false(refreshStub.called);
-  t.is(error, unauthorizedError);
+  t.is(error.cause, unauthorizedError);
 });
 
 test.serial('withCmrLaunchpadTokenRefreshRetry retries errors the configured number of times without refreshing', async (t) => {
@@ -407,7 +407,7 @@ test.serial('withCmrLaunchpadTokenRefreshRetry retries errors the configured num
   t.false(refreshStub.called);
 });
 
-test.serial('withCmrLaunchpadTokenRefreshRetry exhausts configured retries', async (t) => {
+test.serial('withCmrLaunchpadTokenRefreshRetry wraps an exhausted retry sequence', async (t) => {
   process.env.CMR_RETRIES = '2';
   t.teardown(() => delete process.env.CMR_RETRIES);
   const cmr = CMR.getInstance({
@@ -426,7 +426,7 @@ test.serial('withCmrLaunchpadTokenRefreshRetry exhausts configured retries', asy
   const operation = sinon.stub().rejects(originalError);
   const error = await t.throwsAsync(
     () => cmr.withCmrLaunchpadTokenRefreshRetry(operation),
-    { name: 'CMRRetryExhaustedError' }
+    { name: 'CMRCallFailedError' }
   );
 
   t.is(operation.callCount, 3);
