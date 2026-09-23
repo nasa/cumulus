@@ -32,6 +32,7 @@ describe('Create SQS rule that exists in a cross-account configuration via the C
   let execution;
   let expectedPayload;
   let beforeAllError;
+  let inspectedExecutionCount = 0;
 
   beforeAll(async () => {
     try {
@@ -110,7 +111,16 @@ describe('Create SQS rule that exists in a cross-account configuration via the C
         bucket: config.bucket,
         findExecutionFn: (executionToCheck, params) => {
           const payloadString = JSON.stringify(executionToCheck);
-          return payloadString.includes(params.testId);
+          const matches = payloadString.includes(params.testId);
+          if (inspectedExecutionCount < 10) {
+            log.debug(`Inspected workflow execution ${JSON.stringify({
+              execution: executionToCheck,
+              testId: params.testId,
+              matches,
+            })}`);
+            inspectedExecutionCount += 1;
+          }
+          return matches;
         },
         findExecutionFnParams: { testId: expectedPayload.testId },
         startTask: 'HelloWorld',
