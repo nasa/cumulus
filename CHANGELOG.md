@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-5370**
+  - Updating iceberg's admin variable to return an empty string as an element.  A default list element is necessary due to how new SSM parameters are created.  At deployment time, they cannot have an empty value, and if they do, a failure will prevent a successful build.
+
 - **CUMULUS-5369**
   - The `instanceMeta` API endpoint now returns `icebergAdmins`, a list of iceberg admin
     usernames read from the `${prefix}-iceberg_admins_list` SSM parameter created by the
