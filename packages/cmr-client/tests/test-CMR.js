@@ -163,6 +163,9 @@ test.serial('getReadHeaders returns clientId and token for launchpad', (t) => {
 });
 
 test.serial('ingestUMMGranule() returns CMRInternalError when CMR is down', async (t) => {
+  process.env.CMR_RETRIES = '0';
+  t.teardown(() => delete process.env.CMR_RETRIES);
+
   const cmrSearch = CMR.getInstance({ oauthProvider: 'launchpad', token: 'abc', clientId: 'client' });
   const provider = PROVIDER;
 
@@ -183,10 +186,12 @@ test.serial('ingestUMMGranule() returns CMRInternalError when CMR is down', asyn
     .times(3)
     .reply(503, internalError);
 
-  await t.throwsAsync(
+  const error = await t.throwsAsync(
     () => cmrSearch.ingestUMMGranule(ummgMetadata, provider),
-    { instanceOf: CMRInternalError }
+    { name: 'CMRCallFailedError' }
   );
+
+  t.true(error.cause instanceof CMRInternalError);
 });
 
 test.serial('ingestUMMGranule() throws an exception if the input fails validation', async (t) => {
@@ -210,16 +215,21 @@ test.serial('ingestUMMGranule() throws an exception if the input fails validatio
     .put(`/ingest/providers/${provider}/granules/${ummgMetadata.GranuleUR}`)
     .reply(422, ummValidationError);
 
-  await t.throwsAsync(
+  const error = await t.throwsAsync(
     () => cmrSearch.ingestUMMGranule(ummgMetadata, provider),
-    {
-      name: 'Error',
-      message: 'Failed to ingest, statusCode: 422, statusMessage: Unprocessable Entity, CMR error message: [{"path":["Temporal"],"errors":["oh snap"]}]',
-    }
+    { name: 'CMRCallFailedError' }
+  );
+
+  t.is(
+    error.cause.message,
+    'Failed to ingest, statusCode: 422, statusMessage: Unprocessable Entity, CMR error message: [{"path":["Temporal"],"errors":["oh snap"]}]'
   );
 });
 
-test.serial('ingestUMMGranule refreshes launchpad token on 401 and retries successfully', async (t) => {
+test.serial('ingestUMMGranule retries on 401 without refreshing the launchpad token', async (t) => {
+  process.env.CMR_RETRIES = '1';
+  t.teardown(() => delete process.env.CMR_RETRIES);
+
   const cmrSearch = CMR.getInstance({
     oauthProvider: 'launchpad',
     token: 'invalid-token',
@@ -230,10 +240,7 @@ test.serial('ingestUMMGranule refreshes launchpad token on 401 and retries succe
   });
   const provider = PROVIDER;
 
-  const refreshStub = sinon.stub(cmrSearch, 'checkRefreshLaunchpadToken')
-    .callsFake(() => {
-      cmrSearch.token = 'valid-token';
-    });
+  const refreshStub = sinon.stub(cmrSearch, 'checkRefreshLaunchpadToken');
   t.teardown(() => refreshStub.restore());
 
   const ummgMetadata = { GranuleUR: 'asdf' };
@@ -252,7 +259,7 @@ test.serial('ingestUMMGranule refreshes launchpad token on 401 and retries succe
   const result = await cmrSearch.ingestUMMGranule(ummgMetadata, provider);
 
   t.deepEqual(result, successBody);
-  t.true(refreshStub.calledOnce);
+  t.false(refreshStub.called);
   t.true(nock.isDone());
 });
 
@@ -326,7 +333,7 @@ test.serial('withCmrLaunchpadTokenRefreshRetry does not retry for non-launchpad 
   t.false(refreshSpy.called);
 });
 
-test.serial('withCmrLaunchpadTokenRefreshRetry passes through non-401 errors without retry', async (t) => {
+test.serial('withCmrLaunchpadTokenRefreshRetry does not retry when CMR_RETRIES is 0', async (t) => {
   process.env.CMR_RETRIES = '0';
   t.teardown(() => delete process.env.CMR_RETRIES);
   const cmr = CMR.getInstance({
@@ -381,7 +388,7 @@ test.serial('withCmrLaunchpadTokenRefreshRetry wraps a first-attempt failure', a
   t.is(error.cause, unauthorizedError);
 });
 
-test.serial('withCmrLaunchpadTokenRefreshRetry retries errors the configured number of times without refreshing', async (t) => {
+test.serial('withCmrLaunchpadTokenRefreshRetry retries errors the configured number of times without refreshing the launchpad token', async (t) => {
   process.env.CMR_RETRIES = '1';
   t.teardown(() => delete process.env.CMR_RETRIES);
   const cmr = CMR.getInstance({
@@ -393,11 +400,11 @@ test.serial('withCmrLaunchpadTokenRefreshRetry retries errors the configured num
     certificate: 'cert',
   });
 
-  const refreshStub = sinon.stub(cmr, 'checkRefreshLaunchpadToken');
+  const refreshStub = sinon.stub(cmr, 'checkRefreshLaunchpadToken').resolves();
   t.teardown(() => refreshStub.restore());
 
   const operation = sinon.stub();
-  operation.onFirstCall().rejects(Object.assign(new Error('Unauthorized'), { statusCode: 401 }));
+  operation.onFirstCall().rejects(Object.assign(new Error('Internal Server Error'), { statusCode: 500 }));
   operation.onSecondCall().resolves('success');
 
   const result = await cmr.withCmrLaunchpadTokenRefreshRetry(operation);
@@ -419,10 +426,10 @@ test.serial('withCmrLaunchpadTokenRefreshRetry wraps an exhausted retry sequence
     certificate: 'cert',
   });
 
-  const refreshStub = sinon.stub(cmr, 'checkRefreshLaunchpadToken');
+  const refreshStub = sinon.stub(cmr, 'checkRefreshLaunchpadToken').resolves();
   t.teardown(() => refreshStub.restore());
 
-  const originalError = Object.assign(new Error('Unauthorized'), { statusCode: 401 });
+  const originalError = Object.assign(new Error('Internal Server Error'), { statusCode: 500 });
   const operation = sinon.stub().rejects(originalError);
   const error = await t.throwsAsync(
     () => cmr.withCmrLaunchpadTokenRefreshRetry(operation),

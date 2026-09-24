@@ -21,7 +21,7 @@ const logDetails: { [key: string]: string } = {
 };
 
 const getCmrRetries = (): number => {
-  const retries = Number.parseInt(process.env.CMR_RETRIES || '3', 10);
+  const retries = Number.parseInt(process.env.CMR_RETRIES || '0', 10);
   return Number.isNaN(retries) || retries < 0 ? 0 : retries;
 };
 /**
@@ -221,7 +221,11 @@ export class CMR {
 
   /**
   * Runs a CMR operation with configurable retry logic.
-  * By default, 3 retries are attempted.
+  * By default, 0 retries are attempted.
+  *
+  * Retries on any error. Regardless of how the operation fails, the
+  * final error is wrapped in a CMRCallFailedError with the original error
+  * preserved as `cause`.
   *
   * @param {Function} operation - the CMR function with args to execute
   * Retries are controlled by the CMR_RETRIES environment variable
