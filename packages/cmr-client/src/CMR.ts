@@ -250,9 +250,11 @@ export class CMR {
           statusCode = error.statusCode;
           throw error;
         } finally {
-          log.info(`CMR call completed after attempt ${attemptNumber}`);
-          log.info(`CMR Operation:(${operationDescription}), Status: ${statusCode}`);
-          log.info(`CMR call duration ${Date.now() - startTime}ms`);
+          const duration = Date.now() - startTime;
+          log.info(
+            `CMR Operation:(${operationDescription}), Attempt: ${attemptNumber}, `
+            + `Status: ${statusCode}, Duration: ${duration}ms`
+          );
         }
       }, {
         retries,
