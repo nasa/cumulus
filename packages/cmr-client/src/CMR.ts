@@ -228,21 +228,30 @@ export class CMR {
   * preserved as `cause`.
   *
   * @param {Function} operation - the CMR function with args to execute
+  * @param {string} operationDescription - description of the CMR call, used for logging
   * Retries are controlled by the CMR_RETRIES environment variable
   * waits 5 * 2^n seconds before retry n.
   * @returns {Promise} - result of CMR function call
   */
   async withCmrLaunchpadTokenRefreshRetry<T>(
-    operation: () => Promise<T>
+    operation: () => Promise<T>,
+    operationDescription = 'CMR operation'
   ): Promise<T> {
     const retries = getCmrRetries();
     try {
       return await pRetry(async (attemptNumber) => {
         const startTime = Date.now();
+        let statusCode;
         try {
-          return await operation();
+          const result = await operation();
+          statusCode = (result as unknown as { statusCode?: number })?.statusCode;
+          return result;
+        } catch (error) {
+          statusCode = error.statusCode;
+          throw error;
         } finally {
-          log.info(`CMR call completed, attempt ${attemptNumber}`);
+          log.info(`CMR call completed after attempt ${attemptNumber}`);
+          log.info(`CMR Operation:(${operationDescription}), Status: ${statusCode}`);
           log.info(`CMR call duration ${Date.now() - startTime}ms`);
         }
       }, {
@@ -253,7 +262,7 @@ export class CMR {
     } catch (error) {
       throw Object.assign(
         new CMRCallFailedError(
-          `CMR operation failed after ${retries + 1} attempts: ${error.message}`
+          `CMR operation (${operationDescription}) failed after ${retries + 1} attempts: ${error.message}`
         ),
         { cause: error }
       );
@@ -323,7 +332,7 @@ export class CMR {
     return await this.withCmrLaunchpadTokenRefreshRetry(async () => {
       const headers = this.getWriteHeaders({ token: await this.getToken() });
       return await ingestConcept('collection', xml, 'Collection.DataSetId', provider, headers);
-    });
+    }, `ingestCollection, provider: ${provider}`);
   }
 
   /**
@@ -342,7 +351,7 @@ export class CMR {
     return await this.withCmrLaunchpadTokenRefreshRetry(async () => {
       const headers = this.getWriteHeaders({ token: await this.getToken(), cmrRevisionId });
       return await ingestConcept('granule', xml, 'Granule.GranuleUR', provider, headers);
-    });
+    }, `ingestGranule, provider: ${provider}`);
   }
 
   /**
@@ -358,6 +367,7 @@ export class CMR {
     provider: string,
     cmrRevisionId?: string
   ): Promise<CMRResponseBody | CMRErrorResponseBody> {
+    const granuleId = ummgMetadata.GranuleUR || 'no GranuleId found on input metadata';
     return await this.withCmrLaunchpadTokenRefreshRetry(async () => {
       const headers = this.getWriteHeaders({
         token: await this.getToken(),
@@ -365,7 +375,6 @@ export class CMR {
         cmrRevisionId,
       });
 
-      const granuleId = ummgMetadata.GranuleUR || 'no GranuleId found on input metadata';
       logDetails.granuleId = granuleId;
 
       try {
@@ -397,7 +406,7 @@ export class CMR {
 
         throw Object.assign(new Error(errorMessage), { statusCode, cause: error });
       }
-    });
+    }, `ingestUMMGranule, provider: ${provider}, granuleId: ${granuleId}`);
   }
 
   /**
@@ -411,7 +420,7 @@ export class CMR {
     return await this.withCmrLaunchpadTokenRefreshRetry(async () => {
       const headers = this.getWriteHeaders({ token: await this.getToken() });
       return await deleteConcept('collections', datasetID, provider, headers);
-    });
+    }, `deleteCollection, provider: ${provider}, datasetID: ${datasetID}`);
   }
 
   /**
@@ -425,7 +434,7 @@ export class CMR {
     return await this.withCmrLaunchpadTokenRefreshRetry(async () => {
       const headers = this.getWriteHeaders({ token: await this.getToken() });
       return await deleteConcept('granules', granuleUR, provider, headers);
-    });
+    }, `deleteGranule, provider: ${provider}, granuleUR: ${granuleUR}`);
   }
 
   async searchConcept(
