@@ -6,14 +6,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Added
+### Fixed
+- **CSD-299**
+  - Removed token regeneration in response to CMR 401 errors. During recent load tests, this behavior, combined with an overly aggressive retry strategy, contributed to overwhelming CMR. This change partially reverts CSD-99, which introduced token regeneration on 401 responses to address an issue where EDL cached invalid tokens. Because the underlying EDL caching issue has since been resolved, token regeneration on 401 responses is no longer necessary.
 
+### Added
+- **CSD-299**
+  - Added a new `CMRCallFailedError` error type. This error is thrown for CMR failures after the configured retry attempts, including failures on the first attempt, and should be detectable by StepFunctions for CMR-specific retry behavior.
 - **CUMULUS-5369**
   - The `instanceMeta` API endpoint now returns `icebergAdmins`, a list of iceberg admin
     usernames read from the `${prefix}-iceberg_admins_list` SSM parameter created by the
     `rds-iceberg-replication` module. An empty list is returned if the parameter does not exist.
   - Added an `ssm()` service and `SSM.getParameterValue()` helper to `@cumulus/aws-client` to facilitate
     this retrieval.
+
+### Changed
+- **CSD-299**
+  - Updated CMR retries to explicitly use exponential backoff. This defaults to 0 retries.  Retries may be specified using the `CMR_RETRIES` environment variable.  If retries are specified, a backoff factor of 2 and a minTimeout of 5s is used.  For 3 retries, this leads to retries at 5, 10 and 20 seconds with total lambda duration of up to 35 seconds of wait.
 
 ## [v22.4.1] 2026-09-14
 
