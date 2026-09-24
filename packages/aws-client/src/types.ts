@@ -14,6 +14,7 @@ import { SecretsManager } from '@aws-sdk/client-secrets-manager';
 import { SFN } from '@aws-sdk/client-sfn';
 import { SNS } from '@aws-sdk/client-sns';
 import { SQS } from '@aws-sdk/client-sqs';
+import { SSM } from '@aws-sdk/client-ssm';
 import { STS } from '@aws-sdk/client-sts';
 
 export type AWSClientTypes =
@@ -30,6 +31,7 @@ export type AWSClientTypes =
     SFN |
     SNS |
     SQS |
+    SSM |
     STS |
     CloudWatchEvents |
     CloudFormation |

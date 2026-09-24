@@ -14,6 +14,7 @@ const { KMS } = require('@aws-sdk/client-kms');
 const { SFN } = require('@aws-sdk/client-sfn');
 const { SNS } = require('@aws-sdk/client-sns');
 const { SQS } = require('@aws-sdk/client-sqs');
+const { SSM } = require('@aws-sdk/client-ssm');
 const { STS } = require('@aws-sdk/client-sts');
 
 const services = require('../services');
@@ -348,6 +349,27 @@ test('sqs() service defaults to localstack in test mode', async (t) => {
     credentials
   );
   const serviceConfigEndpoint = await sqs.config.endpoint();
+  const localEndpoint = new URL(endpoint);
+  t.like(
+    serviceConfigEndpoint,
+    {
+      hostname: localEndpoint.hostname,
+      port: Number.parseInt(localEndpoint.port, 10),
+    }
+  );
+});
+
+test('ssm() service defaults to localstack in test mode', async (t) => {
+  const ssm = services.ssm();
+  const {
+    credentials,
+    endpoint,
+  } = localStackAwsClientOptions(SSM);
+  t.like(
+    await ssm.config.credentials(),
+    credentials
+  );
+  const serviceConfigEndpoint = await ssm.config.endpoint();
   const localEndpoint = new URL(endpoint);
   t.like(
     serviceConfigEndpoint,
