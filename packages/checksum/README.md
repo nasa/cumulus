@@ -33,8 +33,8 @@ const myCksum = generateChecksumFromStream('cksum', stream);
 ### checksum.generateChecksumFromStream(algorithm, stream, [options]) ⇒ <code>Promise.&lt;(number\|string)&gt;</code>
 Create <algorithm> file checksum from readable stream
 
-**Kind**: static method of [<code>checksum</code>](#module_checksum)  
-**Returns**: <code>Promise.&lt;(number\|string)&gt;</code> - the file checksum  
+**Kind**: static method of [<code>checksum</code>](#module_checksum)
+**Returns**: <code>Promise.&lt;(number\|string)&gt;</code> - the file checksum
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -47,8 +47,8 @@ Create <algorithm> file checksum from readable stream
 ### checksum.validateChecksumFromStream(algorithm, stream, expectedSum, [options]) ⇒ <code>Promise.&lt;boolean&gt;</code>
 Validate expected checksum against calculated checksum
 
-**Kind**: static method of [<code>checksum</code>](#module_checksum)  
-**Returns**: <code>Promise.&lt;boolean&gt;</code> - whether expectedSum === calculatedSum  
+**Kind**: static method of [<code>checksum</code>](#module_checksum)
+**Returns**: <code>Promise.&lt;boolean&gt;</code> - whether expectedSum === calculatedSum
 
 | Param | Type | Description |
 | --- | --- | --- |

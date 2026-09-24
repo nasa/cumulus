@@ -158,7 +158,7 @@ input.</p>
 ### Build
 Utility functions for building Cumulus messages
 
-**Example**  
+**Example**
 ```js
 const Build = require('@cumulus/message/Build');
 ```
@@ -167,8 +167,8 @@ const Build = require('@cumulus/message/Build');
 #### buildQueueMessageFromTemplate(params) ⇒ <code>Message.CumulusMessage</code> ⏏
 Build an SQS message from a workflow template for queueing executions.
 
-**Kind**: Exported function  
-**Returns**: <code>Message.CumulusMessage</code> - A Cumulus message object  
+**Kind**: Exported function
+**Returns**: <code>Message.CumulusMessage</code> - A Cumulus message object
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -190,7 +190,7 @@ Build an SQS message from a workflow template for queueing executions.
 Utility functions for generating execution information or parsing execution information
 from a Cumulus message
 
-**Example**  
+**Example**
 ```js
 const Executions = require('@cumulus/message/Executions');
 ```
@@ -215,8 +215,8 @@ const Executions = require('@cumulus/message/Executions');
 #### buildExecutionArn(stateMachineArn, executionName) ⇒ <code>string</code> ⏏
 Build execution ARN from a state machine ARN and execution name
 
-**Kind**: Exported function  
-**Returns**: <code>string</code> - an execution ARN  
+**Kind**: Exported function
+**Returns**: <code>string</code> - an execution ARN
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -228,8 +228,8 @@ Build execution ARN from a state machine ARN and execution name
 #### getExecutionUrlFromArn(executionArn) ⇒ <code>string</code> ⏏
 Returns execution URL from an execution ARN.
 
-**Kind**: Exported function  
-**Returns**: <code>string</code> - returns AWS console URL for the execution  
+**Kind**: Exported function
+**Returns**: <code>string</code> - returns AWS console URL for the execution
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -240,8 +240,8 @@ Returns execution URL from an execution ARN.
 #### getStateMachineArnFromExecutionArn(executionArn) ⇒ <code>string</code> ⏏
 Get state machine ARN from an execution ARN
 
-**Kind**: Exported function  
-**Returns**: <code>string</code> - a state machine ARN  
+**Kind**: Exported function
+**Returns**: <code>string</code> - a state machine ARN
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -252,8 +252,8 @@ Get state machine ARN from an execution ARN
 #### getMessageExecutionName(message) ⇒ <code>string</code> ⏏
 Get the execution name from a workflow message.
 
-**Kind**: Exported function  
-**Returns**: <code>string</code> - An execution name  
+**Kind**: Exported function
+**Returns**: <code>string</code> - An execution name
 **Throws**:
 
 - <code>Error</code> if there is no execution name
@@ -268,8 +268,8 @@ Get the execution name from a workflow message.
 #### getMessageStateMachineArn(message) ⇒ <code>string</code> ⏏
 Get the state machine ARN from a workflow message.
 
-**Kind**: Exported function  
-**Returns**: <code>string</code> - A state machine ARN  
+**Kind**: Exported function
+**Returns**: <code>string</code> - A state machine ARN
 **Throws**:
 
 - <code>Error</code> if there is not state machine ARN
@@ -284,8 +284,8 @@ Get the state machine ARN from a workflow message.
 #### getMessageExecutionArn(message) ⇒ <code>null</code> \| <code>string</code> ⏏
 Get the execution ARN from a workflow message.
 
-**Kind**: Exported function  
-**Returns**: <code>null</code> \| <code>string</code> - A state machine execution ARN  
+**Kind**: Exported function
+**Returns**: <code>null</code> \| <code>string</code> - A state machine execution ARN
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -296,8 +296,8 @@ Get the execution ARN from a workflow message.
 #### getMessageExecutionParentArn(message) ⇒ <code>undefined</code> \| <code>string</code> ⏏
 Get the parent execution ARN from a workflow message, if any.
 
-**Kind**: Exported function  
-**Returns**: <code>undefined</code> \| <code>string</code> - A state machine execution ARN  
+**Kind**: Exported function
+**Returns**: <code>undefined</code> \| <code>string</code> - A state machine execution ARN
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -308,8 +308,8 @@ Get the parent execution ARN from a workflow message, if any.
 #### getMessageCumulusVersion(message) ⇒ <code>undefined</code> \| <code>string</code> ⏏
 Get the Cumulus version from a workflow message, if any.
 
-**Kind**: Exported function  
-**Returns**: <code>undefined</code> \| <code>string</code> - The cumulus version  
+**Kind**: Exported function
+**Returns**: <code>undefined</code> \| <code>string</code> - The cumulus version
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -320,8 +320,8 @@ Get the Cumulus version from a workflow message, if any.
 #### getMessageExecutionOriginalPayload(message) ⇒ <code>unknown</code> \| <code>undefined</code> ⏏
 Get the workflow original payload, if any.
 
-**Kind**: Exported function  
-**Returns**: <code>unknown</code> \| <code>undefined</code> - The workflow original payload  
+**Kind**: Exported function
+**Returns**: <code>unknown</code> \| <code>undefined</code> - The workflow original payload
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -332,8 +332,8 @@ Get the workflow original payload, if any.
 #### getMessageExecutionFinalPayload(message) ⇒ <code>unknown</code> \| <code>undefined</code> ⏏
 Get the workflow final payload, if any.
 
-**Kind**: Exported function  
-**Returns**: <code>unknown</code> \| <code>undefined</code> - The workflow final payload  
+**Kind**: Exported function
+**Returns**: <code>unknown</code> \| <code>undefined</code> - The workflow final payload
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -344,8 +344,8 @@ Get the workflow final payload, if any.
 #### generateExecutionApiRecordFromMessage(message, [updatedAt]) ⇒ <code>ApiExecution</code> ⏏
 Generate an execution record for the API from the message.
 
-**Kind**: Exported function  
-**Returns**: <code>ApiExecution</code> - An execution API record  
+**Kind**: Exported function
+**Returns**: <code>ApiExecution</code> - An execution API record
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -357,8 +357,8 @@ Generate an execution record for the API from the message.
 #### generatePdrApiRecordFromMessage(message, [updatedAt]) ⇒ <code>ApiPdr</code> ⏏
 Generate a PDR record for the API from the message.
 
-**Kind**: global method of [<code>Executions</code>](#module_Executions)  
-**Returns**: <code>ApiPdr</code> - An PDR API record  
+**Kind**: global method of [<code>Executions</code>](#module_Executions)
+**Returns**: <code>ApiPdr</code> - An PDR API record
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -370,7 +370,7 @@ Generate a PDR record for the API from the message.
 ### Granules
 Utility functions for parsing granule information from a Cumulus message
 
-**Example**  
+**Example**
 ```js
 const Granules = require('@cumulus/message/Granules');
 ```
@@ -387,9 +387,9 @@ const Granules = require('@cumulus/message/Granules');
 #### getMessageGranules(message) ⇒ <code>Array.&lt;object&gt;</code> \| <code>undefined</code> ⏏
 Get granules from payload?.granules of a workflow message.
 
-**Kind**: Exported function  
+**Kind**: Exported function
 **Returns**: <code>Array.&lt;object&gt;</code> \| <code>undefined</code> - An array of granule objects, or
-  undefined if `message.payload.granules` is not set  
+  undefined if `message.payload.granules` is not set
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -400,8 +400,8 @@ Get granules from payload?.granules of a workflow message.
 #### messageHasGranules(message) ⇒ <code>boolean</code> ⏏
 Determine if message has a granules object.
 
-**Kind**: Exported function  
-**Returns**: <code>boolean</code> - true if message has a granules object  
+**Kind**: Exported function
+**Returns**: <code>boolean</code> - true if message has a granules object
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -412,8 +412,8 @@ Determine if message has a granules object.
 #### getGranuleStatus(workflowStatus, granule) ⇒ <code>string</code> ⏏
 Determine the status of a granule.
 
-**Kind**: Exported function  
-**Returns**: <code>string</code> - The granule status  
+**Kind**: Exported function
+**Returns**: <code>string</code> - The granule status
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -425,8 +425,8 @@ Determine the status of a granule.
 #### getGranuleQueryFields(message) ⇒ <code>unknown</code> \| <code>undefined</code> ⏏
 Get the query fields of a granule, if any
 
-**Kind**: Exported function  
-**Returns**: <code>unknown</code> \| <code>undefined</code> - The granule query fields, if any  
+**Kind**: Exported function
+**Returns**: <code>unknown</code> \| <code>undefined</code> - The granule query fields, if any
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -437,8 +437,8 @@ Get the query fields of a granule, if any
 #### generateGranuleApiRecord(message) ⇒ <code>Promise.&lt;ApiGranule&gt;</code> ⏏
 Generate an API granule record
 
-**Kind**: Exported function  
-**Returns**: <code>Promise.&lt;ApiGranule&gt;</code> - The granule API record  
+**Kind**: Exported function
+**Returns**: <code>Promise.&lt;ApiGranule&gt;</code> - The granule API record
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -449,7 +449,7 @@ Generate an API granule record
 ### Queue
 Utility functions for parsing queue information from a Cumulus message
 
-**Example**  
+**Example**
 ```js
 const Queue = require('@cumulus/message/Queue');
 ```
@@ -464,8 +464,8 @@ const Queue = require('@cumulus/message/Queue');
 #### getQueueUrl(message) ⇒ <code>string</code> ⏏
 Get the queue URL from a workflow message.
 
-**Kind**: Exported function  
-**Returns**: <code>string</code> - A queue URL  
+**Kind**: Exported function
+**Returns**: <code>string</code> - A queue URL
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -476,8 +476,8 @@ Get the queue URL from a workflow message.
 #### getMaximumExecutions(message, queueUrl) ⇒ <code>number</code> ⏏
 Get the maximum executions for a queue.
 
-**Kind**: Exported function  
-**Returns**: <code>number</code> - Count of the maximum executions for the queue  
+**Kind**: Exported function
+**Returns**: <code>number</code> - Count of the maximum executions for the queue
 **Throws**:
 
 - <code>Error</code> if no maximum executions can be found
@@ -493,8 +493,8 @@ Get the maximum executions for a queue.
 #### hasQueueAndExecutionLimit(message) ⇒ <code>boolean</code> ⏏
 Determine if there is a queue and queue execution limit in the message.
 
-**Kind**: Exported function  
-**Returns**: <code>boolean</code> - True if there is a queue and execution limit.  
+**Kind**: Exported function
+**Returns**: <code>boolean</code> - True if there is a queue and execution limit.
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -505,27 +505,27 @@ Determine if there is a queue and queue execution limit in the message.
 ### isCumulusMessageLike()
 Bare check for CumulusMessage Shape
 
-**Kind**: global function  
+**Kind**: global function
 <a name="isDLQRecordLike"></a>
 
 ### isDLQRecordLike()
 Bare check for SQS message Shape
 
-**Kind**: global function  
+**Kind**: global function
 <a name="unwrapDeadLetterCumulusMessage"></a>
 
 ### unwrapDeadLetterCumulusMessage()
 Unwrap dead letter Cumulus message, which may be wrapped in a
 States cloudwatch event, which is wrapped in an SQS message.
 
-**Kind**: global function  
+**Kind**: global function
 <a name="extractSQSMetadata"></a>
 
 ### extractSQSMetadata(message) ⇒
 peel out metadata from an SQS(/DLQ)record
 
-**Kind**: global function  
-**Returns**: the given message without its body  
+**Kind**: global function
+**Returns**: the given message without its body
 
 | Param | Description |
 | --- | --- |
@@ -536,7 +536,7 @@ peel out metadata from an SQS(/DLQ)record
 ### hoistCumulusMessageDetails()
 Reformat object with key attributes at top level.
 
-**Kind**: global function  
+**Kind**: global function
 <a name="getFailedStepName"></a>
 
 ### getFailedStepName(events, failedStepEvent) ⇒ <code>string</code>
@@ -544,8 +544,8 @@ Searches the Execution step History for the TaskStateEntered pertaining to
 the failed task Id.  HistoryEvent ids are numbered sequentially, starting at
 one.
 
-**Kind**: global function  
-**Returns**: <code>string</code> - name of the current stepfunction task or 'UnknownFailedStepName'.  
+**Kind**: global function
+**Returns**: <code>string</code> - name of the current stepfunction task or 'UnknownFailedStepName'.
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -560,9 +560,9 @@ Finds all failed execution events and returns the last one in the list.
 Looks for a failed lambda execution (LambdaFunctionFailed),
 failed ECS Task (TaskFailed) or an external worker (ActivityFailed)
 
-**Kind**: global function  
+**Kind**: global function
 **Returns**: <code>Array.&lt;HistoryEvent&gt;</code> \| <code>undefined</code> - - the last lambda or activity that failed in the
-event array, or an empty array.  
+event array, or an empty array.
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -579,8 +579,8 @@ input.
 
 Falls back to overall execution input.
 
-**Kind**: global function  
-**Returns**: <code>Object</code> - - CumulusMessage Execution step message or execution input message  
+**Kind**: global function
+**Returns**: <code>Object</code> - - CumulusMessage Execution step message or execution input message
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -592,8 +592,8 @@ Falls back to overall execution input.
 ### isFileExtensionMatched(granuleFile, extension) ⇒ <code>boolean</code>
 Check if the file has the extension
 
-**Kind**: global function  
-**Returns**: <code>boolean</code> - whether the file has the extension  
+**Kind**: global function
+**Returns**: <code>boolean</code> - whether the file has the extension
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -605,8 +605,8 @@ Check if the file has the extension
 ### parseException(exception) ⇒ <code>string</code>
 Ensures that the exception is returned as an object
 
-**Kind**: global function  
-**Returns**: <code>string</code> - an stringified exception  
+**Kind**: global function
+**Returns**: <code>string</code> - an stringified exception
 
 | Param | Type | Description |
 | --- | --- | --- |
