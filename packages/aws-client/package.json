@@ -63,6 +63,7 @@
     "@aws-sdk/client-sfn": "^3.993.0",
     "@aws-sdk/client-sns": "^3.993.0",
     "@aws-sdk/client-sqs": "^3.993.0",
+    "@aws-sdk/client-ssm": "^3.993.0",
     "@aws-sdk/client-sts": "^3.993.0",
     "@aws-sdk/lib-dynamodb": "^3.993.0",
     "@aws-sdk/lib-storage": "^3.993.0",

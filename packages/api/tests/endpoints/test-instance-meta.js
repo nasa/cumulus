@@ -2,7 +2,7 @@
 
 const test = require('ava');
 const request = require('supertest');
-const { s3 } = require('@cumulus/aws-client/services');
+const { s3, ssm } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
@@ -27,6 +27,7 @@ process.env.cmr_provider = CMR_PROVIDER;
 process.env.cmr_oauth_provider = CMR_OAUTH_PROVIDER;
 process.env.TOKEN_SECRET = randomString();
 process.env.stackName = STACKNAME;
+const ICEBERG_ADMINS_PARAMETER_NAME = `${STACKNAME}-iceberg_admins_list`;
 let accessTokenModel;
 let jwtAuthToken;
 
@@ -47,17 +48,34 @@ test.before(async () => {
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 });
 
+test.afterEach.always(async () => {
+  await ssm().deleteParameter({ Name: ICEBERG_ADMINS_PARAMETER_NAME }).catch((error) => {
+    if (error.name !== 'ParameterNotFound') throw error;
+  });
+});
+
 test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await accessTokenModel.deleteTable();
 });
 
-test('GET returns expected metadata', async (t) => {
-  const response = await request(app)
-    .get('/instanceMeta')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
+const getInstanceMeta = () => request(app)
+  .get('/instanceMeta')
+  .set('Accept', 'application/json')
+  .set('Authorization', `Bearer ${jwtAuthToken}`)
+  .expect(200);
+
+const putIcebergAdminsParameter = (Value) => ssm().putParameter({
+  Name: ICEBERG_ADMINS_PARAMETER_NAME,
+  Type: 'StringList',
+  Value,
+  Overwrite: true,
+});
+
+// Tests below create/delete the shared SSM parameter, so they must not run concurrently
+test.serial('GET returns expected metadata', async (t) => {
+  await putIcebergAdminsParameter('admin-one,admin-two');
+  const response = await getInstanceMeta();
 
   t.deepEqual(response.body, {
     cmr: {
@@ -68,7 +86,22 @@ test('GET returns expected metadata', async (t) => {
     cumulus: {
       stackName: STACKNAME,
     },
+    icebergAdmins: ['admin-one', 'admin-two'],
   });
+});
+
+test.serial('GET returns an empty icebergAdmins list when the SSM parameter does not exist', async (t) => {
+  const response = await getInstanceMeta();
+
+  t.deepEqual(response.body.icebergAdmins, []);
+  t.is(response.body.cumulus.stackName, STACKNAME);
+});
+
+test.serial('GET trims whitespace and ignores empty entries in the icebergAdmins list', async (t) => {
+  await putIcebergAdminsParameter('admin-one, admin-two,,');
+  const response = await getInstanceMeta();
+
+  t.deepEqual(response.body.icebergAdmins, ['admin-one', 'admin-two']);
 });
 
 test('GET with invalid access token returns an invalid token response', async (t) => {
