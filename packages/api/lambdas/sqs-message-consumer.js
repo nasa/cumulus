@@ -40,6 +40,17 @@ async function processQueues(event, dispatchFn) {
     return map;
   }, {});
 
+  const queueRuleMapping = Object.entries(rulesByQueueMap).map(([queueUrl, queueRules]) => ({
+    queueUrl,
+    rules: queueRules.map((rule) => ({
+      name: rule.name,
+      workflow: rule.workflow,
+      state: rule.state,
+      ruleValue: rule.rule?.value,
+    })),
+  }));
+  log.info(`SQS queue rule mapping ${JSON.stringify(queueRuleMapping)}`);
+
   await Promise.all(Object.keys(rulesByQueueMap).map(async (queueUrl) => {
     const rulesForQueue = rulesByQueueMap[queueUrl];
 
@@ -78,6 +89,13 @@ async function processQueues(event, dispatchFn) {
 async function dispatch(queueUrl, message) {
   const messageReceiveCount = Number.parseInt(message.Attributes.ApproximateReceiveCount, 10);
   const rulesForQueue = this.rulesForQueue;
+
+  log.info(`Received SQS message ${JSON.stringify({
+    messageId: message.MessageId,
+    queueUrl,
+    receiveCount: messageReceiveCount,
+  })}`);
+
   await archiveSqsMessageToS3(queueUrl, message);
 
   const eventObject = JSON.parse(message.Body);
@@ -89,6 +107,15 @@ async function dispatch(queueUrl, message) {
     allowProviderMismatchOnRuleFilter: process.env.allowProviderMismatchOnRuleFilter === 'true',
   };
   const rulesToSchedule = rulesHelpers.filterRulesByRuleParams(rulesForQueue, ruleParams);
+
+  log.info(`Selected SQS rules ${JSON.stringify({
+    messageId: message.MessageId,
+    queueUrl,
+    rules: rulesToSchedule.map((rule) => ({
+      name: rule.name,
+      workflow: rule.workflow,
+    })),
+  })}`);
 
   return await Promise.all(rulesToSchedule.map((rule) => {
     if (get(rule, 'meta.retries', 3) < messageReceiveCount - 1) {
