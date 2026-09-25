@@ -23,11 +23,18 @@ const log = new Logger({
   sender: '@cumulus/message/StepFunctions',
 });
 
-describe('Create SQS rule that exists in a cross-account configuration via the Cumulus API', () => {
-  // this test is set up as 'opt-in'.  Because we only have a single queue available in the cross-account
+describe('Create and verify triggering workflows using SQS queue in different account (i.e. "cross-account")', () => {
+  // This test checks that we can trigger a workflow in account A by sending a message from account A to a SQS
+  // queue in Account B.  A lambda in account A gets the message from the queue in account B and triggers the
+  // respective workflow in account A.  This is primarily mimicking using legacy account deliveries to trigger
+  // workflows in consolidated cumulus accounts
+
+  // IMPORTANT NOTE:
+  // this test is set up as 'opt-in'.  Because we only have a single queue available in the separate AWS account,
   // single queue availablility means that [prefix]-sqsMessageConsumer lambdas in different stacks are
-  // pulling messages from the same queue, preventing a given stack getting the message it expected as
-  // another stack alreaady took the message
+  // pulling messages from the same queue with the hardcoded queuURL in this test, preventing a given stack
+  // getting the message it expected as another stack alreaady took the message
+
   let config;
   let sqsClient;
   let queueUrl; // Assumes this is created or retrieved prior to the rule creation
@@ -46,6 +53,9 @@ describe('Create SQS rule that exists in a cross-account configuration via the C
       process.env.stackName = config.stackName;
 
       sqsClient = new SQSClient({ region: process.env.AWS_REGION || 'us-east-1' });
+
+      // this queue is created in a separate AWS account and exists outside of terraform config in Cumulus
+      // this is the sole resource involved in this test that exists outside the cumulus infra in this repo
       queueUrl = config.crossAccountSqsTestQueueUrl;
 
       log.debug(`Referencing cross-account SQS queue: ${queueUrl}`);

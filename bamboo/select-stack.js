@@ -37,6 +37,7 @@ function determineIntegrationTestStackName(cb) {
     'Katherine Kelly': 'kk-int',
     'Mason Yates': 'mason-t-yates-ci',
     mckadesorensen: 'dms-opex-sbx-ci',
+    'Micah Thorstenson': 'mi-ci',
     mikedorfman: 'mikedorfman-ci',
     'Nate Pauzenga': 'np-ci',
     'Naga Nages': 'nnaga-ci',
@@ -45,7 +46,7 @@ function determineIntegrationTestStackName(cb) {
     'Rohan Weeden': 'reweeden-ci',
     'Tim Clark': 'teclark-ci',
     'Theodore Reuter': 'tr-ci',
-    'Micah Thorstenson': 'mi-ci',
+
     wisdomaj: 'awisdom-ci',
     'Yonggang Liu': 'yliu10-ci',
   };
