@@ -34,16 +34,16 @@ A class to simplify requests to the CMR
         * [.getToken()](#CMR+getToken) ⇒ <code>Promise.&lt;(string\|undefined)&gt;</code>
         * [.checkRefreshLaunchpadToken()](#CMR+checkRefreshLaunchpadToken) ⇒ <code>Promise.&lt;void&gt;</code>
         * [.refreshLaunchpadToken()](#CMR+refreshLaunchpadToken) ⇒ <code>Promise.&lt;void&gt;</code>
-        * [.withCmrLaunchpadTokenRefreshRetry(operation, [retries])](#CMR+withCmrLaunchpadTokenRefreshRetry) ⇒ <code>Promise</code>
+        * [.withCmrLaunchpadTokenRefreshRetry(operation, operationDescription)](#CMR+withCmrLaunchpadTokenRefreshRetry) ⇒ <code>Promise</code>
         * [.getWriteHeaders(params)](#CMR+getWriteHeaders) ⇒ <code>Object</code>
         * [.getReadHeaders(params)](#CMR+getReadHeaders) ⇒ <code>Object</code>
-        * [.ingestCollection(xml)](#CMR+ingestCollection) ⇒ <code>Promise.&lt;Object&gt;</code>
-        * [.ingestGranule(xml, cmrRevisionId)](#CMR+ingestGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
-        * [.ingestUMMGranule(ummgMetadata, cmrRevisionId)](#CMR+ingestUMMGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
-        * [.deleteCollection(datasetID)](#CMR+deleteCollection) ⇒ <code>Promise.&lt;Object&gt;</code>
-        * [.deleteGranule(granuleUR)](#CMR+deleteGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
-        * [.searchCollections(params, [format])](#CMR+searchCollections) ⇒ <code>Promise.&lt;Object&gt;</code>
-        * [.searchGranules(params, [format])](#CMR+searchGranules) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.ingestCollection(xml, provider)](#CMR+ingestCollection) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.ingestGranule(xml, provider, cmrRevisionId)](#CMR+ingestGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.ingestUMMGranule(ummgMetadata, provider, cmrRevisionId)](#CMR+ingestUMMGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.deleteCollection(datasetID, provider)](#CMR+deleteCollection) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.deleteGranule(granuleUR, provider)](#CMR+deleteGranule) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.searchCollections(params, provider, [format])](#CMR+searchCollections) ⇒ <code>Promise.&lt;Object&gt;</code>
+        * [.searchGranules(params, provider, [format])](#CMR+searchGranules) ⇒ <code>Promise.&lt;Object&gt;</code>
         * [.getGranuleMetadata(cmrLink)](#CMR+getGranuleMetadata) ⇒ <code>Object</code>
     * _static_
         * [.getInstance()](#CMR.getInstance) ⇒ [<code>CMR</code>](#CMR)
@@ -111,9 +111,13 @@ stores it as a part of the CMR singleton class, and then uses that one for calls
 **Returns**: <code>Promise.&lt;void&gt;</code> - refresh promise
 <a name="CMR+withCmrLaunchpadTokenRefreshRetry"></a>
 
-### cmrClient.withCmrLaunchpadTokenRefreshRetry(operation, [retries]) ⇒ <code>Promise</code>
-Runs a CMR operation with retry logic for launchpad failures. If the operation fails with a
-401, refresh the Launchpad token and retry.
+### cmrClient.withCmrLaunchpadTokenRefreshRetry(operation, operationDescription) ⇒ <code>Promise</code>
+Runs a CMR operation with configurable retry logic.
+By default, 0 retries are attempted.
+
+Retries on any error. Regardless of how the operation fails, the
+final error is wrapped in a CMRCallFailedError with the original error
+preserved as `cause`.
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)
 **Returns**: <code>Promise</code> - - result of CMR function call
@@ -121,7 +125,7 @@ Runs a CMR operation with retry logic for launchpad failures. If the operation f
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
 | operation | <code>function</code> |  | the CMR function with args to execute |
-| [retries] | <code>number</code> | <code>5</code> | number of retry attempts on 401 |
+| operationDescription | <code>string</code> | <code>&quot;CMR operation&quot;</code> | description of the CMR call, used for logging Retries are controlled by the CMR_RETRIES environment variable waits 5 * 2^n seconds before retry n. |
 
 <a name="CMR+getWriteHeaders"></a>
 
@@ -153,7 +157,7 @@ Return object containing CMR request headers for GETs
 
 <a name="CMR+ingestCollection"></a>
 
-### cmrClient.ingestCollection(xml) ⇒ <code>Promise.&lt;Object&gt;</code>
+### cmrClient.ingestCollection(xml, provider) ⇒ <code>Promise.&lt;Object&gt;</code>
 Adds a collection record to the CMR
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)
@@ -162,10 +166,11 @@ Adds a collection record to the CMR
 | Param | Type | Description |
 | --- | --- | --- |
 | xml | <code>string</code> | the collection XML document |
+| provider | <code>string</code> | the CMR provider to target |
 
 <a name="CMR+ingestGranule"></a>
 
-### cmrClient.ingestGranule(xml, cmrRevisionId) ⇒ <code>Promise.&lt;Object&gt;</code>
+### cmrClient.ingestGranule(xml, provider, cmrRevisionId) ⇒ <code>Promise.&lt;Object&gt;</code>
 Adds a granule record to the CMR
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)
@@ -174,11 +179,12 @@ Adds a granule record to the CMR
 | Param | Type | Description |
 | --- | --- | --- |
 | xml | <code>string</code> | the granule XML document |
+| provider | <code>string</code> | the CMR provider to target |
 | cmrRevisionId | <code>string</code> | Optional CMR Revision ID |
 
 <a name="CMR+ingestUMMGranule"></a>
 
-### cmrClient.ingestUMMGranule(ummgMetadata, cmrRevisionId) ⇒ <code>Promise.&lt;Object&gt;</code>
+### cmrClient.ingestUMMGranule(ummgMetadata, provider, cmrRevisionId) ⇒ <code>Promise.&lt;Object&gt;</code>
 Adds/Updates UMMG json metadata in the CMR
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)
@@ -187,11 +193,12 @@ Adds/Updates UMMG json metadata in the CMR
 | Param | Type | Description |
 | --- | --- | --- |
 | ummgMetadata | <code>Object</code> | UMMG metadata object |
+| provider | <code>string</code> | the CMR provider to target |
 | cmrRevisionId | <code>string</code> | Optional CMR Revision ID |
 
 <a name="CMR+deleteCollection"></a>
 
-### cmrClient.deleteCollection(datasetID) ⇒ <code>Promise.&lt;Object&gt;</code>
+### cmrClient.deleteCollection(datasetID, provider) ⇒ <code>Promise.&lt;Object&gt;</code>
 Deletes a collection record from the CMR
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)
@@ -200,10 +207,11 @@ Deletes a collection record from the CMR
 | Param | Type | Description |
 | --- | --- | --- |
 | datasetID | <code>string</code> | the collection unique id |
+| provider | <code>string</code> | the CMR provider to target |
 
 <a name="CMR+deleteGranule"></a>
 
-### cmrClient.deleteGranule(granuleUR) ⇒ <code>Promise.&lt;Object&gt;</code>
+### cmrClient.deleteGranule(granuleUR, provider) ⇒ <code>Promise.&lt;Object&gt;</code>
 Deletes a granule record from the CMR
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)
@@ -212,10 +220,11 @@ Deletes a granule record from the CMR
 | Param | Type | Description |
 | --- | --- | --- |
 | granuleUR | <code>string</code> | the granule unique id |
+| provider | <code>string</code> | the CMR provider to target |
 
 <a name="CMR+searchCollections"></a>
 
-### cmrClient.searchCollections(params, [format]) ⇒ <code>Promise.&lt;Object&gt;</code>
+### cmrClient.searchCollections(params, provider, [format]) ⇒ <code>Promise.&lt;Object&gt;</code>
 Search in collections
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)
@@ -224,11 +233,12 @@ Search in collections
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
 | params | <code>string</code> |  | the search parameters |
+| provider | <code>string</code> |  | the CMR provider to target |
 | [format] | <code>string</code> | <code>&quot;json&quot;</code> | format of the response |
 
 <a name="CMR+searchGranules"></a>
 
-### cmrClient.searchGranules(params, [format]) ⇒ <code>Promise.&lt;Object&gt;</code>
+### cmrClient.searchGranules(params, provider, [format]) ⇒ <code>Promise.&lt;Object&gt;</code>
 Search in granules
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)
@@ -237,6 +247,7 @@ Search in granules
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
 | params | <code>string</code> |  | the search parameters |
+| provider | <code>string</code> |  | the CMR provider to target |
 | [format] | <code>string</code> | <code>&quot;&#x27;json&#x27;&quot;</code> | format of the response |
 
 <a name="CMR+getGranuleMetadata"></a>

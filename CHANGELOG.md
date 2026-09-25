@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v22.4.2] 2026-09-24
+
+### Fixed
+- **CSD-299**
+  - Removed token regeneration in response to CMR 401 errors. During recent load tests, this behavior, combined with an overly aggressive retry strategy, contributed to overwhelming CMR. This change partially reverts CSD-99, which introduced token regeneration on 401 responses to address an issue where EDL cached invalid tokens. Because the underlying EDL caching issue has since been resolved, token regeneration on 401 responses is no longer necessary.
+
+### Added
+- **CSD-299**
+  - Added a new `CMRCallFailedError` error type. This error is thrown for CMR failures after the configured retry attempts, including failures on the first attempt, and should be detectable by StepFunctions for CMR-specific retry behavior.
+- **CUMULUS-5369**
+  - The `instanceMeta` API endpoint now returns `icebergAdmins`, a list of iceberg admin
+    usernames read from the `${prefix}-iceberg_admins_list` SSM parameter created by the
+    `rds-iceberg-replication` module. An empty list is returned if the parameter does not exist.
+  - Added an `ssm()` service and `SSM.getParameterValue()` helper to `@cumulus/aws-client` to facilitate
+    this retrieval.
+
+### Changed
+- **CSD-299**
+  - Updated CMR retries to explicitly use exponential backoff. This defaults to 0 retries.  Retries may be specified using the `CMR_RETRIES` environment variable.  If retries are specified, a backoff factor of 2 and a minTimeout of 5s is used.  For 3 retries, this leads to retries at 5, 10 and 20 seconds with total lambda duration of up to 35 seconds of wait.
+
 ## [v22.4.1] 2026-09-14
 
 ### Fixed
@@ -16,6 +36,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     leading to no final granule update call made to PG.  Adding ECS `TaskFailed` to the checks ensures
     the correct failure point is identified.  Moving forwards failed ECS tasks that were not correctly
     reporting granule status should now update.
+
+## [v22.4.0] 2026-09-02
+
+### Fixed
+
+- **CSD-25**
+  - Fixed a long running intermittant issue where graules in PG were stuck in 'running' state in PG
+    from a 'failed' step function execution, due to a failure to correctly lookup failed ECS tasks,
+    leading to no final granule update call made to PG.  Adding ECS `TaskFailed` to the checks ensures
+    the correct failure point is identified.  Moving forwards failed ECS tasks that were not correctly
+    reporting granule status should now update.
+
+### Added
+
+- Added CI deployment config to support mthorste's dev stack
 
 ## [v22.4.0] 2026-09-02
 
@@ -10081,7 +10116,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v22.4.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v22.4.2...HEAD
+[v22.4.2]: https://github.com/nasa/cumulus/compare/v22.4.1...v22.4.2
 [v22.4.1]: https://github.com/nasa/cumulus/compare/v22.4.0...v22.4.1
 [v22.4.0]: https://github.com/nasa/cumulus/compare/v22.3.5...v22.4.0
 [v22.3.5]: https://github.com/nasa/cumulus/compare/v22.3.4...v22.3.5
