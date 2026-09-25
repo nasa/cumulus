@@ -88,3 +88,10 @@ yliu10-tf:
 
 blokey:
   bucket: blokey-internal
+
+tr-ci:
+  bucket: treuter-internal
+  crossAccountSqsTestQueueUrl: "https://sqs.us-east-1.amazonaws.com/226009925001/cumulus-sandbox-cross-account-sqsTestQueue"
+
+tr-sbx:
+  bucket: cumulus-test-sandbox-internal

@@ -44,6 +44,7 @@ function determineIntegrationTestStackName(cb) {
     'Robert Swanson': 'rs-ci',
     'Rohan Weeden': 'reweeden-ci',
     'Tim Clark': 'teclark-ci',
+    'Theodore Reuter': 'tr-ci',
     'Micah Thorstenson': 'mi-ci',
     wisdomaj: 'awisdom-ci',
     'Yonggang Liu': 'yliu10-ci',
