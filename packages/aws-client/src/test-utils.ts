@@ -9,6 +9,7 @@ export const inTestMode = () => process.env.NODE_ENV === 'test';
 // From https://github.com/localstack/localstack/blob/master/README.md
 const localStackPorts = {
   APIGatewayClient: 4566,
+  AthenaClient: 4566,
   CloudFormation: 4566,
   CloudWatchEvents: 4566,
   DynamoDB: 4566,
