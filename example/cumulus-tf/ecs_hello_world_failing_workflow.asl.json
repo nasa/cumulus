@@ -1,0 +1,31 @@
+{
+  "Comment": "Deterministically failing ECS Hello World workflow",
+  "StartAt": "EcsTaskHelloWorldFail",
+  "States": {
+    "EcsTaskHelloWorldFail": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}",
+            "fail": true
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${ecs_task_hello_world_fail_activity_id}",
+      "TimeoutSeconds": 60,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.Timeout"
+          ],
+          "MaxAttempts": 1
+        }
+      ],
+      "End": true
+    }
+  }
+}
