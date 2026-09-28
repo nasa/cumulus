@@ -20,6 +20,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added an `ssm()` service and `SSM.getParameterValue()` helper to `@cumulus/aws-client` to facilitate
     this retrieval.
   - Added empty string default to iceberg_admin variable.  This prevents build failures as SSM parameters cannot have an empty/null value on deploy.
+- **CUMULUS-5529**
+  - Added integration test to validate we are catching ECS task failures in workflows and properly updating
+    granule satus in postgres, a test covering a bug fixed in CSD-258
 
 ### Changed
 - **CSD-299**
