@@ -54,22 +54,32 @@ describe('Granules status in Postgres is correctly updated in the event of a wor
           {
             granuleId,
             dataType: collection.name,
-            version: collection.version,
+            status: 'queued',
+            collectionId: collectionId,
+            producerGranuleId: 'integration-test-producter',
             files: [],
           },
         ],
       };
-      // create collection + provider in for the granule
-      await Promise.all([
-        addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
-        addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix),
-        createGranule({
-          prefix: config.stackName,
-          body: inputPayload,
-        }),
-      ]);
 
+      granuleParams = {
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId,
+        collectionId,
+      };
+      // create collection + provider in for the granule
+      log.debug('starting collection write');
+      await addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId);
+      log.debug('finished collection write, starting provider write');
+      await addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix);
+      log.debug('finished provider write, adding granule initial');
+      await createGranule({
+        prefix: config.stackName,
+        body: inputPayload.granules[0],
+      });
+      log.debug('wrote granule');
       const ecs = new ECSClient({ region: process.env.AWS_REGION || 'us-east-1' });
+      log.debug('validating ecs is running');
       const service = await ecs.send(new DescribeServicesCommand({
         cluster: `${config.stackName}-CumulusECSCluster`,
         services: [`${config.stackName}-HelloWorldEcsFailWorkflow`],
@@ -78,7 +88,7 @@ describe('Granules status in Postgres is correctly updated in the event of a wor
       expect(service.services[0].desiredCount).toBe(1);
       expect(service.services[0].runningCount).toBe(1);
       expect(service.services[0].pendingCount).toBe(0);
-
+      log.debug('starting workflow, not waiting for workflow completion');
       workflowExecutionArn = await buildAndStartWorkflow(
         config.stackName,
         config.bucket,
@@ -87,11 +97,8 @@ describe('Granules status in Postgres is correctly updated in the event of a wor
         provider,
         inputPayload
       );
-      granuleParams = {
-        prefix: config.stackName,
-        granuleId: inputPayload.granules[0].granuleId,
-        collectionId,
-      };
+
+      log.debug('waiting to get granule "running" status');
       const runningGranule = await waitForApiStatus(
         getGranule,
         granuleParams,
@@ -110,32 +117,31 @@ describe('Granules status in Postgres is correctly updated in the event of a wor
     if (beforeAllError) fail(beforeAllError);
   });
   afterAll(async () => {
-    try {
-      log.debug('deleting granule, collection, provider');
-      await deleteGranule(granuleParams);
-      await deleteExecution({
-        prefix: config.stackName,
-        executionArn: workflowExecutionArn,
-      });
-      await providerApi.deleteProvider({
-        prefix: config.stackName,
-        providerId: provider.id,
-      });
-      await collectionsApi.deleteCollection({
-        prefix: config.stackName,
-        collectionName: collection.name,
-        collectionVersion: collection.version,
-      });
-    } catch (error) {
-      log.error('Error in afterAll:', error);
-    }
-    // clean up db - delete granule, collection, provider, execution records
+    log.debug('afterAll deleting granule');
+    await deleteGranule(granuleParams);
+    log.debug('afterAll deleting execution');
+    await deleteExecution({
+      prefix: config.stackName,
+      executionArn: workflowExecutionArn,
+    });
+    log.debug('afterAll deleting provider');
+    await providerApi.deleteProvider({
+      prefix: config.stackName,
+      providerId: provider.id,
+    });
+    log.debug('afterAll deleting collection');
+    await collectionsApi.deleteCollection({
+      prefix: config.stackName,
+      collectionName: collection.name,
+      collectionVersion: collection.version,
+    });
+    log.debug('afterAll deleted all resources');
   });
 
-  it("failed ECS task results in granule status going to 'failed' state", () => {
+  it("failed ECS task results in granule status going to 'failed' state", async () => {
     if (beforeAllError) throw SetupError;
     // check the execution failed
-    const failedExecution = waitForApiStatus(
+    const failedExecution = await waitForApiStatus(
       getExecution,
       {
         prefix: config.stackName,
@@ -146,9 +152,10 @@ describe('Granules status in Postgres is correctly updated in the event of a wor
     expect(failedExecution.status).toEqual('failed');
 
     // check the granule status was moved to 'failed' as we expect and not stuck on 'running'
-    const failedGranule = waitForApiStatus(
+    const failedGranule = await waitForApiStatus(
       getGranule,
-      granuleParams
+      granuleParams,
+      'failed'
     );
     expect(failedGranule.status).toEqual('failed');
     // veryfiy granule status and execution status match
