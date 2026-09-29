@@ -7,13 +7,14 @@ const { deleteGranule, createGranule, getGranule } = require('@cumulus/api-clien
 const { deleteExecution, getExecution } = require('@cumulus/api-client/executions');
 const providerApi = require('@cumulus/api-client/providers');
 const collectionsApi = require('@cumulus/api-client/collections');
-
+const { lastFailedEventStep } = require('@cumulus/message/StepFunctions');
+const { getExecutionHistory } = require('@cumulus/aws-client/StepFunctions');
 const {
   addCollections,
   addProviders,
 } = require('@cumulus/integration-tests');
 
-const { ECSClient, DescribeServicesCommand } = require('@aws-sdk/client-ecs');
+const { ECSClient, DescribeClustersCommand } = require('@aws-sdk/client-ecs');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 
@@ -24,7 +25,7 @@ const {
 } = require('../../helpers/testUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 
-const workflowName = 'HelloWorldEcsFailWorkflow';
+const workflowName = 'EcsFailWorkflow';
 const SetupError = new Error('Test setup failed');
 
 describe('Granules status in Postgres is correctly updated in the event of a workflow failing on a failed ECS task', () => {
@@ -68,26 +69,23 @@ describe('Granules status in Postgres is correctly updated in the event of a wor
         collectionId,
       };
       // create collection + provider in for the granule
-      log.debug('starting collection write');
+      log.debug('starting collection and provider DB write');
       await addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId);
-      log.debug('finished collection write, starting provider write');
       await addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix);
-      log.debug('finished provider write, adding granule initial');
+      log.debug('finished creating collection and provider in DB, adding initial granule to be "updated"');
       await createGranule({
         prefix: config.stackName,
         body: inputPayload.granules[0],
       });
       log.debug('wrote granule');
-      const ecs = new ECSClient({ region: process.env.AWS_REGION || 'us-east-1' });
-      log.debug('validating ecs is running');
-      const service = await ecs.send(new DescribeServicesCommand({
-        cluster: `${config.stackName}-CumulusECSCluster`,
-        services: [`${config.stackName}-HelloWorldEcsFailWorkflow`],
-      }));
 
-      expect(service.services[0].desiredCount).toBe(1);
-      expect(service.services[0].runningCount).toBe(1);
-      expect(service.services[0].pendingCount).toBe(0);
+      // validate cluster health
+      const ecs = new ECSClient({ region: process.env.AWS_REGION || 'us-east-1' });
+      const ecsService = await ecs.send(new DescribeClustersCommand({
+        cluster: `${config.stackName}-CumulusECSCluster`,
+      }));
+      expect(ecsService.clusters[0].status).toBe('ACTIVE');
+
       log.debug('starting workflow, not waiting for workflow completion');
       workflowExecutionArn = await buildAndStartWorkflow(
         config.stackName,
@@ -98,7 +96,6 @@ describe('Granules status in Postgres is correctly updated in the event of a wor
         inputPayload
       );
 
-      log.debug('waiting to get granule "running" status');
       const runningGranule = await waitForApiStatus(
         getGranule,
         granuleParams,
@@ -106,30 +103,27 @@ describe('Granules status in Postgres is correctly updated in the event of a wor
       );
 
       expect(runningGranule.status).toEqual('running');
-
-      // assert granule status in PG == 'running'
     } catch (error) {
       log.error('Error in beforeAll:', error);
       beforeAllError = error;
     }
   });
+
   beforeEach(() => {
     if (beforeAllError) fail(beforeAllError);
   });
+
   afterAll(async () => {
-    log.debug('afterAll deleting granule');
+    // DB cleanup post test
     await deleteGranule(granuleParams);
-    log.debug('afterAll deleting execution');
     await deleteExecution({
       prefix: config.stackName,
       executionArn: workflowExecutionArn,
     });
-    log.debug('afterAll deleting provider');
     await providerApi.deleteProvider({
       prefix: config.stackName,
       providerId: provider.id,
     });
-    log.debug('afterAll deleting collection');
     await collectionsApi.deleteCollection({
       prefix: config.stackName,
       collectionName: collection.name,
@@ -140,7 +134,7 @@ describe('Granules status in Postgres is correctly updated in the event of a wor
 
   it("failed ECS task results in granule status going to 'failed' state", async () => {
     if (beforeAllError) throw SetupError;
-    // check the execution failed
+    // check the workflow execution failed
     const failedExecution = await waitForApiStatus(
       getExecution,
       {
@@ -151,6 +145,11 @@ describe('Granules status in Postgres is correctly updated in the event of a wor
     );
     expect(failedExecution.status).toEqual('failed');
 
+    // validate that it was an ECS task failure that crashed workflow
+    const { events } = await getExecutionHistory({ executionArn: workflowExecutionArn });
+    const lastFailedEvent = lastFailedEventStep(events);
+    expect(lastFailedEvent.type).toEqual('TaskFailed');
+
     // check the granule status was moved to 'failed' as we expect and not stuck on 'running'
     const failedGranule = await waitForApiStatus(
       getGranule,
@@ -158,7 +157,7 @@ describe('Granules status in Postgres is correctly updated in the event of a wor
       'failed'
     );
     expect(failedGranule.status).toEqual('failed');
-    // veryfiy granule status and execution status match
+    // Essential check that execution status and granule status match
     expect(failedGranule.status).toEqual(failedExecution.status);
   });
 });
