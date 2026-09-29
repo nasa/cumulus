@@ -18,6 +18,7 @@ const reservedWords = [
   'estimateTableRowCount',
   'fields',
   'includeFullRecord',
+  'includeFailedCount',
   'searchContext',
   'countOnly',
 ];
@@ -253,6 +254,7 @@ export const convertQueryStringToDbQueryParameters = (
     fields,
     estimateTableRowCount,
     includeFullRecord,
+    includeFailedCount,
     countOnly,
   } = queryStringParameters;
 
@@ -267,6 +269,7 @@ export const convertQueryStringToDbQueryParameters = (
   if (typeof fields === 'string') dbQueryParameters.fields = fields.split(',');
   dbQueryParameters.estimateTableRowCount = (estimateTableRowCount === 'true');
   dbQueryParameters.includeFullRecord = (includeFullRecord === 'true');
+  dbQueryParameters.includeFailedCount = (includeFailedCount === 'true');
   dbQueryParameters.countOnly = (countOnly === 'true');
   dbQueryParameters.sort = convertSort(type, queryStringParameters);
 

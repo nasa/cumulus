@@ -86,6 +86,9 @@ const granuleMapping: TypeMapping = {
   pdrName: (value?: string) => ({
     pdrName: value,
   }),
+  failedCount: (value?: string) => ({
+    failedCount: value && Number(value),
+  }),
 };
 
 const asyncOperationMapping : TypeMapping = {
