@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+### Added
+- ** CUMULUS-5394 **
+  - Add a "failed_count" field to Granules search query. Add a "failed_count" field to granules which signifies how many times the granule failed, will help with and be a part of the page/view for "stuck"/problematic granules being added to the OPEX dashboard
 
 ### Fixed
 - **CSD-299**
