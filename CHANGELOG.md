@@ -10,6 +10,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CSD-299**
   - Removed token regeneration in response to CMR 401 errors. During recent load tests, this behavior, combined with an overly aggressive retry strategy, contributed to overwhelming CMR. This change partially reverts CSD-99, which introduced token regeneration on 401 responses to address an issue where EDL cached invalid tokens. Because the underlying EDL caching issue has since been resolved, token regeneration on 401 responses is no longer necessary.
 
+- **CUMULUS-5443**
+  - Adding integration test to validate the ability to use cross account SQS queues to trigger workflows.
+    Due to infra complexity of cross account targeting and multiple lambdas that would poll the same cross-account
+    SQS queue, 'stealing' messages intended for a different stack, this is an 'opt-in' test that will only run in CI
+    if targeting tr-ci stack.
 ### Added
 - **CSD-299**
   - Added a new `CMRCallFailedError` error type. This error is thrown for CMR failures after the configured retry attempts, including failures on the first attempt, and should be detectable by StepFunctions for CMR-specific retry behavior.
@@ -19,6 +24,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `rds-iceberg-replication` module. An empty list is returned if the parameter does not exist.
   - Added an `ssm()` service and `SSM.getParameterValue()` helper to `@cumulus/aws-client` to facilitate
     this retrieval.
+- Adding CI deploying config to support treuter's CI stack
   - Added empty string default to iceberg_admin variable.  This prevents build failures as SSM parameters cannot have an empty/null value on deploy.
 
 ### Changed
