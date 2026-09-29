@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-5444**
+  - Added `@cumulus/granule-seed` (`lambdas/granule-seed`), a tool for seeding test stacks
+    with real granule records.
+    - `bin/extract.js` samples granules from a source database, with their collections,
+      providers, rules, async operations, executions, PDRs, files and granule-execution
+      links. It writes them to S3 as gzipped CSV bundles in nested tiers of 10 to
+      1,000,000 granules. Rules are copied disabled, with their trigger ARNs cleared.
+    - `bin/load.js` loads one tier into a target database in a single transaction. It
+      remaps every key and can generate synthetic executions for the loaded granules.
+    - `bin/revert.js` removes everything a load inserted.
+
 ## [v22.4.1] 2026-09-14
 
 ### Fixed
