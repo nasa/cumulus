@@ -1,7 +1,7 @@
 import pRetry from 'p-retry';
 import get from 'lodash/get';
 import got, { Headers } from 'got';
-import { CMRInternalError } from '@cumulus/errors';
+import { CMRCallFailedError, CMRInternalError } from '@cumulus/errors';
 import { getValidLaunchpadToken } from '@cumulus/launchpad-auth';
 import Logger from '@cumulus/logger';
 import * as secretsManagerUtils from '@cumulus/aws-client/SecretsManager';
@@ -18,6 +18,11 @@ const { getRequiredEnvVar } = require('@cumulus/common/env');
 
 const logDetails: { [key: string]: string } = {
   file: 'cmr-client/CMR.js',
+};
+
+const getCmrRetries = (): number => {
+  const retries = Number.parseInt(process.env.CMR_RETRIES || '0', 10);
+  return Number.isNaN(retries) || retries < 0 ? 0 : retries;
 };
 /**
  * Returns a valid a CMR token
@@ -215,52 +220,54 @@ export class CMR {
   }
 
   /**
-  * Runs a CMR operation with retry logic for launchpad failures. If the operation fails with a
-  * 401, refresh the Launchpad token and retry.
+  * Runs a CMR operation with configurable retry logic.
+  * By default, 0 retries are attempted.
+  *
+  * Retries on any error. Regardless of how the operation fails, the
+  * final error is wrapped in a CMRCallFailedError with the original error
+  * preserved as `cause`.
   *
   * @param {Function} operation - the CMR function with args to execute
-  * @param {number} [retries=5] - number of retry attempts on 401
+  * @param {string} operationDescription - description of the CMR call, used for logging
+  * Retries are controlled by the CMR_RETRIES environment variable
+  * waits 5 * 2^n seconds before retry n.
   * @returns {Promise} - result of CMR function call
   */
   async withCmrLaunchpadTokenRefreshRetry<T>(
     operation: () => Promise<T>,
-    retries: number = 5
+    operationDescription = 'CMR operation'
   ): Promise<T> {
-    if (this.oauthProvider !== 'launchpad') {
-      return await operation();
-    }
-
+    const retries = getCmrRetries();
     try {
-      return await pRetry(
-        async () => {
-          try {
-            return await operation();
-          } catch (error) {
-            if (error.statusCode !== 401) {
-              throw new pRetry.AbortError(error);
-            }
-            throw error;
-          }
-        },
-        {
-          retries,
-          onFailedAttempt: async (error) => {
-            if (error.retriesLeft > 0) {
-              await this.checkRefreshLaunchpadToken();
-            }
-          },
+      return await pRetry(async (attemptNumber) => {
+        const startTime = Date.now();
+        let statusCode;
+        try {
+          const result = await operation();
+          statusCode = (result as unknown as { statusCode?: number })?.statusCode;
+          return result;
+        } catch (error) {
+          statusCode = error.statusCode;
+          throw error;
+        } finally {
+          const duration = Date.now() - startTime;
+          log.info(
+            `CMR Operation:(${operationDescription}), Attempt: ${attemptNumber}, `
+            + `Status: ${statusCode}, Duration: ${duration}ms`
+          );
         }
-      );
+      }, {
+        retries,
+        minTimeout: 5000,
+        factor: 2,
+      });
     } catch (error) {
-      if (error.statusCode === 401) {
-        throw Object.assign(
-          new Error(
-            `CMR launchpad authentication failed after ${retries + 1} attempts: ${error.message}`
-          ),
-          { statusCode: 401, cause: error }
-        );
-      }
-      throw error;
+      throw Object.assign(
+        new CMRCallFailedError(
+          `CMR operation (${operationDescription}) failed after ${retries + 1} attempts: ${error.message}`
+        ),
+        { cause: error }
+      );
     }
   }
 
@@ -327,7 +334,7 @@ export class CMR {
     return await this.withCmrLaunchpadTokenRefreshRetry(async () => {
       const headers = this.getWriteHeaders({ token: await this.getToken() });
       return await ingestConcept('collection', xml, 'Collection.DataSetId', provider, headers);
-    });
+    }, `ingestCollection, provider: ${provider}`);
   }
 
   /**
@@ -346,7 +353,7 @@ export class CMR {
     return await this.withCmrLaunchpadTokenRefreshRetry(async () => {
       const headers = this.getWriteHeaders({ token: await this.getToken(), cmrRevisionId });
       return await ingestConcept('granule', xml, 'Granule.GranuleUR', provider, headers);
-    });
+    }, `ingestGranule, provider: ${provider}`);
   }
 
   /**
@@ -362,6 +369,7 @@ export class CMR {
     provider: string,
     cmrRevisionId?: string
   ): Promise<CMRResponseBody | CMRErrorResponseBody> {
+    const granuleId = ummgMetadata.GranuleUR || 'no GranuleId found on input metadata';
     return await this.withCmrLaunchpadTokenRefreshRetry(async () => {
       const headers = this.getWriteHeaders({
         token: await this.getToken(),
@@ -369,7 +377,6 @@ export class CMR {
         cmrRevisionId,
       });
 
-      const granuleId = ummgMetadata.GranuleUR || 'no GranuleId found on input metadata';
       logDetails.granuleId = granuleId;
 
       try {
@@ -401,7 +408,7 @@ export class CMR {
 
         throw Object.assign(new Error(errorMessage), { statusCode, cause: error });
       }
-    });
+    }, `ingestUMMGranule, provider: ${provider}, granuleId: ${granuleId}`);
   }
 
   /**
@@ -415,7 +422,7 @@ export class CMR {
     return await this.withCmrLaunchpadTokenRefreshRetry(async () => {
       const headers = this.getWriteHeaders({ token: await this.getToken() });
       return await deleteConcept('collections', datasetID, provider, headers);
-    });
+    }, `deleteCollection, provider: ${provider}, datasetID: ${datasetID}`);
   }
 
   /**
@@ -429,7 +436,7 @@ export class CMR {
     return await this.withCmrLaunchpadTokenRefreshRetry(async () => {
       const headers = this.getWriteHeaders({ token: await this.getToken() });
       return await deleteConcept('granules', granuleUR, provider, headers);
-    });
+    }, `deleteGranule, provider: ${provider}, granuleUR: ${granuleUR}`);
   }
 
   async searchConcept(

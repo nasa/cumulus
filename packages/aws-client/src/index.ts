@@ -5,6 +5,7 @@ export * as S3 from './S3';
 export * as services from './services';
 export * as SNS from './SNS';
 export * as SQS from './SQS';
+export * as SSM from './SSM';
 export * as StepFunctions from './StepFunctions';
 export * as testUtils from './test-utils';
 export * as utils from './utils';

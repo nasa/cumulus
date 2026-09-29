@@ -163,6 +163,9 @@ test.serial('getReadHeaders returns clientId and token for launchpad', (t) => {
 });
 
 test.serial('ingestUMMGranule() returns CMRInternalError when CMR is down', async (t) => {
+  process.env.CMR_RETRIES = '0';
+  t.teardown(() => delete process.env.CMR_RETRIES);
+
   const cmrSearch = CMR.getInstance({ oauthProvider: 'launchpad', token: 'abc', clientId: 'client' });
   const provider = PROVIDER;
 
@@ -183,10 +186,12 @@ test.serial('ingestUMMGranule() returns CMRInternalError when CMR is down', asyn
     .times(3)
     .reply(503, internalError);
 
-  await t.throwsAsync(
+  const error = await t.throwsAsync(
     () => cmrSearch.ingestUMMGranule(ummgMetadata, provider),
-    { instanceOf: CMRInternalError }
+    { name: 'CMRCallFailedError' }
   );
+
+  t.true(error.cause instanceof CMRInternalError);
 });
 
 test.serial('ingestUMMGranule() throws an exception if the input fails validation', async (t) => {
@@ -210,16 +215,21 @@ test.serial('ingestUMMGranule() throws an exception if the input fails validatio
     .put(`/ingest/providers/${provider}/granules/${ummgMetadata.GranuleUR}`)
     .reply(422, ummValidationError);
 
-  await t.throwsAsync(
+  const error = await t.throwsAsync(
     () => cmrSearch.ingestUMMGranule(ummgMetadata, provider),
-    {
-      name: 'Error',
-      message: 'Failed to ingest, statusCode: 422, statusMessage: Unprocessable Entity, CMR error message: [{"path":["Temporal"],"errors":["oh snap"]}]',
-    }
+    { name: 'CMRCallFailedError' }
+  );
+
+  t.is(
+    error.cause.message,
+    'Failed to ingest, statusCode: 422, statusMessage: Unprocessable Entity, CMR error message: [{"path":["Temporal"],"errors":["oh snap"]}]'
   );
 });
 
-test.serial('ingestUMMGranule refreshes launchpad token on 401 and retries successfully', async (t) => {
+test.serial('ingestUMMGranule retries on 401 without refreshing the launchpad token', async (t) => {
+  process.env.CMR_RETRIES = '1';
+  t.teardown(() => delete process.env.CMR_RETRIES);
+
   const cmrSearch = CMR.getInstance({
     oauthProvider: 'launchpad',
     token: 'invalid-token',
@@ -230,10 +240,7 @@ test.serial('ingestUMMGranule refreshes launchpad token on 401 and retries succe
   });
   const provider = PROVIDER;
 
-  const refreshStub = sinon.stub(cmrSearch, 'checkRefreshLaunchpadToken')
-    .callsFake(() => {
-      cmrSearch.token = 'valid-token';
-    });
+  const refreshStub = sinon.stub(cmrSearch, 'checkRefreshLaunchpadToken');
   t.teardown(() => refreshStub.restore());
 
   const ummgMetadata = { GranuleUR: 'asdf' };
@@ -252,14 +259,132 @@ test.serial('ingestUMMGranule refreshes launchpad token on 401 and retries succe
   const result = await cmrSearch.ingestUMMGranule(ummgMetadata, provider);
 
   t.deepEqual(result, successBody);
-  t.true(refreshStub.calledOnce);
+  t.false(refreshStub.called);
   t.true(nock.isDone());
+});
+
+test.serial('ingestCollection sends a PUT request and returns the CMR response', async (t) => {
+  const cmrSearch = CMR.getInstance({ oauthProvider: 'launchpad', token: 'abc', clientId: 'client' });
+  const provider = PROVIDER;
+  const xml = '<Collection><DataSetId>collection1</DataSetId></Collection>';
+
+  process.env.CMR_ENVIRONMENT = 'SIT';
+  t.teardown(() => delete process.env.CMR_ENVIRONMENT);
+
+  nock('https://cmr.sit.earthdata.nasa.gov')
+    .put('/ingest/providers/CUMULUS/collections/collection1')
+    .reply(200, '<result><concept-id>C123-CUMULUS</concept-id></result>');
+
+  const result = await cmrSearch.ingestCollection(xml, provider);
+
+  t.is(result.result['concept-id'], 'C123-CUMULUS');
+  t.true(nock.isDone());
+});
+
+test.serial('ingestGranule sends a PUT request and returns the CMR response', async (t) => {
+  const cmrSearch = CMR.getInstance({ oauthProvider: 'launchpad', token: 'abc', clientId: 'client' });
+  const provider = PROVIDER;
+  const xml = '<Granule><GranuleUR>granule1</GranuleUR></Granule>';
+
+  process.env.CMR_ENVIRONMENT = 'SIT';
+  t.teardown(() => delete process.env.CMR_ENVIRONMENT);
+
+  nock('https://cmr.sit.earthdata.nasa.gov')
+    .put('/ingest/providers/CUMULUS/granules/granule1')
+    .reply(200, '<result><concept-id>G123-CUMULUS</concept-id></result>');
+
+  const result = await cmrSearch.ingestGranule(xml, provider);
+
+  t.is(result.result['concept-id'], 'G123-CUMULUS');
+  t.true(nock.isDone());
+});
+
+test.serial('deleteCollection sends a DELETE request and returns the CMR response', async (t) => {
+  const cmrSearch = CMR.getInstance({ oauthProvider: 'launchpad', token: 'abc', clientId: 'client' });
+  const provider = PROVIDER;
+
+  process.env.CMR_ENVIRONMENT = 'SIT';
+  t.teardown(() => delete process.env.CMR_ENVIRONMENT);
+
+  nock('https://cmr.sit.earthdata.nasa.gov')
+    .delete('/ingest/providers/CUMULUS/collections/collection1')
+    .reply(200, '<result><concept-id>C123-CUMULUS</concept-id></result>');
+
+  const result = await cmrSearch.deleteCollection('collection1', provider);
+
+  t.is(result.result['concept-id'], 'C123-CUMULUS');
+  t.true(nock.isDone());
+});
+
+test.serial('deleteGranule sends a DELETE request and returns the CMR response', async (t) => {
+  const cmrSearch = CMR.getInstance({ oauthProvider: 'launchpad', token: 'abc', clientId: 'client' });
+  const provider = PROVIDER;
+
+  process.env.CMR_ENVIRONMENT = 'SIT';
+  t.teardown(() => delete process.env.CMR_ENVIRONMENT);
+
+  nock('https://cmr.sit.earthdata.nasa.gov')
+    .delete('/ingest/providers/CUMULUS/granules/granule1')
+    .reply(200, '<result><concept-id>G123-CUMULUS</concept-id></result>');
+
+  const result = await cmrSearch.deleteGranule('granule1', provider);
+
+  t.is(result.result['concept-id'], 'G123-CUMULUS');
+  t.true(nock.isDone());
+});
+
+test.serial('searchGranules returns parsed granule entries', async (t) => {
+  const cmrSearch = CMR.getInstance({ oauthProvider: 'launchpad', token: 'abc', clientId: 'client' });
+  const provider = PROVIDER;
+  const body = JSON.stringify({
+    feed: {
+      updated: 'sometime',
+      id: 'someurl',
+      title: 'fake Cmr Results',
+      entry: [{ granuleEntry: 'data1' }],
+    },
+  });
+
+  process.env.CMR_ENVIRONMENT = 'UAT';
+  t.teardown(() => delete process.env.CMR_ENVIRONMENT);
+
+  nock('https://cmr.uat.earthdata.nasa.gov')
+    .get('/search/granules.json')
+    .query((q) => q.page_num === '1')
+    .reply(200, body, { 'cmr-hits': 1 });
+
+  const results = await cmrSearch.searchGranules({}, provider);
+
+  t.deepEqual(results, [{ granuleEntry: 'data1' }]);
+});
+
+test.serial('getGranuleMetadata returns parsed granule metadata from a concept link', async (t) => {
+  const cmrSearch = CMR.getInstance({ oauthProvider: 'launchpad', token: 'abc', clientId: 'client' });
+  const conceptId = 'G123-CUMULUS';
+  const body = { GranuleUR: 'granule1' };
+
+  nock('https://cmr.example.com')
+    .get(`/search/concepts/${conceptId}.json`)
+    .reply(200, JSON.stringify(body));
+
+  const result = await cmrSearch.getGranuleMetadata(`https://cmr.example.com/search/concepts/${conceptId}.xml`);
+
+  t.deepEqual(result, body);
 });
 
 test.serial('getCmrPassword returns the set password if no secret exists', async (t) => {
   const cmr = CMR.getInstance({ password: 'test-password' });
 
   t.is(await cmr.getCmrPassword(), 'test-password');
+});
+
+test.serial('getCmrPassword throws if no password or secret is set', async (t) => {
+  const cmr = CMR.getInstance({});
+
+  await t.throwsAsync(
+    () => cmr.getCmrPassword(),
+    { message: 'No CMR password set' }
+  );
 });
 
 test.serial('getCmrPassword returns password from AWS secret when set', async (t) => {
@@ -326,7 +451,9 @@ test.serial('withCmrLaunchpadTokenRefreshRetry does not retry for non-launchpad 
   t.false(refreshSpy.called);
 });
 
-test.serial('withCmrLaunchpadTokenRefreshRetry passes through non-401 errors without retry', async (t) => {
+test.serial('withCmrLaunchpadTokenRefreshRetry does not retry when CMR_RETRIES is 0', async (t) => {
+  process.env.CMR_RETRIES = '0';
+  t.teardown(() => delete process.env.CMR_RETRIES);
   const cmr = CMR.getInstance({
     clientId: 'clientId',
     oauthProvider: 'launchpad',
@@ -345,14 +472,16 @@ test.serial('withCmrLaunchpadTokenRefreshRetry passes through non-401 errors wit
 
   await t.throwsAsync(
     () => cmr.withCmrLaunchpadTokenRefreshRetry(operation),
-    { message: 'Bad Request' }
+    { name: 'CMRCallFailedError' }
   );
 
   t.is(operation.callCount, 1);
   t.false(refreshSpy.called);
 });
 
-test.serial('withCmrLaunchpadTokenRefreshRetry refreshes launchpad token on 401 and retries successfully', async (t) => {
+test.serial('withCmrLaunchpadTokenRefreshRetry wraps a first-attempt failure', async (t) => {
+  process.env.CMR_RETRIES = '0';
+  t.teardown(() => delete process.env.CMR_RETRIES);
   const cmr = CMR.getInstance({
     clientId: 'clientId',
     oauthProvider: 'launchpad',
@@ -362,25 +491,24 @@ test.serial('withCmrLaunchpadTokenRefreshRetry refreshes launchpad token on 401 
     certificate: 'cert',
   });
 
-  const refreshStub = sinon.stub(cmr, 'checkRefreshLaunchpadToken')
-    .callsFake(() => {
-      cmr.token = 'valid-token';
-    });
+  const refreshStub = sinon.stub(cmr, 'checkRefreshLaunchpadToken');
   t.teardown(() => refreshStub.restore());
 
-  const operation = sinon.stub();
-  operation.onFirstCall().rejects(Object.assign(new Error('Unauthorized'), { statusCode: 401 }));
-  operation.onSecondCall().resolves('success');
+  const unauthorizedError = Object.assign(new Error('Unauthorized'), { statusCode: 401 });
+  const operation = sinon.stub().rejects(unauthorizedError);
 
-  const result = await cmr.withCmrLaunchpadTokenRefreshRetry(operation);
+  const error = await t.throwsAsync(() => cmr.withCmrLaunchpadTokenRefreshRetry(operation), {
+    name: 'CMRCallFailedError',
+  });
 
-  t.is(result, 'success');
-  t.is(operation.callCount, 2);
-  t.true(refreshStub.calledOnce);
-  t.is(cmr.token, 'valid-token');
+  t.is(operation.callCount, 1);
+  t.false(refreshStub.called);
+  t.is(error.cause, unauthorizedError);
 });
 
-test.serial('withCmrLaunchpadTokenRefreshRetry exhausts retries and throws an error with preserved statusCode and cause', async (t) => {
+test.serial('withCmrLaunchpadTokenRefreshRetry retries errors the configured number of times without refreshing the launchpad token', async (t) => {
+  process.env.CMR_RETRIES = '1';
+  t.teardown(() => delete process.env.CMR_RETRIES);
   const cmr = CMR.getInstance({
     clientId: 'clientId',
     oauthProvider: 'launchpad',
@@ -393,18 +521,41 @@ test.serial('withCmrLaunchpadTokenRefreshRetry exhausts retries and throws an er
   const refreshStub = sinon.stub(cmr, 'checkRefreshLaunchpadToken').resolves();
   t.teardown(() => refreshStub.restore());
 
-  const originalError = Object.assign(new Error('Unauthorized'), { statusCode: 401 });
-  const operation = sinon.stub().rejects(originalError);
+  const operation = sinon.stub();
+  operation.onFirstCall().rejects(Object.assign(new Error('Internal Server Error'), { statusCode: 500 }));
+  operation.onSecondCall().resolves('success');
 
-  const retries = 2;
+  const result = await cmr.withCmrLaunchpadTokenRefreshRetry(operation);
+
+  t.is(result, 'success');
+  t.is(operation.callCount, 2);
+  t.false(refreshStub.called);
+});
+
+test.serial('withCmrLaunchpadTokenRefreshRetry wraps an exhausted retry sequence', async (t) => {
+  process.env.CMR_RETRIES = '2';
+  t.teardown(() => delete process.env.CMR_RETRIES);
+  const cmr = CMR.getInstance({
+    clientId: 'clientId',
+    oauthProvider: 'launchpad',
+    token: 'invalid-token',
+    passphrase: 'passphrase',
+    api: 'api',
+    certificate: 'cert',
+  });
+
+  const refreshStub = sinon.stub(cmr, 'checkRefreshLaunchpadToken').resolves();
+  t.teardown(() => refreshStub.restore());
+
+  const originalError = Object.assign(new Error('Internal Server Error'), { statusCode: 500 });
+  const operation = sinon.stub().rejects(originalError);
   const error = await t.throwsAsync(
-    () => cmr.withCmrLaunchpadTokenRefreshRetry(operation, retries),
-    { message: /CMR launchpad authentication failed after 3 attempts/ }
+    () => cmr.withCmrLaunchpadTokenRefreshRetry(operation),
+    { name: 'CMRCallFailedError' }
   );
 
-  t.is(operation.callCount, retries + 1);
-  t.is(refreshStub.callCount, retries);
-  t.is(error.statusCode, 401);
+  t.is(operation.callCount, 3);
+  t.false(refreshStub.called);
   t.is(error.cause, originalError);
 });
 
