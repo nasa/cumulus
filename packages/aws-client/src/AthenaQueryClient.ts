@@ -193,19 +193,19 @@ export class AthenaQueryClient {
     }));
     log.info(`response (${typeof response}) from GetQueryResults: ${JSON.stringify(response)}`);
 
-    let nextToken = response.NextToken || '';
+    let nextToken = response?.NextToken?.toString() || '';
     data = data.concat(await this.mapData(response.ResultSet));
 
-    while (nextToken !== undefined && nextToken !== '') {
+    while (response?.NextToken?.toString()) {
       // eslint-disable-next-line no-await-in-loop
-      const nextResponse = await this.client.send(new GetQueryResultsCommand({
+      const response = await this.client.send(new GetQueryResultsCommand({
         QueryExecutionId,
         NextToken: nextToken,
       }));
-      log.info(`response (${typeof nextResponse}) from GetQueryResults: ${JSON.stringify(nextResponse)}`);
-      nextToken = nextResponse.NextToken || '';
+      log.info(`response (${typeof response}) from GetQueryResults: ${JSON.stringify(response)}`);
+      nextToken = response?.NextToken?.toString() || '';
       // eslint-disable-next-line no-await-in-loop
-      data = data.concat(await this.mapData(nextResponse.ResultSet));
+      data = data.concat(await this.mapData(response.ResultSet));
     }
     return data;
   }
