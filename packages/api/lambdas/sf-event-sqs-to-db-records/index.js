@@ -81,6 +81,7 @@ function isRecordTypeWritable(configuredRecordTypes, recordType) {
  * @returns {RecordWriteFlags} An object indicating which record types should be written.
  */
 const determineRecordWriteFlags = (cumulusMessage) => {
+  const logPrefix = getLogPrefix(cumulusMessage);
   const defaultWriteFlags = {
     shouldWriteExecutionRecords: true,
     shouldWriteGranuleRecords: true,
@@ -89,7 +90,7 @@ const determineRecordWriteFlags = (cumulusMessage) => {
 
   const reportMessageSource = get(cumulusMessage, 'meta.reportMessageSource');
   if (reportMessageSource) {
-    log.debug(`determineRecordWriteFlags: reportMessageSource is '${reportMessageSource}', writing all records`);
+    log.debug(`${logPrefix}: determineRecordWriteFlags: reportMessageSource is '${reportMessageSource}', writing all records`);
     return defaultWriteFlags;
   }
 
@@ -106,7 +107,7 @@ const determineRecordWriteFlags = (cumulusMessage) => {
     shouldWritePdrRecords: isRecordTypeWritable(configuredRecordTypes, 'pdr'),
   };
 
-  log.debug(`determineRecordWriteFlags: determined write flags: ${JSON.stringify(writeFlags)}`);
+  log.debug(`${logPrefix}: determineRecordWriteFlags: determined write flags: ${JSON.stringify(writeFlags)}`);
   return writeFlags;
 };
 
@@ -124,6 +125,9 @@ const writeRecords = async ({
   knex,
   testOverrides = {},
 }) => {
+  const logPrefix = getLogPrefix(cumulusMessage);
+  log.info(`${logPrefix}: Starting writeRecords processing`);
+  
   const messageCollectionNameVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);
   const messageAsyncOperationId = getMessageAsyncOperationId(cumulusMessage);
   const messageParentExecutionArn = getMessageExecutionParentArn(cumulusMessage);
@@ -168,7 +172,7 @@ const writeRecords = async ({
     parentExecutionCreatedAt,
   };
   if (!shouldWriteExecutionToPostgres(fieldsToMeetRequirements)) {
-    log.debug(`Could not satisfy requirements for writing records, fieldsToMeetRequirements: ${JSON.stringify(fieldsToMeetRequirements)}`);
+    log.debug(`${logPrefix}: Could not satisfy requirements for writing records, fieldsToMeetRequirements: ${JSON.stringify(fieldsToMeetRequirements)}`);
     throw new UnmetRequirementsError('Could not satisfy requirements for writing records to PostgreSQL. No records written to the database.');
   }
   let metricsAndCmrProvider = {
@@ -185,6 +189,7 @@ const writeRecords = async ({
   let executionCumulusId;
   let executionCreatedAt;
   if (shouldWriteExecutionRecords) {
+    log.debug(`${logPrefix}: Writing execution records to PostgreSQL`);
     const execution = await writeExecutionRecordFromMessage({
       cumulusMessage,
       collectionCumulusId,
@@ -204,6 +209,7 @@ const writeRecords = async ({
   const providerCumulusId = await getMessageProviderCumulusId(cumulusMessage, knex);
 
   if (shouldWritePdrRecords) {
+    log.debug(`${logPrefix}: Writing PDR records to PostgreSQL`);
     await writePdr({
       cumulusMessage,
       collectionCumulusId,
@@ -216,7 +222,8 @@ const writeRecords = async ({
   }
 
   if (shouldWriteGranuleRecords) {
-    return writeGranulesFromMessage({
+    log.debug(`${logPrefix}: Writing Granule records to PostgreSQL`);
+    const result = await writeGranulesFromMessage({
       cumulusMessage,
       executionCumulusId,
       executionCreatedAt,
@@ -224,16 +231,22 @@ const writeRecords = async ({
       knex,
       testOverrides,
     });
+    log.info(`${logPrefix}: Successfully completed writeRecords processing`);
+    return result;
   }
 
   if (executionCumulusId && !shouldWriteGranuleRecords) {
-    return writeGranuleExecutionAssociationsFromMessage({
+    log.debug(`${logPrefix}: Writing Granule Execution Associations`);
+    const result = await writeGranuleExecutionAssociationsFromMessage({
       cumulusMessage,
       executionCumulusId,
       executionCreatedAt,
       knex,
     });
+    log.info(`${logPrefix}: Successfully completed writeRecords processing`);
+    return result;
   }
+  log.info(`${logPrefix}: Successfully completed writeRecords processing (No granules written)`);
   return undefined;
 };
 
@@ -261,26 +274,30 @@ const handler = async (event) => {
 
   await Promise.all(sqsMessages.map(async (message) => {
     let cumulusMessage;
+    let logPrefix = '[Unknown Context]';
 
     const executionEvent = parseSQSMessageBody(message);
     try {
       if (isEventBridgeEvent(executionEvent)) {
         cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
+        logPrefix = getLogPrefix(cumulusMessage);
       } else {
         throw new TypeError('SQSMessage body not in expected EventBridgeEvent format');
       }
     } catch (error) {
-      log.error(`Writing message failed on getting message from execution event: ${JSON.stringify(message)}`, error);
+      log.error(`${logPrefix}: Writing message failed on getting message from execution event: ${JSON.stringify(message)}`, error);
       return batchItemFailures.push({ itemIdentifier: message.messageId });
     }
     try {
       return await writeRecords({ ...event, cumulusMessage, knex });
     } catch (error) {
-      log.error(`Writing message failed: ${JSON.stringify(message)}`, error);
+      log.error(`${logPrefix}: Writing message failed: ${JSON.stringify(message)}`, error);
+      
       if (!process.env.DeadLetterQueue) {
-        log.error('DeadLetterQueue not configured');
+        log.error(`${logPrefix}: DeadLetterQueue not configured`);
         return undefined;
       }
+      log.info(`${logPrefix}: Sending failed message to DLQ: ${process.env.DeadLetterQueue}`);
       return sendSQSMessage(
         process.env.DeadLetterQueue,
         {
@@ -292,6 +309,26 @@ const handler = async (event) => {
   }));
 
   return { batchItemFailures };
+};
+
+/**
+ * Extracts tracing context (Execution ID and Granule IDs) for logs
+ * 
+ * @param {CumulusMessage} cumulusMessage 
+ * @returns {string} Formatted log prefix
+ */
+const getLogPrefix = (cumulusMessage) => {
+  if (!cumulusMessage) return '[Unknown Context]';
+  const executionId = get(cumulusMessage, 'cumulus_meta.execution_name', 'UnknownExecutionId');
+  const granules = get(cumulusMessage, 'payload.granules', []);
+  const granuleIds = granules.map((g) => {
+    // Find the file in the granule where type is 'data'
+    const dataFile = (g.files || []).find((file) => file.type === 'data');
+    // Extract the file name, or fallback to the granuleId property if not found
+    return dataFile ? (dataFile.fileName || dataFile.name) : g.granuleId;
+  }).filter(Boolean);
+  const granuleIdString = granuleIds.length ? ` | GranuleIds: ${granuleIds.join(', ')}` : '';
+  return `[GranuleId:${granuleIdString} - ExecutionId:${executionId}]`;
 };
 
 module.exports = {
