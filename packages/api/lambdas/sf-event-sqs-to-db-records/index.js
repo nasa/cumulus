@@ -51,8 +51,8 @@ const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-record
 
 /**
  * Extracts tracing context (Execution ID and Granule IDs) for logs
- * 
- * @param {CumulusMessage} cumulusMessage 
+ *
+ * @param {CumulusMessage} cumulusMessage
  * @returns {string} Formatted log prefix
  */
 const getLogPrefix = (cumulusMessage) => {
@@ -147,7 +147,7 @@ const writeRecords = async ({
 }) => {
   const logPrefix = getLogPrefix(cumulusMessage);
   log.info(`${logPrefix}: Starting writeRecords processing`);
-  
+
   const messageCollectionNameVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);
   const messageAsyncOperationId = getMessageAsyncOperationId(cumulusMessage);
   const messageParentExecutionArn = getMessageExecutionParentArn(cumulusMessage);
@@ -312,7 +312,7 @@ const handler = async (event) => {
       return await writeRecords({ ...event, cumulusMessage, knex });
     } catch (error) {
       log.error(`${logPrefix}: Writing message failed: ${JSON.stringify(message)}`, error);
-      
+
       if (!process.env.DeadLetterQueue) {
         log.error(`${logPrefix}: DeadLetterQueue not configured`);
         return undefined;
