@@ -50,6 +50,26 @@ const {
 const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-records' });
 
 /**
+ * Extracts tracing context (Execution ID and Granule IDs) for logs
+ * 
+ * @param {CumulusMessage} cumulusMessage 
+ * @returns {string} Formatted log prefix
+ */
+const getLogPrefix = (cumulusMessage) => {
+  if (!cumulusMessage) return '[Unknown Context]';
+  const executionId = get(cumulusMessage, 'cumulus_meta.execution_name', 'UnknownExecutionId');
+  const granules = get(cumulusMessage, 'payload.granules', []);
+  const granuleIds = granules.map((g) => {
+    // Find the file in the granule where type is 'data'
+    const dataFile = (g.files || []).find((file) => file.type === 'data');
+    // Extract the file name, or fallback to the granuleId property if not found
+    return dataFile ? (dataFile.fileName || dataFile.name) : g.granuleId;
+  }).filter(Boolean);
+  const granuleIdString = granuleIds.length ? ` | GranuleIds: ${granuleIds.join(', ')}` : '';
+  return `[GranuleId:${granuleIdString} - ExecutionId:${executionId}]`;
+};
+
+/**
  * @typedef {import('@cumulus/types/message').CumulusMessage} CumulusMessage
  * @typedef {import('@cumulus/types/message').RecordType} RecordType
  * @typedef {import('knex').Knex} Knex
@@ -309,26 +329,6 @@ const handler = async (event) => {
   }));
 
   return { batchItemFailures };
-};
-
-/**
- * Extracts tracing context (Execution ID and Granule IDs) for logs
- * 
- * @param {CumulusMessage} cumulusMessage 
- * @returns {string} Formatted log prefix
- */
-const getLogPrefix = (cumulusMessage) => {
-  if (!cumulusMessage) return '[Unknown Context]';
-  const executionId = get(cumulusMessage, 'cumulus_meta.execution_name', 'UnknownExecutionId');
-  const granules = get(cumulusMessage, 'payload.granules', []);
-  const granuleIds = granules.map((g) => {
-    // Find the file in the granule where type is 'data'
-    const dataFile = (g.files || []).find((file) => file.type === 'data');
-    // Extract the file name, or fallback to the granuleId property if not found
-    return dataFile ? (dataFile.fileName || dataFile.name) : g.granuleId;
-  }).filter(Boolean);
-  const granuleIdString = granuleIds.length ? ` | GranuleIds: ${granuleIds.join(', ')}` : '';
-  return `[GranuleId:${granuleIdString} - ExecutionId:${executionId}]`;
 };
 
 module.exports = {
