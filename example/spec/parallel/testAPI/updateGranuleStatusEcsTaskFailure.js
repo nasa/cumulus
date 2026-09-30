@@ -57,7 +57,7 @@ describe('Granules status in Postgres is correctly updated in the event of a wor
             dataType: collection.name,
             status: 'queued',
             collectionId: collectionId,
-            producerGranuleId: 'integration-test-producter',
+            producerGranuleId: 'integration-test-producer',
             files: [],
           },
         ],
