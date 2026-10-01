@@ -1113,12 +1113,11 @@ test('GranuleSearch with includeFullRecord true retrieves granules, files and ex
   });
 });
 
-test('GranuleSearch with includeFailedCount true includes failedCount column', async (t) => {
+test.only('GranuleSearch with failedCountFilter true includes failedCount column', async (t) => {
   const { knex } = t.context;
-  console.log('Testing includeFailedCount');
   const queryStringParameters = {
     limit: 200,
-    includeFailedCount: 'true',
+    failedCountFilter: 'true',
   };
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
