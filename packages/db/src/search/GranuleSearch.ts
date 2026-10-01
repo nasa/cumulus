@@ -106,9 +106,6 @@ export class GranuleSearch extends BaseSearch {
       );
     }
 
-    console.log('granules countQuery:', countQuery.toSQL().sql);
-    console.log('granules searchQuery:', searchQuery.toSQL().sql);
-
     return { countQuery, searchQuery };
   }
 
