@@ -612,46 +612,16 @@ test.serial('query() collects data while NextToken is not null and returns the m
     },
   };
 
-  const getDataResultsWithNextToken = {
-    UpdateCount: 0,
-    NextToken: 'TestString',
-    ResultSet: {
-      Rows: [
-        {
-          Data: [
-            { VarCharValue: 'bucket' },
-            { VarCharValue: 'key' },
-            { VarCharValue: 'version_id' },
-            { VarCharValue: 'is_latest' },
-            { VarCharValue: 'is_delete_marker' },
-          ],
-        },
-        {
-          Data: [
-            { VarCharValue: testBucket },
-            { VarCharValue: testKey },
-            {},
-            { VarCharValue: true },
-            { VarCharValue: false },
-          ],
-        },
-      ],
-    },
-  };
-
-  athenaClientMock.on(GetQueryResultsCommand).resolvesOnce(
-    getDataResultsResponse
-  ).resolvesOnce(
-    getDataResultsResponse
-  ).resolvesOnce(
-    getDataResultsResponse
-  ).resolvesOnce(
-    getDataResultsWithNextToken
-  ).resolvesOnce(
-    getDataResultsWithNextToken
-  ).resolves(
+  athenaClientMock.on(GetQueryResultsCommand, {QueryExecutionId: '3456-qrst-7890-uvwx'}).resolves(
+    Object.assign({NextToken: 'FirstTestString'}, getDataResultsResponse)
+  )
+  athenaClientMock.on(GetQueryResultsCommand, {QueryExecutionId: '3456-qrst-7890-uvwx', NextToken: 'FirstTestString'}).resolves(
+    Object.assign({NextToken: 'SecondTestString'}, getDataResultsResponse)
+  )
+  athenaClientMock.on(GetQueryResultsCommand, {QueryExecutionId: '3456-qrst-7890-uvwx', NextToken: 'SecondTestString'}).resolves(
     getDataResultsResponse
   )
+
 
   const results = await t.context.client.query(getDataQuery);
 
@@ -659,7 +629,6 @@ test.serial('query() collects data while NextToken is not null and returns the m
     { bucket: testBucket, key: testKey, version_id: '', is_latest: true, is_delete_marker: false },
     { bucket: testBucket, key: testKey, version_id: '', is_latest: true, is_delete_marker: false },
     { bucket: testBucket, key: testKey, version_id: '', is_latest: true, is_delete_marker: false },
-
   ];
 
   t.deepEqual(results.length, expected.length);

@@ -188,7 +188,7 @@ export class AthenaQueryClient {
    */
   private async getQueryResults(QueryExecutionId: string): Promise<MappedData> {
     let data = [] as MappedData;
-    const response = await this.client.send(new GetQueryResultsCommand({
+    let response = await this.client.send(new GetQueryResultsCommand({
       QueryExecutionId,
     }));
     log.info(`response (${typeof response}) from GetQueryResults: ${JSON.stringify(response)}`);
@@ -196,9 +196,9 @@ export class AthenaQueryClient {
     let nextToken = response?.NextToken?.toString() || '';
     data = data.concat(await this.mapData(response.ResultSet));
 
-    while (response?.NextToken?.toString()) {
+    while (nextToken !== '') {
       // eslint-disable-next-line no-await-in-loop
-      const response = await this.client.send(new GetQueryResultsCommand({
+      response = await this.client.send(new GetQueryResultsCommand({
         QueryExecutionId,
         NextToken: nextToken,
       }));
