@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     Due to infra complexity of cross account targeting and multiple lambdas that would poll the same cross-account
     SQS queue, 'stealing' messages intended for a different stack, this is an 'opt-in' test that will only run in CI
     if targeting tr-ci stack.
+
+- **CUMULUS-5636**
+  - Resolved an issue found in G2 load testing where the cmr-client library was caching an outdated token in warm lambdas.
+
 ### Added
 - **CSD-299**
   - Added a new `CMRCallFailedError` error type. This error is thrown for CMR failures after the configured retry attempts, including failures on the first attempt, and should be detectable by StepFunctions for CMR-specific retry behavior.
