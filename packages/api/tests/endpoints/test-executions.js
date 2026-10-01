@@ -557,7 +557,7 @@ test.serial('DELETE returns a 404 if PostgreSQL execution cannot be found', asyn
   t.is(response.body.message, 'No record found');
 });
 
-test.serial('POST /executions/search-by-granules returns 1 record by default', async (t) => {
+test.serial('POST /executions/search-by-granules returns all matching records up to the default limit of 10', async (t) => {
   const { fakeGranules, fakePGExecutions } = t.context;
 
   const response = await request(app)
@@ -568,13 +568,21 @@ test.serial('POST /executions/search-by-granules returns 1 record by default', a
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
-  t.is(response.body.results.length, 1);
+  const { meta, results } = response.body;
+  t.is(results.length, 3);
+  t.is(meta.stack, process.env.stackName);
+  t.is(meta.table, 'executions');
+  t.is(meta.count, 3);
 
-  response.body.results.forEach(async (execution) => t.deepEqual(
-    execution,
-    await translatePostgresExecutionToApiExecution(fakePGExecutions
-      .find((fakePGExecution) => fakePGExecution.arn === execution.arn))
-  ));
+  await Promise.all(results.map(async (execution) => {
+    t.deepEqual(
+      execution,
+      await translatePostgresExecutionToApiExecution(
+        fakePGExecutions.find((fakePGExecution) => fakePGExecution.arn === execution.arn),
+        t.context.knex
+      )
+    );
+  }));
 });
 
 test.serial('POST /executions/search-by-granules supports paging', async (t) => {
@@ -596,7 +604,9 @@ test.serial('POST /executions/search-by-granules supports paging', async (t) => 
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
+  t.is(page1.body.meta.count, 3);
   t.is(page1.body.results.length, 2);
+  t.is(page2.body.meta.count, 3);
   t.is(page2.body.results.length, 1);
 
   const response = page1.body.results.concat(page2.body.results);
@@ -634,6 +644,7 @@ test.serial('POST /executions/search-by-granules returns correct executions when
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
+  t.is(response.body.meta.count, 3);
   t.is(response.body.results.length, 3);
 
   response.body.results.forEach(async (execution) => t.deepEqual(
@@ -681,6 +692,7 @@ test.serial('POST /executions/search-by-granules returns correct executions when
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
+  t.is(response.body.meta.count, 2);
   t.is(response.body.results.length, 2);
 
   response.body.results.forEach(async (execution) => t.deepEqual(
