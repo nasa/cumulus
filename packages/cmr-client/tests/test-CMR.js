@@ -672,7 +672,7 @@ test.serial('getInstance returns the latest created CMR instance', (t) => {
   t.is(firstCMR, thirdCMR);
 });
 
-test.serial('getInstance updates the existing instance with freshly-provided config and token', (t) => {
+test.serial('getInstance updates the existing instance with a freshly-provided token', (t) => {
   const firstCMR = CMR.getInstance({
     clientId: 'clientId',
     oauthProvider: 'launchpad',
@@ -686,7 +686,7 @@ test.serial('getInstance updates the existing instance with freshly-provided con
   });
 
   t.is(firstCMR, secondCMR);
-  t.is(secondCMR.clientId, 'clientId2');
+  t.is(secondCMR.clientId, 'clientId');
   t.is(secondCMR.token, 'second-token');
 });
 

@@ -125,28 +125,16 @@ export class CMR {
   }
 
   /**
-   * Applies freshly-fetched config/credentials to this instance. The token is only
-   * overwritten if one is provided, so EDL's lazily-cached token isn't discarded.
+   * Applies a freshly-fetched token to this instance, so a warm singleton doesn't
+   * keep using a token that's since been refreshed elsewhere (e.g. in S3). Other
+   * config fields are static task config and are left as set at construction time.
    */
   private updateConfig(params: CMRConstructorParams): void {
-    this.clientId = params.clientId;
-    this.username = params.username;
-    this.password = params.password;
-    this.passwordSecretName = params.passwordSecretName;
-    this.oauthProvider = params.oauthProvider;
-    this.passphrase = params.passphrase;
-    this.api = params.api;
-    this.certificate = params.certificate;
     if (params.token !== undefined) {
       this.token = params.token;
     }
     const tokenSuffix = this.token ? this.token.slice(-10) : undefined;
-    log.info(`Updated existing CMR configuration: {
-        clientId: ${this.clientId},
-        username: ${this.username},
-        oauthProvider: ${this.oauthProvider},
-        api: ${this.api},
-        tokenSuffix: ${tokenSuffix}}`);
+    log.info(`Updated existing CMR with token suffix: ${tokenSuffix}`);
   }
 
   /**
