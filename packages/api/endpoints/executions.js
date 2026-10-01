@@ -236,7 +236,10 @@ async function searchByGranules(req, res) {
   const payload = req.body;
   const knex = await getKnexClient();
   const { value: granules } = await getGranulesForPayload(payload).next() || {};
-  const { page = 1, limit = 10, ...sortParams } = req.query;
+
+  const { page: rawPage, limit: rawLimit, ...sortParams } = req.query;
+  const page = Number.parseInt(rawPage, 10) || 1;
+  const limit = Number.parseInt(rawLimit, 10) || 10;
 
   const offset = page < 1 ? 0 : (page - 1) * limit;
 
