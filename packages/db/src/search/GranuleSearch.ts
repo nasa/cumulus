@@ -86,16 +86,16 @@ export class GranuleSearch extends BaseSearch {
       searchQuery.leftJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
     }
 
-    if (this.dbQueryParameters.includeFailedCount) {
+    if (this.dbQueryParameters.failedCountFilter) {
       const failedCountQuery = this.failedExecutionCountsQuery(knex);
 
-      countQuery.leftJoin(
+      countQuery.innerJoin(
         failedCountQuery.clone(),
         `${this.tableName}.cumulus_id`,
         'failed_execution_counts.granule_cumulus_id'
       );
 
-      searchQuery.leftJoin(
+      searchQuery.innerJoin(
         failedCountQuery,
         `${this.tableName}.cumulus_id`,
         'failed_execution_counts.granule_cumulus_id'
@@ -105,6 +105,9 @@ export class GranuleSearch extends BaseSearch {
         )
       );
     }
+
+    console.log('granules countQuery:', countQuery.toSQL().sql);
+    console.log('granules searchQuery:', searchQuery.toSQL().sql);
 
     return { countQuery, searchQuery };
   }
@@ -117,10 +120,10 @@ export class GranuleSearch extends BaseSearch {
     const { countQuery, searchQuery, dbQueryParameters } = params;
     const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
 
-    if ('failedCount' in term && this.dbQueryParameters.includeFailedCount) {
+    if ('failedCount' in term && this.dbQueryParameters.failedCountFilter) {
       const failedCount = term.failedCount;
       [countQuery, searchQuery].forEach((query) => query?.whereRaw(
-        'COALESCE(failed_execution_counts.failed_count, 0) = ?',
+        'COALESCE(failed_execution_counts.failed_count, 0) >= ?',
         [failedCount]
       ));
     }
@@ -186,7 +189,7 @@ export class GranuleSearch extends BaseSearch {
       });
     }
 
-    if (this.dbQueryParameters.includeFailedCount) {
+    if (this.dbQueryParameters.failedCountFilter) {
       const failedCountSort = finalSort.find(({ column }) => column === 'failed_count');
 
       if (failedCountSort) {
