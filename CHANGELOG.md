@@ -27,7 +27,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Adding CI deploying config to support treuter's CI stack
   - Added empty string default to iceberg_admin variable.  This prevents build failures as SSM parameters cannot have an empty/null value on deploy.
 - **CUMULUS-5529**
-  - Added integration test to validate we are catching ECS task failures in workflows and properly updating
+  - Added integration test that validates we are catching ECS task failures in workflows and properly updating
     granule satus in postgres, a test covering a bug fixed in CSD-258
 
 ### Changed
