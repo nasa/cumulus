@@ -90,7 +90,7 @@ export class GranuleSearch extends BaseSearch {
       const failedCountQuery = this.failedExecutionCountsQuery(knex);
 
       countQuery.innerJoin(
-        failedCountQuery.clone(),
+        failedCountQuery,
         `${this.tableName}.cumulus_id`,
         'failed_execution_counts.granule_cumulus_id'
       );
