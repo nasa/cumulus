@@ -1,4 +1,5 @@
 import { Knex } from 'knex';
+import omit from 'lodash/omit';
 import pick from 'lodash/pick';
 import set from 'lodash/set';
 
@@ -22,6 +23,7 @@ export interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
   collectionVersion: string,
   pdrName?: string,
   providerName?: string,
+  failed_count?: number,
 }
 
 const collectionCumulusIdColumn = 'collection_cumulus_id';
@@ -83,7 +85,53 @@ export class GranuleSearch extends BaseSearch {
     } else {
       searchQuery.leftJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
     }
+
+    if (this.dbQueryParameters.failedCountFilter) {
+      const failedCountQuery = this.failedExecutionCountsQuery(knex);
+
+      countQuery.innerJoin(
+        failedCountQuery,
+        `${this.tableName}.cumulus_id`,
+        'failed_execution_counts.granule_cumulus_id'
+      );
+
+      searchQuery.innerJoin(
+        failedCountQuery,
+        `${this.tableName}.cumulus_id`,
+        'failed_execution_counts.granule_cumulus_id'
+      ).select(
+        knex.raw(
+          'COALESCE(failed_execution_counts.failed_count, 0) AS failed_count'
+        )
+      );
+    }
+
     return { countQuery, searchQuery };
+  }
+
+  protected buildTermQuery(params: {
+    countQuery?: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
+
+    if ('failedCount' in term && this.dbQueryParameters.failedCountFilter) {
+      const failedCount = term.failedCount;
+      [countQuery, searchQuery].forEach((query) => query?.whereRaw(
+        'COALESCE(failed_execution_counts.failed_count, 0) >= ?',
+        [failedCount]
+      ));
+    }
+
+    super.buildTermQuery({
+      ...params,
+      dbQueryParameters: {
+        ...(dbQueryParameters ?? this.dbQueryParameters),
+        term: omit(term, ['failedCount']),
+      },
+    });
   }
 
   /**
@@ -136,6 +184,19 @@ export class GranuleSearch extends BaseSearch {
         column: collectionCumulusIdColumn,
         order: 'asc',
       });
+    }
+
+    if (this.dbQueryParameters.failedCountFilter) {
+      const failedCountSort = finalSort.find(({ column }) => column === 'failed_count');
+
+      if (failedCountSort) {
+        params.searchQuery.orderBy(
+          'failed_execution_counts.failed_count',
+          failedCountSort.order
+        );
+
+        finalSort.splice(finalSort.indexOf(failedCountSort), 1);
+      }
     }
 
     super.buildSortQuery({
@@ -228,8 +289,30 @@ export class GranuleSearch extends BaseSearch {
         files: fileRecords,
         executionUrls,
       });
-      return fields ? pick(apiRecord, fields) : apiRecord;
+      return fields ? pick({ ...apiRecord, failedCount: item.failed_count }, fields)
+        : { ...apiRecord, failedCount: item.failed_count };
     });
     return apiRecords;
+  }
+
+  protected failedExecutionCountsQuery(knex: Knex) {
+    const {
+      executions: executionsTable,
+      granulesExecutions: granulesExecutionsTable,
+    } = TableNames;
+
+    const failedCountQuery = knex(granulesExecutionsTable)
+      .select(`${granulesExecutionsTable}.granule_cumulus_id`)
+      .count(`${executionsTable}.cumulus_id as failed_count`)
+      .innerJoin(
+        executionsTable,
+        `${granulesExecutionsTable}.execution_cumulus_id`,
+        `${executionsTable}.cumulus_id`
+      )
+      .where(`${executionsTable}.status`, 'failed')
+      .groupBy(`${granulesExecutionsTable}.granule_cumulus_id`)
+      .as('failed_execution_counts');
+
+    return failedCountQuery;
   }
 }
