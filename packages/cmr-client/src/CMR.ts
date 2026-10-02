@@ -119,7 +119,7 @@ export class CMR {
     if (!CMR.instance) {
       CMR.instance = new CMR(params);
     } else {
-      CMR.instance.updateConfig(params);
+      CMR.instance.setToken(params);
     }
     return CMR.instance;
   }
@@ -129,7 +129,7 @@ export class CMR {
    * keep using a token that's since been refreshed elsewhere (e.g. in S3). Other
    * config fields are static task config and are left as set at construction time.
    */
-  private updateConfig(params: CMRConstructorParams): void {
+  private setToken(params: CMRConstructorParams): void {
     if (params.token !== undefined) {
       this.token = params.token;
     }
