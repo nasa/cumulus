@@ -1,0 +1,16 @@
+{
+  "Comment": "Deterministically failing ECS task workflow, always emits a TaskFailed history event",
+  "StartAt": "EcsTaskHelloWorldFail",
+  "States": {
+    "EcsTaskHelloWorldFail": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::ecs:runTask.sync",
+      "Parameters": {
+        "Cluster": "${ecs_cluster_arn}",
+        "TaskDefinition": "${ecs_task_definition_arn}",
+        "LaunchType": "EC2"
+      },
+      "End": true
+    }
+  }
+}
