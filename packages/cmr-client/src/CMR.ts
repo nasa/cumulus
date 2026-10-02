@@ -111,22 +111,42 @@ export class CMR {
   }
 
   /**
-   * Creates a new CMR singleton instance of one does not already exist,
-   * if one does, returns it
+   * Creates a new CMR singleton instance if one does not already exist; if one
+   * does, refreshes it with the given params (e.g. a freshly-fetched token) and returns it
    * @returns {CMR} - the existing or newly made CMR instance
    */
   static getInstance(params: CMRConstructorParams): CMR {
     if (!CMR.instance) {
       CMR.instance = new CMR(params);
     } else {
-      const { clientId, username, oauthProvider, api } = CMR.instance;
-      log.info(`Returning existing CMR configuration: {
-        clientId: ${clientId},
-        username: ${username},
-        oauthProvider: ${oauthProvider},
-        api: ${api}}`);
+      CMR.instance.updateConfig(params);
     }
     return CMR.instance;
+  }
+
+  /**
+   * Applies freshly-fetched config/credentials to this instance. The token is only
+   * overwritten if one is provided, so EDL's lazily-cached token isn't discarded.
+   */
+  private updateConfig(params: CMRConstructorParams): void {
+    this.clientId = params.clientId;
+    this.username = params.username;
+    this.password = params.password;
+    this.passwordSecretName = params.passwordSecretName;
+    this.oauthProvider = params.oauthProvider;
+    this.passphrase = params.passphrase;
+    this.api = params.api;
+    this.certificate = params.certificate;
+    if (params.token !== undefined) {
+      this.token = params.token;
+    }
+    const tokenSuffix = this.token ? this.token.slice(-10) : undefined;
+    log.info(`Updated existing CMR configuration: {
+        clientId: ${this.clientId},
+        username: ${this.username},
+        oauthProvider: ${this.oauthProvider},
+        api: ${this.api},
+        tokenSuffix: ${tokenSuffix}}`);
   }
 
   /**
