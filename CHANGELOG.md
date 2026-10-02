@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-5636**
   - Resolved an issue found in G2 load testing where the cmr-client library was caching an outdated token in warm lambdas.  Previously, an instance of the CMR class was cached and persisted in a warm lambda execution environment.  This cache contained the token and was only refreshed when the lambda was initially called.  This update changes so we update the token with each invocation.
+  - Upgraded node-forge to ^1.4.0 to mitigate High-severity vulnerability.
 
 ### Added
 - **CSD-299**
