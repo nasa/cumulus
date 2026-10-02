@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v22.4.3] 2026-10-02
+
+### Fixed
+
+- **CUMULUS-5636**
+  - Resolved an issue found in G2 load testing where the cmr-client library was caching an outdated token in warm lambdas.  Previously, an instance of the CMR class was cached and persisted in a warm lambda execution environment.  This cache contained the token and was only refreshed when the lambda was initially called.  This update changes so we update the token with each invocation.
+  - Upgraded node-forge to ^1.4.0 to mitigate High-severity vulnerability.
+
 ## [v22.4.2] 2026-09-24
 
 ### Fixed
@@ -10120,7 +10128,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v22.4.2...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v22.4.3...HEAD
+[v22.4.3]: https://github.com/nasa/cumulus/compare/v22.4.2...v22.4.3
 [v22.4.2]: https://github.com/nasa/cumulus/compare/v22.4.1...v22.4.2
 [v22.4.1]: https://github.com/nasa/cumulus/compare/v22.4.0...v22.4.1
 [v22.4.0]: https://github.com/nasa/cumulus/compare/v22.3.5...v22.4.0
