@@ -277,7 +277,9 @@ export const convertQueryStringToDbQueryParameters = (
   const fieldParams = omit(queryStringParameters, reservedWords);
   // determine which search strategy should be applied
   // options are term, terms, range, exists and not in
-  const fieldsList = Object.entries(fieldParams).map(([name, value]) => ({ name, value }));
+  const fieldsList = Object.entries(fieldParams)
+    .filter(([name]) => name !== 'failedCount' && !name.startsWith('failedCount__'))
+    .map(([name, value]) => ({ name, value }));
 
   // for each search strategy, get all parameters and convert them to db parameters
   Object.keys(regexes).forEach((k: string) => {

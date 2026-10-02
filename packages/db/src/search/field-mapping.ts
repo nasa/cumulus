@@ -87,7 +87,7 @@ const granuleMapping: TypeMapping = {
     pdrName: value,
   }),
   failedCount: (value?: string) => ({
-    failedCount: value && Number(value),
+    failed_count: value ? Number(value) : undefined,
   }),
 };
 

@@ -1,5 +1,4 @@
 import { Knex } from 'knex';
-import omit from 'lodash/omit';
 import pick from 'lodash/pick';
 import set from 'lodash/set';
 
@@ -107,31 +106,6 @@ export class GranuleSearch extends BaseSearch {
     }
 
     return { countQuery, searchQuery };
-  }
-
-  protected buildTermQuery(params: {
-    countQuery?: Knex.QueryBuilder,
-    searchQuery: Knex.QueryBuilder,
-    dbQueryParameters?: DbQueryParameters,
-  }) {
-    const { countQuery, searchQuery, dbQueryParameters } = params;
-    const { term = {} } = dbQueryParameters ?? this.dbQueryParameters;
-
-    if ('failedCount' in term && this.dbQueryParameters.failedCountFilter) {
-      const failedCount = term.failedCount;
-      [countQuery, searchQuery].forEach((query) => query?.whereRaw(
-        'COALESCE(failed_execution_counts.failed_count, 0) >= ?',
-        [failedCount]
-      ));
-    }
-
-    super.buildTermQuery({
-      ...params,
-      dbQueryParameters: {
-        ...(dbQueryParameters ?? this.dbQueryParameters),
-        term: omit(term, ['failedCount']),
-      },
-    });
   }
 
   /**
@@ -311,6 +285,7 @@ export class GranuleSearch extends BaseSearch {
       )
       .where(`${executionsTable}.status`, 'failed')
       .groupBy(`${granulesExecutionsTable}.granule_cumulus_id`)
+      .havingRaw(`count(${executionsTable}.cumulus_id) > 1`)
       .as('failed_execution_counts');
 
     return failedCountQuery;
