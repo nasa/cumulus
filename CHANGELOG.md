@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+- **CUMULUS-5636**
+  - Resolved an issue found in G2 load testing where the cmr-client library was caching an outdated token in warm lambdas.  Previously, an instance of the CMR class was cached and persisted in a warm lambda execution environment.  This cache contained the token and was only refreshed when the lambda was initially called.  This update changes so we update the token with each invocation.
+  - Upgraded node-forge to ^1.4.0 to mitigate High-severity vulnerability.
+- **CUMULUS-5443**
+  - Adding integration test to validate the ability to use cross account SQS queues to trigger workflows.
+    Due to infra complexity of cross account targeting and multiple lambdas that would poll the same cross-account
+    SQS queue, 'stealing' messages intended for a different stack, this is an 'opt-in' test that will only run in CI
+    if targeting tr-ci stack.
+
 ## [v22.4.2] 2026-09-24
 
 ### Fixed
@@ -57,16 +66,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Fixed
 - **CSD-299**
   - Removed token regeneration in response to CMR 401 errors. During recent load tests, this behavior, combined with an overly aggressive retry strategy, contributed to overwhelming CMR. This change partially reverts CSD-99, which introduced token regeneration on 401 responses to address an issue where EDL cached invalid tokens. Because the underlying EDL caching issue has since been resolved, token regeneration on 401 responses is no longer necessary.
-
-- **CUMULUS-5443**
-  - Adding integration test to validate the ability to use cross account SQS queues to trigger workflows.
-    Due to infra complexity of cross account targeting and multiple lambdas that would poll the same cross-account
-    SQS queue, 'stealing' messages intended for a different stack, this is an 'opt-in' test that will only run in CI
-    if targeting tr-ci stack.
-
-- **CUMULUS-5636**
-  - Resolved an issue found in G2 load testing where the cmr-client library was caching an outdated token in warm lambdas.  Previously, an instance of the CMR class was cached and persisted in a warm lambda execution environment.  This cache contained the token and was only refreshed when the lambda was initially called.  This update changes so we update the token with each invocation.
-  - Upgraded node-forge to ^1.4.0 to mitigate High-severity vulnerability.
 
 ### Added
 - **CSD-299**
