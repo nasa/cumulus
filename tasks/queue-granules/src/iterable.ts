@@ -24,7 +24,11 @@ class GroupAndChunkIterable<
   ) { }
 
   private _groupKey(props: TGroupProps): TGroupKey {
-    return Object.values(props).filter((p) => Boolean(p)).join('') as TGroupKey;
+    // Keep every slot and separate them, so two different sets of props cannot
+    // concatenate into the same key. Dropping the empty ones and joining on
+    // nothing merged e.g. {MOD09GQ___006, s3_provider} with
+    // {MOD09GQ___006s3_provider, undefined}.
+    return Object.values(props).map((p) => p ?? '').join('\u0000') as TGroupKey;
   }
 
   /**

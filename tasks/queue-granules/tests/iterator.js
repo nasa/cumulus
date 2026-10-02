@@ -106,6 +106,16 @@ test('GroupAndChunkIterable batches granules by collection and version', (t) => 
   );
 });
 
+test('GroupAndChunkIterable keeps groups apart when their props concatenate alike', (t) => {
+  const granule1 = createGranuleWithCollectionId('granule-1', 'MOD09GQ', '006', 's3_provider');
+  const granule2 = createGranuleWithCollectionId('granule-2', 'MOD09GQ', '006s3_provider');
+  const iterable = createIterable([granule1, granule2], 3);
+  t.deepEqual(
+    [...iterable].flatMap(({ chunks }) => [...chunks]),
+    [[granule1], [granule2]]
+  );
+});
+
 test('GroupAndChunkIterable batches granules by provider', (t) => {
   const granule1 = createGranule('granule-1', 'collection-1', '001', 'test_provider');
   const granule2 = createGranule('granule-2', 'collection-1', '001', 'test_provider');
