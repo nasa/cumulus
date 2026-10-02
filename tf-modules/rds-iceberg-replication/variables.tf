@@ -238,6 +238,6 @@ variable "snapshot_cleanup_interval_minutes" {
 
 variable iceberg_admin_list {
   type        = list(string)
-  default     = []
+  default     = [" "]
   description = "list of iceberg admin usernames"
 }

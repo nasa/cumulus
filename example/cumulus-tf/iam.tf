@@ -76,3 +76,52 @@ resource "aws_iam_role_policy" "lzards_api_client_test_processing_role_get_secre
   role   = split("/", module.cumulus.lambda_processing_role_arn)[1]
   policy = data.aws_iam_policy_document.lzards_api_client_test_processing_role_get_secrets[0].json
 }
+
+data "aws_iam_policy_document" "private_api_sqs_cross_account" {
+  count = var.cross_account_test_sqs_arn == null ? 0 : 1
+
+  statement {
+    actions = [
+      "sqs:GetQueueUrl",
+      "sqs:GetQueueAttributes",
+    ]
+
+    resources = [var.cross_account_test_sqs_arn]
+  }
+}
+
+resource "aws_iam_role_policy" "integration_test_cross_account_api_policy" {
+  count = var.cross_account_test_sqs_arn == null ? 0 : 1
+
+  name = "${var.prefix}-example-private-api-cross-account-sqs"
+  role = "${var.prefix}-lambda-api-gateway"
+
+  policy = data.aws_iam_policy_document.private_api_sqs_cross_account[0].json
+
+  depends_on = [module.cumulus]
+}
+
+data "aws_iam_policy_document" "example_sqs_message_consumer_cross_account" {
+  count = var.cross_account_test_sqs_arn == null ? 0 : 1
+
+  statement {
+    actions = [
+      "sqs:GetQueueUrl",
+      "sqs:GetQueueAttributes",
+      "sqs:ReceiveMessage",
+      "sqs:DeleteMessage",
+      "sqs:ChangeMessageVisibility",
+    ]
+
+    resources = [var.cross_account_test_sqs_arn]
+  }
+}
+resource "aws_iam_role_policy" "example_sqs_message_consumer_cross_account" {
+  count = var.cross_account_test_sqs_arn == null ? 0 : 1
+
+  name   = "${var.prefix}-test-sqsMessageConsumer-cross-account"
+  role   = split("/", module.cumulus.lambda_processing_role_arn)[1]
+  policy = data.aws_iam_policy_document.example_sqs_message_consumer_cross_account[0].json
+
+  depends_on = [module.cumulus]
+}
