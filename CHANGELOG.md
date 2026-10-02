@@ -31,6 +31,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     this retrieval.
 - Adding CI deploying config to support treuter's CI stack
   - Added empty string default to iceberg_admin variable.  This prevents build failures as SSM parameters cannot have an empty/null value on deploy.
+- **CUMULUS-5444**
+  - Added `@cumulus/granule-seed` (`lambdas/granule-seed`), a tool for seeding test stacks
+    with real granule records.
+    - `bin/extract.js` samples granules from a source database, with their collections,
+      providers, rules, async operations, executions, PDRs, files and granule-execution
+      links. It writes them to S3 as gzipped CSV bundles in nested tiers of 10 to
+      1,000,000 granules. Rules are copied disabled, with their trigger ARNs cleared.
+    - `bin/load.js` loads one tier into a target database in a single transaction. It
+      remaps every key and can generate synthetic executions for the loaded granules.
+    - `bin/revert.js` removes everything a load inserted.
 
 ### Changed
 - **CSD-299**

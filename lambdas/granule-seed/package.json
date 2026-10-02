@@ -1,0 +1,45 @@
+{
+  "name": "@cumulus/granule-seed",
+  "version": "22.4.1",
+  "description": "Extract sampled granule record bundles from a Cumulus RDS cluster and load them into another",
+  "license": "Apache-2.0",
+  "author": "Cumulus Authors",
+  "private": true,
+  "homepage": "https://github.com/nasa/cumulus/tree/master/lambdas/granule-seed#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasa/cumulus",
+    "directory": "lambdas/granule-seed"
+  },
+  "engines": {
+    "node": ">=22.21.1"
+  },
+  "scripts": {
+    "clean": "rm -rf dist node_modules",
+    "package": "echo 'granule-seed: no lambda artifact until the loader lands (CUMULUS-5444 PR 4)'",
+    "test": "../../node_modules/.bin/ava",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "test:ci": "../../scripts/run_package_ci_unit.sh",
+    "coverage": "python ../../scripts/coverage_handler/coverage.py"
+  },
+  "ava": {
+    "files": [
+      "tests/*.js"
+    ],
+    "timeout": "10m",
+    "verbose": true
+  },
+  "dependencies": {
+    "@cumulus/aws-client": "22.4.1",
+    "@cumulus/common": "22.4.1",
+    "@cumulus/db": "22.4.1",
+    "@cumulus/logger": "22.4.1",
+    "lodash": "^4.18.1",
+    "minimist": "^1.2.8",
+    "pg": "~8.13",
+    "pg-copy-streams": "^6.0.6"
+  },
+  "devDependencies": {
+    "knex": "2.4.1"
+  }
+}
