@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
+- Fixed `GroupAndChunkIterable` in `queue-granules` building its group key by
+  concatenating the group properties with no separator and dropping empty ones,
+  so two granules in different collections could be queued as one group under
+  the first granule's collection and provider.
 - **CSD-299**
   - Removed token regeneration in response to CMR 401 errors. During recent load tests, this behavior, combined with an overly aggressive retry strategy, contributed to overwhelming CMR. This change partially reverts CSD-99, which introduced token regeneration on 401 responses to address an issue where EDL cached invalid tokens. Because the underlying EDL caching issue has since been resolved, token regeneration on 401 responses is no longer necessary.
 
