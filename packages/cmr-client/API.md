@@ -30,6 +30,7 @@ A class to simplify requests to the CMR
 * [CMR](#CMR)
     * [new CMR()](#new_CMR_new)
     * _instance_
+        * [.setToken()](#CMR+setToken)
         * [.getCmrPassword()](#CMR+getCmrPassword) ⇒ <code>Promise.&lt;string&gt;</code>
         * [.getToken()](#CMR+getToken) ⇒ <code>Promise.&lt;(string\|undefined)&gt;</code>
         * [.checkRefreshLaunchpadToken()](#CMR+checkRefreshLaunchpadToken) ⇒ <code>Promise.&lt;void&gt;</code>
@@ -75,6 +76,14 @@ const cmrClient = new CMR({
 TODO: this should be subclassed or refactored to a functional style
 due to branch logic/complexity in token vs password/username handling
 ```
+<a name="CMR+setToken"></a>
+
+### cmrClient.setToken()
+Applies a freshly-fetched token to this instance, so a warm singleton doesn't
+keep using a token that's since been refreshed elsewhere (e.g. in S3). Other
+config fields are static task config and are left as set at construction time.
+
+**Kind**: instance method of [<code>CMR</code>](#CMR)
 <a name="CMR+getCmrPassword"></a>
 
 ### cmrClient.getCmrPassword() ⇒ <code>Promise.&lt;string&gt;</code>
@@ -265,8 +274,8 @@ Get the granule metadata from CMR using the cmrLink
 <a name="CMR.getInstance"></a>
 
 ### CMR.getInstance() ⇒ [<code>CMR</code>](#CMR)
-Creates a new CMR singleton instance of one does not already exist,
-if one does, returns it
+Creates a new CMR singleton instance if one does not already exist; if one
+does, refreshes it with the given params (e.g. a freshly-fetched token) and returns it
 
 **Kind**: static method of [<code>CMR</code>](#CMR)
 **Returns**: [<code>CMR</code>](#CMR) - - the existing or newly made CMR instance

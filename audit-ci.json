@@ -3,5 +3,11 @@
   "pass-enoaudit": true,
   "retry-count": 20,
   "allowlist": [
+    {
+      "GHSA-86w9-cpqp-85rv": {
+        "active": true,
+        "notes": "No fixed node-forge version is currently available"
+      }
+    }
   ]
 }
