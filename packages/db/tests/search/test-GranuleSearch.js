@@ -1122,8 +1122,8 @@ test.only('GranuleSearch with failedCountFilter true includes failedCount column
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
   response.results.forEach((granuleRecord) => {
-    t.true('failedCount' in granuleRecord);
-    t.true(granuleRecord.failedCount.isNumber());
+    t.true('failed_count' in granuleRecord);
+    t.true(Number.isInteger(granuleRecord.failed_count));
   });
 });
 
