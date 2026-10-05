@@ -3,7 +3,7 @@
 // TODO: Remove this comment when localstack is replaced:
 // Athena client tests are unable to run using localstack local environment.
 // Once localstack is replaced, these tests will need to be updated to use
-// local AWS instances. This work should be completed in CUMULUS-5307.
+// local AWS services. This work should be completed in CUMULUS-5307.
 
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
@@ -399,18 +399,56 @@ test.serial('checkQueryExecutionStateAndGetData throws when getQueryExecution re
 });
 
 test.serial('checkQueryExecutionStateAndGetData throws when getQueryExecution returns with a FAILED state', async (t) => {
+  // create table
   const tableName = `${randomString()}_table`;
   const tableQuery = `CREATE TABLE IF NOT EXISTS ${tableName}
-( bucket string, key string, version_id string, is_latest boolean, is_delete_marker boolean);`;
-
-  const testBucket = 'daac-public-bucket';
-  const testKey = `${randomString()}`;
-  const addDataQuery = `INSERT INTO ${tableName} VALUES ('${testBucket}', '${testKey}', '', true, false);`;
+  ( bucket string, key string, version_id string, is_latest boolean, is_delete_marker boolean);`;
 
   const startCreateTableResponse = { QueryExecutionId: '1234-abcd-5678-efgh' };
   athenaClientMock.on(StartQueryExecutionCommand).resolves(
     startCreateTableResponse
   );
+
+  const createTableResponse = {
+    QueryExecution: {
+      QueryExecutionId: '1234-abcd-5678-efgh',
+      Query: `CREATE DATABASE IF NOT EXISTS ${t.context.db}
+( bucket string, key string, version_id string, is_latest boolean, is_delete_marker boolean);`,
+      ResultConfiguration: {
+        OutputLocation: `s3://${t.context.Bucket}/`,
+      },
+      QueryExecutionContext: {
+        Database: t.context.db,
+      },
+      Status: {
+        State: 'SUCCEEDED',
+        SubmissionDateTime: new Date().toISOString(),
+      },
+    },
+  };
+  athenaClientMock.on(GetQueryExecutionCommand).resolves(
+    createTableResponse
+  );
+
+  const createQueryResponse = {
+    ResultSet: { Rows: [], ResultSetMetadata: { ColumnInfo: [] } },
+  };
+  athenaClientMock.on(GetQueryResultsCommand).resolves(
+    createQueryResponse
+  );
+
+  await t.context.client.query(tableQuery);
+
+  // populate table
+  const testBucket = 'daac-public-bucket';
+  const testKey = `${randomString()}`;
+  const addDataQuery = `INSERT INTO ${tableName} VALUES ('${testBucket}', '${testKey}', '', true, false);`;
+
+  const startAddDataResponse = { QueryExecutionId: '2345-ijkl-6789-mnop' };
+  athenaClientMock.on(StartQueryExecutionCommand).resolves(
+    startAddDataResponse
+  );
+
   const addDataResponse = {
     QueryExecution: {
       QueryExecutionId: '2345-ijkl-6789-mnop',
@@ -431,23 +469,23 @@ test.serial('checkQueryExecutionStateAndGetData throws when getQueryExecution re
     addDataResponse
   );
 
-  const createQueryResponse = {
-    ResultSet: { Rows: [], ResultSetMetadata: { ColumnInfo: [] } },
-  };
-  athenaClientMock.on(GetQueryResultsCommand).resolves(
-    createQueryResponse
-  );
-
-  await t.context.client.query(tableQuery);
+  // not sure what the add Data response for get query results will be
+  // but for now assuming it will be the same as the create queries
 
   await t.context.client.query(addDataQuery);
 
+  // query for data
   const getDataQuery = `SELECT * FROM ${tableName};`;
+
+  const startGetDataResponse = { QueryExecutionId: '3456-qrst-7890-uvwx' };
+  athenaClientMock.on(StartQueryExecutionCommand).resolves(
+    startGetDataResponse
+  );
 
   const getDataExecutionResponse = {
     QueryExecution: {
-      QueryExecutionId: '2345-ijkl-6789-mnop',
-      Query: `INSERT INTO ${tableName} VALUES ('${testBucket}', '${testKey}', '', true, false);`,
+      QueryExecutionId: '3456-qrst-7890-uvwx',
+      Query: `SELECT * FROM ${tableName};`,
       ResultConfiguration: {
         OutputLocation: `s3://${t.context.Bucket}/`,
       },
@@ -461,6 +499,7 @@ test.serial('checkQueryExecutionStateAndGetData throws when getQueryExecution re
       },
     },
   };
+
   athenaClientMock.on(GetQueryExecutionCommand).resolves(
     getDataExecutionResponse
   );
