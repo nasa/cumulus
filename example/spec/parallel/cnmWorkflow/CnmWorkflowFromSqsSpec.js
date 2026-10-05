@@ -5,6 +5,8 @@ const replace = require('lodash/replace');
 const pWaitFor = require('p-wait-for');
 
 const { createSqsQueues, getSqsQueueMessageCounts } = require('@cumulus/api/lib/testUtils');
+const { deleteExecution, getExecutions } = require('@cumulus/api-client/executions');
+
 const { sns } = require('@cumulus/aws-client/services');
 const {
   DeleteTopicCommand,
@@ -16,7 +18,6 @@ const {
   sendSQSMessage,
 } = require('@cumulus/aws-client/SQS');
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const { getGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
 const { randomId } = require('@cumulus/common/test-utils');
 const { getWorkflowFileKey } = require('@cumulus/common/workflows');
@@ -74,6 +75,22 @@ const s3data = [
 
 async function cleanUp() {
   setProcessEnvironment(config.stackName, config.bucket);
+
+  const collectionId = constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version);
+
+  const { body } = getExecutions({
+    prefix: config.stackName,
+    query: { collectionId },
+  });
+  const executionArns = JSON.parse(body).results.map((e) => e.arn);
+
+  await Promise.all(executionArns.map((eArn) =>
+    deleteExecution({
+      prefix: config.stackName,
+      executionArn: eArn,
+
+    })));
+
   console.log(`\nDeleting rule ${ruleOverride.name}`);
   const rules = await readJsonFilesFromDir(ruleDirectory);
   await deleteRules(config.stackName, config.bucket, rules, ruleSuffix);
