@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Upgraded node-forge to ^1.4.0 to mitigate High-severity vulnerability.
 
 ### Added
+  - Added audit-ci.json whitelist for https://github.com/advisories/GHSA-vfj7-8cjw-p6xm vulnerability where no safer package version is available
 - **CSD-299**
   - Added a new `CMRCallFailedError` error type. This error is thrown for CMR failures after the configured retry attempts, including failures on the first attempt, and should be detectable by StepFunctions for CMR-specific retry behavior.
 - **CUMULUS-5369**
@@ -34,6 +35,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-5529**
   - Added integration test that validates we are catching ECS task failures in workflows and properly updating
     granule satus in postgres, covering a bug fixed in CSD-258
+  - Hardened integration tests that were consistantly failing due to error fall through.
 
 ### Changed
 - **CSD-299**
