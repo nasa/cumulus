@@ -94,7 +94,6 @@ async function cleanUp() {
   console.log(`\nDeleting rule ${ruleOverride.name}`);
   const rules = await readJsonFilesFromDir(ruleDirectory);
   await deleteRules(config.stackName, config.bucket, rules, ruleSuffix);
-  await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
   await removePublishedGranule({ prefix: config.stackName,
     granuleId,
     collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version) });
