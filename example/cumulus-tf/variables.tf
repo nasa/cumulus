@@ -352,6 +352,7 @@ variable "archive_api_users" {
   type        = list(string)
   default = [
     "acyu",
+    "adamconrad7",
     "atisdale",
     "awisdom",
     "blokey",
