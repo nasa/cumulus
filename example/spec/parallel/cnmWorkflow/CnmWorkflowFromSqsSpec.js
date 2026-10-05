@@ -78,7 +78,7 @@ async function cleanUp() {
 
   const collectionId = constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version);
 
-  const { body } = getExecutions({
+  const { body } = await getExecutions({
     prefix: config.stackName,
     query: { collectionId },
   });
