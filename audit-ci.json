@@ -8,6 +8,12 @@
         "active": true,
         "notes": "No fixed node-forge version is currently available"
       }
+    },
+    {
+      "GHSA-vfj7-8cjw-p6xm": {
+        "active": true,
+        "notes": "No fixed node-forge version is currently available"
+      }
     }
   ]
 }
