@@ -2,7 +2,8 @@
 
 'use strict';
 
-const git = require('simple-git');
+const simpleGit = require('simple-git');
+const git = simpleGit('.');
 
 function determineIntegrationTestStackName(cb) {
   const branch = process.env.BRANCH;
@@ -50,7 +51,7 @@ function determineIntegrationTestStackName(cb) {
     'Yonggang Liu': 'yliu10-ci',
   };
 
-  return git('.').log({ '--max-count': '10' }, (e, r) => {
+  return git.log({ '--max-count': '10' }, (e, r) => {
     // Find the first commit not authored by pre-commit-ci[bot]
     const commits = r.all || [r.latest];
     const firstNonBotCommit = commits.find(
