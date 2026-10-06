@@ -48,6 +48,7 @@ const {
   createTestDataPath,
   createTestSuffix,
   timestampedName,
+  safeStep,
 } = require('../../helpers/testUtils');
 
 let config;
@@ -75,36 +76,36 @@ const s3data = [
 
 async function cleanUp() {
   setProcessEnvironment(config.stackName, config.bucket);
-
   const collectionId = constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version);
 
-  const { body } = await getExecutions({
-    prefix: config.stackName,
-    query: { collectionId },
-  });
-  const executionArns = JSON.parse(body).results.map((e) => e.arn);
-
-  await Promise.all(executionArns.map((eArn) =>
-    deleteExecution({
+  await safeStep('delete collection execution', async () => {
+    const { body } = await getExecutions({
       prefix: config.stackName,
-      executionArn: eArn,
+      query: { collectionId },
+    });
+    const executionArns = JSON.parse(body).results.map((e) => e.arn);
+    await Promise.all(executionArns.map((eArn) =>
+      deleteExecution({ prefix: config.stackName, executionArn: eArn })));
+  });
+  await safeStep('delete rules', async () => {
+    console.log(`\nDeleting rule ${ruleOverride.name}`);
+    const rules = await readJsonFilesFromDir(ruleDirectory);
+    await deleteRules(config.stackName, config.bucket, rules, ruleSuffix);
+  });
 
-    })));
+  await safeStep('delete granule', async () => {
+    await removePublishedGranule({ prefix: config.stackName,
+      granuleId,
+      collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version) });
+  });
 
-  console.log(`\nDeleting rule ${ruleOverride.name}`);
-  const rules = await readJsonFilesFromDir(ruleDirectory);
-  await deleteRules(config.stackName, config.bucket, rules, ruleSuffix);
-  await removePublishedGranule({ prefix: config.stackName,
-    granuleId,
-    collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version) });
-
-  await Promise.all([
-    deleteFolder(config.bucket, testDataFolder),
-    deleteQueue(queues.sourceQueueUrl),
-    deleteQueue(queues.deadLetterQueueUrl),
-    sns().send(new DeleteTopicCommand({ TopicArn: cnmResponseStream })),
-    cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-    cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
+  await Promise.allSettled([
+    safeStep('delete test data folder', () => deleteFolder(config.bucket, testDataFolder)),
+    safeStep('delete source queue', () => deleteQueue(queues.sourceQueueUrl)),
+    safeStep('delete dead letter queue', () => deleteQueue(queues.deadLetterQueueUrl)),
+    safeStep('delete sns topic', () => sns().send(new DeleteTopicCommand({ TopicArn: cnmResponseStream }))),
+    safeStep('cleanup collections', () => cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix)),
+    safeStep('cleanup providers', () => cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)),
   ]);
 }
 
