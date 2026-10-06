@@ -6,9 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
 - **CUMULUS-5636**
   - Resolved an issue found in G2 load testing where the cmr-client library was caching an outdated token in warm lambdas.  Previously, an instance of the CMR class was cached and persisted in a warm lambda execution environment.  This cache contained the token and was only refreshed when the lambda was initially called.  This update changes so we update the token with each invocation.
   - Upgraded node-forge to ^1.4.0 to mitigate High-severity vulnerability.
+- Added audit-ci.json whitelist for https://github.com/advisories/GHSA-vfj7-8cjw-p6xm vulnerability where no safer package version is available
+
+### Added
 - **CUMULUS-5443**
   - Adding integration test to validate the ability to use cross account SQS queues to trigger workflows.
     Due to infra complexity of cross account targeting and multiple lambdas that would poll the same cross-account
