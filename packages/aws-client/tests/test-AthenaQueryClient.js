@@ -651,16 +651,15 @@ test.serial('query() collects data while NextToken is not null and returns the m
     },
   };
 
-  athenaClientMock.on(GetQueryResultsCommand, {QueryExecutionId: '3456-qrst-7890-uvwx'}).resolves(
-    Object.assign({NextToken: 'FirstTestString'}, getDataResultsResponse)
-  )
-  athenaClientMock.on(GetQueryResultsCommand, {QueryExecutionId: '3456-qrst-7890-uvwx', NextToken: 'FirstTestString'}).resolves(
-    Object.assign({NextToken: 'SecondTestString'}, getDataResultsResponse)
-  )
-  athenaClientMock.on(GetQueryResultsCommand, {QueryExecutionId: '3456-qrst-7890-uvwx', NextToken: 'SecondTestString'}).resolves(
+  athenaClientMock.on(GetQueryResultsCommand, { QueryExecutionId: '3456-qrst-7890-uvwx' }).resolves(
+    { ...getDataResultsResponse, NextToken: 'FirstTestString' }
+  );
+  athenaClientMock.on(GetQueryResultsCommand, { QueryExecutionId: '3456-qrst-7890-uvwx', NextToken: 'FirstTestString' }).resolves(
+    { ...getDataResultsResponse, NextToken: 'SecondTestString' }
+  );
+  athenaClientMock.on(GetQueryResultsCommand, { QueryExecutionId: '3456-qrst-7890-uvwx', NextToken: 'SecondTestString' }).resolves(
     getDataResultsResponse
-  )
-
+  );
 
   const results = await t.context.client.query(getDataQuery);
 
