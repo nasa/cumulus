@@ -3,7 +3,11 @@
   "pass-enoaudit": true,
   "retry-count": 20,
   "allowlist": [
-    "GHSA-43fc-jf86-j433",
-    "GHSA-r5fr-rjxr-66jc"
+    {
+      "GHSA-86w9-cpqp-85rv": {
+        "active": true,
+        "notes": "No fixed node-forge version is currently available"
+      }
+    }
   ]
 }

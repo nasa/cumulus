@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-5660**
+  - Mitigated vulnerabilties discovered in bamboo-CI build
 - **CUMULUS-5677**
   - Update several Node and Python dependencies due to Snyk findings/sercurity vulnerabilities
 - **CUMULUS-5765**
