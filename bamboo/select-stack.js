@@ -2,7 +2,7 @@
 
 'use strict';
 
-const git = require('simple-git');
+const git = require('simple-git').simpleGit;
 
 function determineIntegrationTestStackName(cb) {
   const branch = process.env.BRANCH;

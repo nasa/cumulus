@@ -12,6 +12,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Upgraded node-forge to ^1.4.0 to mitigate High-severity vulnerability.
 - Added audit-ci.json whitelist for https://github.com/advisories/GHSA-vfj7-8cjw-p6xm vulnerability where no safer package version is available
 
+- **CUMULUS-5254**
+  - Updated the `/executions/search-by-granules` endpoint to set the default limit to 10 and
+    expanded the meta response structure to include standardized query search metadata.
+
+
 ### Added
 - **CUMULUS-5443**
   - Adding integration test to validate the ability to use cross account SQS queues to trigger workflows.
@@ -24,6 +29,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Fixed
 - **CSD-299**
   - Removed token regeneration in response to CMR 401 errors. During recent load tests, this behavior, combined with an overly aggressive retry strategy, contributed to overwhelming CMR. This change partially reverts CSD-99, which introduced token regeneration on 401 responses to address an issue where EDL cached invalid tokens. Because the underlying EDL caching issue has since been resolved, token regeneration on 401 responses is no longer necessary.
+
+- **CUMULUS-5660**
+  - Mitigated vulnerabilties discovered in bamboo-CI build
 
 ### Added
 - **CSD-299**
