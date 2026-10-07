@@ -1,0 +1,22 @@
+{
+    "name": "OPERA_L3_DISP-S1-STATIC_V1",
+    "version": "1",
+    "duplicateHandling": "replace",
+    "process": "DISP-STATIC",
+    "url_path": "OPERA_L3_DISP-S1-STATIC_V1/{granule.granuleId}/",
+    "granuleId": "^OPERA_L3_DISP-S1-STATIC_.*$",
+    "granuleIdExtraction": "(OPERA_L3_DISP-S1-STATIC_.*)(\\.tif)",
+    "sampleFileName": "OPERA_L3_DISP-S1-STATIC_F11115_20140403_S1A_v1.0_los_enu.tif",
+    "files": [
+        {
+            "bucket": "opera-products",
+            "regex": "^OPERA_L3_DISP-S1-STATIC_.*(?:\\.tif|cnm\\.json|\\.context\\.json|\\.dataset\\.json|\\.iso\\.xml|\\.met\\.json|\\.rc.yaml|\\.catalog\\.json|\\.log)(?!\\.png)(?:\\.md5)?$",
+            "sampleFileName": "OPERA_L3_DISP-S1-STATIC_F11115_20140403_S1A_v1.0_los_enu.tif"
+        },
+        {
+            "bucket": "opera-browse",
+            "regex": "^OPERA_L3_DISP-S1-STATIC_.*(?!:\\.tif|cnm\\.json|\\.context\\.json|\\.dataset\\.json|\\.iso\\.xml|\\.met\\.json|\\rc.yaml|\\.catalog\\.json)(?:\\.png)(?:\\.md5)?$",
+            "sampleFileName": "OPERA_L3_DISP-S1-STATIC_F11115_20140403_S1A_v1.0_BROWSE.png"
+        }
+    ]
+}
