@@ -37,8 +37,8 @@ All modules are accessible using require: `require('@cumulus/ingest/<MODULE_NAME
 - [`log`](./log.js) - stringifies JS object logs for ElasticSearch indexing
 - [`parse-pdr`](./parse-pdr.js) - tools for validating PDRs and generating PDRD and PAN messages
 - [`pdr`](./pdr.js) - discovers and ingests pdrs
-- [`queue`](./queue.js) - creates queues for ingesting data
-- [`recursion`](./recursion.js) - handles recursion of a FTP/SFTP list operation
+- [`queue`](./src/queue.js) - creates queues for ingesting data
+- [`recursion`](./src/recursion.ts) - handles recursion of a FTP/SFTP list operation
 - [`sftp`](./sftp.js) - for accessing SFTP servers
 
 ## Contributing
