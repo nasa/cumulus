@@ -33,7 +33,7 @@
     "install-locks": "lerna exec --no-sort -- npm install --package-lock-only --no-audit --ignore-scripts",
     "install-python-deps": "lerna run install-python-deps --concurrency 1",
     "lint": "npm run lint-package-json && npm run eslint && lerna run python-lint && npm run lint-python && npm run lint-md",
-    "lint-md": "markdownlint docs/**/*.md docs/*.md tf-modules/**/*.md tf-modules/*.md",
+    "lint-md": "markdownlint docs/**/*.md docs/*.md tf-modules/**/*.md tf-modules/*.md CHANGELOG.md",
     "lint-package-json": "npmPkgJsonLint .",
     "lint-python": "uv run ruff check . && uv run ruff format --diff .",
     "precommit:install": "uv run pre-commit install",
