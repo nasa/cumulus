@@ -40,6 +40,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     this retrieval.
 - Adding CI deploying config to support treuter's CI stack
   - Added empty string default to iceberg_admin variable.  This prevents build failures as SSM parameters cannot have an empty/null value on deploy.
+- **CUMULUS-5295**
+  - Added Granule and step function execution Id's to log statements in the sf-event-sqs-to-db-records lambda to expedite debugging in this task.
 
 ### Changed
 - **CSD-299**
