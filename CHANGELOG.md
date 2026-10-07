@@ -27,6 +27,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Upgraded node-forge to ^1.4.0 to mitigate High-severity vulnerability.
 
 ### Added
+
+- Added CI deployment config to support aconrad's dev stack
 - **CSD-299**
   - Added a new `CMRCallFailedError` error type. This error is thrown for CMR failures after the configured retry attempts, including failures on the first attempt, and should be detectable by StepFunctions for CMR-specific retry behavior.
 - **CUMULUS-5369**
