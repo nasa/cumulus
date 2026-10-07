@@ -50,7 +50,7 @@ function determineIntegrationTestStackName(cb) {
     'Yonggang Liu': 'yliu10-ci',
   };
 
-  return git.log({ '--max-count': '10' }, (e, r) => {
+  return git('.').log({ '--max-count': '10' }, (e, r) => {
     // Find the first commit not authored by pre-commit-ci[bot]
     const commits = r.all || [r.latest];
     const firstNonBotCommit = commits.find(
