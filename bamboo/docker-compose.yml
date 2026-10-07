@@ -41,10 +41,11 @@ services:
     environment:
       ES_JAVA_OPTS: "-Xms750m -Xmx750m"
   localstack:
-    image: localstack/localstack:4.0.3
+    # image: ministackorg/ministack:1.3.65-full
+    image: ministackorg/ministack:1.3.65
     network_mode: "service:build_env"
     environment:
-      SERVICES: "cloudformation,cloudwatch,cloudwatchlogs,dynamodb,iam,kinesis,kms,lambda,s3,secretsmanager,sns,sqs,stepfunctions,ssm,logs"
+      - ATHENA_ENGINE=mock
   build_env:
     image: $CUMULUS_BASE_IMAGE
     volumes:
