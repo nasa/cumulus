@@ -1113,6 +1113,20 @@ test('GranuleSearch with includeFullRecord true retrieves granules, files and ex
   });
 });
 
+test.only('GranuleSearch with failedCountFilter true includes failedCount column', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    failedCountFilter: 'true',
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  response.results.forEach((granuleRecord) => {
+    t.true('failed_count' in granuleRecord);
+    t.true(Number.isInteger(granuleRecord.failed_count));
+  });
+});
+
 test('GranuleSearch with archived: true pulls only archive granules', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {

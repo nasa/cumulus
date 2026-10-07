@@ -49,6 +49,7 @@ export type ApiGranuleRecord = {
   timeToArchive?: number
   timeToPreprocess?: number
   archived: boolean
+  failedCount?: number
 } & PartialGranuleTemporalInfo & PartialGranuleProcessingInfo;
 
 export type ApiGranule = {
@@ -73,6 +74,7 @@ export type ApiGranule = {
   timeToArchive?: number | null
   timeToPreprocess?: number | null
   updatedAt?: number | null
+  failedCount?: number | null
 } & PartialGranuleTemporalInfo & PartialGranuleProcessingInfo;
 
 export type MetricsGranule = {
