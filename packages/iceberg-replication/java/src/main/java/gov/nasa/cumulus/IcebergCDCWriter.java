@@ -30,7 +30,8 @@ import org.apache.iceberg.Table;
 import org.apache.iceberg.TableProperties;
 import org.apache.iceberg.catalog.Catalog;
 import org.apache.iceberg.catalog.TableIdentifier;
-import org.apache.iceberg.io.DataWriter;
+import org.apache.iceberg.io.BaseDataWriter;
+import org.apache.iceberg.parquet.ParquetAppenderFactory;
 import org.apache.iceberg.data.GenericRecord;
 import org.apache.iceberg.data.InternalRecordWrapper;
 import org.apache.iceberg.data.Record;
@@ -77,7 +78,7 @@ public class IcebergCDCWriter {
     private final String branch;
     private final FileFormat fileFormat;
     private final long targetFileSize;
-    private final GenericAppenderFactory appenderFactory;
+    private final ParquetAppenderFactory appenderFactory;
 
     /**
      * Build a writer for a specific table.
@@ -149,10 +150,10 @@ public class IcebergCDCWriter {
                         TableProperties.WRITE_TARGET_FILE_SIZE_BYTES,
                         Long.toString(DEFAULT_TARGET_FILE_SIZE)));
 
-        this.appenderFactory = GenericAppenderFactory.create(
+        this.appenderFactory = new ParquetAppenderFactory(
                 table.schema(),
                 table.spec(),
-                table.io().newInputFile(table.location()));
+                table.io());
     }
 
     /**
