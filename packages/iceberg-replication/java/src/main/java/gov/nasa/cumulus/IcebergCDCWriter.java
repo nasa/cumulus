@@ -229,7 +229,7 @@ public class IcebergCDCWriter {
         final InternalRecordWrapper wrapper = new InternalRecordWrapper(rowSchema.asStruct());
 
         PartitionedFanoutWriter<Record> writer =
-            new PartitionedFanoutWriter<>(
+            new PartitionedFanoutWriter<Record>(
                 spec, fileFormat, fileFactory, table.io(), targetFileSize) {
             @Override
             protected PartitionKey partition(Record row) {
@@ -264,7 +264,7 @@ public class IcebergCDCWriter {
             List<Map<String, Object>> upserts,
             OutputFileFactory fileFactory) throws IOException {
         org.apache.iceberg.io.UnpartitionedWriter<Record> writer =
-        new org.apache.iceberg.io.UnpartitionedWriter<>(
+        new org.apache.iceberg.io.UnpartitionedWriter<Record>(
                 spec, fileFormat, fileFactory, table.io(), targetFileSize);
         boolean success = false;
         try {
