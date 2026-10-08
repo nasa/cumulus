@@ -230,7 +230,10 @@ public class IcebergCDCWriter {
 
         PartitionedFanoutWriter<Record> writer =
             new PartitionedFanoutWriter<Record>(
-                spec, fileFormat, fileFactory, table.io(), targetFileSize) {
+                spec,
+                fileFormat,
+                new org.apache.iceberg.io.DataFileAppenderFactory(table, spec, rowSchema),
+                fileFactory) {
             @Override
             protected PartitionKey partition(Record row) {
                 partitionKey.partition(wrapper.wrap(row));
