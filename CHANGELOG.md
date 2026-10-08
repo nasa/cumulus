@@ -7,30 +7,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
-- **CSD-299**
-  - Removed token regeneration in response to CMR 401 errors. During recent load tests, this behavior, combined with an overly aggressive retry strategy, contributed to overwhelming CMR. This change partially reverts CSD-99, which introduced token regeneration on 401 responses to address an issue where EDL cached invalid tokens. Because the underlying EDL caching issue has since been resolved, token regeneration on 401 responses is no longer necessary.
+- **CUMULUS-5636**
+  - Resolved an issue found in G2 load testing where the cmr-client library was caching an outdated token in warm lambdas.  Previously, an instance of the CMR class was cached and persisted in a warm lambda execution environment.  This cache contained the token and was only refreshed when the lambda was initially called.  This update changes so we update the token with each invocation.
+  - Upgraded node-forge to ^1.4.0 to mitigate High-severity vulnerability.
+- Added audit-ci.json whitelist for https://github.com/advisories/GHSA-vfj7-8cjw-p6xm vulnerability where no safer package version is available
 
+- **CUMULUS-5254**
+  - Updated the `/executions/search-by-granules` endpoint to set the default limit to 10 and
+    expanded the meta response structure to include standardized query search metadata.
+
+
+### Added
 - **CUMULUS-5443**
   - Adding integration test to validate the ability to use cross account SQS queues to trigger workflows.
     Due to infra complexity of cross account targeting and multiple lambdas that would poll the same cross-account
     SQS queue, 'stealing' messages intended for a different stack, this is an 'opt-in' test that will only run in CI
     if targeting tr-ci stack.
-
-- **CUMULUS-5636**
-  - Resolved an issue found in G2 load testing where the cmr-client library was caching an outdated token in warm lambdas.  Previously, an instance of the CMR class was cached and persisted in a warm lambda execution environment.  This cache contained the token and was only refreshed when the lambda was initially called.  This update changes so we update the token with each invocation.
-  - Upgraded node-forge to ^1.4.0 to mitigate High-severity vulnerability.
-
-### Added
-- **CSD-299**
-  - Added a new `CMRCallFailedError` error type. This error is thrown for CMR failures after the configured retry attempts, including failures on the first attempt, and should be detectable by StepFunctions for CMR-specific retry behavior.
-- **CUMULUS-5369**
-  - The `instanceMeta` API endpoint now returns `icebergAdmins`, a list of iceberg admin
-    usernames read from the `${prefix}-iceberg_admins_list` SSM parameter created by the
-    `rds-iceberg-replication` module. An empty list is returned if the parameter does not exist.
-  - Added an `ssm()` service and `SSM.getParameterValue()` helper to `@cumulus/aws-client` to facilitate
-    this retrieval.
-- Adding CI deploying config to support treuter's CI stack
-  - Added empty string default to iceberg_admin variable.  This prevents build failures as SSM parameters cannot have an empty/null value on deploy.
 - **CUMULUS-5444**
   - Added `@cumulus/granule-seed` (`lambdas/granule-seed`), a tool for seeding test stacks
     with real granule records.
@@ -42,6 +34,25 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       remaps every key and can generate synthetic executions for the loaded granules.
     - `bin/revert.js` removes everything a load inserted.
 
+## [v22.4.2] 2026-09-24
+
+### Fixed
+- **CSD-299**
+  - Removed token regeneration in response to CMR 401 errors. During recent load tests, this behavior, combined with an overly aggressive retry strategy, contributed to overwhelming CMR. This change partially reverts CSD-99, which introduced token regeneration on 401 responses to address an issue where EDL cached invalid tokens. Because the underlying EDL caching issue has since been resolved, token regeneration on 401 responses is no longer necessary.
+
+- **CUMULUS-5660**
+  - Mitigated vulnerabilties discovered in bamboo-CI build
+
+### Added
+- **CSD-299**
+  - Added a new `CMRCallFailedError` error type. This error is thrown for CMR failures after the configured retry attempts, including failures on the first attempt, and should be detectable by StepFunctions for CMR-specific retry behavior.
+- **CUMULUS-5369**
+  - The `instanceMeta` API endpoint now returns `icebergAdmins`, a list of iceberg admin
+    usernames read from the `${prefix}-iceberg_admins_list` SSM parameter created by the
+    `rds-iceberg-replication` module. An empty list is returned if the parameter does not exist.
+  - Added an `ssm()` service and `SSM.getParameterValue()` helper to `@cumulus/aws-client` to facilitate
+    this retrieval.
+
 ### Changed
 - **CSD-299**
   - Updated CMR retries to explicitly use exponential backoff. This defaults to 0 retries.  Retries may be specified using the `CMR_RETRIES` environment variable.  If retries are specified, a backoff factor of 2 and a minTimeout of 5s is used.  For 3 retries, this leads to retries at 5, 10 and 20 seconds with total lambda duration of up to 35 seconds of wait.
@@ -49,28 +60,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [v22.4.1] 2026-09-14
 
 ### Fixed
-
 - **CSD-258**
   - Fixed a long running intermittant issue where graules in PG were stuck in 'running' state in PG
     from a 'failed' step function execution, due to a failure to correctly lookup failed ECS tasks,
     leading to no final granule update call made to PG.  Adding ECS `TaskFailed` to the checks ensures
     the correct failure point is identified.  Moving forwards failed ECS tasks that were not correctly
     reporting granule status should now update.
-
-## [v22.4.0] 2026-09-02
-
-### Fixed
-
-- **CSD-25**
-  - Fixed a long running intermittant issue where graules in PG were stuck in 'running' state in PG
-    from a 'failed' step function execution, due to a failure to correctly lookup failed ECS tasks,
-    leading to no final granule update call made to PG.  Adding ECS `TaskFailed` to the checks ensures
-    the correct failure point is identified.  Moving forwards failed ECS tasks that were not correctly
-    reporting granule status should now update.
-
-### Added
-
-- Added CI deployment config to support mthorste's dev stack
 
 ## [v22.4.0] 2026-09-02
 
@@ -10136,7 +10131,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v22.4.1...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v22.4.2...HEAD
+[v22.4.2]: https://github.com/nasa/cumulus/compare/v22.4.1...v22.4.2
 [v22.4.1]: https://github.com/nasa/cumulus/compare/v22.4.0...v22.4.1
 [v22.4.0]: https://github.com/nasa/cumulus/compare/v22.3.5...v22.4.0
 [v22.3.5]: https://github.com/nasa/cumulus/compare/v22.3.4...v22.3.5

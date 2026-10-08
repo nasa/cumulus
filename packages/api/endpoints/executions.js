@@ -32,6 +32,10 @@ const { validateGranuleExecutionRequest, getFunctionNameFromRequestContext } = r
 
 const log = new Logger({ sender: '@cumulus/api/executions' });
 
+/**
+ * @typedef {import('@cumulus/db').SearchMeta} SearchMeta
+ */
+
 const BulkExecutionDeletePayloadSchema = z.object({
   esBatchSize: z.union([
     z.string().transform((val) => {
@@ -232,7 +236,10 @@ async function searchByGranules(req, res) {
   const payload = req.body;
   const knex = await getKnexClient();
   const { value: granules } = await getGranulesForPayload(payload).next() || {};
-  const { page = 1, limit = 1, ...sortParams } = req.query;
+
+  const { page: rawPage, limit: rawLimit, ...sortParams } = req.query;
+  const page = Number.parseInt(rawPage, 10) || 1;
+  const limit = Number.parseInt(rawLimit, 10) || 10;
 
   const offset = page < 1 ? 0 : (page - 1) * limit;
 
@@ -246,10 +253,18 @@ async function searchByGranules(req, res) {
   const apiExecutions = await Promise.all(executions
     .map((execution) => translatePostgresExecutionToApiExecution(execution, knex)));
 
+  /** @type {SearchMeta} */
+  const meta = {
+    name: process.env.CUMULUS_API_NAME || 'cumulus-api',
+    stack: process.env.stackName,
+    table: 'executions',
+    limit,
+    page,
+    count: executionCumulusIds.length,
+  };
+
   const response = {
-    meta: {
-      count: apiExecutions.length,
-    },
+    meta,
     results: apiExecutions,
   };
 
