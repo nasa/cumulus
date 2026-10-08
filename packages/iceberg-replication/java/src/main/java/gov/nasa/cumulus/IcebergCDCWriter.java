@@ -146,6 +146,7 @@ public class IcebergCDCWriter {
                 table.properties().getOrDefault(
                         TableProperties.WRITE_TARGET_FILE_SIZE_BYTES,
                         Long.toString(DEFAULT_TARGET_FILE_SIZE)));
+    }
 
     /**
      * Refresh table metadata. Call before retrying a commit after a conflict.
