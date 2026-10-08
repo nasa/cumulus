@@ -234,6 +234,11 @@ data "aws_iam_policy_document" "ecs_task_role_policy" {
   }
 
   statement {
+    actions   = ["lambda:GetLayerVersion"]
+    resources = [var.cumulus_message_adapter_lambda_layer_version_arn]
+  }
+
+  statement {
     actions = [
       "s3:GetAccelerateConfiguration",
       "s3:GetBucket*",
