@@ -30,7 +30,7 @@ import org.apache.iceberg.Table;
 import org.apache.iceberg.TableProperties;
 import org.apache.iceberg.catalog.Catalog;
 import org.apache.iceberg.catalog.TableIdentifier;
-import org.apache.iceberg.data.GenericAppenderFactory;
+import org.apache.iceberg.io.DataWriter;
 import org.apache.iceberg.data.GenericRecord;
 import org.apache.iceberg.data.InternalRecordWrapper;
 import org.apache.iceberg.data.Record;
@@ -149,10 +149,10 @@ public class IcebergCDCWriter {
                         TableProperties.WRITE_TARGET_FILE_SIZE_BYTES,
                         Long.toString(DEFAULT_TARGET_FILE_SIZE)));
 
-        // GenericAppenderFactory configured for both data and equality-delete writers.
-        this.appenderFactory = new GenericAppenderFactory(
-                rowSchema, spec, equalityFieldIds, deleteSchema, /* posDeleteRowSchema */ null);
-        this.appenderFactory.setAll(table.properties());
+        this.appenderFactory = GenericAppenderFactory.create(
+                table.schema(),
+                table.spec(),
+                table.io().newInputFile(table.location()));
     }
 
     /**
