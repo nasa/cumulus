@@ -47,6 +47,8 @@ NODE_ENV=test
 <dd></dd>
 <dt><a href="#module_SQS">SQS</a></dt>
 <dd></dd>
+<dt><a href="#module_SSM">SSM</a></dt>
+<dd></dd>
 <dt><a href="#module_StepFunctions">StepFunctions</a></dt>
 <dd></dd>
 <dt><a href="#module_STS">STS</a></dt>
@@ -894,6 +896,26 @@ Delete a given SQS message from a given queue.
 Test if an SQS queue exists
 
 **Kind**: inner method of [<code>SQS</code>](#module_SQS)
+<a name="module_SSM"></a>
+
+## SSM
+<a name="module_SSM..getParameterValue"></a>
+
+### SSM~getParameterValue(Name) ⇒ <code>Promise.&lt;(string\|undefined)&gt;</code>
+Get the value of an SSM parameter
+
+**Kind**: inner method of [<code>SSM</code>](#module_SSM)
+**Returns**: <code>Promise.&lt;(string\|undefined)&gt;</code> - the parameter value, or undefined if the parameter has
+  no value
+**Throws**:
+
+- <code>ParameterNotFound</code> if the parameter does not exist
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| Name | <code>string</code> | name of the SSM parameter |
+
 <a name="module_StepFunctions"></a>
 
 ## StepFunctions

@@ -371,6 +371,7 @@ variable "archive_api_users" {
     "masonyates97",
     "mobrien84",
     "mikedorfman",
+    "mthorste",
     "nnageswa",
     "norrisdj",
     "npauzenga",

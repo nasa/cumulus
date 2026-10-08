@@ -149,6 +149,8 @@ export const getFailedStepName = (
 
 /**
  * Finds all failed execution events and returns the last one in the list.
+ * Looks for a failed lambda execution (LambdaFunctionFailed),
+ * failed ECS Task (TaskFailed) or an external worker (ActivityFailed)
  *
  * @param {HistoryEvent[]} events - array of AWS Stepfunction execution HistoryEvents
  * @returns {HistoryEvent[] | undefined} - the last lambda or activity that failed in the
@@ -158,7 +160,7 @@ export const lastFailedEventStep = (
   events: HistoryEvent[]
 ): HistoryEvent | undefined => {
   const failures = events.filter((event) =>
-    ['LambdaFunctionFailed', 'ActivityFailed'].includes(event.type as string));
+    ['LambdaFunctionFailed', 'ActivityFailed', 'TaskFailed'].includes(event.type as string));
   return failures.pop();
 };
 
