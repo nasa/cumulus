@@ -30,6 +30,7 @@ import org.apache.iceberg.Table;
 import org.apache.iceberg.TableProperties;
 import org.apache.iceberg.catalog.Catalog;
 import org.apache.iceberg.catalog.TableIdentifier;
+import org.apache.iceberg.data.GenericAppenderFactory;
 import org.apache.iceberg.data.GenericRecord;
 import org.apache.iceberg.data.InternalRecordWrapper;
 import org.apache.iceberg.data.Record;
@@ -76,6 +77,7 @@ public class IcebergCDCWriter {
     private final String branch;
     private final FileFormat fileFormat;
     private final long targetFileSize;
+    private final GenericAppenderFactory appenderFactory;
 
     /**
      * Build a writer for a specific table.
@@ -146,6 +148,11 @@ public class IcebergCDCWriter {
                 table.properties().getOrDefault(
                         TableProperties.WRITE_TARGET_FILE_SIZE_BYTES,
                         Long.toString(DEFAULT_TARGET_FILE_SIZE)));
+
+        // GenericAppenderFactory configured for both data and equality-delete writers.
+        this.appenderFactory = new GenericAppenderFactory(
+                rowSchema, spec, equalityFieldIds, deleteSchema, /* posDeleteRowSchema */ null);
+        this.appenderFactory.setAll(table.properties());
     }
 
     /**
@@ -229,17 +236,15 @@ public class IcebergCDCWriter {
         final InternalRecordWrapper wrapper = new InternalRecordWrapper(rowSchema.asStruct());
 
         PartitionedFanoutWriter<Record> writer =
-            new PartitionedFanoutWriter<Record>(
-                spec,
-                fileFormat,
-                new org.apache.iceberg.io.DataFileAppenderFactory(table, spec, rowSchema),
-                fileFactory) {
-            @Override
-            protected PartitionKey partition(Record row) {
-                partitionKey.partition(wrapper.wrap(row));
-                return partitionKey;
-            }
-        };
+                new PartitionedFanoutWriter<Record>(
+                        spec, fileFormat, appenderFactory, fileFactory,
+                        table.io(), targetFileSize) {
+                    @Override
+                    protected PartitionKey partition(Record row) {
+                        partitionKey.partition(wrapper.wrap(row));
+                        return partitionKey;
+                    }
+                };
 
         // dataFiles() closes the writer. On error path we explicitly abort()
         // to clean up partial files; do NOT also call close() afterwards.
@@ -267,8 +272,9 @@ public class IcebergCDCWriter {
             List<Map<String, Object>> upserts,
             OutputFileFactory fileFactory) throws IOException {
         org.apache.iceberg.io.UnpartitionedWriter<Record> writer =
-        new org.apache.iceberg.io.UnpartitionedWriter<Record>(
-                spec, fileFormat, fileFactory, table.io(), targetFileSize);
+                new org.apache.iceberg.io.UnpartitionedWriter<>(
+                        spec, fileFormat, appenderFactory, fileFactory,
+                        table.io(), targetFileSize);
         boolean success = false;
         try {
             for (Map<String, Object> rowMap : upserts) {
@@ -348,9 +354,8 @@ public class IcebergCDCWriter {
             EncryptedOutputFile out = (pk == null)
                     ? fileFactory.newOutputFile()
                     : fileFactory.newOutputFile(pk);
-            EqualityDeleteWriter<Record> writer =
-                org.apache.iceberg.parquet.Parquet.writeDeletes(out)
-                    .createDeleteWriter();
+            EqualityDeleteWriter<Record> writer = appenderFactory.newEqDeleteWriter(
+                    out, fileFormat, pk);
             try {
                 for (GenericRecord r : e.getValue()) {
                     writer.write(r);
