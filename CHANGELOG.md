@@ -16,6 +16,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated the `/executions/search-by-granules` endpoint to set the default limit to 10 and
     expanded the meta response structure to include standardized query search metadata.
 
+- **CUMULUS-5699**
+  - Updated permissions to allow the ecs task role to run lambda:GetLayerVersion on the CMA layer
+  - Passed the CMR layer arn through the archive module to make it accessible in the ecs_task_role_policy
 
 ### Added
 - **CUMULUS-5443**
