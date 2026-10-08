@@ -542,8 +542,8 @@ class CDCIcebergSink:
         log.info("Starting Spark session...")
 
         classpath_jars = [
-            os.path.join(jars_dir, "iceberg-spark-runtime-3.5_2.12-1.10.2jar"),
-            os.path.join(jars_dir, "iceberg-aws-bundle-1.10.2.jar"),
+            os.path.join(jars_dir, "iceberg-spark-runtime-3.5_2.12-1.12.2jar"),
+            os.path.join(jars_dir, "iceberg-aws-bundle-1.12.2.jar"),
             helper_jar,
         ]
         for j in classpath_jars:

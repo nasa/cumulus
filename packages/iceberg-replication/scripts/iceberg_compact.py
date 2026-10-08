@@ -123,8 +123,8 @@ def get_spark(jars_dir: str, warehouse: str, region: str) -> SparkSession:
     """Start a spark session."""
     log.info("Starting Spark session...")
     jars = (
-        f"{jars_dir}/iceberg-spark-runtime-3.5_2.12-1.10.2.jar"
-        f":{jars_dir}/iceberg-aws-bundle-1.10.2.jar"
+        f"{jars_dir}/iceberg-spark-runtime-3.5_2.12-1.12.2.jar"
+        f":{jars_dir}/iceberg-aws-bundle-1.12.2.jar"
     )
 
     spark = (
