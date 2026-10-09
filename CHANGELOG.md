@@ -20,6 +20,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated the `/executions/search-by-granules` endpoint to set the default limit to 10 and
     expanded the meta response structure to include standardized query search metadata.
 
+- **CUMULUS-5677**
+  - Update several Node and Python dependencies due to Snyk findings/sercurity vulnerabilities
 
 ### Added
 - **CUMULUS-5443**
