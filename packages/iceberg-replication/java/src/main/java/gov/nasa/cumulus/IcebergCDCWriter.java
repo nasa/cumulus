@@ -30,7 +30,7 @@ import org.apache.iceberg.Table;
 import org.apache.iceberg.TableProperties;
 import org.apache.iceberg.catalog.Catalog;
 import org.apache.iceberg.catalog.TableIdentifier;
-import org.apache.iceberg.data.GenericAppenderFactory;
+import org.apache.iceberg.data.GenericFileWriterFactory;
 import org.apache.iceberg.data.GenericRecord;
 import org.apache.iceberg.data.InternalRecordWrapper;
 import org.apache.iceberg.data.Record;
@@ -77,7 +77,7 @@ public class IcebergCDCWriter {
     private final String branch;
     private final FileFormat fileFormat;
     private final long targetFileSize;
-    private final GenericAppenderFactory appenderFactory;
+    private final GenericFileWriterFactory writerFactory;
 
     /**
      * Build a writer for a specific table.
@@ -149,10 +149,17 @@ public class IcebergCDCWriter {
                         TableProperties.WRITE_TARGET_FILE_SIZE_BYTES,
                         Long.toString(DEFAULT_TARGET_FILE_SIZE)));
 
-        // GenericAppenderFactory configured for both data and equality-delete writers.
-        this.appenderFactory = new GenericAppenderFactory(
-                rowSchema, spec, equalityFieldIds, deleteSchema, /* posDeleteRowSchema */ null);
-        this.appenderFactory.setAll(table.properties());
+        // One writer factory for both data files and equality-delete files.
+        // (Replaces the appender factory removed in Iceberg 1.12.) Table
+        // properties such as compression and metrics config are applied
+        // automatically because the factory is built from the table.
+        this.writerFactory = new GenericFileWriterFactory.Builder(table)
+                .dataSchema(rowSchema)
+                .dataFileFormat(fileFormat)
+                .deleteFileFormat(fileFormat)
+                .equalityFieldIds(equalityFieldIds)
+                .equalityDeleteRowSchema(deleteSchema)
+                .build();
     }
 
     /**
@@ -237,7 +244,7 @@ public class IcebergCDCWriter {
 
         PartitionedFanoutWriter<Record> writer =
                 new PartitionedFanoutWriter<Record>(
-                        spec, fileFormat, appenderFactory, fileFactory,
+                        spec, fileFormat, writerFactory, fileFactory,
                         table.io(), targetFileSize) {
                     @Override
                     protected PartitionKey partition(Record row) {
@@ -273,7 +280,7 @@ public class IcebergCDCWriter {
             OutputFileFactory fileFactory) throws IOException {
         org.apache.iceberg.io.UnpartitionedWriter<Record> writer =
                 new org.apache.iceberg.io.UnpartitionedWriter<>(
-                        spec, fileFormat, appenderFactory, fileFactory,
+                        spec, fileFormat, writerFactory, fileFactory,
                         table.io(), targetFileSize);
         boolean success = false;
         try {
@@ -354,8 +361,8 @@ public class IcebergCDCWriter {
             EncryptedOutputFile out = (pk == null)
                     ? fileFactory.newOutputFile()
                     : fileFactory.newOutputFile(pk);
-            EqualityDeleteWriter<Record> writer = appenderFactory.newEqDeleteWriter(
-                    out, fileFormat, pk);
+            EqualityDeleteWriter<Record> writer = writerFactory.newEqualityDeleteWriter(
+                    out, spec, pk);
             try {
                 for (GenericRecord r : e.getValue()) {
                     writer.write(r);
