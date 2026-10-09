@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **CUMULUS-5677**
+  - Update several Node and Python dependencies due to Snyk findings/sercurity vulnerabilities
+- **CUMULUS-5830**
+  - Upgraded node references to patch the critical Node2Shell vulnerability in NodeJS.  Upgraded to a patched version
+  - As a result of node vuln, updated the AsyncOperation container to new version 61, `cumuluss/async-operation:61`.  Users should update their reference to `async-operation` with the new version.
+
 ## [v21.3.5] 2026-06-02
 
 ### Changed
