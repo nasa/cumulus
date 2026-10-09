@@ -6,6 +6,7 @@ const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 const isNil = require('lodash/isNil');
 const set = require('lodash/set');
+const omit = require('lodash/omit');
 
 const {
   AddPermissionCommand,
@@ -624,12 +625,11 @@ async function addRule(item, payload) {
     'Rule created by cumulus-api'
   );
   const targetId = 'lambdaTarget';
-
   await CloudwatchEvents.putTarget(
     name,
     targetId,
     process.env.invokeArn,
-    JSON.stringify(payload)
+    JSON.stringify(omit(payload, 'template'))
   );
 }
 
