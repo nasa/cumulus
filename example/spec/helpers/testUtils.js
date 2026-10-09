@@ -92,6 +92,22 @@ async function updateAndUploadTestFileToBucket(params) {
   });
 }
 
+//
+/**
+ * safe execution of functions.  Intended for cleanup actions, so even if a single clean up step
+ * fails it will error the entire clean up block, preventing other clean up steps from running
+ * instead of partial clean up
+ * @param {string} label - the label to add for logging purposes
+ * @param {*} fn - the cleanup function being safely executed
+ */
+async function safeStep(label, fn) {
+  try {
+    await fn();
+  } catch (error) {
+    console.log(`cleanUp: ${label} failed`, error);
+  }
+}
+
 /**
  * For the given bucket, upload all the test data files to S3
  * and update contents with replacements
@@ -203,6 +219,7 @@ module.exports = {
   loadConfig,
   templateFile,
   timestampedName,
+  safeStep,
   updateAndUploadTestDataToBucket,
   updateAndUploadTestFileToBucket,
   uploadTestDataToBucket,
