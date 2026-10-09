@@ -6,6 +6,10 @@ const test = require('ava');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const SQS = require('@cumulus/aws-client/SQS');
 const schedule = rewire('../../lambdas/sf-scheduler');
+const { s3PutObject } = require('@cumulus/aws-client/S3');
+const { randomId } = require('@cumulus/common/test-utils');
+const awsServices = require('@cumulus/aws-client/services');
+const s3 = require('@cumulus/aws-client/S3');
 const get = require('lodash/get');
 const defaultQueueUrl = 'defaultQueueUrl';
 const customQueueUrl = 'userDefinedQueueUrl';
@@ -81,18 +85,27 @@ const getApiCollection = schedule.__get__('getApiCollection');
 const resetProvider = schedule.__set__('getProvider', fakeGetProvider);
 const resetCollection = schedule.__set__('getCollection', fakeGetCollection);
 
-test.before(() => {
+test.before(async () => {
   process.env.defaultSchedulerQueueUrl = defaultQueueUrl;
+  process.env.system_bucket = randomId('system-bucket');
+  process.env.stackName = randomId('stackName');
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
+  await s3PutObject({
+    Bucket: process.env.system_bucket,
+    Key: `${process.env.stackName}/workflow_template.json`,
+    Body: JSON.stringify(fakeMessageResponse),
+  });
 });
 
 test.afterEach.always(() => {
   sqsStub.resetHistory();
 });
 
-test.after.always(() => {
+test.after.always(async () => {
   resetProvider();
   resetCollection();
   sqsStub.restore();
+  await s3.recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test.serial('getApiProvider returns undefined when input is falsey', async (t) => {
