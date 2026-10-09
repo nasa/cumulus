@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Fixed
 - **CSD-299**
   - Removed token regeneration in response to CMR 401 errors. During recent load tests, this behavior, combined with an overly aggressive retry strategy, contributed to overwhelming CMR. This change partially reverts CSD-99, which introduced token regeneration on 401 responses to address an issue where EDL cached invalid tokens. Because the underlying EDL caching issue has since been resolved, token regeneration on 401 responses is no longer necessary.
+- **CUMULUS-5288**
+  - Fixed an issue where scheduled rule creation was failing due to the inclusion of the workflow template, creating a too large payload for EventBridge.  The workflow template is no longer included in the EventBridge scheduled event, and is instead pulled in by the ScheduleSF lambda at the time the event is triggered.  This large reduction in EventBridge event size will make it very unlikely for scheduled events to be too big.
 
 - **CUMULUS-5443**
   - Adding integration test to validate the ability to use cross account SQS queues to trigger workflows.

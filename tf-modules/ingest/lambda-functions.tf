@@ -168,6 +168,7 @@ resource "aws_lambda_function" "schedule_sf" {
     variables = {
       stackName                = var.prefix
       defaultSchedulerQueueUrl = local.defaultSchedulerQueueUrl
+      system_bucket            = var.system_bucket
     }
   }
   tags = var.tags

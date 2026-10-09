@@ -175,10 +175,8 @@ async function buildPayload(rule) {
     bucket,
     workflowFileKey
   );
-  const template = await s3Utils.getJsonS3Object(bucket, workflows.templateKey(stack));
 
   return {
-    template,
     definition: {
       name: fullDefinition.name,
       arn: fullDefinition.arn,
