@@ -46,7 +46,7 @@
   },
   "dependencies": {
     "@cumulus/aws-client": "22.4.2",
-    "@cumulus/cumulus-message-adapter-js": "2.4.0"
+    "@cumulus/cumulus-message-adapter-js": "2.5.0"
   },
   "devDependencies": {
     "@cumulus/schemas": "22.4.2",
