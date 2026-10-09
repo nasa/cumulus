@@ -111,22 +111,30 @@ export class CMR {
   }
 
   /**
-   * Creates a new CMR singleton instance of one does not already exist,
-   * if one does, returns it
+   * Creates a new CMR singleton instance if one does not already exist; if one
+   * does, refreshes it with the given params (e.g. a freshly-fetched token) and returns it
    * @returns {CMR} - the existing or newly made CMR instance
    */
   static getInstance(params: CMRConstructorParams): CMR {
     if (!CMR.instance) {
       CMR.instance = new CMR(params);
     } else {
-      const { clientId, username, oauthProvider, api } = CMR.instance;
-      log.info(`Returning existing CMR configuration: {
-        clientId: ${clientId},
-        username: ${username},
-        oauthProvider: ${oauthProvider},
-        api: ${api}}`);
+      CMR.instance.setToken(params.token);
     }
     return CMR.instance;
+  }
+
+  /**
+   * Applies a freshly-fetched token to this instance, so a warm singleton doesn't
+   * keep using a token that's since been refreshed elsewhere (e.g. in S3). Other
+   * config fields are static task config and are left as set at construction time.
+   */
+  private setToken(token?: string): void {
+    if (token !== undefined) {
+      this.token = token;
+    }
+    const tokenSuffix = this.token ? this.token.slice(-10) : undefined;
+    log.info(`Updated existing CMR with token suffix: ${tokenSuffix}`);
   }
 
   /**
