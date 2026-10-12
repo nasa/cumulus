@@ -38,7 +38,6 @@ const scheduleEventTemplate = {
   provider: 'fakeProvider',
   cumulus_meta: {},
   payload: {},
-  template: fakeMessageResponse,
   definition: {},
 };
 const fakeCollection = {
@@ -144,6 +143,9 @@ test.serial('Sends an SQS message to the custom queue URL if queueUrl is defined
       version: fakeCollection.version,
     },
   };
+  t.deepEqual(scheduleInput.cumulus_meta, {});
+  t.false('meta' in scheduleInput);
+
   await schedule.handleScheduleEvent(scheduleInput);
 
   t.is(sqsStub.calledOnce, true);
@@ -153,6 +155,13 @@ test.serial('Sends an SQS message to the custom queue URL if queueUrl is defined
   t.is(targetMessage.cumulus_meta.queueExecutionLimits[customQueueUrl], 5);
   t.deepEqual(targetMessage.meta.collection, fakeCollection);
   t.deepEqual(targetMessage.meta.provider, fakeProvider);
+
+  // validate we've retrieved and added info from workflow template
+  t.is(targetMessage.meta.cmr.username, fakeMessageResponse.meta.cmr.username);
+  t.deepEqual(
+    targetMessage.cumulus_meta.queueExecutionLimits,
+    fakeMessageResponse.cumulus_meta.queueExecutionLimits
+  );
 });
 
 test.serial('Sends an SQS message to the default queue if queueUrl is not defined', async (t) => {
@@ -164,6 +173,8 @@ test.serial('Sends an SQS message to the default queue if queueUrl is not define
       version: fakeCollection.version,
     },
   };
+  t.deepEqual(scheduleInput.cumulus_meta, {});
+  t.false('meta' in scheduleInput);
 
   await schedule.handleScheduleEvent(scheduleInput);
 
@@ -173,6 +184,13 @@ test.serial('Sends an SQS message to the default queue if queueUrl is not define
   t.is(targetQueueUrl, defaultQueueUrl);
   t.deepEqual(targetMessage.meta.collection, fakeCollection);
   t.deepEqual(targetMessage.meta.provider, fakeProvider);
+
+  // validate we've retrieved and added info from workflow template
+  t.is(targetMessage.meta.cmr.username, fakeMessageResponse.meta.cmr.username);
+  t.deepEqual(
+    targetMessage.cumulus_meta.queueExecutionLimits,
+    fakeMessageResponse.cumulus_meta.queueExecutionLimits
+  );
 });
 
 test.serial('throws if cmrProvider not defined in collection', async (t) => {
@@ -198,6 +216,9 @@ test.serial('Sends an SQS message with cmrProvider from collection', async (t) =
       version: fakeCollection.version,
     },
   };
+  // verifying data from workflow template is not present
+  t.deepEqual(scheduleInput.cumulus_meta, {});
+  t.false('meta' in scheduleInput);
 
   await schedule.handleScheduleEvent(scheduleInput);
 
@@ -208,5 +229,10 @@ test.serial('Sends an SQS message with cmrProvider from collection', async (t) =
   t.deepEqual(targetMessage.meta.collection, fakeCollection);
   t.deepEqual(targetMessage.meta.provider, fakeProvider);
   t.is(targetMessage.meta.cmr.provider, fakeCollection.cmrProvider);
+  // validate we've retrieved and added info from workflow template
   t.is(targetMessage.meta.cmr.username, fakeMessageResponse.meta.cmr.username);
+  t.deepEqual(
+    targetMessage.cumulus_meta.queueExecutionLimits,
+    fakeMessageResponse.cumulus_meta.queueExecutionLimits
+  );
 });
