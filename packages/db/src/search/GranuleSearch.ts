@@ -100,7 +100,7 @@ export class GranuleSearch extends BaseSearch {
         'failed_execution_counts.granule_cumulus_id'
       ).select(
         knex.raw(
-          'COALESCE(failed_execution_counts.failed_count, 0) AS failed_count'
+          'COALESCE(failed_execution_counts.failed_count, 0)::int AS failed_count'
         )
       );
     }
@@ -212,7 +212,7 @@ export class GranuleSearch extends BaseSearch {
     : Promise<Partial<ApiGranuleRecord>[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
 
-    const { fields, includeFullRecord } = this.dbQueryParameters;
+    const { fields, includeFullRecord, failedCountFilter } = this.dbQueryParameters;
 
     const fileMapping: { [key: number]: PostgresFileRecord[] } = {};
     const executionMapping: { [key: number]: { url: string, granule_cumulus_id: number } } = {};
@@ -260,8 +260,9 @@ export class GranuleSearch extends BaseSearch {
         files: fileRecords,
         executionUrls,
       });
-      return fields ? pick({ ...apiRecord, failedCount: item.failed_count }, fields)
-        : { ...apiRecord, failedCount: item.failed_count };
+      const record = failedCountFilter ? { ...apiRecord, failedCount: item.failed_count }
+        : apiRecord;
+      return fields ? pick(record, fields) : record;
     });
     return apiRecords;
   }
