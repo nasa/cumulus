@@ -160,25 +160,22 @@ export class GranuleSearch extends BaseSearch {
       });
     }
 
-    if (this.dbQueryParameters.failedCountFilter) {
-      const failedCountSort = finalSort.find(({ column }) => column === 'failed_count');
-
-      if (failedCountSort) {
+    finalSort.forEach((sortItem) => {
+      if (this.dbQueryParameters.failedCountFilter && sortItem.column === 'failed_count') {
+        // failed_count lives on the joined subquery, not on the granules table
         params.searchQuery.orderBy(
           'failed_execution_counts.failed_count',
-          failedCountSort.order
+          sortItem.order
         );
-
-        finalSort.splice(finalSort.indexOf(failedCountSort), 1);
+      } else {
+        super.buildSortQuery({
+          ...params,
+          dbQueryParameters: {
+            ...(dbQueryParameters || this.dbQueryParameters),
+            sort: [sortItem],
+          },
+        });
       }
-    }
-
-    super.buildSortQuery({
-      ...params,
-      dbQueryParameters: {
-        ...(dbQueryParameters || this.dbQueryParameters),
-        sort: finalSort,
-      },
     });
   }
 
