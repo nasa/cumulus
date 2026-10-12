@@ -69,6 +69,85 @@ Orphan file deletion is configured on the Iceberg tables to automatically clean 
 
 See [Iceberg troubleshooting](../troubleshooting/troubleshoot_iceberg.md).
 
+## Testing
+
+### Unit tests
+
+Iceberg unit tests run as part of the normal per-package unit test CI (`npm run test:coverage`), against LocalStack. There is no Iceberg-specific unit test job.
+
+- `packages/db/tests/iceberg-search/` runs the DuckDB search classes with httpfs pointed at LocalStack S3 (see `packages/db/src/test-duckdb-utils.ts`).
+- `packages/db/tests/test-iceberg-connection.js` uses a fake DuckDB connection, so it needs neither a native binary nor AWS.
+- `packages/api/tests/endpoints/test-iceberg-*.js` covers the Iceberg API stats and health endpoints.
+
+### Integration tests
+
+`packages/api/tests/docker/test-iceberg-api.js` exercises the running Iceberg API routes against real AWS resources (Glue and S3 for the Iceberg tables, plus the deployed stack's DynamoDB tables).
+
+To run it manually, run `npm run test:docker:iceberg` in `packages/api` with `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_ACCOUNT_ID`, `api_config_secret_id`, `dynamoTableNameString` and `ICEBERG_NAMESPACE` set. The API listens on `PORT` or `ICEBERG_PORT` (default 5001).
+
+In CI, `bamboo/iceberg-api-integration-tests.sh` starts `packages/api/app/iceberg-index.js` with `FAKE_AUTH=true`, waits for `/health`, and then runs the test.
+
+### AWS deployment in CI
+
+The Bamboo integration stack is deployed by `bamboo/bootstrap-tf-deployment.sh`. Iceberg components are opt-in:
+
+- `DEPLOY_ICEBERG_API` (default `false`) deploys the Iceberg API. The image comes from `ghcr.io/nasa/cumulus-iceberg-api`, tagged with the first 7 characters of the plan revision, and the script waits for that image to be published.
+- `DEPLOY_ICEBERG_REPLICATION` builds and pushes the replication images through `bamboo/build_and_deploy_iceberg_replication_images.sh`.
+
+Terraform wiring is in `example/cumulus-tf/main.tf`, and per-deployment settings (bucket, namespace, image version) are in `example/deployments/cumulus/*.tfvars`.
+
+The CI stack deploys only the Iceberg API. It does not deploy the replication stack (`tf-modules/rds-iceberg-replication`), which is deployed separately from `example/rds-iceberg-replication-tf`. The integration test therefore reads Iceberg tables that must already exist and be populated in the configured bucket and namespace. For example, the providers test expects a replicated provider with `id` `s3-provider`.
+
+### Testing in a developer sandbox
+
+To test replication end to end in your own AWS account:
+
+1. Deploy `data-persistence`, `rds-cluster` and `cumulus-tf` from `example/` with your own prefix. The default `cumulus-rds-tf` parameter group already sets `rds.logical_replication=1` and loads `pglogical`. Record the VPC ID, a subnet, the RDS security group, the RDS endpoint and the admin DB secret ARN.
+2. Choose a globally unique `iceberg_s3_bucket` and an `iceberg_namespace`. Terraform does not create either. The bootstrap task creates the bucket if it is missing, and creates the Glue database, the Postgres publication and the Iceberg tables on first start. The task role is granted `s3:CreateBucket` and `glue:*` for this.
+3. Build and push images to your account's ECR from `packages/iceberg-replication` with `scripts/build_bootstrap_image.sh`, `scripts/push_bootstrap_image.sh`, `scripts/push_kafka_image.sh` and `scripts/push_kafka_connect_image.sh`. The bootstrap image is also used as `iceberg_cleanup_image`.
+4. Copy `example/rds-iceberg-replication-tf/terraform.tfvars.example`, fill it in, and apply it. Watch the ECS task logs for table creation, the initial Postgres load and the switch to streaming.
+5. In `cumulus-tf`, set `deploy_iceberg_api = true`, `iceberg_s3_bucket`, `iceberg_namespace` and the API image variables, then apply.
+6. Run an ingest so Postgres has providers, collections and granules, then run `npm run test:docker:iceberg` in `packages/api`. To check replication itself, write a record through the Cumulus API and poll the Iceberg API until it appears, then update and delete it. Also restart the replication task to confirm it resumes without reloading.
+
+### Relationship to the Core release
+
+The Iceberg API image is built by GitHub Actions on every push to `master` and on pull requests. The release-versioned image tag is produced when `lerna.json` changes in a merge to `master`. Iceberg is not currently a step in the [release process](../development/release.md), and no GitHub workflow runs the Iceberg integration test. How the Bamboo plan invokes it is configured outside this repository.
+
+## Upgrading and publishing
+
+### Where versions are pinned
+
+| Component | Location |
+| --- | --- |
+| Iceberg (Spark runtime and AWS bundle jars) | `packages/iceberg-replication/scripts/download_jars.sh` (`VERSION`, `SCALA`, `SPARK`) |
+| Iceberg (Java helper compile dependency) | `packages/iceberg-replication/java/pom.xml` (`iceberg.version`) |
+| Helper jar (`iceberg-cdc-helper`) | `pom.xml` version and the hardcoded jar name in `packages/iceberg-replication/Dockerfile.bootstrap` |
+| `pyiceberg`, `pyspark` | `packages/iceberg-replication/scripts/pyproject.toml` and `requirements.txt` |
+| DuckDB | `@duckdb/node-api` in `packages/db/package.json` |
+| Debezium (Kafka and Connect) | `bamboo_DEBEZIUM_VERSION` in `bamboo/set-bamboo-env-variables.sh`; default of the `mirror-debezium-images.yml` workflow |
+| Image versions deployed | `cumulus_iceberg_api_image_version` in `example/deployments/cumulus/*.tfvars`, and the `kafka_image`, `connect_image`, `bootstrap_image` and `iceberg_cleanup_image` variables of `tf-modules/rds-iceberg-replication` |
+
+### Bumping the Iceberg version
+
+1. Update `VERSION` in `download_jars.sh` and `iceberg.version` in `pom.xml`, along with the jar name in the `pom.xml` comment. The Spark minor version in `download_jars.sh` must match the `pyspark` version.
+2. Update `pyiceberg` and `pyspark` in `pyproject.toml` and regenerate `requirements.txt`.
+3. If the helper jar version changed, update the jar name in `Dockerfile.bootstrap`.
+4. Build the bootstrap image and verify replication against a test deployment (see Testing above).
+5. Update the image versions in the relevant `.tfvars` files and Terraform variables.
+6. Add a `CHANGELOG.md` entry.
+
+The Iceberg jars are downloaded from Maven Central at Docker build time. Nothing is published to PyPI, npm or Maven.
+
+### Where images are published
+
+| Image | Registry | Workflow |
+| --- | --- | --- |
+| `cumulus-iceberg-api` | `ghcr.io/nasa` | `.github/workflows/build-and-push-iceberg-api-image.yml`: pushed on merge to `master` with a short SHA tag, plus a `lerna.json` version tag when `lerna.json` changed in the merge. Manual dispatch with `push_image`. |
+| `replication-bootstrap` | `ghcr.io/nasa` | `.github/workflows/build-and-push-iceberg-replication-image.yml`: runs when files under `packages/iceberg-replication/` change. Pull requests build but do not push. |
+| Debezium Kafka and Connect | `ghcr.io/nasa` (mirrored from `quay.io/debezium`) | `.github/workflows/mirror-debezium-images.yml`, run manually. |
+
+The replication images can also be pushed to ECR by the legacy Bamboo script `bamboo/build_and_deploy_iceberg_replication_images.sh`.
+
 ## Decisions and Alternatives
 
 We've documented some of the design decisions and alternatives. It is important to revisit these decisions periodically because Iceberg is under active development and new features and updates to libraries may invalidate some of these decisions and allow for significant improvements in the future.
@@ -81,10 +160,10 @@ For the Iceberg format we are using version 2. There are currently 3 version for
 
 There are several reasons we chose DuckDB as the query engine:
 
-* Supports Iceberg catalogs and tables
-* Allows querying both Postgres and Iceberg tables in the same session
-* Same SQL syntax for querying Iceberg tables as Postgres tables (allowing reuse of knex query builder code)
-* Has a CLI, a python library, and a NodeJS library
+- Supports Iceberg catalogs and tables
+- Allows querying both Postgres and Iceberg tables in the same session
+- Same SQL syntax for querying Iceberg tables as Postgres tables (allowing reuse of knex query builder code)
+- Has a CLI, a python library, and a NodeJS library
 
 While developing we encountered many limitations with incomplete support for many of the things we were trying to do but were able to make it work at least as the query engine. For writing to Iceberg tables, creating database tables, and setting up table properties and partitioning we used a combination of native Java Iceberg libraries and PyIceberg due to these limitations.
 

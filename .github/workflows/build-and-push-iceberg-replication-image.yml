@@ -11,7 +11,7 @@ on:
       - master
     paths:
       - 'packages/iceberg-replication/**'
-      - '.github/workflows/build-bootstrap.yml'
+      - '.github/workflows/build-and-push-iceberg-replication-image.yml'
   workflow_dispatch:
     inputs:
       tag:

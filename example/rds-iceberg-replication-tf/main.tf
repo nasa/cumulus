@@ -32,6 +32,7 @@ module "rds_iceberg_replication" {
   subnet                            = var.subnet
   rds_security_group                = var.rds_security_group
   rds_endpoint                      = var.rds_endpoint
+  rds_port                          = var.rds_port
   force_new_deployment              = var.force_new_deployment
   small_tables_cpu                  = var.small_tables_cpu
   small_tables_memory               = var.small_tables_memory
@@ -53,6 +54,8 @@ module "rds_iceberg_replication" {
   connect_image                     = var.connect_image
   bootstrap_image                   = var.bootstrap_image
   pg_db                             = var.pg_db
+  pg_schema                         = var.pg_schema
+  iceberg_admin_list                = var.iceberg_admin_list
   iceberg_namespace                 = var.iceberg_namespace
   iceberg_s3_bucket                 = var.iceberg_s3_bucket
   compaction_interval_sec           = var.compaction_interval_sec

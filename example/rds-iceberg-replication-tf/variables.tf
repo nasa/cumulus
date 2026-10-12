@@ -8,12 +8,6 @@ variable "prefix" {
   type        = string
 }
 
-variable "aws_db_subnet_group_prefix" {
-  description = "Prefix for RDS database cluster subnet group"
-  type        = string
-  default     = "cumulus-rds-tf-subnet"
-}
-
 variable "region" {
   description = "Region to deploy module to"
   type        = string
@@ -165,6 +159,18 @@ variable "iceberg_namespace" {
 variable "pg_db" {
   description = "postgres database"
   type        = string
+}
+
+variable "rds_port" {
+  description = "The Postgres port"
+  type        = string
+  default     = "5432"
+}
+
+variable "iceberg_admin_list" {
+  description = "list of iceberg admin usernames"
+  type        = list(string)
+  default     = [" "]
 }
 
 variable "pg_schema" {

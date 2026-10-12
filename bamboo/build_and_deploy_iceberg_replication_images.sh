@@ -21,4 +21,4 @@ set_iceberg_image_version
 ./packages/iceberg-replication/scripts/build_bootstrap_image.sh $ICEBERG_IMAGE_VERSION
 ./packages/iceberg-replication/scripts/push_bootstrap_image.sh $ICEBERG_IMAGE_VERSION
 ./packages/iceberg-replication/scripts/push_kafka_image.sh $DEBEZIUM_VERSION
-./packages/iceberg-replication/scripts/push_kafka_connector_image.sh $DEBEZIUM_VERSION
+./packages/iceberg-replication/scripts/push_kafka_connect_image.sh $DEBEZIUM_VERSION
