@@ -7,7 +7,7 @@ NONCACHE_WORKING_DIR=$(pwd)
 
 # We need this installed for the GIT_PR lookup in the env script, but only for this
 # first job in the sequence
-npm install @octokit/graphql@2.1.1 simple-git@3.7.0
+npm install @octokit/graphql@2.1.1 simple-git@4.0.2
 
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-pr.sh

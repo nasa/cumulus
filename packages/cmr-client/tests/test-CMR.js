@@ -672,6 +672,42 @@ test.serial('getInstance returns the latest created CMR instance', (t) => {
   t.is(firstCMR, thirdCMR);
 });
 
+test.serial('getInstance updates the existing instance with a freshly-provided token', (t) => {
+  const firstCMR = CMR.getInstance({
+    clientId: 'clientId',
+    oauthProvider: 'launchpad',
+    token: 'first-token',
+  });
+
+  const secondCMR = CMR.getInstance({
+    clientId: 'clientId2',
+    oauthProvider: 'launchpad',
+    token: 'second-token',
+  });
+
+  t.is(firstCMR, secondCMR);
+  t.is(secondCMR.clientId, 'clientId');
+  t.is(secondCMR.token, 'second-token');
+});
+
+test.serial('getInstance preserves the existing token when a subsequent call does not provide one', (t) => {
+  const firstCMR = CMR.getInstance({
+    clientId: 'clientId',
+    oauthProvider: 'earthdata',
+    username: 'username',
+    token: 'cached-edl-token',
+  });
+
+  const secondCMR = CMR.getInstance({
+    clientId: 'clientId',
+    oauthProvider: 'earthdata',
+    username: 'username',
+  });
+
+  t.is(firstCMR, secondCMR);
+  t.is(secondCMR.token, 'cached-edl-token');
+});
+
 test.serial('resetInstance properly reverts the CMR singleton to undefined', (t) => {
   const firstCMR = CMR.getInstance({
     clientId: 'clientId',

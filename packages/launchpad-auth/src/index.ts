@@ -175,6 +175,12 @@ async function getValidLaunchpadTokenFromS3(): Promise<string | undefined> {
       const tokenExpirationInMs = (
         launchpadToken.session_maxtimeout + launchpadToken.session_starttime
       ) * 1000;
+      const tokenSuffix = launchpadToken.sm_token
+        ? launchpadToken.sm_token.slice(-10)
+        : undefined;
+      log.debug(`getValidLaunchpadTokenFromS3 found token: {
+        tokenSuffix: ${tokenSuffix},
+        timeRemainingMs: ${tokenExpirationInMs - now}}`);
 
       // check if token is still valid
       if (now < tokenExpirationInMs) {
