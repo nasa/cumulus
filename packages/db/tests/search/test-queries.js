@@ -36,6 +36,7 @@ test('convertQueryStringToDbQueryParameters correctly converts api query string 
     fields: ['granuleId', 'collectionId', 'status', 'updatedAt'],
     infix: 'A1657416',
     includeFullRecord: true,
+    failedCountFilter: false,
     limit: 20,
     not: {
       granule_id: 'notMatchingGranuleId',
@@ -100,6 +101,7 @@ test('convertQueryStringToDbQueryParameters adds limit and sorting on cumulus_id
     offset: 0,
     page: 1,
     includeFullRecord: false,
+    failedCountFilter: false,
     sort: [
       {
         column: 'cumulus_id',
@@ -192,6 +194,7 @@ test('convertQueryStringToDbQueryParameters correctly converts sortby error para
     offset: 0,
     page: 1,
     includeFullRecord: false,
+    failedCountFilter: false,
     sort: [
       {
         column: 'error.Error',
