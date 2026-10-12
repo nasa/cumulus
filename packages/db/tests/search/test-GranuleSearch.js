@@ -267,8 +267,8 @@ test.before(async (t) => {
 
   for (const { granuleIndex, failed, completed } of failedExecutionPlan) {
     const statuses = [
-      ...Array(failed).fill('failed'),
-      ...Array(completed).fill('completed'),
+      ...new Array(failed).fill('failed'),
+      ...new Array(completed).fill('completed'),
     ];
 
     // the created_at & timestamp are set to avoid breaking existing test
