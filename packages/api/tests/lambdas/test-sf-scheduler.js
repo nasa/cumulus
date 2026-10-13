@@ -7,6 +7,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const SQS = require('@cumulus/aws-client/SQS');
 const schedule = rewire('../../lambdas/sf-scheduler');
 const { s3PutObject } = require('@cumulus/aws-client/S3');
+const cloneDeep = require('lodash/cloneDeep');
 const { randomId } = require('@cumulus/common/test-utils');
 const awsServices = require('@cumulus/aws-client/services');
 const s3 = require('@cumulus/aws-client/S3');
@@ -56,6 +57,11 @@ const fakeProvider = {
 };
 
 const sqsStub = sinon.stub(SQS, 'sendSQSMessage');
+
+const buildScheduleInput = (overrides = {}) => ({
+  ...cloneDeep(scheduleEventTemplate),
+  ...overrides,
+});
 
 const fakeGetCollection = (item) => {
   const collections = {
@@ -134,15 +140,15 @@ test.serial('getApiCollection returns collection when input is a valid collectio
 });
 
 test.serial('Sends an SQS message to the custom queue URL if queueUrl is defined', async (t) => {
-  const scheduleInput = {
-    ...scheduleEventTemplate,
-    queueUrl: customQueueUrl,
-    provider: fakeProvider.id,
-    collection: {
-      name: fakeCollection.name,
-      version: fakeCollection.version,
-    },
-  };
+  const scheduleInput = buildScheduleInput(
+    { queueUrl: customQueueUrl,
+      provider: fakeProvider.id,
+      collection: {
+        name: fakeCollection.name,
+        version: fakeCollection.version,
+      } }
+  );
+
   t.deepEqual(scheduleInput.cumulus_meta, {});
   t.false('meta' in scheduleInput);
 
@@ -165,14 +171,15 @@ test.serial('Sends an SQS message to the custom queue URL if queueUrl is defined
 });
 
 test.serial('Sends an SQS message to the default queue if queueUrl is not defined', async (t) => {
-  const scheduleInput = {
-    ...scheduleEventTemplate,
+  const scheduleInput = buildScheduleInput({
     provider: fakeProvider.id,
     collection: {
       name: fakeCollection.name,
       version: fakeCollection.version,
     },
-  };
+  });
+
+  console.log(`scheduleInput: ${JSON.stringify(scheduleInput)}`);
   t.deepEqual(scheduleInput.cumulus_meta, {});
   t.false('meta' in scheduleInput);
 
@@ -194,28 +201,28 @@ test.serial('Sends an SQS message to the default queue if queueUrl is not define
 });
 
 test.serial('throws if cmrProvider not defined in collection', async (t) => {
-  const scheduleInput = {
-    ...scheduleEventTemplate,
+  const scheduleInput = buildScheduleInput({
     provider: fakeCollectionWithoutProvider.id,
     collection: {
       name: fakeCollectionWithoutProvider.name,
       version: fakeCollectionWithoutProvider.version,
     },
-  };
+  });
+
   await t.throwsAsync(schedule.handleScheduleEvent(scheduleInput), {
     message: 'no cmr_provider found for collection fakeCollection___001 all collections must configure a cmr_provider for sf to be scheduled',
   });
 });
 
 test.serial('Sends an SQS message with cmrProvider from collection', async (t) => {
-  const scheduleInput = {
-    ...scheduleEventTemplate,
+  const scheduleInput = buildScheduleInput({
     provider: fakeProvider.id,
     collection: {
       name: fakeCollection.name,
       version: fakeCollection.version,
     },
-  };
+  });
+
   // verifying data from workflow template is not present
   t.deepEqual(scheduleInput.cumulus_meta, {});
   t.false('meta' in scheduleInput);
