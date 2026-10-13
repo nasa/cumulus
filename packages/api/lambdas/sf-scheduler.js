@@ -38,14 +38,14 @@ const getApiCollection = (collection) => {
  * A consumer should be configured for this queue to start executions for
  * the queued message.
  *
- * @param {Object} event - lambda input message
+ * @param {object} event - lambda input message
  * @returns {Promise}
  */
 async function handleScheduleEvent(event) {
   const [providerRecord, collection, messageTemplate] = await Promise.all([
     getApiProvider(event.provider),
     getApiCollection(event.collection),
-    await s3Utils.getJsonS3Object(
+    s3Utils.getJsonS3Object(
       process.env.system_bucket,
       workflows.templateKey(process.env.stackName)
     ),
