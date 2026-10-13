@@ -22,6 +22,7 @@ export interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
   collectionVersion: string,
   pdrName?: string,
   providerName?: string,
+  failed_count?: number,
 }
 
 const collectionCumulusIdColumn = 'collection_cumulus_id';
@@ -83,6 +84,27 @@ export class GranuleSearch extends BaseSearch {
     } else {
       searchQuery.leftJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
     }
+
+    if (this.dbQueryParameters.failedCountFilter) {
+      const failedCountQuery = this.failedExecutionCountsQuery(knex);
+
+      countQuery.innerJoin(
+        failedCountQuery,
+        `${this.tableName}.cumulus_id`,
+        'failed_execution_counts.granule_cumulus_id'
+      );
+
+      searchQuery.innerJoin(
+        failedCountQuery,
+        `${this.tableName}.cumulus_id`,
+        'failed_execution_counts.granule_cumulus_id'
+      ).select(
+        knex.raw(
+          'COALESCE(failed_execution_counts.failed_count, 0)::int AS failed_count'
+        )
+      );
+    }
+
     return { countQuery, searchQuery };
   }
 
@@ -138,12 +160,22 @@ export class GranuleSearch extends BaseSearch {
       });
     }
 
-    super.buildSortQuery({
-      ...params,
-      dbQueryParameters: {
-        ...(dbQueryParameters || this.dbQueryParameters),
-        sort: finalSort,
-      },
+    finalSort.forEach((sortItem) => {
+      if (this.dbQueryParameters.failedCountFilter && sortItem.column === 'failed_count') {
+        // failed_count lives on the joined subquery, not on the granules table
+        params.searchQuery.orderBy(
+          'failed_execution_counts.failed_count',
+          sortItem.order
+        );
+      } else {
+        super.buildSortQuery({
+          ...params,
+          dbQueryParameters: {
+            ...(dbQueryParameters || this.dbQueryParameters),
+            sort: [sortItem],
+          },
+        });
+      }
     });
   }
 
@@ -180,7 +212,7 @@ export class GranuleSearch extends BaseSearch {
     : Promise<Partial<ApiGranuleRecord>[]> {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
 
-    const { fields, includeFullRecord } = this.dbQueryParameters;
+    const { fields, includeFullRecord, failedCountFilter } = this.dbQueryParameters;
 
     const fileMapping: { [key: number]: PostgresFileRecord[] } = {};
     const executionMapping: { [key: number]: { url: string, granule_cumulus_id: number } } = {};
@@ -228,8 +260,32 @@ export class GranuleSearch extends BaseSearch {
         files: fileRecords,
         executionUrls,
       });
-      return fields ? pick(apiRecord, fields) : apiRecord;
+      const record = failedCountFilter ? { ...apiRecord, failedCount: item.failed_count }
+        : apiRecord;
+      return fields ? pick(record, fields) : record;
     });
     return apiRecords;
+  }
+
+  protected failedExecutionCountsQuery(knex: Knex) {
+    const {
+      executions: executionsTable,
+      granulesExecutions: granulesExecutionsTable,
+    } = TableNames;
+
+    const failedCountQuery = knex(granulesExecutionsTable)
+      .select(`${granulesExecutionsTable}.granule_cumulus_id`)
+      .count(`${executionsTable}.cumulus_id as failed_count`)
+      .innerJoin(
+        executionsTable,
+        `${granulesExecutionsTable}.execution_cumulus_id`,
+        `${executionsTable}.cumulus_id`
+      )
+      .where(`${executionsTable}.status`, 'failed')
+      .groupBy(`${granulesExecutionsTable}.granule_cumulus_id`)
+      .havingRaw(`count(${executionsTable}.cumulus_id) > 1`)
+      .as('failed_execution_counts');
+
+    return failedCountQuery;
   }
 }

@@ -253,6 +253,49 @@ test.before(async (t) => {
       execution_created_at: executionRecords[99 - i].created_at,
     }))
   );
+  // --- failed execution fixtures for failedCountFilter tests ---
+  // granuleIndex refers to a position in t.context.pgGranules.
+  // Even indexes are in collection 2, odd indexes are in collection 1.
+  const failedExecutionPlan = [
+    { granuleIndex: 1, failed: 1, completed: 0 },
+    { granuleIndex: 2, failed: 2, completed: 0 },
+    { granuleIndex: 3, failed: 3, completed: 0 },
+  ];
+
+  // granuleId -> number of failed executions, for tests to compare against
+  t.context.expectedFailedCounts = {};
+
+  for (const { granuleIndex, failed, completed } of failedExecutionPlan) {
+    const statuses = [
+      ...new Array(failed).fill('failed'),
+      ...new Array(completed).fill('completed'),
+    ];
+
+    // the created_at & timestamp are set to avoid breaking existing test
+    // eslint-disable-next-line no-await-in-loop
+    const executions = await executionPgModel.insert(
+      knex,
+      statuses.map((status) => fakeExecutionRecordFactory({
+        status,
+        created_at: new Date('2000-01-01T00:00:00.000Z'),
+        timestamp: new Date('2000-01-01T00:00:00.000Z'),
+      })),
+      ['cumulus_id', 'created_at']
+    );
+
+    // eslint-disable-next-line no-await-in-loop
+    await granuleExecutionPgModel.insert(
+      knex,
+      executions.map((execution) => ({
+        granule_cumulus_id: t.context.pgGranules[granuleIndex].cumulus_id,
+        collection_cumulus_id: t.context.granules[granuleIndex].collection_cumulus_id,
+        execution_cumulus_id: execution.cumulus_id,
+        execution_created_at: execution.created_at,
+      }))
+    );
+
+    t.context.expectedFailedCounts[t.context.granuleIds[granuleIndex]] = failed;
+  }
 });
 
 test.after.always(async (t) => {
@@ -1111,6 +1154,94 @@ test('GranuleSearch with includeFullRecord true retrieves granules, files and ex
     t.true('bucket' in granuleRecord.files[1]);
     t.true('key' in granuleRecord.files[1]);
   });
+});
+
+test('GranuleSearch with failedCountFilter true includes failedCount column', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    failedCountFilter: 'true',
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.true(response.results.length > 0);
+  response.results.forEach((granuleRecord) => {
+    t.true('failedCount' in granuleRecord);
+    t.true(Number.isInteger(granuleRecord.failedCount));
+  });
+});
+
+test('GranuleSearch with failedCountFilter true only returns granules with more than one failed execution', async (t) => {
+  const { knex, granuleIds, expectedFailedCounts } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    estimateTableRowCount: 'false', // exact count, not an estimate
+    failedCountFilter: 'true',
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+
+  const expectedIds = Object.keys(expectedFailedCounts).filter(
+    (id) => expectedFailedCounts[id] > 1
+  );
+
+  // granule with 0 or 1 failures must not appear
+  t.is(response.results.length, 2);
+  t.is(response.meta.count, 2);
+  t.deepEqual(
+    response.results.map((granule) => granule.granuleId).sort(),
+    [...expectedIds].sort()
+  );
+  t.false(response.results.some((granule) => granule.granuleId === granuleIds[1]));
+
+  // each granule reports the exact number of failures that were seeded
+  response.results.forEach((granule) => {
+    t.is(granule.failedCount, expectedFailedCounts[granule.granuleId]);
+  });
+});
+
+test('GranuleSearch sorts by failedCount descending when failedCountFilter is true', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    estimateTableRowCount: 'false',
+    failedCountFilter: 'true',
+    sort_key: ['-failedCount'],
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+
+  t.deepEqual(response.results.map((granule) => granule.failedCount), [3, 2]);
+});
+
+test('GranuleSearch sorts by failedCount ascending when failedCountFilter is true', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    estimateTableRowCount: 'false',
+    failedCountFilter: 'true',
+    sort_key: ['+failedCount'],
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+
+  t.deepEqual(response.results.map((granule) => granule.failedCount), [2, 3]);
+});
+
+test('GranuleSearch orders by failed_execution_counts.failed_count in the generated SQL', (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    failedCountFilter: 'true',
+    collectionId: 'abc___V01',
+    sort_key: ['-failedCount'],
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const { searchQuery } = dbSearch.buildSearch(knex);
+  const sql = searchQuery.toSQL().sql;
+
+  t.true(sql.includes('order by "granules"."collection_cumulus_id" asc, "failed_execution_counts"."failed_count" desc'));
+  // the failed_count sort must not also be applied against the granules table
+  t.false(sql.includes('"granules"."failed_count"'));
 });
 
 test('GranuleSearch with archived: true pulls only archive granules', async (t) => {

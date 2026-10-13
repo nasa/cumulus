@@ -18,6 +18,7 @@ const reservedWords = [
   'estimateTableRowCount',
   'fields',
   'includeFullRecord',
+  'failedCountFilter',
   'searchContext',
   'countOnly',
 ];
@@ -253,6 +254,7 @@ export const convertQueryStringToDbQueryParameters = (
     fields,
     estimateTableRowCount,
     includeFullRecord,
+    failedCountFilter,
     countOnly,
   } = queryStringParameters;
 
@@ -267,6 +269,7 @@ export const convertQueryStringToDbQueryParameters = (
   if (typeof fields === 'string') dbQueryParameters.fields = fields.split(',');
   dbQueryParameters.estimateTableRowCount = (estimateTableRowCount === 'true');
   dbQueryParameters.includeFullRecord = (includeFullRecord === 'true');
+  dbQueryParameters.failedCountFilter = (failedCountFilter === 'true');
   dbQueryParameters.countOnly = (countOnly === 'true');
   dbQueryParameters.sort = convertSort(type, queryStringParameters);
 
@@ -274,7 +277,9 @@ export const convertQueryStringToDbQueryParameters = (
   const fieldParams = omit(queryStringParameters, reservedWords);
   // determine which search strategy should be applied
   // options are term, terms, range, exists and not in
-  const fieldsList = Object.entries(fieldParams).map(([name, value]) => ({ name, value }));
+  const fieldsList = Object.entries(fieldParams)
+    .filter(([name]) => name !== 'failedCount' && !name.startsWith('failedCount__'))
+    .map(([name, value]) => ({ name, value }));
 
   // for each search strategy, get all parameters and convert them to db parameters
   Object.keys(regexes).forEach((k: string) => {
