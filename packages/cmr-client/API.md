@@ -34,7 +34,7 @@ A class to simplify requests to the CMR
         * [.getToken()](#CMR+getToken) ⇒ <code>Promise.&lt;(string\|undefined)&gt;</code>
         * [.checkRefreshLaunchpadToken()](#CMR+checkRefreshLaunchpadToken) ⇒ <code>Promise.&lt;void&gt;</code>
         * [.refreshLaunchpadToken()](#CMR+refreshLaunchpadToken) ⇒ <code>Promise.&lt;void&gt;</code>
-        * [.withCmrLaunchpadTokenRefreshRetry(operation, [retries])](#CMR+withCmrLaunchpadTokenRefreshRetry) ⇒ <code>Promise</code>
+        * [.withCmrLaunchpadTokenRefreshRetry(operation, operationDescription)](#CMR+withCmrLaunchpadTokenRefreshRetry) ⇒ <code>Promise</code>
         * [.getWriteHeaders(params)](#CMR+getWriteHeaders) ⇒ <code>Object</code>
         * [.getReadHeaders(params)](#CMR+getReadHeaders) ⇒ <code>Object</code>
         * [.ingestCollection(xml)](#CMR+ingestCollection) ⇒ <code>Promise.&lt;Object&gt;</code>
@@ -111,9 +111,13 @@ stores it as a part of the CMR singleton class, and then uses that one for calls
 **Returns**: <code>Promise.&lt;void&gt;</code> - refresh promise
 <a name="CMR+withCmrLaunchpadTokenRefreshRetry"></a>
 
-### cmrClient.withCmrLaunchpadTokenRefreshRetry(operation, [retries]) ⇒ <code>Promise</code>
-Runs a CMR operation with retry logic for launchpad failures. If the operation fails with a
-401, refresh the Launchpad token and retry.
+### cmrClient.withCmrLaunchpadTokenRefreshRetry(operation, operationDescription) ⇒ <code>Promise</code>
+Runs a CMR operation with configurable retry logic.
+By default, 0 retries are attempted.
+
+Retries on any error. Regardless of how the operation fails, the
+final error is wrapped in a CMRCallFailedError with the original error
+preserved as `cause`.
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)
 **Returns**: <code>Promise</code> - - result of CMR function call
@@ -121,7 +125,7 @@ Runs a CMR operation with retry logic for launchpad failures. If the operation f
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
 | operation | <code>function</code> |  | the CMR function with args to execute |
-| [retries] | <code>number</code> | <code>5</code> | number of retry attempts on 401 |
+| operationDescription | <code>string</code> | <code>&quot;CMR operation&quot;</code> | description of the CMR call, used for logging Retries are controlled by the CMR_RETRIES environment variable waits 5 * 2^n seconds before retry n. |
 
 <a name="CMR+getWriteHeaders"></a>
 

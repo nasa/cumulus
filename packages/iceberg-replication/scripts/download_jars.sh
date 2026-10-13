@@ -4,7 +4,7 @@ set -euo pipefail
 JARS_DIR="$(cd "$(dirname "$0")" && pwd)/jars"
 mkdir -p "$JARS_DIR"
 
-VERSION="1.7.1"
+VERSION="1.12.0"
 SCALA="2.12"
 SPARK="3.5"
 BASE="https://repo1.maven.org/maven2/org/apache/iceberg"
