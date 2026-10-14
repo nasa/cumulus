@@ -22,7 +22,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-5677**
   - Update several Node and Python dependencies due to Snyk findings/sercurity vulnerabilities
 - **CUMULUS-5271**
-  - Update zod and js-yaml Node dependencies due to Snyk findings/sercurity vulnerabilities
+  - Update zod and adding typescript Node dependencies due to Snyk findings/sercurity vulnerabilities
 
 ### Added
 - **CUMULUS-5443**
