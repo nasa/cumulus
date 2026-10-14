@@ -644,6 +644,15 @@ test.serial('query() collects data while NextToken is not null and returns the m
             { VarCharValue: testKey },
             {},
             { VarCharValue: true },
+            { VarCharValue: true },
+          ],
+        },
+        {
+          Data: [
+            { VarCharValue: testBucket },
+            { VarCharValue: testKey },
+            {},
+            { VarCharValue: false },
             { VarCharValue: false },
           ],
         },
@@ -664,10 +673,14 @@ test.serial('query() collects data while NextToken is not null and returns the m
   const results = await t.context.client.query(getDataQuery);
 
   const expected = [
-    { bucket: testBucket, key: testKey, version_id: '', is_latest: true, is_delete_marker: false },
-    { bucket: testBucket, key: testKey, version_id: '', is_latest: true, is_delete_marker: false },
-    { bucket: testBucket, key: testKey, version_id: '', is_latest: true, is_delete_marker: false },
+    { bucket: testBucket, key: testKey, version_id: '', is_latest: true, is_delete_marker: true },
+    { bucket: testBucket, key: testKey, version_id: '', is_latest: false, is_delete_marker: false },
+    { bucket: testBucket, key: testKey, version_id: '', is_latest: true, is_delete_marker: true },
+    { bucket: testBucket, key: testKey, version_id: '', is_latest: false, is_delete_marker: false },
+    { bucket: testBucket, key: testKey, version_id: '', is_latest: true, is_delete_marker: true },
+    { bucket: testBucket, key: testKey, version_id: '', is_latest: false, is_delete_marker: false },
   ];
 
   t.deepEqual(results.length, expected.length);
+  t.deepEqual(results, expected);
 });
