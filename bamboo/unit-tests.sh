@@ -26,3 +26,6 @@ docker exec -i ${container_id}-build_env-1 /bin/bash -c "cd $UNIT_TEST_BUILD_DIR
 docker exec -i ${container_id}-build_env-1 \
   /bin/bash -c "cd $UNIT_TEST_BUILD_DIR && \
   $TARGET_SCRIPT" || error_to_s3
+
+docker exec -i ${container_id}-build_env-1 /bin/bash -c "cd $UNIT_TEST_BUILD_DIR && npm run coverage:no-api -- --grace=50 --merge --noRerun"
+docker exec -i ${container_id}-build_env-1 /bin/bash -c "cd $UNIT_TEST_BUILD_DIR && nyc report"
