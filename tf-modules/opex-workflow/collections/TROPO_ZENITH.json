@@ -1,0 +1,22 @@
+{
+    "name": "OPERA_L4_TROPO-ZENITH_V1",
+    "version": "1",
+    "duplicateHandling": "replace",
+    "process": "TROPO",
+    "url_path": "OPERA_L4_TROPO-ZENITH_V1/{granule.granuleId}/",
+    "granuleId": "^OPERA_L4_TROPO.*$",
+    "granuleIdExtraction": "(OPERA_L4_TROPO.*)(\\.nc)",
+    "sampleFileName": "OPERA_L4_TROPO-ZENITH_20150102T060000Z_20250509T181348Z_HRES_v0.1.nc",
+    "files": [
+        {
+            "bucket": "opera-products",
+            "regex": "^OPERA_L4_TROPO-ZENITH_.*\\.(?:nc|iso\\.xml)(?!png)(?:\\.md5)?$",
+            "sampleFileName": "OPERA_L4_TROPO-ZENITH_20150102T060000Z_20250509T181348Z_HRES_v0.1.nc"
+        },
+        {
+            "bucket": "opera-browse",
+            "regex": "^OPERA_L4_TROPO-ZENITH_.*\\.(?!nc|iso\\.xml)(?:png)(?:\\.md5)?$",
+            "sampleFileName": "OPERA_L4_TROPO-ZENITH_20150102T060000Z_20250509T181348Z_HRES_v0.1.png"
+        }
+    ]
+}

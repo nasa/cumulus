@@ -1,0 +1,22 @@
+{
+    "name": "OPERA_L2_RTC-S1_V1",
+    "version": "1.0",
+    "duplicateHandling": "replace",
+    "process": "RTC",
+    "url_path": "OPERA_L2_RTC-S1/{granule.granuleId}/",
+    "granuleId": "^OPERA_L2_RTC-S1_.*_\\d{8}T\\d{6}Z_\\d{8}T\\d{6}Z_S1[A-Z]_30_v\\d\\.\\d$",
+    "granuleIdExtraction": "(OPERA_L2_RTC-S1.*)(\\.h5)",
+    "sampleFileName": "OPERA_L2_RTC-S1_T078-166762-IW1_20200101T014643Z_20230215T192812Z_S1A_30_v0.0.h5",
+    "files": [
+        {
+            "bucket": "opera-products",
+            "regex": "^OPERA_L2_RTC-S1_(?!.*BROWSE).*",
+            "sampleFileName": "OPERA_L2_RTC-S1_T078-166762-IW1_20200101T014643Z_20230215T192812Z_S1A_30_v0.0.h5"
+        },
+        {
+            "bucket": "opera-browse",
+            "regex": "^OPERA_L2_RTC-S1.*_BROWSE.*",
+            "sampleFileName": "OPERA_L2_RTC-S1_T048-100996-IW1_20210422T232328Z_20230502T185340Z_S1A_30_v0.0_BROWSE.png"
+        }
+    ]
+}
