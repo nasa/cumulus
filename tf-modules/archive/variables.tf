@@ -10,6 +10,12 @@ variable "background_queue_url" {
   type        = string
 }
 
+variable "cumulus_message_adapter_lambda_layer_version_arn" {
+  description = "Layer version ARN of the Lambda layer for the Cumulus Message Adapter"
+  type        = string
+  default     = null
+}
+
 variable "cmr_client_id" {
   type = string
 }
