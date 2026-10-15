@@ -52,14 +52,14 @@ const lambdaStep = new LambdaStep();
  * Retries using exponential backoff until desired has been reached.  If the
  *   desired state is not reached an error is thrown.
  *
- * @param {Object} params - params
+ * @param {object} params - params
  * @param {string} params.id - the id of the AsyncOperation
  * @param {string} params.status - the status to wait for
  * @param {string} params.stackName - the Cumulus stack name
  * @param {number} params.retryOptions - retrying options.
  *                   The Default values result in 15 attempts in ~1 min.
  *                   https://github.com/tim-kos/node-retry#retryoperationoptions
- * @returns {Promise<Object>} - the AsyncOperation object
+ * @returns {Promise<object>} - the AsyncOperation object
  */
 async function waitForAsyncOperationStatus({
   id,
@@ -108,6 +108,10 @@ async function getClusterArn(stackName) {
   return matchingArns[0];
 }
 
+/**
+ *
+ * @param executionArn
+ */
 async function getExecutionInput(executionArn) {
   const { input } = await StepFunctions.describeExecution({ executionArn });
   return input;
@@ -117,7 +121,7 @@ async function getExecutionInput(executionArn) {
  * Fetch the output of a given execution
  *
  * @param {string} executionArn
- * @returns {Promise<Object>} the output of the execution
+ * @returns {Promise<object>} the output of the execution
  */
 const getExecutionOutput = (executionArn) =>
   StepFunctions.describeExecution({ executionArn })
@@ -125,6 +129,10 @@ const getExecutionOutput = (executionArn) =>
     .then(JSON.parse)
     .then(pullStepFunctionEvent);
 
+/**
+ *
+ * @param executionArn
+ */
 async function getExecutionInputObject(executionArn) {
   return JSON.parse(await getExecutionInput(executionArn));
 }
@@ -210,12 +218,12 @@ function setupSeedData(stackName, bucketName, dataDirectory) {
 /**
  * Load a collection from a JSON file and update it
  *
- * @param {Object} params
+ * @param {object} params
  * @param {string} params.filename - the JSON file containing the collection
  * @param {string} params.customFilePath
  * @param {string} params.duplicateHandling
  * @param {string} params.postfix
- * @returns {Object} a collection
+ * @returns {object} a collection
  */
 const loadCollection = async (params = {}) =>
   await readJsonFile(params.filename)
@@ -228,14 +236,14 @@ const loadCollection = async (params = {}) =>
  * @param {string} bucketName - S3 internal bucket name
  * @param {Array} collections - List of collections to delete
  * @param {string} postfix - string that was appended to collection name
- * @returns {Array<Object>} a list of the http responses
+ * @returns {Array<object>} a list of the http responses
  */
 async function deleteCollections(stackName, bucketName, collections, postfix) {
   // setProcessEnvironment is not needed by this function, but other code
   // depends on this undocumented side effect
   setProcessEnvironment(stackName, bucketName);
 
-  return await Promise.all(
+  return await Promise.allSettled(
     collections.map(
       ({ name, version }) => {
         const realName = postfix ? `${name}${postfix}` : name;
@@ -246,7 +254,11 @@ async function deleteCollections(stackName, bucketName, collections, postfix) {
         });
       }
     )
-  );
+  ).then((results) => {
+    const failed = results.filter((r) => r.status === 'rejected');
+    console.warn(`Failed to delete ${failed.length} collections during cleanup`, failed.map((f) => f.reason?.message));
+    return results;
+  });
 }
 
 /**
@@ -272,7 +284,8 @@ async function cleanupCollections(stackName, bucket, collectionsDirectory, postf
  * This allows us to switch between different environments/accounts, which
  * would hit a different server.
  *
- * @param {Object} provider - provider object
+ * @param {object} provider - provider object
+ * @param provider.host
  * @returns {string} provider host
  */
 const getProviderHost = ({ host }) => process.env.PROVIDER_HOST || host;
@@ -281,7 +294,9 @@ const getProviderHost = ({ host }) => process.env.PROVIDER_HOST || host;
  * Get the provider port. If the port is not set, leave it not set.
  * Otherwise set it to the environment variable, if set.
  *
- * @param {Object} provider - provider object
+ * @param {object} provider - provider object
+ * @param provider.protocol
+ * @param provider.port
  * @returns {number} provider port
  */
 function getProviderPort({ protocol, port }) {
@@ -295,11 +310,11 @@ function getProviderPort({ protocol, port }) {
 /**
  * Update a provider with a custom s3Host, and update the id to use a postfix.
  *
- * @param {Object} params
- * @param {Object} params.provider
+ * @param {object} params
+ * @param {object} params.provider
  * @param {string} params.s3Host
  * @param {string} params.postfix
- * @returns {Object} an updated provider
+ * @returns {object} an updated provider
  */
 const buildProvider = (params = {}) => {
   const { provider, s3Host, postfix } = params;
@@ -319,11 +334,11 @@ const buildProvider = (params = {}) => {
 /**
  * Load a provider from a JSON file and update it
  *
- * @param {Object} params
+ * @param {object} params
  * @param {string} params.filename - the JSON file containing the provider
  * @param {string} params.s3Host
  * @param {string} params.postfix
- * @returns {Object} a provider
+ * @returns {object} a provider
  */
 const loadProvider = async (params = {}) =>
   await readJsonFile(params.filename)
@@ -331,6 +346,7 @@ const loadProvider = async (params = {}) =>
 
 /**
  *  Returns true if provider exists, false otherwise
+ *
  * @param {string} stackName
  * @param {string} id
  * @returns {boolean}
@@ -457,7 +473,7 @@ async function cleanupProviders(stackName, bucket, providersDirectory, postfix) 
  *
  * @param {string} config - Test config used to set environment variables and template rules data
  * @param {string} dataDirectory - the directory of rules json files
- * @param {Object} overrides - override rule fields
+ * @param {object} overrides - override rule fields
  * @param {string} [postfix] - string to append to rule name, collection, and provider
  * @returns {Promise.<Array>} array of Rules added
  */
@@ -503,7 +519,7 @@ async function addRulesWithPostfix(config, dataDirectory, overrides, postfix) {
  *
  * @param {string} config - Test config used to set environment variables and template rules data
  * @param {string} dataDirectory - the directory of rules json files
- * @param {Object} overrides - override rule fields
+ * @param {object} overrides - override rule fields
  * @returns {Promise.<Array>} array of Rules added
  */
 function addRules(config, dataDirectory, overrides) {
@@ -514,8 +530,8 @@ function addRules(config, dataDirectory, overrides) {
  * Remove params added to the rule when it is saved into dynamo
  * and comes back from the db
  *
- * @param {Object} rule - dynamo rule object
- * @returns {Object} - updated rule object that can be compared to the original
+ * @param {object} rule - dynamo rule object
+ * @returns {object} - updated rule object that can be compared to the original
  */
 function removeRuleAddedParams(rule) {
   const ruleCopy = cloneDeep(rule);
@@ -530,8 +546,8 @@ function removeRuleAddedParams(rule) {
 /**
  * Confirm whether task was started by rule by checking for rule-specific value in meta.triggerRule
  *
- * @param {Object} taskInput - Cumulus Task input
- * @param {Object} params - Object as { rule: valueToMatch }
+ * @param {object} taskInput - Cumulus Task input
+ * @param {object} params - Object as { rule: valueToMatch }
  * @returns {boolean} true if triggered by rule, else false
  */
 function isWorkflowTriggeredByRule(taskInput, params) {
@@ -566,9 +582,9 @@ async function deleteRules(stackName, bucketName, rules, postfix) {
 /**
  * Delete a rule's Kinesis Event Source Mappings
  *
- * @param {Object} rule - a Rule record as returned by the Rules api
+ * @param {object} rule - a Rule record as returned by the Rules api
  * @param {string} rule.name
- * @param {Object} rule.rule
+ * @param {object} rule.rule
  * @param {string} rule.rule.arn
  * @param {string} rule.rule.logEventArn
  * @returns {Promise<unknown[]>} - Event Source Map deletion results
@@ -608,7 +624,7 @@ async function deleteRuleResources(rule) {
  *
  * @param {string} workflowArn - name of the workflow to get executions for
  * @param {number} maxExecutionResults - max results to return
- * @returns {Array<Object>} array of state function executions.
+ * @returns {Array<object>} array of state function executions.
  */
 async function getExecutions(workflowArn, maxExecutionResults = 10) {
   const data = await StepFunctions.listExecutions({
@@ -622,14 +638,14 @@ async function getExecutions(workflowArn, maxExecutionResults = 10) {
  * Wait for the execution that matches the criteria in the compare function to begin
  * The compare function should take 2 arguments: taskInput and params
  *
- * @param {Object} options
+ * @param {object} options
  * @param {string} options.workflowName - workflow name to find execution for
  * @param {string} options.stackName - stack name
  * @param {string} options.bucket - bucket name
- * @param {function} options.findExecutionFn - function that takes the taskInput and
+ * @param {Function} options.findExecutionFn - function that takes the taskInput and
  * findExecutionFnParams and returns a boolean indicating whether or not this is the correct
  * instance of the workflow
- * @param {Object} options.findExecutionFnParams - params to be passed into findExecutionFn
+ * @param {object} options.findExecutionFnParams - params to be passed into findExecutionFn
  * @param {string} options.startTask - Name of task to check for step input. Input to this
  * task will be evaluated by the compare function `findExecutionFn`.
  * @param {number} [options.maxWaitSeconds] - an optional custom wait time in seconds
@@ -675,8 +691,8 @@ async function waitForTestExecutionStart({
  * Deep compares two payloads to ensure payload contains all expected values
  * Payload may or may not contain additional values that we don't care about.
  *
- * @param {Object} payload - actual payload
- * @param {Object} expectedPayload - expected payload
+ * @param {object} payload - actual payload
+ * @param {object} expectedPayload - expected payload
  * @returns {boolean} whether payloads are equal
  */
 const payloadContainsExpected = (payload, expectedPayload) => {
@@ -692,12 +708,12 @@ const payloadContainsExpected = (payload, expectedPayload) => {
 /**
  * Wait for a certain number of test stepfunction executions to exist.
  *
- * @param {Object} expectedPayload - expected payload for execution
+ * @param {object} expectedPayload - expected payload for execution
  * @param {string} workflowArn - name of the workflow to wait for
  * @param {integer} maxWaitTimeSecs - maximum time to wait for the correct execution in seconds
  * @param {integer} numExecutions - The number of executions to wait for
  * used to query if the workflow has started.
- * @returns {Array<Object>} [{executionArn: <arn>, status: <status>}]
+ * @returns {Array<object>} [{executionArn: <arn>, status: <status>}]
  * @throws {Error} any AWS error, re-thrown from AWS execution or 'Workflow Never Started'.
  */
 async function waitForAllTestSf(
@@ -747,7 +763,7 @@ async function waitForAllTestSf(
 /**
  * Wait for listObjectsV2 to return the expected result count for a given bucket & prefix.
  *
- * @param {Object} params - params object
+ * @param {object} params - params object
  * @param {string} params.bucket - S3 bucket
  * @param {string} [params.prefix] - S3 prefix
  * @param {number} params.desiredCount - Desired count to wait for

@@ -16,6 +16,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated the `/executions/search-by-granules` endpoint to set the default limit to 10 and
     expanded the meta response structure to include standardized query search metadata.
 
+- **CUMULUS-5699**
+  - Updated permissions to allow the ecs task role to run lambda:GetLayerVersion on the CMA layer
+  - Passed the CMR layer arn through the archive module to make it accessible in the ecs_task_role_policy
+- **CUMULUS-5677**
+  - Update several Node and Python dependencies due to Snyk findings/sercurity vulnerabilities
 
 ### Added
 - **CUMULUS-5443**
@@ -44,6 +49,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Mitigated vulnerabilties discovered in bamboo-CI build
 
 ### Added
+  - Added audit-ci.json whitelist for https://github.com/advisories/GHSA-vfj7-8cjw-p6xm vulnerability where no safer package version is available
 - **CSD-299**
   - Added a new `CMRCallFailedError` error type. This error is thrown for CMR failures after the configured retry attempts, including failures on the first attempt, and should be detectable by StepFunctions for CMR-specific retry behavior.
 - **CUMULUS-5369**
@@ -52,6 +58,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `rds-iceberg-replication` module. An empty list is returned if the parameter does not exist.
   - Added an `ssm()` service and `SSM.getParameterValue()` helper to `@cumulus/aws-client` to facilitate
     this retrieval.
+  - Added empty string default to iceberg_admin variable.  This prevents build failures as SSM parameters cannot have an empty/null value on deploy.
+- **CUMULUS-5529**
+  - Added integration test that validates we are catching ECS task failures in workflows and properly updating granule satus in postgres, covering a bug fixed in CSD-258
+  - Hardened integration tests that were consistantly failing due to error fall through.  Added a 'safeStep' function so a singele clean up call failures doesn't result in other cleanup actions failing
+- Adding CI deploying config to support treuter's CI stack
+
 
 ### Changed
 - **CSD-299**
