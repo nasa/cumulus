@@ -74,7 +74,7 @@ const getLogPrefix = (cumulusMessage) => {
 
   const granuleId = granuleIds.length > 0 ? granuleIds[0] : 'UnknownGranuleId';
 
-  return `[GranuleId:${granuleId} - ExecutionId:${executionId}]`;
+  return `[GranuleId: ${granuleId} - ExecutionId: ${executionId}]`;
 };
 
 /**
@@ -342,4 +342,5 @@ const handler = async (event) => {
 module.exports = {
   handler,
   writeRecords,
+  getLogPrefix
 };
