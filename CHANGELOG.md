@@ -29,6 +29,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     SQS queue, 'stealing' messages intended for a different stack, this is an 'opt-in' test that will only run in CI
     if targeting tr-ci stack.
 
+### Changed
+- **CUMULUS-5615**
+  - Removed deprecated documentation. Cumulus Template Deploy is no longer supported and mentions have been noted appropriately.
+
 ## [v22.4.2] 2026-09-24
 
 ### Fixed
