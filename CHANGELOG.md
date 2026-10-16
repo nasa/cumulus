@@ -30,6 +30,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     if targeting tr-ci stack.
 - **CUMULUS-5731**
   - Provisioned a dedicated custom event bus per stack and updated the Cumulus workflow event rule and targets to use it.
+  - Provisioned a EventBridge rule on the default event bus to automatically route all Step
+    Function execution events matching the stack prefix to the dedicated custom event bus.
 
 ## [v22.4.2] 2026-09-24
 
