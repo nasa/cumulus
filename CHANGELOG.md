@@ -23,6 +23,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Passed the CMR layer arn through the archive module to make it accessible in the ecs_task_role_policy
 - **CUMULUS-5677**
   - Update several Node and Python dependencies due to Snyk findings/sercurity vulnerabilities
+- **CUMULUS-5271**
+  - Update zod and adding typescript Node dependencies due to Snyk findings/sercurity vulnerabilities
 
 ### Added
 - **CUMULUS-5443**
