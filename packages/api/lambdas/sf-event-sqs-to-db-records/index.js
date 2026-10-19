@@ -342,5 +342,5 @@ const handler = async (event) => {
 module.exports = {
   handler,
   writeRecords,
-  getLogPrefix
+  getLogPrefix,
 };

@@ -727,7 +727,7 @@ test('getLogPrefix() returns Unknown values if fields are missing in an empty me
 test('getLogPrefix() extracts execution_name and uses UnknownGranuleId if granules array is empty', (t) => {
   const message = {
     cumulus_meta: { execution_name: 'test-execution-123' },
-    payload: { granules: [] }
+    payload: { granules: [] },
   };
   t.is(getLogPrefix(message), '[GranuleId: UnknownGranuleId - ExecutionId: test-execution-123]');
 });
@@ -737,9 +737,9 @@ test('getLogPrefix() extracts explicit granuleId directly on the granule object'
     cumulus_meta: { execution_name: 'test-execution-123' },
     payload: { 
       granules: [
-        { granuleId: 'explicit-granule-456' }
-      ] 
-    }
+        { granuleId: 'explicit-granule-456' },
+      ], 
+    },
   };
   t.is(getLogPrefix(message), '[GranuleId: explicit-granule-456 - ExecutionId: test-execution-123]');
 });
@@ -752,11 +752,11 @@ test('getLogPrefix() falls back to extracting from files using "fileName" if gra
         { 
           files: [
             { type: 'metadata', fileName: 'meta.xml' },
-            { type: 'data', fileName: 'data-file.hdf' }
-          ] 
-        }
-      ] 
-    }
+            { type: 'data', fileName: 'data-file.hdf' },
+          ],
+        },
+      ],
+    },
   };
   t.is(getLogPrefix(message), '[GranuleId: data-file.hdf - ExecutionId: test-execution-123]');
 });
@@ -768,11 +768,11 @@ test('getLogPrefix() falls back to extracting from files using "name" if granule
       granules: [
         { 
           files: [
-            { type: 'data', name: 'data-name-fallback.hdf' }
-          ] 
-        }
-      ] 
-    }
+            { type: 'data', name: 'data-name-fallback.hdf' },
+          ],
+        },
+      ],
+    },
   };
   t.is(getLogPrefix(message), '[GranuleId: data-name-fallback.hdf - ExecutionId: test-execution-123]');
 });
@@ -784,11 +784,11 @@ test('getLogPrefix() returns UnknownGranuleId if granuleId is missing and no dat
       granules: [
         { 
           files: [
-            { type: 'metadata', fileName: 'meta.xml' }
-          ] 
-        }
-      ] 
-    }
+            { type: 'metadata', fileName: 'meta.xml' },
+          ],
+        },
+      ],
+    },
   };
   t.is(getLogPrefix(message), '[GranuleId: UnknownGranuleId - ExecutionId: test-execution-123]');
 });
@@ -799,9 +799,9 @@ test('getLogPrefix() uses the first valid granuleId when multiple granules exist
     payload: { 
       granules: [
         { granuleId: 'first-granule' },
-        { granuleId: 'second-granule' }
-      ] 
-    }
+        { granuleId: 'second-granule' },
+      ],
+    },
   };
   t.is(getLogPrefix(message), '[GranuleId: first-granule - ExecutionId: test-execution-123]');
 });
@@ -812,9 +812,9 @@ test('getLogPrefix() skips invalid granules and finds the first valid one', (t) 
     payload: { 
       granules: [
         { files: [{ type: 'metadata', fileName: 'skip-me' }] },
-        { granuleId: 'valid-granule' }                          
-      ] 
-    }
+        { granuleId: 'valid-granule' },                         
+      ],
+    },
   };
   t.is(getLogPrefix(message), '[GranuleId: valid-granule - ExecutionId: test-execution-123]');
 });
