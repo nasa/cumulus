@@ -7,15 +7,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
+
 - **CUMULUS-5636**
   - Resolved an issue found in G2 load testing where the cmr-client library was caching an outdated token in warm lambdas.  Previously, an instance of the CMR class was cached and persisted in a warm lambda execution environment.  This cache contained the token and was only refreshed when the lambda was initially called.  This update changes so we update the token with each invocation.
   - Upgraded node-forge to ^1.4.0 to mitigate High-severity vulnerability.
 - Added audit-ci.json whitelist for https://github.com/advisories/GHSA-vfj7-8cjw-p6xm vulnerability where no safer package version is available
-
 - **CUMULUS-5254**
   - Updated the `/executions/search-by-granules` endpoint to set the default limit to 10 and
     expanded the meta response structure to include standardized query search metadata.
-
 - **CUMULUS-5699**
   - Updated permissions to allow the ecs task role to run lambda:GetLayerVersion on the CMA layer
   - Passed the CMR layer arn through the archive module to make it accessible in the ecs_task_role_policy
@@ -25,6 +24,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update zod and adding typescript Node dependencies due to Snyk findings/sercurity vulnerabilities
 
 ### Added
+
 - **CUMULUS-5443**
   - Adding integration test to validate the ability to use cross account SQS queues to trigger workflows.
     Due to infra complexity of cross account targeting and multiple lambdas that would poll the same cross-account
@@ -32,6 +32,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     if targeting tr-ci stack.
 
 ### Changed
+
+- **CUMULUS-5582**
+  - Updated cma-js dependency to 2.5.0
 - **CUMULUS-5615**
   - Removed deprecated documentation. Cumulus Template Deploy is no longer supported and mentions have been noted appropriately.
 
