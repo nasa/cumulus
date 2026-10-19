@@ -735,10 +735,10 @@ test('getLogPrefix() extracts execution_name and uses UnknownGranuleId if granul
 test('getLogPrefix() extracts explicit granuleId directly on the granule object', (t) => {
   const message = {
     cumulus_meta: { execution_name: 'test-execution-123' },
-    payload: { 
+    payload: {
       granules: [
         { granuleId: 'explicit-granule-456' },
-      ], 
+      ],
     },
   };
   t.is(getLogPrefix(message), '[GranuleId: explicit-granule-456 - ExecutionId: test-execution-123]');
@@ -747,9 +747,9 @@ test('getLogPrefix() extracts explicit granuleId directly on the granule object'
 test('getLogPrefix() falls back to extracting from files using "fileName" if granuleId is missing and file type is "data"', (t) => {
   const message = {
     cumulus_meta: { execution_name: 'test-execution-123' },
-    payload: { 
+    payload: {
       granules: [
-        { 
+        {
           files: [
             { type: 'metadata', fileName: 'meta.xml' },
             { type: 'data', fileName: 'data-file.hdf' },
@@ -764,9 +764,9 @@ test('getLogPrefix() falls back to extracting from files using "fileName" if gra
 test('getLogPrefix() falls back to extracting from files using "name" if granuleId and fileName are missing', (t) => {
   const message = {
     cumulus_meta: { execution_name: 'test-execution-123' },
-    payload: { 
+    payload: {
       granules: [
-        { 
+        {
           files: [
             { type: 'data', name: 'data-name-fallback.hdf' },
           ],
@@ -780,9 +780,9 @@ test('getLogPrefix() falls back to extracting from files using "name" if granule
 test('getLogPrefix() returns UnknownGranuleId if granuleId is missing and no data file is found', (t) => {
   const message = {
     cumulus_meta: { execution_name: 'test-execution-123' },
-    payload: { 
+    payload: {
       granules: [
-        { 
+        {
           files: [
             { type: 'metadata', fileName: 'meta.xml' },
           ],
@@ -796,7 +796,7 @@ test('getLogPrefix() returns UnknownGranuleId if granuleId is missing and no dat
 test('getLogPrefix() uses the first valid granuleId when multiple granules exist', (t) => {
   const message = {
     cumulus_meta: { execution_name: 'test-execution-123' },
-    payload: { 
+    payload: {
       granules: [
         { granuleId: 'first-granule' },
         { granuleId: 'second-granule' },
@@ -809,10 +809,10 @@ test('getLogPrefix() uses the first valid granuleId when multiple granules exist
 test('getLogPrefix() skips invalid granules and finds the first valid one', (t) => {
   const message = {
     cumulus_meta: { execution_name: 'test-execution-123' },
-    payload: { 
+    payload: {
       granules: [
         { files: [{ type: 'metadata', fileName: 'skip-me' }] },
-        { granuleId: 'valid-granule' },                         
+        { granuleId: 'valid-granule' },                    
       ],
     },
   };
