@@ -45,7 +45,7 @@
     "@cumulus/aws-client": "22.4.2",
     "@cumulus/cmrjs": "22.4.2",
     "@cumulus/common": "22.4.2",
-    "@cumulus/cumulus-message-adapter-js": "2.4.0",
+    "@cumulus/cumulus-message-adapter-js": "2.5.0",
     "@cumulus/distribution-utils": "22.4.2",
     "@cumulus/errors": "22.4.2",
     "@cumulus/ingest": "22.4.2",
