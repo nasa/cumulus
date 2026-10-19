@@ -35,6 +35,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-5582**
   - Updated cma-js dependency to 2.5.0
+- **CUMULUS-5615**
+  - Removed deprecated documentation. Cumulus Template Deploy is no longer supported and mentions have been noted appropriately.
 
 ## [v22.4.2] 2026-09-24
 

@@ -47,15 +47,12 @@ NODE_ENV=test
 <dd></dd>
 <dt><a href="#module_SQS">SQS</a></dt>
 <dd></dd>
-<<<<<<< HEAD
 <dt><a href="#module_SSM">SSM</a></dt>
 <dd></dd>
 <dt><a href="#module_STS">STS</a></dt>
 <dd></dd>
 <dt><a href="#module_SecretsManager">SecretsManager</a></dt>
 <dd></dd>
-=======
->>>>>>> master
 <dt><a href="#module_StepFunctions">StepFunctions</a></dt>
 <dd></dd>
 <dt><a href="#module_STS">STS</a></dt>
