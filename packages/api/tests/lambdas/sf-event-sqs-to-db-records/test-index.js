@@ -812,7 +812,7 @@ test('getLogPrefix() skips invalid granules and finds the first valid one', (t) 
     payload: {
       granules: [
         { files: [{ type: 'metadata', fileName: 'skip-me' }] },
-        { granuleId: 'valid-granule' },                    
+        { granuleId: 'valid-granule' },
       ],
     },
   };
