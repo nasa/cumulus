@@ -811,8 +811,8 @@ test('getLogPrefix() skips invalid granules and finds the first valid one', (t) 
     cumulus_meta: { execution_name: 'test-execution-123' },
     payload: { 
       granules: [
-        { files: [{ type: 'metadata', fileName: 'skip-me' }] }, // Filters to UnknownGranuleId
-        { granuleId: 'valid-granule' }                          // This should be selected
+        { files: [{ type: 'metadata', fileName: 'skip-me' }] },
+        { granuleId: 'valid-granule' }                          
       ] 
     }
   };
