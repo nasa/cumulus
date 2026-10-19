@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Mitigated vulnerabilties discovered in bamboo-CI build
 - **CUMULUS-5677**
   - Update several Node and Python dependencies due to Snyk findings/sercurity vulnerabilities
+- **CUMULUS-5721**
+  - Update zod and adding typescript Node dependencies due to Snyk findings/sercurity vulnerabilities
 - **CUMULUS-5765**
   - Update package vulnerabilities (follows-redirects, certifi)
 - **CUMULUS-5830**
