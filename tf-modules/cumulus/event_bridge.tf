@@ -38,17 +38,15 @@ resource "aws_iam_role_policy" "cross_bus_router_policy" {
   })
 }
 
-# Single rule on the DEFAULT bus that catches ALL state machines in this stack prefix
 resource "aws_cloudwatch_event_rule" "forward_to_custom_bus" {
-  name           = "${var.prefix}-all-sfn-forwarder"
+  name           = "${var.prefix}-sfn-execution-forwarder"
   event_bus_name = "default"
-  description    = "Forwards all Step Function execution events matching the stack prefix to the custom event bus."
+  description    = "Forwards Step Function execution events matching the stack prefix to the custom event bus."
 
   event_pattern = jsonencode({
     source      = ["aws.states"]
     detail-type = ["Step Functions Execution Status Change"]
     detail = {
-      # Catches any state machine ARN that starts with your stack/environment prefix
       stateMachineArn = [{
         prefix = "arn:aws:states:${local.aws_region}:${local.aws_account_id}:stateMachine:${var.prefix}-"
       }]
@@ -57,9 +55,8 @@ resource "aws_cloudwatch_event_rule" "forward_to_custom_bus" {
   tags = var.tags
 }
 
-# This target forwards ONLY your stack's events to your dedicated custom bus
 resource "aws_cloudwatch_event_target" "forward_target" {
-  target_id      = "forward_all_to_cumulus_custom_bus"
+  target_id      = "forward_sfn_to_cumulus_custom_bus"
   rule           = aws_cloudwatch_event_rule.forward_to_custom_bus.name
   event_bus_name = "default"
   arn            = aws_cloudwatch_event_bus.cumulus_event_bus.arn
