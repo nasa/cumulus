@@ -46,36 +46,9 @@ const {
   writeGranuleExecutionAssociationsFromMessage,
   writeGranulesFromMessage,
 } = require('../../lib/writeRecords/write-granules');
+const { getLogPrefix } = require('../../lib/utils');
 
 const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-records' });
-
-/**
- * Extracts tracing context (Execution ID and Granule IDs) for logs
- *
- * @param {CumulusMessage} cumulusMessage
- * @returns {string} Formatted log prefix
- */
-const getLogPrefix = (cumulusMessage) => {
-  if (!cumulusMessage) return '[Unknown Context]';
-  const executionId = get(cumulusMessage, 'cumulus_meta.execution_name', 'UnknownExecutionId');
-
-  const granules = get(cumulusMessage, 'payload.granules', []);
-  const granuleIds = granules.map((g) => {
-    // Prefer the explicit granuleId directly on the granule object
-    if (g.granuleId) {
-      return g.granuleId;
-    }
-    // Fallback to extracting from files if granuleId is missing
-    const dataFile = (g.files || []).find((file) => file.type === 'data');
-    const fileName = dataFile ? (dataFile.fileName || dataFile.name) : null;
-
-    return fileName || 'UnknownGranuleId';
-  }).filter((id) => id !== 'UnknownGranuleId');
-
-  const granuleId = granuleIds.length > 0 ? granuleIds[0] : 'UnknownGranuleId';
-
-  return `[GranuleId: ${granuleId} - ExecutionId: ${executionId}]`;
-};
 
 /**
  * @typedef {import('@cumulus/types/message').CumulusMessage} CumulusMessage
@@ -342,5 +315,4 @@ const handler = async (event) => {
 module.exports = {
   handler,
   writeRecords,
-  getLogPrefix,
 };

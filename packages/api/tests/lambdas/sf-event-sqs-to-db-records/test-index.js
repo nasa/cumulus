@@ -40,8 +40,8 @@ const {
 const { createSqsQueues, getSqsQueueMessageCounts } = require('../../../lib/testUtils');
 const {
   writeRecords,
-  getLogPrefix,
 } = require('../../../lambdas/sf-event-sqs-to-db-records');
+const { getLogPrefix } = require('../../../lib/utils');
 
 const {
   handler,
