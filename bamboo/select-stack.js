@@ -2,7 +2,7 @@
 
 'use strict';
 
-const git = require('simple-git');
+const git = require('simple-git').simpleGit;
 
 function determineIntegrationTestStackName(cb) {
   const branch = process.env.BRANCH;
@@ -46,7 +46,6 @@ function determineIntegrationTestStackName(cb) {
     'Rohan Weeden': 'reweeden-ci',
     'Tim Clark': 'teclark-ci',
     'Theodore Reuter': 'tr-ci',
-
     wisdomaj: 'awisdom-ci',
     'Yonggang Liu': 'yliu10-ci',
   };
