@@ -195,7 +195,7 @@ export class AthenaQueryClient {
 
     let nextToken = response?.NextToken?.toString() || '';
     data = data.concat(await this.mapData(response.ResultSet, ['']));
-    const dataColumns = data.length !== 0 ? Object.keys(data[0]) : ['']
+    const dataColumns = data.length !== 0 ? Object.keys(data[0]) : [''];
     while (nextToken !== '') {
       // eslint-disable-next-line no-await-in-loop
       response = await this.client.send(new GetQueryResultsCommand({
@@ -220,7 +220,9 @@ export class AthenaQueryClient {
     const mappedData: MappedData = [];
     if (data === undefined || data.Rows === undefined || data.Rows.length === 0) return mappedData;
 
-    const columns: string[] = dataColumns[0].length !== 0 ? dataColumns : data.Rows[0].Data!.map((column) => column.VarCharValue as string);
+    const columns: string[] = dataColumns[0].length !== 0 ?
+      dataColumns :
+      data.Rows[0].Data!.map((column) => column.VarCharValue as string);
 
     data.Rows.forEach((item, i) => {
       if (i === 0 && dataColumns[0].length === 0) return;
