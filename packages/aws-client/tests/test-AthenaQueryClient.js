@@ -98,7 +98,7 @@ test.serial('mapData returns data in the expected format', (t) => {
       ],
     },
   };
-  const mappedResult = t.context.client.mapData(response.ResultSet);
+  const mappedResult = t.context.client.mapData(response.ResultSet, ['']);
 
   t.deepEqual(expected, mappedResult);
 });
@@ -109,7 +109,7 @@ test.serial('mapData() returns expected result when ResultSet is empty', (t) => 
     UpdateCount: 0,
     ResultSet: { Rows: [], ResultSetMetadata: { ColumnInfo: [] } },
   };
-  const mappedResult = t.context.client.mapData(response.ResultSet);
+  const mappedResult = t.context.client.mapData(response.ResultSet, ['']);
 
   t.deepEqual([], mappedResult);
 });
@@ -625,7 +625,7 @@ test.serial('query() collects data while NextToken is not null and returns the m
     startGetDataResponse
   );
 
-  const getDataResultsResponse = {
+  const getFirstDataResultsResponse = {
     UpdateCount: 0,
     ResultSet: {
       Rows: [
@@ -660,14 +660,40 @@ test.serial('query() collects data while NextToken is not null and returns the m
     },
   };
 
+  const getNextDataResultsResponse = {
+    UpdateCount: 0,
+    ResultSet: {
+      Rows: [
+        {
+          Data: [
+            { VarCharValue: testBucket },
+            { VarCharValue: testKey },
+            {},
+            { VarCharValue: true },
+            { VarCharValue: true },
+          ],
+        },
+        {
+          Data: [
+            { VarCharValue: testBucket },
+            { VarCharValue: testKey },
+            {},
+            { VarCharValue: false },
+            { VarCharValue: false },
+          ],
+        },
+      ],
+    },
+  };
+
   athenaClientMock.on(GetQueryResultsCommand, { QueryExecutionId: '3456-qrst-7890-uvwx' }).resolves(
-    { ...getDataResultsResponse, NextToken: 'FirstTestString' }
+    { ...getFirstDataResultsResponse, NextToken: 'FirstTestString' }
   );
   athenaClientMock.on(GetQueryResultsCommand, { QueryExecutionId: '3456-qrst-7890-uvwx', NextToken: 'FirstTestString' }).resolves(
-    { ...getDataResultsResponse, NextToken: 'SecondTestString' }
+    { ...getNextDataResultsResponse, NextToken: 'SecondTestString' }
   );
   athenaClientMock.on(GetQueryResultsCommand, { QueryExecutionId: '3456-qrst-7890-uvwx', NextToken: 'SecondTestString' }).resolves(
-    getDataResultsResponse
+    getNextDataResultsResponse
   );
 
   const results = await t.context.client.query(getDataQuery);
