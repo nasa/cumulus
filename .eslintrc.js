@@ -160,6 +160,7 @@ module.exports = {
     'unicorn/no-process-exit': 'off',
     'unicorn/prefer-flat-map': 'off',
     'unicorn/prefer-negative-index': 'off',
+    "unicorn/prefer-module": "off",
     'unicorn/prefer-set-has': 'off',
     'unicorn/prefer-spread': 'off',
     'unicorn/prefer-string-slice': 'off',
