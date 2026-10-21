@@ -117,7 +117,6 @@
     "@types/xml2js": "^0.4.5",
     "@typescript-eslint/eslint-plugin": "^8.72.0",
     "@typescript-eslint/parser": "^8.72.0",
-    "eslint-config-airbnb-typescript": "^18.0.0",
     "audit-ci": "6.6.1",
     "ava": "^8.1.0",
     "aws-sdk-client-mock": "^3.1.0",
