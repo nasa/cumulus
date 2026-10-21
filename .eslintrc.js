@@ -214,7 +214,7 @@ module.exports = {
     "unicorn/prefer-array-flat": "off",
     "unicorn/prefer-prototype-methods": "off",
 
-    "quotes": "off",
+    quotes: "off",
   },
   parserOptions: {
     requireConfigFile: false,
