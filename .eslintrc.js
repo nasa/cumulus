@@ -236,6 +236,18 @@ module.exports = {
         '@typescript-eslint/dot-notation': 'off',
         '@typescript-eslint/no-implied-eval': 'off',
         '@typescript-eslint/no-throw-literal': 'off',
+        "@typescript-eslint/brace-style": "off",
+        "@typescript-eslint/comma-spacing": "off",
+        "@typescript-eslint/func-call-spacing": "off",
+        "@typescript-eslint/indent": "off",
+        "@typescript-eslint/keyword-spacing": "off",
+        "@typescript-eslint/no-extra-semi": "off",
+        "@typescript-eslint/space-before-blocks": "off",
+        "@typescript-eslint/quotes": "off",
+        "@typescript-eslint/semi": "off",
+        "@typescript-eslint/space-before-function-paren": "off",
+        "@typescript-eslint/space-infix-ops": "off",
+        "@typescript-eslint/object-curly-spacing": "off",
         '@typescript-eslint/comma-dangle': [
           'error',
           {
