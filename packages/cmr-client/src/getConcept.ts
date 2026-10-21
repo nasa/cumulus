@@ -14,8 +14,13 @@ async function getGranuleConceptMetadata(
   try {
     response = await got.get(conceptLink, { headers });
   } catch (error) {
+    if (error.response?.statusCode === 404) {
+      log.warn(`Concept metadata not found (404) at ${conceptLink}`);
+      return undefined;
+    }
+
     log.error(`Error getting concept metadata from ${conceptLink}`, error);
-    return undefined;
+    throw error;
   }
 
   if (response.statusCode !== 200) {
