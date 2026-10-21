@@ -137,7 +137,7 @@
     "eslint-plugin-lodash": "^2.7.0",
     "eslint-plugin-node": "^7.0.1",
     "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-unicorn": "^78.0.0",
+    "eslint-plugin-unicorn": "^51.0.1",
     "file-loader": "^6.2.0",
     "got": "^11.8.5",
     "hasha": "v5.2.0",
