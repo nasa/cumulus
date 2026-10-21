@@ -233,6 +233,7 @@ module.exports = {
         },
       },
       rules: {
+        'import/no-unresolved': 'off',
         '@typescript-eslint/no-require-imports': 'off',
         '@typescript-eslint/dot-notation': 'off',
         '@typescript-eslint/no-implied-eval': 'off',
