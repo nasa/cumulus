@@ -88,6 +88,7 @@ module.exports = {
 
     'generator-star-spacing': 'off',
     'import/no-extraneous-dependencies': 'off',
+    "import/extensions": "off",
     'import/newline-after-import': 'off',
     'class-methods-use-this': 'off',
     'no-warning-comments': 'off',
@@ -171,6 +172,17 @@ module.exports = {
     "unicorn/prefer-top-level-await": "off",
     'unicorn/prefer-trim-start-end': 'off',
     'unicorn/prevent-abbreviations': 'off',
+    "unicorn/prefer-node-protocol": "off",
+    "unicorn/prefer-module": "off",
+    "unicorn/prefer-top-level-await": "off",
+    "unicorn/no-array-callback-reference": "off",
+    "unicorn/no-array-push-push": "off",
+    "unicorn/no-array-for-each": "off",
+    "unicorn/no-useless-undefined": "off",
+    "unicorn/text-encoding-identifier-case": "off",
+    "unicorn/numeric-separators-style": "off",
+
+    "quotes": "off",
   },
   parserOptions: {
     requireConfigFile: false,
