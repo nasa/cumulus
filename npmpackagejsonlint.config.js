@@ -113,6 +113,5 @@ module.exports = {
         //     'publishConfig'
       ],
     ],
-    'no-duplicate-properties': 'error',
   },
 };
