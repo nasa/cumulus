@@ -98,7 +98,7 @@ test.serial('mapData returns data in the expected format', (t) => {
       ],
     },
   };
-  const mappedResult = t.context.client.mapData(response.ResultSet, ['']);
+  const mappedResult = t.context.client.mapData(response.ResultSet);
 
   t.deepEqual(expected, mappedResult);
 });
@@ -109,9 +109,66 @@ test.serial('mapData() returns expected result when ResultSet is empty', (t) => 
     UpdateCount: 0,
     ResultSet: { Rows: [], ResultSetMetadata: { ColumnInfo: [] } },
   };
-  const mappedResult = t.context.client.mapData(response.ResultSet, ['']);
+  const mappedResult = t.context.client.mapData(response.ResultSet);
 
   t.deepEqual([], mappedResult);
+});
+
+test.serial('mapData() returns expected result when dataColumns is empty', (t) => {
+  const testBucket = 'daac-public-bucket';
+  const testKey = `${randomString()}`;
+
+  // response is in the shape of GetQueryResultsCommand Output
+  const response = {
+    UpdateCount: 0,
+    ResultSet: {
+      Rows: [
+        { Data: [
+          { VarCharValue: 'bucket' },
+          { VarCharValue: 'key' },
+          { VarCharValue: 'version_id' },
+          { VarCharValue: 'is_latest' },
+          { VarCharValue: 'is_delete_marker' },
+        ] },
+        { Data: [
+          { VarCharValue: testBucket },
+          { VarCharValue: testKey },
+          {},
+          { VarCharValue: true },
+          { VarCharValue: false },
+        ] },
+      ],
+    },
+  };
+  const expected = response.ResultSet.Rows[0].Data.map((column) => column.VarCharValue);
+  const mappedResult = t.context.client.mapData(response.ResultSet, undefined);
+  t.deepEqual(expected, Object.keys(mappedResult[0]));
+});
+
+test.serial('mapData() returns expected result when dataColumns is passed', (t) => {
+  const testBucket = 'daac-public-bucket';
+  const testKey = `${randomString()}`;
+
+  const dataColumns = ['bucket', 'key', 'version_id', 'is_latest', 'is_delete_marker'];
+
+  // response is in the shape of GetQueryResultsCommand Output
+  const response = {
+    UpdateCount: 0,
+    ResultSet: {
+      Rows: [
+        { Data: [
+          { VarCharValue: testBucket },
+          { VarCharValue: testKey },
+          {},
+          { VarCharValue: true },
+          { VarCharValue: false },
+        ] },
+      ],
+    },
+  };
+
+  const mappedResult = t.context.client.mapData(response.ResultSet, dataColumns);
+  t.deepEqual(dataColumns, Object.keys(mappedResult[0]));
 });
 
 test.serial('query() initiates a query, waits for it to finish, and returns the mapped response', async (t) => {
@@ -585,6 +642,12 @@ test.serial('query() collects data while NextToken is not null and returns the m
   // populate table
   const testBucket = 'daac-public-bucket';
   const testKey = `${randomString()}`;
+  const testKey1 = `${randomString()}`;
+  const testKey2 = `${randomString()}`;
+  const testKey3 = `${randomString()}`;
+  const testKey4 = `${randomString()}`;
+  const testKey5 = `${randomString()}`;
+  const testKey6 = `${randomString()}`;
 
   const addDataQuery = `INSERT INTO ${tableName} VALUES ('${testBucket}', '${testKey}', '', true, false);`;
 
@@ -627,6 +690,7 @@ test.serial('query() collects data while NextToken is not null and returns the m
 
   const getFirstDataResultsResponse = {
     UpdateCount: 0,
+    NextToken: 'FirstTestString',
     ResultSet: {
       Rows: [
         {
@@ -641,7 +705,7 @@ test.serial('query() collects data while NextToken is not null and returns the m
         {
           Data: [
             { VarCharValue: testBucket },
-            { VarCharValue: testKey },
+            { VarCharValue: testKey1 },
             {},
             { VarCharValue: true },
             { VarCharValue: true },
@@ -650,7 +714,7 @@ test.serial('query() collects data while NextToken is not null and returns the m
         {
           Data: [
             { VarCharValue: testBucket },
-            { VarCharValue: testKey },
+            { VarCharValue: testKey2 },
             {},
             { VarCharValue: false },
             { VarCharValue: false },
@@ -660,14 +724,15 @@ test.serial('query() collects data while NextToken is not null and returns the m
     },
   };
 
-  const getNextDataResultsResponse = {
+  const getSecondDataResultsResponse = {
     UpdateCount: 0,
+    NextToken: 'SecondTestString',
     ResultSet: {
       Rows: [
         {
           Data: [
             { VarCharValue: testBucket },
-            { VarCharValue: testKey },
+            { VarCharValue: testKey3 },
             {},
             { VarCharValue: true },
             { VarCharValue: true },
@@ -676,7 +741,33 @@ test.serial('query() collects data while NextToken is not null and returns the m
         {
           Data: [
             { VarCharValue: testBucket },
-            { VarCharValue: testKey },
+            { VarCharValue: testKey4 },
+            {},
+            { VarCharValue: false },
+            { VarCharValue: false },
+          ],
+        },
+      ],
+    },
+  };
+
+  const getThirdDataResultsResponse = {
+    UpdateCount: 0,
+    ResultSet: {
+      Rows: [
+        {
+          Data: [
+            { VarCharValue: testBucket },
+            { VarCharValue: testKey5 },
+            {},
+            { VarCharValue: true },
+            { VarCharValue: true },
+          ],
+        },
+        {
+          Data: [
+            { VarCharValue: testBucket },
+            { VarCharValue: testKey6 },
             {},
             { VarCharValue: false },
             { VarCharValue: false },
@@ -687,24 +778,24 @@ test.serial('query() collects data while NextToken is not null and returns the m
   };
 
   athenaClientMock.on(GetQueryResultsCommand, { QueryExecutionId: '3456-qrst-7890-uvwx' }).resolves(
-    { ...getFirstDataResultsResponse, NextToken: 'FirstTestString' }
+    getFirstDataResultsResponse
   );
   athenaClientMock.on(GetQueryResultsCommand, { QueryExecutionId: '3456-qrst-7890-uvwx', NextToken: 'FirstTestString' }).resolves(
-    { ...getNextDataResultsResponse, NextToken: 'SecondTestString' }
+    getSecondDataResultsResponse
   );
   athenaClientMock.on(GetQueryResultsCommand, { QueryExecutionId: '3456-qrst-7890-uvwx', NextToken: 'SecondTestString' }).resolves(
-    getNextDataResultsResponse
+    getThirdDataResultsResponse
   );
 
   const results = await t.context.client.query(getDataQuery);
 
   const expected = [
-    { bucket: testBucket, key: testKey, version_id: '', is_latest: true, is_delete_marker: true },
-    { bucket: testBucket, key: testKey, version_id: '', is_latest: false, is_delete_marker: false },
-    { bucket: testBucket, key: testKey, version_id: '', is_latest: true, is_delete_marker: true },
-    { bucket: testBucket, key: testKey, version_id: '', is_latest: false, is_delete_marker: false },
-    { bucket: testBucket, key: testKey, version_id: '', is_latest: true, is_delete_marker: true },
-    { bucket: testBucket, key: testKey, version_id: '', is_latest: false, is_delete_marker: false },
+    { bucket: testBucket, key: testKey1, version_id: '', is_latest: true, is_delete_marker: true },
+    { bucket: testBucket, key: testKey2, version_id: '', is_latest: false, is_delete_marker: false },
+    { bucket: testBucket, key: testKey3, version_id: '', is_latest: true, is_delete_marker: true },
+    { bucket: testBucket, key: testKey4, version_id: '', is_latest: false, is_delete_marker: false },
+    { bucket: testBucket, key: testKey5, version_id: '', is_latest: true, is_delete_marker: true },
+    { bucket: testBucket, key: testKey6, version_id: '', is_latest: false, is_delete_marker: false },
   ];
 
   t.deepEqual(results.length, expected.length);

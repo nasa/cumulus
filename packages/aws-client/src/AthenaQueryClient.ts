@@ -194,8 +194,8 @@ export class AthenaQueryClient {
     log.info(`response (${typeof response}) from GetQueryResults: ${JSON.stringify(response)}`);
 
     let nextToken = response?.NextToken?.toString() || '';
-    data = data.concat(await this.mapData(response.ResultSet, ['']));
-    const dataColumns = data.length !== 0 ? Object.keys(data[0]) : [''];
+    data = data.concat(await this.mapData(response.ResultSet));
+    const dataColumns = data.length !== 0 ? Object.keys(data[0]) : undefined;
     while (nextToken !== '') {
       // eslint-disable-next-line no-await-in-loop
       response = await this.client.send(new GetQueryResultsCommand({
@@ -214,18 +214,24 @@ export class AthenaQueryClient {
    * Map data returned from Athena in rows, with each row an object with columns/keys and values.
    *
    * @param {ResultSet} data - Data in rows returned from Athena Query, in the ResultSet format
+   * @param {dataColumns} Array of strings of column names for ResultSet
    * @returns {MappedData} Array of rows of data as MappedObjects <columnName: stringValue>
    */
-  mapData(data: ResultSet | undefined, dataColumns: string[]): MappedData {
+  mapData(
+    data: ResultSet | undefined,
+    dataColumns?: string[]
+  ): MappedData {
     const mappedData: MappedData = [];
     if (data === undefined || data.Rows === undefined || data.Rows.length === 0) return mappedData;
-
-    const columns: string[] = dataColumns[0].length !== 0 ?
-      dataColumns :
-      data.Rows[0].Data!.map((column) => column.VarCharValue as string);
+    let columns: string[];
+    if (dataColumns !== undefined) {
+      columns = dataColumns;
+    } else {
+      columns = data.Rows[0].Data!.map((column) => column.VarCharValue as string);
+    }
 
     data.Rows.forEach((item, i) => {
-      if (i === 0 && dataColumns[0].length === 0) return;
+      if (i === 0 && dataColumns === undefined) return;
       if (item.Data === undefined) return;
 
       const mappedObject: MappedObject = {};
