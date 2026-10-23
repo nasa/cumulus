@@ -33,6 +33,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     Due to infra complexity of cross account targeting and multiple lambdas that would poll the same cross-account
     SQS queue, 'stealing' messages intended for a different stack, this is an 'opt-in' test that will only run in CI
     if targeting tr-ci stack.
+- **CUMULUS-5731**
+  - Provisioned a dedicated custom event bus per stack and updated the Cumulus workflow event rule and targets to use it.
+  - Provisioned a EventBridge rule on the default event bus to automatically route all Step
+    Function execution events matching the stack prefix to the dedicated custom event bus.
 
 ### Changed
 
