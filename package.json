@@ -190,6 +190,7 @@
     "brace-expansion@1": "^1.1.18",
     "brace-expansion@2": "^2.1.4",
     "brace-expansion@5": "^5.0.9",
+    "follow-redirects": "^1.16.1",
     "form-data": "^4.0.4",
     "js-yaml": "^3.15.1",
     "lodash@4": "^4.18.1",
