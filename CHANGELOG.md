@@ -24,7 +24,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-5271**
   - Update zod and adding typescript Node dependencies due to Snyk findings/sercurity vulnerabilities
 - **CUMULUS-5734**
-  - Updated `@cumulus/cmr-client` `getGranuleConceptMetadata` to throw on non-404 errors.
+  - Updated `@cumulus/cmr-client` `getGranuleConceptMetadata` to throw on non-404 errors rather
+    than returning undefined, ensuring granule unpublishing fails if a non-404 error occurs.
 
 ### Added
 
