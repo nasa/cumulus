@@ -23,6 +23,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update several Node and Python dependencies due to Snyk findings/sercurity vulnerabilities
 - **CUMULUS-5271**
   - Update zod and adding typescript Node dependencies due to Snyk findings/sercurity vulnerabilities
+- **CUMULUS-5734**
+  - Updated `@cumulus/cmr-client` `getGranuleConceptMetadata` to throw on non-404 errors rather
+    than returning undefined, ensuring granule unpublishing fails if a non-404 error occurs.
+- **CUMULUS-5765**
+  - Update package vulnerabilities (follows-redirects, certifi)
 
 ### Added
 
@@ -31,6 +36,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     Due to infra complexity of cross account targeting and multiple lambdas that would poll the same cross-account
     SQS queue, 'stealing' messages intended for a different stack, this is an 'opt-in' test that will only run in CI
     if targeting tr-ci stack.
+- **CUMULUS-5731**
+  - Provisioned a dedicated custom event bus per stack and updated the Cumulus workflow event rule and targets to use it.
+  - Provisioned a EventBridge rule on the default event bus to automatically route all Step
+    Function execution events matching the stack prefix to the dedicated custom event bus.
 
 ### Changed
 
