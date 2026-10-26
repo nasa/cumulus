@@ -23,6 +23,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update several Node and Python dependencies due to Snyk findings/sercurity vulnerabilities
 - **CUMULUS-5271**
   - Update zod and adding typescript Node dependencies due to Snyk findings/sercurity vulnerabilities
+- **CUMULUS-5734**
+  - Updated `@cumulus/cmr-client` `getGranuleConceptMetadata` to throw on non-404 errors rather
+    than returning undefined, ensuring granule unpublishing fails if a non-404 error occurs.
 - **CUMULUS-5765**
   - Update package vulnerabilities (follows-redirects, certifi)
 
