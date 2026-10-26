@@ -68,6 +68,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added an `ssm()` service and `SSM.getParameterValue()` helper to `@cumulus/aws-client` to facilitate
     this retrieval.
   - Added empty string default to iceberg_admin variable.  This prevents build failures as SSM parameters cannot have an empty/null value on deploy.
+- **CUMULUS-5295**
+  - Added Granule and step function execution Id's to log statements in the sf-event-sqs-to-db-records lambda to expedite debugging in this task.
 - **CUMULUS-5529**
   - Added integration test that validates we are catching ECS task failures in workflows and properly updating granule satus in postgres, covering a bug fixed in CSD-258
   - Hardened integration tests that were consistantly failing due to error fall through.  Added a 'safeStep' function so a singele clean up call failures doesn't result in other cleanup actions failing
