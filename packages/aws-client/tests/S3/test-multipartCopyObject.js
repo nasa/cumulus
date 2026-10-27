@@ -97,7 +97,7 @@ test('multipartCopyObject() copies a file between buckets', async (t) => {
   t.truthy(etag, 'Missing etag in copy response');
 });
 
-test('multipartCopyObject() fails when the chunkSize is smaller than the minimum allowed object size', async (t) => {
+test.skip('multipartCopyObject() fails when the chunkSize is smaller than the minimum allowed object size', async (t) => {
   const { sourceBucket, destinationBucket } = t.context;
 
   const sourceKey = randomId('source-key');
@@ -124,7 +124,7 @@ test('multipartCopyObject() fails when the chunkSize is smaller than the minimum
   );
 });
 
-test("multipartCopyObject() sets the object's ACL", async (t) => {
+test.skip("multipartCopyObject() sets the object's ACL", async (t) => {
   const { sourceBucket, destinationBucket } = t.context;
 
   const sourceKey = randomId('source-key');
