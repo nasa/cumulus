@@ -1,99 +1,68 @@
-/**
- * module AthenaQueryClient
- */
-
+import pRetry from 'p-retry';
 import {
   AthenaClient,
   AthenaClientConfig,
   StartQueryExecutionCommand,
   GetQueryExecutionCommand,
   QueryExecutionState,
-  GetQueryExecutionCommandOutput,
   GetQueryResultsCommand,
+  GetQueryResultsCommandOutput,
   ResultSet,
+  Datum,
+  // --- IMPORT NATIVE AWS TYPES ---
+  ResultConfiguration,
+  ResultReuseConfiguration,
 } from '@aws-sdk/client-athena';
-
-import isNil from 'lodash/isNil';
 import Logger from '@cumulus/logger';
 
 const log = new Logger({ sender: 'aws-client/AthenaQueryClient' });
 
-interface ResultReuseConfiguration {
-  ResultReuseByAgeConfiguration: {
-    Enabled: boolean,
-    MaxAgeInMinutes?: number,
-  }
-}
-interface ResultConfiguration {
-  OutputLocation: string;
-  EncryptionConfiguration?: { // EncryptionConfiguration
-    EncryptionOption: 'SSE_S3' | 'SSE_KMS' | 'CSE_KMS'; // required
-    KmsKey?: string;
-  };
-  ExpectedBucketOwner?: string;
-  AclConfiguration?: { // AclConfiguration
-    S3AclOption: 'BUCKET_OWNER_FULL_CONTROL'; // required
-  };
-}
-
-interface AthenaQueryClientConfig {
+export interface AthenaQueryClientConfig {
   ClientConfig: AthenaClientConfig;
   Database: string;
   Catalog: string;
-  ResultConfiguration: ResultConfiguration;
+  ResultConfiguration: ResultConfiguration; // Native Type
   WorkGroup?: string;
-  ResultReuseConfiguration?: ResultReuseConfiguration;
+  ResultReuseConfiguration?: ResultReuseConfiguration; // Native Type
 }
 
-type MappedObject = { [index: string]: string };
-type MappedData = Array<MappedObject>;
+export type MappedObject = Record<string, string>;
+export type MappedData = MappedObject[];
 
 export class AthenaQueryClient {
-  public database: string;
-  private client: AthenaClient;
-  private catalog: string;
-  private workGroup: string = 'primary';
-  private resultConfiguration: ResultConfiguration | undefined;
-  private resultReuseConfiguration: ResultReuseConfiguration = {
-    ResultReuseByAgeConfiguration: {
-      Enabled: true,
-      MaxAgeInMinutes: 60,
-    },
-  };
+  public readonly database: string;
+  private readonly client: AthenaClient;
+  private readonly catalog: string;
+  private readonly workGroup: string;
+  private readonly resultConfiguration: ResultConfiguration;
+  private readonly resultReuseConfiguration: ResultReuseConfiguration;
 
   constructor(config: AthenaQueryClientConfig) {
     this.client = new AthenaClient(config.ClientConfig);
     this.database = config.Database;
     this.catalog = config.Catalog;
-
-    if (config.WorkGroup) this.workGroup = config.WorkGroup;
-    if (config.ResultConfiguration) {
-      this.resultConfiguration = config.ResultConfiguration;
-    }
-    if (config.ResultReuseConfiguration) {
-      this.resultReuseConfiguration = config.ResultReuseConfiguration;
-    }
+    this.workGroup = config.WorkGroup ?? 'primary';
+    this.resultConfiguration = config.ResultConfiguration;
+    this.resultReuseConfiguration = config.ResultReuseConfiguration ?? {
+      ResultReuseByAgeConfiguration: {
+        Enabled: true,
+        MaxAgeInMinutes: 60,
+      },
+    };
   }
 
   /**
-   * Get data from Athena and rerutn it as proper formatted Array of objects
-   *
-   * @param {string} sqlQuery - The SQL query string
-   * @returns {Array} Array of Objects
+   * Get data from Athena and return it as properly formatted Array of objects
    */
   async query(sqlQuery: string): Promise<MappedData | undefined> {
     const queryExecutionId = await this.startQueryExecution(sqlQuery);
-
-    const response = await this.checkQueryExecutionStateAndGetData(queryExecutionId);
-    log.info(`response (${typeof response}) from checkQueryExecutionStateAndGetData: ${JSON.stringify(response)}`);
+    const response = await this.waitForQueryAndGetData(queryExecutionId);
+    log.info('Response from waitForQueryAndGetData completed.');
     return response;
   }
 
   /**
    * Start Query Execution
-   *
-   * @param {string} sqlQuery - The SQL query string
-   * @returns {string} QueryExecutionId - unique ID of the query run from request
    */
   async startQueryExecution(sqlQuery: string): Promise<string> {
     const queryExecutionInput = {
@@ -106,156 +75,157 @@ export class AthenaQueryClient {
       WorkGroup: this.workGroup,
       ResultReuseConfiguration: this.resultReuseConfiguration,
     };
-    log.info(`about to run query with ${JSON.stringify(queryExecutionInput)}`);
+    log.info(`About to run query with ${JSON.stringify(queryExecutionInput)}`);
 
     const { QueryExecutionId } = await this.client.send(
       new StartQueryExecutionCommand(queryExecutionInput)
     );
-    log.info(`from query execution, got back ${QueryExecutionId}, which is a ${typeof QueryExecutionId}`);
+    log.info(`From query execution, got back ${QueryExecutionId}`);
 
-    if (QueryExecutionId === undefined) {
+    if (!QueryExecutionId) {
       throw new Error('QueryExecutionId was returned by Athena StartQueryExecutionCommand as undefined');
     }
     return QueryExecutionId;
   }
 
   /**
-   * Get query execution status and output
-   *
-   * @param {string} QueryExecutionId - Id of a query which we sent to Athena
-   * @returns {GetQueryExecutionCommandOutput} - output from GetQueryExecutionCommand
+   * Polls query execution status using p-retry with automatic exponential backoff.
    */
-  private async getQueryExecution(
-    QueryExecutionId: string
-  ): Promise<GetQueryExecutionCommandOutput> {
-    const command = new GetQueryExecutionCommand({ QueryExecutionId });
-    return await this.client.send(command);
-  }
+  private async waitForQueryAndGetData(queryExecutionId: string): Promise<MappedData | undefined> {
+    const runCheck = async () => {
+      const response = await this.client.send(
+        new GetQueryExecutionCommand({ QueryExecutionId: queryExecutionId })
+      );
+      const state = response.QueryExecution?.Status?.State;
+      log.info(`GetQueryExecution status check: ${state}`);
 
-  /**
-   * Check query exeqution state
-   * if it is "QUEUED" or "RUNNING", recursively call to check the state
-   * with increasing polling delays until the state is "SUCCEEDED" and after it we get the data
-   *
-   * @param {string} QueryExecutionId - Id of a query which we sent to Athena
-   * @param {number} delay - polling interval passed in, in millisecs
-   * @returns {Array} Array of Objects
-   */
-  private async checkQueryExecutionStateAndGetData(
-    QueryExecutionId: string,
-    delay: number = 0
-  ): Promise<MappedData | undefined> {
-    const response = await this.getQueryExecution(QueryExecutionId);
-    const state = response.QueryExecution?.Status?.State;
-    log.info(`response (${typeof response}) and state (${typeof state}) ${state} from GetQueryExecutionCommand. ${JSON.stringify(response)}`);
-
-    if (state === QueryExecutionState.FAILED) {
-      throw new Error(`Query failed: ${response.QueryExecution!.Status!.StateChangeReason}`);
-    } else if (state === QueryExecutionState.CANCELLED) {
-      throw new Error('Query was cancelled');
-    } else if (state === QueryExecutionState.SUCCEEDED) {
-      return await this.getQueryResults(QueryExecutionId);
-    } else if (state === QueryExecutionState.QUEUED || state === QueryExecutionState.RUNNING) {
-      // polling intervals: 1000 (1s), 600000 (10m), 3600000 (60m/1h)
-      let delayPass = delay;
-      if (delayPass <= 1000) {
-        delayPass = 1000;
-        await this.timeout(delayPass);
-        delayPass += 4000;
-      } else if (delayPass <= 600000) {
-        await this.timeout(delayPass);
-        delayPass *= 2;
-      } else if (delayPass <= 3600000) {
-        await this.timeout(delayPass);
-        delayPass += 600000;
-      } else {
-        log.error(`delays have become ${delayPass}, longer than an hour. time to abort`);
-        throw new Error(`Query ${QueryExecutionId} was queued or running for too long`);
+      if (state === QueryExecutionState.SUCCEEDED) {
+        return await this.getQueryResults(queryExecutionId);
       }
 
-      log.info(`about to rerun checkQueryExecutionStateAndGetData with delay ${delayPass} (also ${delayPass / 1000}s)`);
-      return await this.checkQueryExecutionStateAndGetData(QueryExecutionId, delayPass);
-    }
-    log.error(`end of checkQueryExecutionStateAndGetData reached, state ${state} not processed. response: ${JSON.stringify(response)}`);
-    return undefined;
+      if (state === QueryExecutionState.FAILED) {
+        // Use AbortError so p-retry stops attempting immediately on terminal failure
+        throw new pRetry.AbortError(
+          `Query failed: ${response.QueryExecution?.Status?.StateChangeReason ?? 'Unknown reason'}`
+        );
+      }
+
+      if (state === QueryExecutionState.CANCELLED) {
+        throw new pRetry.AbortError('Query was cancelled');
+      }
+
+      if (state === QueryExecutionState.QUEUED || state === QueryExecutionState.RUNNING) {
+        throw new Error(`Query ${queryExecutionId} is still processing...`);
+      }
+
+      throw new pRetry.AbortError(`Unhandled query state encountered: ${state}`);
+    };
+
+    // Orchestrate exponential checking using p-retry options matching your parameters
+    return await pRetry(runCheck, {
+      factor: 2, // Double the delay duration every step
+      minTimeout: 1000, // Start at 1 second
+      maxTimeout: 30000, // Cap individual sleep intervals at 30 seconds
+      maxRetryTime: 3600000, // Total timeout threshold limit of 1 hour
+      onFailedAttempt: (error) => {
+        log.info(`Attempt ${error.attemptNumber} failed (${error.retriesLeft} retries left): ${error.message}`);
+      },
+    });
   }
 
   /**
-   * Get query execution result
-   *
-   * @param {string} QueryExecutionId - Id of a query which we sent to Athena
-   * @returns {Array} Array of Objects
+   * Public method to stream pages of query results iteratively using an Async Generator.
+   * Useful for large datasets to avoid loading everything into memory at once.
    */
-  private async getQueryResults(QueryExecutionId: string): Promise<MappedData> {
-    let data = [] as MappedData;
-    let response = await this.client.send(new GetQueryResultsCommand({
-      QueryExecutionId,
-    }));
-    log.info(`response (${typeof response}) from GetQueryResults: ${JSON.stringify(response)}`);
+  public async *streamQueryResults(sqlQuery: string): AsyncGenerator<MappedData, void, unknown> {
+    const queryExecutionId = await this.startQueryExecution(sqlQuery);
+    await this.waitForQueryAndGetData(queryExecutionId);
 
-    let nextToken = response?.NextToken?.toString() || '';
-    data = data.concat(await this.mapData(response.ResultSet));
-    const dataColumns = data.length !== 0 ? Object.keys(data[0]) : undefined;
-    while (nextToken !== '') {
+    let nextToken: string | undefined;
+    let dataColumns: string[] | undefined;
+
+    do {
       // eslint-disable-next-line no-await-in-loop
-      response = await this.client.send(new GetQueryResultsCommand({
-        QueryExecutionId,
-        NextToken: nextToken,
-      }));
-      log.info(`response (${typeof response}) from GetQueryResults: ${JSON.stringify(response)}`);
-      nextToken = response?.NextToken?.toString() || '';
+      const response: GetQueryResultsCommandOutput = await this.client.send(
+        new GetQueryResultsCommand({
+          QueryExecutionId: queryExecutionId,
+          NextToken: nextToken,
+        })
+      );
+
+      const pageData = this.mapData(response.ResultSet, dataColumns);
+
+      if (!dataColumns && response.ResultSet?.Rows && response.ResultSet.Rows.length > 0) {
+        dataColumns = response.ResultSet.Rows[0].Data?.map((col: Datum) => col.VarCharValue ?? '') ?? [];
+      }
+
+      // Yield the current page of records to the caller iteratively
+      yield pageData;
+
+      nextToken = response.NextToken;
+    } while (nextToken);
+  }
+
+  /**
+   * Get query execution result with pagination handling
+   */
+  private async getQueryResults(queryExecutionId: string): Promise<MappedData> {
+    let data: MappedData = [];
+    let nextToken: string | undefined;
+    let dataColumns: string[] | undefined;
+
+    do {
       // eslint-disable-next-line no-await-in-loop
-      data = data.concat(await this.mapData(response.ResultSet, dataColumns));
-    }
+      const response: GetQueryResultsCommandOutput = await this.client.send(
+        new GetQueryResultsCommand({
+          QueryExecutionId: queryExecutionId,
+          NextToken: nextToken,
+        })
+      );
+
+      const pageData = this.mapData(response.ResultSet, dataColumns);
+
+      if (!dataColumns && response.ResultSet?.Rows && response.ResultSet.Rows.length > 0) {
+        dataColumns = response.ResultSet.Rows[0].Data?.map((col: Datum) => col.VarCharValue ?? '') ?? [];
+      }
+
+      data = data.concat(pageData);
+      nextToken = response.NextToken;
+    } while (nextToken);
+
     return data;
   }
 
   /**
-   * Map data returned from Athena in rows, with each row an object with columns/keys and values.
-   *
-   * @param {ResultSet} data - Data in rows returned from Athena Query, in the ResultSet format
-   * @param {dataColumns} Array of strings of column names for ResultSet
-   * @returns {MappedData} Array of rows of data as MappedObjects <columnName: stringValue>
+   * Map data returned from Athena rows into cleanly formatted object records.
    */
-  mapData(
+  public mapData(
     data: ResultSet | undefined,
     dataColumns?: string[]
   ): MappedData {
     const mappedData: MappedData = [];
-    if (data === undefined || data.Rows === undefined || data.Rows.length === 0) return mappedData;
+    if (!data?.Rows || data.Rows.length === 0) return mappedData;
+
     let columns: string[];
     if (dataColumns !== undefined) {
       columns = dataColumns;
     } else {
-      columns = data.Rows[0].Data!.map((column) => column.VarCharValue as string);
+      columns = data.Rows[0].Data?.map((column: Datum) => column.VarCharValue ?? '') ?? [];
     }
 
     data.Rows.forEach((item, i) => {
       if (i === 0 && dataColumns === undefined) return;
-      if (item.Data === undefined) return;
+      if (!item.Data) return;
 
       const mappedObject: MappedObject = {};
-      item.Data.forEach((datum, j) => {
-        if (isNil(datum.VarCharValue)) {
-          mappedObject[columns[j]] = '';
-        } else {
-          mappedObject[columns[j]] = datum.VarCharValue;
-        }
+      item.Data.forEach((datum: Datum, j) => {
+        const columnName = columns[j] || `column_${j}`;
+        mappedObject[columnName] = datum.VarCharValue ?? '';
       });
 
       mappedData.push(mappedObject);
     });
 
     return mappedData;
-  }
-
-  /**
-   * Simple helper timeout function uses in checkQueryExecutionStateAndGetData function
-   *
-   * @param {number} msTime - Time in miliseconds
-   * @returns {Promise} Promise
-   */
-  private timeout(msTime: number) {
-    return new Promise((resolve) => setTimeout(resolve, msTime));
   }
 }
