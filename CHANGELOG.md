@@ -30,6 +30,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     than returning undefined, ensuring granule unpublishing fails if a non-404 error occurs.
 - **CUMULUS-5765**
   - Update package vulnerabilities (follows-redirects, certifi)
+- **CUMULUS-5815**
+  - Re-enabling Github Pages publishing in bamboo config files
 
 ### Added
 
