@@ -44,7 +44,7 @@ services:
     network_mode: "service:build_env"
     environment:
       - SFTP_ENABLED=0
-      - SERVICES=athena,cloudformation,cloudwatch,cloudwatchlogs,dynamodb,iam,kinesis,kms,lambda,s3,secretsmanager,sns,sqs,stepfunctions,ssm,logs
+      - SERVICES=athena,cloudformation,cloudwatch,cloudwatchlogs,dynamodb,iam,kinesis,kms,lambda,logs,s3,secretsmanager,sns,sqs,ssm,stepfunctions
   build_env:
     image: $CUMULUS_BASE_IMAGE
     volumes:

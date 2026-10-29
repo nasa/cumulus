@@ -110,7 +110,6 @@ test.beforeEach(async (t) => {
       Bucket: t.context.internalBucketName,
       Key: key,
       Body: JSON.stringify(collection),
-      ACL: 'public-read',
     },
   });
 
