@@ -29,7 +29,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-5765**
   - Update package vulnerabilities (follows-redirects, certifi)
 - **CUMULUS-5815**
-  - Re-enabling Github Pages documentation in bamboo config files
+  - Re-enabling Github Pages publishing in bamboo config files
 
 ### Added
 
