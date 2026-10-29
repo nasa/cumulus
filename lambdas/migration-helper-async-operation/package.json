@@ -5,7 +5,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=22.21.1"
+    "node": "^22.23.4"
   },
   "private": true,
   "main": "./dist/lambda/index.js",

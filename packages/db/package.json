@@ -43,7 +43,7 @@
     "failFast": true
   },
   "engines": {
-    "node": ">=22.21.1"
+    "node": "^22.23.4"
   },
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.993.0",

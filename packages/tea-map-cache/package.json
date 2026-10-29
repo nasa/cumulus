@@ -4,7 +4,7 @@
   "description": "Tea Bucket Map Cache Writer",
   "main": "index.js",
   "engines": {
-    "node": ">=22.21.1"
+    "node": "^22.23.4"
   },
   "scripts": {
     "clean": "git clean -d -x -e node_modules -f",
