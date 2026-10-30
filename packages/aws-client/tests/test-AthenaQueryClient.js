@@ -80,6 +80,17 @@ test.serial('mapData returns data in the expected format', (t) => {
   const response = {
     UpdateCount: 0,
     ResultSet: {
+      ResultSetMetadata:{
+       ColumnInfo: [
+        {
+          bucket: "string",
+          key: "string",
+          version_id: "string",
+          is_latest: "boolean",
+          is_delete_marker: "boolean"
+        }
+       ]
+      },
       Rows: [
         { Data: [
           { VarCharValue: 'bucket' },
@@ -122,6 +133,17 @@ test.serial('mapData() returns expected result when dataColumns is empty', (t) =
   const response = {
     UpdateCount: 0,
     ResultSet: {
+      ResultSetMetadata:{
+       ColumnInfo: [
+        {
+          bucket: "string",
+          key: "string",
+          version_id: "string",
+          is_latest: "boolean",
+          is_delete_marker: "boolean"
+        }
+       ]
+      },
       Rows: [
         { Data: [
           { VarCharValue: 'bucket' },
@@ -155,6 +177,17 @@ test.serial('mapData() returns expected result when dataColumns is passed', (t) 
   const response = {
     UpdateCount: 0,
     ResultSet: {
+      ResultSetMetadata:{
+       ColumnInfo: [
+        {
+          bucket: "string",
+          key: "string",
+          version_id: "string",
+          is_latest: "boolean",
+          is_delete_marker: "boolean"
+        }
+       ]
+      },
       Rows: [
         { Data: [
           { VarCharValue: testBucket },
@@ -201,7 +234,7 @@ test.serial('query() initiates a query, waits for it to finish, and returns the 
   );
 
   const createQueryResponse = {
-    ResultSet: { Rows: [], ResultSetMetadata: { ColumnInfo: [] } },
+    ResultSet: { Rows: [], ResultSetMetadata: { ColumnInfo: undefined } },
   };
   athenaClientMock.on(GetQueryResultsCommand).resolves(
     createQueryResponse
@@ -309,6 +342,17 @@ test.serial('query() initiates a query, waits for it to finish, and returns the 
   const getDataResultsResponse = {
     UpdateCount: 0,
     ResultSet: {
+      ResultSetMetadata:{
+       ColumnInfo: [
+        {
+          bucket: "string",
+          key: "string",
+          version_id: "string",
+          is_latest: "boolean",
+          is_delete_marker: "boolean"
+        }
+       ]
+      },
       Rows: [
         {
           Data: [
@@ -377,7 +421,7 @@ test.serial('checkQueryExecutionStateAndGetData throws when getQueryExecution re
   );
 
   const createQueryResponse = {
-    ResultSet: { Rows: [], ResultSetMetadata: { ColumnInfo: [] } },
+    ResultSet: { Rows: [], ResultSetMetadata: { ColumnInfo: undefined } },
   };
   athenaClientMock.on(GetQueryResultsCommand).resolves(
     createQueryResponse
@@ -488,7 +532,7 @@ test.serial('checkQueryExecutionStateAndGetData throws when getQueryExecution re
   );
 
   const createQueryResponse = {
-    ResultSet: { Rows: [], ResultSetMetadata: { ColumnInfo: [] } },
+    ResultSet: { Rows: [], ResultSetMetadata: { ColumnInfo: undefined } },
   };
   athenaClientMock.on(GetQueryResultsCommand).resolves(
     createQueryResponse
@@ -597,7 +641,7 @@ test.serial('query() collects data while NextToken is not null and returns the m
   );
 
   const createQueryResponse = {
-    ResultSet: { Rows: [], ResultSetMetadata: { ColumnInfo: [] } },
+    ResultSet: { Rows: [], ResultSetMetadata: { ColumnInfo: undefined } },
   };
   athenaClientMock.on(GetQueryResultsCommand).resolves(
     createQueryResponse
@@ -692,6 +736,17 @@ test.serial('query() collects data while NextToken is not null and returns the m
     UpdateCount: 0,
     NextToken: 'FirstTestString',
     ResultSet: {
+      ResultSetMetadata:{
+       ColumnInfo: [
+        {
+          bucket: "string",
+          key: "string",
+          version_id: "string",
+          is_latest: "boolean",
+          is_delete_marker: "boolean"
+        }
+       ]
+      },
       Rows: [
         {
           Data: [
