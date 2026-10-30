@@ -151,6 +151,9 @@ export {
   AsyncOperationSearch,
 } from './search/AsyncOperationSearch';
 export {
+  Meta as SearchMeta,
+} from './search/BaseSearch';
+export {
   CollectionSearch,
 } from './search/CollectionSearch';
 export {

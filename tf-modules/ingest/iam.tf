@@ -69,6 +69,7 @@ data "aws_iam_policy_document" "step_policy" {
       "ecs:RunTask",
       "ecs:StopTask",
       "ecs:DescribeTasks",
+      "events:PutEvents",
       "events:PutTargets",
       "events:PutRule",
       "events:DescribeRule",

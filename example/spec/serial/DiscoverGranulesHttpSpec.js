@@ -11,6 +11,8 @@ const {
 } = require('@cumulus/integration-tests');
 
 const { constructCollectionId } = require('@cumulus/message/Collections');
+const { waitForProviderRecordInOrNotInList } = require('../helpers/Providers');
+
 const { buildAndExecuteWorkflow } = require('../helpers/workflowUtils');
 const { waitForApiStatus } = require('../helpers/apiUtils');
 const {
@@ -61,6 +63,9 @@ describe('The Discover Granules workflow with http Protocol', () => {
         addCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
         createProvider(config.stackName, provider),
       ]);
+
+      const timecheck = Date.now() - 1000 * 30;
+      await waitForProviderRecordInOrNotInList(config.stackName, provider.id, true, { timestamp__from: timecheck });
 
       collection = JSON.parse((await apiTestUtils.getCollection({
         prefix: config.stackName,
