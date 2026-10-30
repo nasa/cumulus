@@ -213,7 +213,7 @@ function getExpectedOutputFileKeys() {
 }
 /**
  * Get file metadata for a set of files.
- * headObject from localstack doesn't return LastModified with millisecond,
+ * headObject from MiniStack doesn't return LastModified with millisecond,
  * use listObjectsV2 instead
  *
  * @param {Array<Object>} files - array of file objects

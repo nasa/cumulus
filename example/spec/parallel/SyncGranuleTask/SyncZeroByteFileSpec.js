@@ -1,8 +1,8 @@
 'use strict';
 
 /*
-* Localstack does not behave the same as S3 when trying to move/sync 0 byte files with
-* multipartCopyObject. Since we are unable to accurately test syncing a 0 byte file with Localstack,
+* MiniStack allows multipart upload for 0 byte file.
+* Since we are unable to accurately test syncing a 0 byte file with MiniStack,
 * we are testing it here.
 */
 

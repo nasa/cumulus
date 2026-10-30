@@ -847,7 +847,7 @@ Subscribe an SQS queue to an SNS topic.
 <a name="module_SQS..createQueue"></a>
 
 ### SQS~createQueue()
-Create an SQS Queue.  Properly handles localstack queue URLs
+Create an SQS Queue
 
 **Kind**: inner method of [<code>SQS</code>](#module_SQS)
 <a name="module_SQS..sendSQSMessage"></a>
