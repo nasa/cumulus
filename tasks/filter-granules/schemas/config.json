@@ -1,0 +1,17 @@
+{
+    "title": "FilterGranulesConfig",
+    "description": "Describes the configuration the filter-granule task",
+    "type": "object",
+    "required": ["granuleIngestWorkflow"],
+    "properties": {
+      "granuleIngestWorkflow": {
+        "type": "string",
+        "description": "Name of the granule ingest workflow to search for when returning execution ARNs"
+      },
+      "filtering": {
+        "type": "boolean",
+        "description": "A boolean that when set to false turns off the granule filtering",
+        "default": true
+      }
+    }
+  }
