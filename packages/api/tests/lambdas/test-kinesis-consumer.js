@@ -54,7 +54,7 @@ const kinesisRule = {
   state: 'ENABLED',
   rule: {
     type: 'kinesis',
-    value: `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`,
+    value: `arn:aws:kinesis:us-east-1:000000000000:stream/${randomId('kinesis')}`,
   },
 };
 

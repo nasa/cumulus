@@ -16,12 +16,13 @@ npm install @cumulus/ingest
 
 ## Testing
 
-Running tests locally requires [localstack](https://github.com/localstack/localstack).
+Local infrastructure emulation is powered by an emulated AWS environment (such as MiniStack) along
+with other local services (such as postgres).
 
-With localstack running, you can run tests using:
+You can run tests using:
 
 ```bash
-LOCALSTACK_HOST=localhost npm test
+npm run test
 ```
 
 ## Modules

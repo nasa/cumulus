@@ -65,7 +65,7 @@ async function prepareS3DownloadEvent(t) {
 
 /**
  * Get file metadata for a set of files.
- * headObject from localstack doesn't return LastModified with millisecond,
+ * headObject from MiniStack doesn't return LastModified with millisecond,
  * use listObjectsV2 instead
  *
  * @param {Array<Object>} files - array of file objects
@@ -110,7 +110,6 @@ test.beforeEach(async (t) => {
       Bucket: t.context.internalBucketName,
       Key: key,
       Body: JSON.stringify(collection),
-      ACL: 'public-read',
     },
   });
 

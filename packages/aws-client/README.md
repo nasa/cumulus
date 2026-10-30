@@ -1,8 +1,8 @@
 # @cumulus/aws-client
 
 Utilities for working with AWS. These utilities can be used for interacting with live AWS services
-or [Localstack][localstack]. For ease of setup, testing, and credential management, code interacting
-with AWS services should use the helpers in this module.
+or an emulated AWS environment (such as [MiniStack][MiniStack]). For ease of setup, testing, and credential
+management, code interacting with AWS services should use the helpers in this module.
 
 ⚠️ The [documented API](#api) of this package will not change without a
 deprecation warning being provided in earlier releases. Code in this package
@@ -13,15 +13,6 @@ considered part of the package's public API.
 
 ```bash
 npm install @cumulus/aws-client
-```
-
-## Interacting with Localstack
-
-To use these utilities with [Localstack][localstack], make sure you have a running instance of
-Localstack and set this environment variable:
-
-```shell
-NODE_ENV=test
 ```
 
 ## API
@@ -48,10 +39,6 @@ NODE_ENV=test
 <dt><a href="#module_SQS">SQS</a></dt>
 <dd></dd>
 <dt><a href="#module_SSM">SSM</a></dt>
-<dd></dd>
-<dt><a href="#module_STS">STS</a></dt>
-<dd></dd>
-<dt><a href="#module_SecretsManager">SecretsManager</a></dt>
 <dd></dd>
 <dt><a href="#module_StepFunctions">StepFunctions</a></dt>
 <dd></dd>
@@ -860,7 +847,7 @@ Subscribe an SQS queue to an SNS topic.
 <a name="module_SQS..createQueue"></a>
 
 ### SQS~createQueue()
-Create an SQS Queue.  Properly handles localstack queue URLs
+Create an SQS Queue
 
 **Kind**: inner method of [<code>SQS</code>](#module_SQS)
 <a name="module_SQS..sendSQSMessage"></a>
@@ -920,12 +907,6 @@ Get the value of an SSM parameter
 | --- | --- | --- |
 | Name | <code>string</code> | name of the SSM parameter |
 
-<a name="module_STS"></a>
-
-## STS
-<a name="module_SecretsManager"></a>
-
-## SecretsManager
 <a name="module_StepFunctions"></a>
 
 ## StepFunctions
@@ -1212,7 +1193,7 @@ future Earth science data streams.
 To make a contribution, please
 [see our contributing guidelines](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).
 
-[localstack]: https://github.com/localstack/localstack
+[MiniStack]: https://ministack.org
 
 ---
 Generated automatically using `npm run build-docs`
