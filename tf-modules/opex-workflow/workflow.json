@@ -1,0 +1,202 @@
+{
+  "Comment": "OPERA Ingest Workflow",
+  "StartAt": "CnmToGranules",
+  "States": {
+    "CnmToGranules": {
+      "Type": "Task",
+      "Resource": "${CnmToGranulesArn}",
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$.granules}",
+                  "destination": "{$.payload.granules}"
+                },
+                {
+                  "source": "{$.cnm}",
+                  "destination": "{$.meta.cnm}"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "CNMResponseFailure"
+        }
+      ],
+      "Next": "SyncGranule"
+    },
+    "SyncGranule": {
+      "Type": "Task",
+      "Resource": "${SyncGranuleArn}",
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "ACL": "disabled",
+            "buckets": "{$.meta.buckets}",
+            "stack": "{$.meta.stack}",
+            "downloadBucket": "{$.meta.buckets.opera-staging.name}",
+            "duplicateHandling": "{$.meta.collection.duplicateHandling}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}",
+            "workflowStartTime": "{$.cumulus_meta.workflow_start_time}",
+            "syncChecksumFiles": true,
+            "fileStagingDir": "{$.meta.cnm.product.name}"
+          }
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "CNMResponseFailure"
+        }
+      ],
+      "Next": "MoveGranules"
+    },
+    "MoveGranules": {
+      "Type": "Task",
+      "Resource": "${MoveGranulesArn}",
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "bucket": "{$.meta.buckets.opera-staging.name}",
+            "buckets": "{$.meta.buckets}",
+            "distribution_endpoint": "{$.meta.distribution_endpoint}",
+            "collection": "{$.meta.collection}",
+            "duplicateHandling": "{$.meta.collection.duplicateHandling}"
+          }
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "CNMResponseFailure"
+        }
+      ],
+      "Next": "CNMResponseSuccess"
+    },
+    "CNMResponseFailure": {
+      "Type": "Task",
+      "Resource": "${ResponseArn}",
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "cnm": "{$.meta.cnm}",
+            "exception": "{$.exception}",
+            "received_count": "{$.meta.eventSource.receivedCount}",
+            "received_time": "{$.cumulus_meta.workflow_start_time}",
+            "sqs_max_retries": "{$.meta.retries}"
+          }
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "MaxAttempts": 1
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "Next": "WorkflowFailed"
+    },
+    "CNMResponseSuccess": {
+      "Type": "Task",
+      "Resource": "${ResponseArn}",
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "cnm": "{$.meta.cnm}",
+            "exception": "{$.exception}",
+            "received_count": "{$.meta.eventSource.receivedCount}",
+            "received_time": "{$.cumulus_meta.workflow_start_time}",
+            "sqs_max_retries": "{$.meta.retries}"
+          }
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "MaxAttempts": 1
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "Next": "WorkflowSuccess"
+    },
+    "WorkflowFailed": {
+      "Type": "Fail",
+      "CausePath": "$.exception.Cause",
+      "ErrorPath": "$.exception.Error"
+    },
+    "WorkflowSuccess": {
+      "Type": "Succeed"
+    }
+  }
+}

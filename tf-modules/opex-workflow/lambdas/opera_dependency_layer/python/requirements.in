@@ -1,0 +1,20 @@
+# Use base layer as constraint file to ensure dependencies are compatible
+-c ../../base_dependency_layer/python/requirements.txt
+# The newest versions of numpy are built against a newer version of GLIBC than
+# is available in the python3.11 lambda image. This constraint tells pip to lock
+# against the latest compatible version, thereby avoiding the need to compile
+# from source during our deployment.
+--only-binary=numpy
+./python_common
+cumulus-message-adapter-python~=2.3.0
+geo_extensions @ git+https://github.com/asfadmin/geo_extensions@v0.3.0
+mandible[all] @ git+https://github.com/asfadmin/mandible@v0.10.2
+Pillow~=10.0
+shapely~=2.0
+# We don't directly use s3fs, but the way their requirements are causes the uv
+# resolver to take a really old version of s3fs in order to take the latest
+# version of fsspec. Since the old s3fs version doesn't do a good job of pinning
+# its dependencies, it allows incompatible packages to be pulled in. Limiting
+# how old of a version we get here, resolves that issue.
+# https://github.com/fsspec/s3fs/issues/642
+s3fs>=2023.6.0
