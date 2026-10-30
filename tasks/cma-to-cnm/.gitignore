@@ -1,0 +1,6 @@
+.venv
+.coverage
+build
+__pycache__
+coverage_html
+.nyc_output
