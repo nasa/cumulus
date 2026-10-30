@@ -20,7 +20,6 @@ import Logger from '@cumulus/logger';
 
 const log = new Logger({ sender: 'aws-client/AthenaQueryClient' });
 
-
 interface AthenaQueryClientConfig {
   ClientConfig: AthenaClientConfig;
   Database: string;
@@ -133,15 +132,15 @@ export class AthenaQueryClient {
   }
 
   private async getQueryResults(QueryExecutionId: string): Promise<MappedData> {
-    let data = [] as MappedData;
+    const data = [] as MappedData;
     let response = await this.client.send(new GetQueryResultsCommand({
       QueryExecutionId,
     }));
 
     let nextToken = response?.NextToken?.toString() || '';
     data.push(...(await this.mapData(response.ResultSet)));
-    let dataColumns = [] as string[]
-    if (response?.ResultSet?.ResultSetMetadata?.ColumnInfo !== undefined){
+    let dataColumns = [] as string[];
+    if (response?.ResultSet?.ResultSetMetadata?.ColumnInfo !== undefined) {
       dataColumns = Object.keys(response.ResultSet?.ResultSetMetadata?.ColumnInfo[0]);
     }
 
@@ -167,8 +166,8 @@ export class AthenaQueryClient {
     let columns: string[];
     if (dataColumns !== undefined) {
       columns = dataColumns;
-    } else if(data.ResultSetMetadata?.ColumnInfo !== undefined) {
-      columns = Object.keys(data.ResultSetMetadata?.ColumnInfo[0])
+    } else if (data.ResultSetMetadata?.ColumnInfo !== undefined) {
+      columns = Object.keys(data.ResultSetMetadata?.ColumnInfo[0]);
     }
 
     data.Rows.forEach((item, i) => {
