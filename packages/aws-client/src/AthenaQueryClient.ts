@@ -144,7 +144,7 @@ export class AthenaQueryClient {
     if (response?.ResultSet?.ResultSetMetadata?.ColumnInfo !== undefined){
       dataColumns = Object.keys(response.ResultSet?.ResultSetMetadata?.ColumnInfo[0]);
     }
-    
+
     while (nextToken !== '') {
       // eslint-disable-next-line no-await-in-loop
       response = await this.client.send(new GetQueryResultsCommand({
