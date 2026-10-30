@@ -49,10 +49,6 @@ NODE_ENV=test
 <dd></dd>
 <dt><a href="#module_SSM">SSM</a></dt>
 <dd></dd>
-<dt><a href="#module_STS">STS</a></dt>
-<dd></dd>
-<dt><a href="#module_SecretsManager">SecretsManager</a></dt>
-<dd></dd>
 <dt><a href="#module_StepFunctions">StepFunctions</a></dt>
 <dd></dd>
 <dt><a href="#module_STS">STS</a></dt>
@@ -920,12 +916,6 @@ Get the value of an SSM parameter
 | --- | --- | --- |
 | Name | <code>string</code> | name of the SSM parameter |
 
-<a name="module_STS"></a>
-
-## STS
-<a name="module_SecretsManager"></a>
-
-## SecretsManager
 <a name="module_StepFunctions"></a>
 
 ## StepFunctions

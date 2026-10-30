@@ -7,12 +7,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
+
 - **CUMULUS-5288**
   - Fixed an issue where scheduled rule creation was failing due to the inclusion of the workflow template, creating a too large payload for EventBridge.  The workflow template is no longer included in the EventBridge scheduled event, and is instead pulled in by the ScheduleSF lambda at the time the event is triggered.  This large reduction in EventBridge event size will make it very unlikely for scheduled events to be too big.
-- **CUMULUS-5636**
-  - Resolved an issue found in G2 load testing where the cmr-client library was caching an outdated token in warm lambdas.  Previously, an instance of the CMR class was cached and persisted in a warm lambda execution environment.  This cache contained the token and was only refreshed when the lambda was initially called.  This update changes so we update the token with each invocation.
-  - Upgraded node-forge to ^1.4.0 to mitigate High-severity vulnerability.
-- Added audit-ci.json whitelist for https://github.com/advisories/GHSA-vfj7-8cjw-p6xm vulnerability where no safer package version is available
 - **CUMULUS-5254**
   - Updated the `/executions/search-by-granules` endpoint to set the default limit to 10 and
     expanded the meta response structure to include standardized query search metadata.
@@ -30,6 +27,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update package vulnerabilities (follows-redirects, certifi)
 - **CUMULUS-5815**
   - Re-enabling Github Pages publishing in bamboo config files
+- **CUMULUS-5660**
+  - Mitigated vulnerabilties discovered in bamboo-CI build
+  - Added audit-ci.json whitelist for https://github.com/advisories/GHSA-vfj7-8cjw-p6xm vulnerability where no safer package version is available
 
 ### Added
 
@@ -42,6 +42,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Provisioned a dedicated custom event bus per stack and updated the Cumulus workflow event rule and targets to use it.
   - Provisioned a EventBridge rule on the default event bus to automatically route all Step
     Function execution events matching the stack prefix to the dedicated custom event bus.
+- **CUMULUS-5295**
+  - Added Granule and step function execution Id's to log statements in the sf-event-sqs-to-db-records lambda to expedite debugging in this task.
+- **CUMULUS-5529**
+  - Added integration test that validates we are catching ECS task failures in workflows and properly updating granule satus in postgres, covering a bug fixed in CSD-258
+  - Hardened integration tests that were consistantly failing due to error fall through.  Added a 'safeStep' function so a singele clean up call failures doesn't result in other cleanup actions failing
+- Adding CI deploying config to support treuter's CI stack
+- **CUMULUS-5369**
+  - Added empty string default to iceberg_admin variable.  This prevents build failures as SSM parameters cannot have an empty/null value on deploy.
 
 ### Changed
 
@@ -50,17 +58,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-5615**
   - Removed deprecated documentation. Cumulus Template Deploy is no longer supported and mentions have been noted appropriately.
 
+## [v22.4.3] 2026-10-02
+
+### Fixed
+
+- **CUMULUS-5636**
+  - Resolved an issue found in G2 load testing where the cmr-client library was caching an outdated token in warm lambdas.  Previously, an instance of the CMR class was cached and persisted in a warm lambda execution environment.  This cache contained the token and was only refreshed when the lambda was initially called.  This update changes so we update the token with each invocation.
+  - Upgraded node-forge to ^1.4.0 to mitigate High-severity vulnerability.
+
 ## [v22.4.2] 2026-09-24
 
 ### Fixed
+
 - **CSD-299**
   - Removed token regeneration in response to CMR 401 errors. During recent load tests, this behavior, combined with an overly aggressive retry strategy, contributed to overwhelming CMR. This change partially reverts CSD-99, which introduced token regeneration on 401 responses to address an issue where EDL cached invalid tokens. Because the underlying EDL caching issue has since been resolved, token regeneration on 401 responses is no longer necessary.
 
-- **CUMULUS-5660**
-  - Mitigated vulnerabilties discovered in bamboo-CI build
-
 ### Added
-  - Added audit-ci.json whitelist for https://github.com/advisories/GHSA-vfj7-8cjw-p6xm vulnerability where no safer package version is available
+
 - **CSD-299**
   - Added a new `CMRCallFailedError` error type. This error is thrown for CMR failures after the configured retry attempts, including failures on the first attempt, and should be detectable by StepFunctions for CMR-specific retry behavior.
 - **CUMULUS-5369**
@@ -69,22 +83,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `rds-iceberg-replication` module. An empty list is returned if the parameter does not exist.
   - Added an `ssm()` service and `SSM.getParameterValue()` helper to `@cumulus/aws-client` to facilitate
     this retrieval.
-  - Added empty string default to iceberg_admin variable.  This prevents build failures as SSM parameters cannot have an empty/null value on deploy.
-- **CUMULUS-5295**
-  - Added Granule and step function execution Id's to log statements in the sf-event-sqs-to-db-records lambda to expedite debugging in this task.
-- **CUMULUS-5529**
-  - Added integration test that validates we are catching ECS task failures in workflows and properly updating granule satus in postgres, covering a bug fixed in CSD-258
-  - Hardened integration tests that were consistantly failing due to error fall through.  Added a 'safeStep' function so a singele clean up call failures doesn't result in other cleanup actions failing
-- Adding CI deploying config to support treuter's CI stack
-
 
 ### Changed
+
 - **CSD-299**
   - Updated CMR retries to explicitly use exponential backoff. This defaults to 0 retries.  Retries may be specified using the `CMR_RETRIES` environment variable.  If retries are specified, a backoff factor of 2 and a minTimeout of 5s is used.  For 3 retries, this leads to retries at 5, 10 and 20 seconds with total lambda duration of up to 35 seconds of wait.
 
 ## [v22.4.1] 2026-09-14
 
 ### Fixed
+
 - **CSD-258**
   - Fixed a long running intermittant issue where graules in PG were stuck in 'running' state in PG
     from a 'failed' step function execution, due to a failure to correctly lookup failed ECS tasks,
@@ -96,6 +104,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CSD-25**
+  - Fixed a long running intermittant issue where graules in PG were stuck in 'running' state in PG
+    from a 'failed' step function execution, due to a failure to correctly lookup failed ECS tasks,
+    leading to no final granule update call made to PG.  Adding ECS `TaskFailed` to the checks ensures
+    the correct failure point is identified.  Moving forwards failed ECS tasks that were not correctly
+    reporting granule status should now update.
 - **CUMULUS-5455**
   - Added an npm override forcing `pacote` to `^21.5.1` to address a high-severity ReDoS vulnerability:
   https://github.com/advisories/GHSA-w4pp-8pjf-rmxw (CVE-2026-9496). `pacote` is npm's package-fetching
@@ -107,6 +121,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   building Core from source picks up the fix automatically on their next `npm install`.
 
 ### Added
+
+- Added CI deployment config to support mthorste's dev stack
 
 - **CUMULUS-5309**
   - Support cross account SQS queues by extracting the owner account ID from the URL and using that in validation of queues.
@@ -10156,7 +10172,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v22.4.2...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v22.4.3...HEAD
+[v22.4.3]: https://github.com/nasa/cumulus/compare/v22.4.2...v22.4.3
 [v22.4.2]: https://github.com/nasa/cumulus/compare/v22.4.1...v22.4.2
 [v22.4.1]: https://github.com/nasa/cumulus/compare/v22.4.0...v22.4.1
 [v22.4.0]: https://github.com/nasa/cumulus/compare/v22.3.5...v22.4.0
