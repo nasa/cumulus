@@ -14,7 +14,7 @@
     "directory": "tasks/change-granule-collection-pg"
   },
   "engines": {
-    "node": ">=22.21.1"
+    "node": "^22.23.4"
   },
   "scripts": {
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && npm run tsc && npm run package",

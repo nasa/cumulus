@@ -5,7 +5,7 @@
   "private": true,
   "main": "index.js",
   "engines": {
-    "node": ">=22.21.1"
+    "node": "^22.23.4"
   },
   "ava": {
     "files": [
