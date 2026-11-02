@@ -87,8 +87,7 @@ Pre-release testing steps:
 13. [Publishing the release](#13-publishing-the-release)
 14. [Create a new Cumulus release on github](#14-create-a-new-cumulus-release-on-github)
 15. [Update Cumulus API document](#15-update-cumulus-api-document)
-16. [Update Cumulus Template Deploy](#16-update-cumulus-template-deploy)
-17. [Merge base branch back to master](#17-merge-base-branch-back-to-master)
+16. [Merge base branch back to master](#16-merge-base-branch-back-to-master)
 
 ### 1. Create a branch for the new release
 
@@ -385,31 +384,7 @@ There may be unreleased changes in the [Cumulus API document](https://github.com
 If there are unrelease changes in the cumulus-api repo, follow the release instruction to create the release, the release version should match
 the Cumulus Core release.
 
-### 16. Update Cumulus Template Deploy
-
-Users are encouraged to use our [Cumulus Template Deploy Project](https://github.com/nasa/cumulus-template-deploy) for deployments. The Cumulus Core version should be updated in this repo when a new Cumulus Core version is released.
-
-This will mean updating the `source` property of Cumulus modules with the correct version:
-
-```hcl
-module "cumulus" {
-  source = "https://github.com/nasa/cumulus/releases/download/{most_current_version}/terraform-aws-cumulus.zip//tf-modules/cumulus"
-  ...
-}
-```
-
-e.g.
-
-```hcl
-module "cumulus" {
-  source = "https://github.com/nasa/cumulus/releases/download/v16.1.1/terraform-aws-cumulus.zip//tf-modules/cumulus"
-  ...
-}
-```
-
-After updating all three modules with the correct release versions, deploy a stack and verify that the deployment is successful.
-
-### 17. Merge base branch back to master
+### 16. Merge base branch back to master
 
 Finally, you need to reproduce the version update changes back to master.
 

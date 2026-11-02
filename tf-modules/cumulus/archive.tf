@@ -14,6 +14,8 @@ module "archive" {
   async_operation_image = var.async_operation_image
   ecs_cluster_name      = aws_ecs_cluster.default.name
 
+  cumulus_message_adapter_lambda_layer_version_arn = var.cumulus_message_adapter_lambda_layer_version_arn
+
   default_log_retention_days       = var.default_log_retention_days
   cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
 

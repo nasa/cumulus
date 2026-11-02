@@ -44,11 +44,42 @@ test.serial('get CMR metadata via granules search succeeds', async (t) => {
   t.is(response.title, 'MOD09GQ.A2016358.h13v04.006.2016360104606');
 });
 
-test.serial('get CMR metadata, fail', async (t) => {
-  nock('https://www.example.com/search/granules.json?foo=bar')
-    .get('/')
+test.serial('get CMR metadata via granule search returns undefined on 404', async (t) => {
+  nock('https://example.com')
+    .get('/search/granules.json?foo=bar')
     .reply(404);
 
-  const response = await getConceptMetadata('https://www.example.com/search/granules.json?foo=bar');
+  const response = await getConceptMetadata(
+    'https://example.com/search/granules.json?foo=bar',
+    {}
+  );
   t.is(response, undefined);
+});
+
+test.serial('get CMR metadata via concept search returns undefined on 404', async (t) => {
+  nock('https://example.com')
+    .get('/search/concepts/not-found')
+    .reply(404);
+
+  const response = await getConceptMetadata(
+    'https://example.com/search/concepts/not-found',
+    {}
+  );
+  t.is(response, undefined);
+});
+
+test.serial('get CMR metadata bubbles up and throws on non-404 errors', async (t) => {
+  nock('https://example.com')
+    .persist()
+    .get('/search/concepts/server-error.json')
+    .reply(500);
+
+  const error = await t.throwsAsync(async () => {
+    await getConceptMetadata(
+      'https://example.com/search/concepts/server-error.json',
+      {}
+    );
+  });
+
+  t.is(error.response.statusCode, 500);
 });

@@ -32,8 +32,8 @@ export class BetterZodError extends Error {
 
     this.input = params.input;
 
-    this.errors = params.error.errors.map(({ message, path }) =>
-      (path.length === 0 ? message : `${message} at ${joinPath(path)}`));
+    this.errors = params.error.issues.map(({ message, path }) =>
+      (path.length === 0 ? message : `${message} at ${joinPath(path as (string | number)[])}`));
   }
 }
 

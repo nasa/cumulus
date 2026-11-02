@@ -6,6 +6,11 @@ const test = require('ava');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const SQS = require('@cumulus/aws-client/SQS');
 const schedule = rewire('../../lambdas/sf-scheduler');
+const { s3PutObject } = require('@cumulus/aws-client/S3');
+const cloneDeep = require('lodash/cloneDeep');
+const { randomId } = require('@cumulus/common/test-utils');
+const awsServices = require('@cumulus/aws-client/services');
+const s3 = require('@cumulus/aws-client/S3');
 const get = require('lodash/get');
 const defaultQueueUrl = 'defaultQueueUrl';
 const customQueueUrl = 'userDefinedQueueUrl';
@@ -34,7 +39,6 @@ const scheduleEventTemplate = {
   provider: 'fakeProvider',
   cumulus_meta: {},
   payload: {},
-  template: fakeMessageResponse,
   definition: {},
 };
 const fakeCollection = {
@@ -53,6 +57,11 @@ const fakeProvider = {
 };
 
 const sqsStub = sinon.stub(SQS, 'sendSQSMessage');
+
+const buildScheduleInput = (overrides = {}) => ({
+  ...cloneDeep(scheduleEventTemplate),
+  ...overrides,
+});
 
 const fakeGetCollection = (item) => {
   const collections = {
@@ -81,18 +90,27 @@ const getApiCollection = schedule.__get__('getApiCollection');
 const resetProvider = schedule.__set__('getProvider', fakeGetProvider);
 const resetCollection = schedule.__set__('getCollection', fakeGetCollection);
 
-test.before(() => {
+test.before(async () => {
   process.env.defaultSchedulerQueueUrl = defaultQueueUrl;
+  process.env.system_bucket = randomId('system-bucket');
+  process.env.stackName = randomId('stackName');
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
+  await s3PutObject({
+    Bucket: process.env.system_bucket,
+    Key: `${process.env.stackName}/workflow_template.json`,
+    Body: JSON.stringify(fakeMessageResponse),
+  });
 });
 
 test.afterEach.always(() => {
   sqsStub.resetHistory();
 });
 
-test.after.always(() => {
+test.after.always(async () => {
   resetProvider();
   resetCollection();
   sqsStub.restore();
+  await s3.recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test.serial('getApiProvider returns undefined when input is falsey', async (t) => {
@@ -122,15 +140,18 @@ test.serial('getApiCollection returns collection when input is a valid collectio
 });
 
 test.serial('Sends an SQS message to the custom queue URL if queueUrl is defined', async (t) => {
-  const scheduleInput = {
-    ...scheduleEventTemplate,
-    queueUrl: customQueueUrl,
-    provider: fakeProvider.id,
-    collection: {
-      name: fakeCollection.name,
-      version: fakeCollection.version,
-    },
-  };
+  const scheduleInput = buildScheduleInput(
+    { queueUrl: customQueueUrl,
+      provider: fakeProvider.id,
+      collection: {
+        name: fakeCollection.name,
+        version: fakeCollection.version,
+      } }
+  );
+
+  t.deepEqual(scheduleInput.cumulus_meta, {});
+  t.false('meta' in scheduleInput);
+
   await schedule.handleScheduleEvent(scheduleInput);
 
   t.is(sqsStub.calledOnce, true);
@@ -140,17 +161,27 @@ test.serial('Sends an SQS message to the custom queue URL if queueUrl is defined
   t.is(targetMessage.cumulus_meta.queueExecutionLimits[customQueueUrl], 5);
   t.deepEqual(targetMessage.meta.collection, fakeCollection);
   t.deepEqual(targetMessage.meta.provider, fakeProvider);
+
+  // validate we've retrieved and added info from workflow template
+  t.is(targetMessage.meta.cmr.username, fakeMessageResponse.meta.cmr.username);
+  t.deepEqual(
+    targetMessage.cumulus_meta.queueExecutionLimits,
+    fakeMessageResponse.cumulus_meta.queueExecutionLimits
+  );
 });
 
 test.serial('Sends an SQS message to the default queue if queueUrl is not defined', async (t) => {
-  const scheduleInput = {
-    ...scheduleEventTemplate,
+  const scheduleInput = buildScheduleInput({
     provider: fakeProvider.id,
     collection: {
       name: fakeCollection.name,
       version: fakeCollection.version,
     },
-  };
+  });
+
+  console.log(`scheduleInput: ${JSON.stringify(scheduleInput)}`);
+  t.deepEqual(scheduleInput.cumulus_meta, {});
+  t.false('meta' in scheduleInput);
 
   await schedule.handleScheduleEvent(scheduleInput);
 
@@ -160,31 +191,41 @@ test.serial('Sends an SQS message to the default queue if queueUrl is not define
   t.is(targetQueueUrl, defaultQueueUrl);
   t.deepEqual(targetMessage.meta.collection, fakeCollection);
   t.deepEqual(targetMessage.meta.provider, fakeProvider);
+
+  // validate we've retrieved and added info from workflow template
+  t.is(targetMessage.meta.cmr.username, fakeMessageResponse.meta.cmr.username);
+  t.deepEqual(
+    targetMessage.cumulus_meta.queueExecutionLimits,
+    fakeMessageResponse.cumulus_meta.queueExecutionLimits
+  );
 });
 
 test.serial('throws if cmrProvider not defined in collection', async (t) => {
-  const scheduleInput = {
-    ...scheduleEventTemplate,
+  const scheduleInput = buildScheduleInput({
     provider: fakeCollectionWithoutProvider.id,
     collection: {
       name: fakeCollectionWithoutProvider.name,
       version: fakeCollectionWithoutProvider.version,
     },
-  };
+  });
+
   await t.throwsAsync(schedule.handleScheduleEvent(scheduleInput), {
     message: 'no cmr_provider found for collection fakeCollection___001 all collections must configure a cmr_provider for sf to be scheduled',
   });
 });
 
 test.serial('Sends an SQS message with cmrProvider from collection', async (t) => {
-  const scheduleInput = {
-    ...scheduleEventTemplate,
+  const scheduleInput = buildScheduleInput({
     provider: fakeProvider.id,
     collection: {
       name: fakeCollection.name,
       version: fakeCollection.version,
     },
-  };
+  });
+
+  // verifying data from workflow template is not present
+  t.deepEqual(scheduleInput.cumulus_meta, {});
+  t.false('meta' in scheduleInput);
 
   await schedule.handleScheduleEvent(scheduleInput);
 
@@ -195,5 +236,10 @@ test.serial('Sends an SQS message with cmrProvider from collection', async (t) =
   t.deepEqual(targetMessage.meta.collection, fakeCollection);
   t.deepEqual(targetMessage.meta.provider, fakeProvider);
   t.is(targetMessage.meta.cmr.provider, fakeCollection.cmrProvider);
+  // validate we've retrieved and added info from workflow template
   t.is(targetMessage.meta.cmr.username, fakeMessageResponse.meta.cmr.username);
+  t.deepEqual(
+    targetMessage.cumulus_meta.queueExecutionLimits,
+    fakeMessageResponse.cumulus_meta.queueExecutionLimits
+  );
 });

@@ -3,7 +3,7 @@
   "version": "22.4.3",
   "description": "A Node.js client to NASA's Common Metadata Repository (CMR) API.",
   "engines": {
-    "node": ">=22.21.1"
+    "node": "^22.23.4"
   },
   "scripts": {
     "build-docs": "../../node_modules/.bin/jsdoc2md --heading-depth 2 --template templates/API.hbs CMR.js CMRSearchConceptQueue.js > API.md",
@@ -46,7 +46,7 @@
     "lodash": "^4.18.1",
     "public-ip": "^3.0.0",
     "xml2js": "0.5.0",
-    "zod": "^3.20.2"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "moment": "^2.30.1",

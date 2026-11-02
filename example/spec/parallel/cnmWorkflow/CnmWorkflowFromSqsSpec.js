@@ -5,6 +5,8 @@ const replace = require('lodash/replace');
 const pWaitFor = require('p-wait-for');
 
 const { createSqsQueues, getSqsQueueMessageCounts } = require('@cumulus/api/lib/testUtils');
+const { deleteExecution, getExecutions } = require('@cumulus/api-client/executions');
+
 const { sns } = require('@cumulus/aws-client/services');
 const {
   DeleteTopicCommand,
@@ -16,7 +18,6 @@ const {
   sendSQSMessage,
 } = require('@cumulus/aws-client/SQS');
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const { getGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
 const { randomId } = require('@cumulus/common/test-utils');
 const { getWorkflowFileKey } = require('@cumulus/common/workflows');
@@ -47,6 +48,7 @@ const {
   createTestDataPath,
   createTestSuffix,
   timestampedName,
+  safeStep,
 } = require('../../helpers/testUtils');
 
 let config;
@@ -74,21 +76,36 @@ const s3data = [
 
 async function cleanUp() {
   setProcessEnvironment(config.stackName, config.bucket);
-  console.log(`\nDeleting rule ${ruleOverride.name}`);
-  const rules = await readJsonFilesFromDir(ruleDirectory);
-  await deleteRules(config.stackName, config.bucket, rules, ruleSuffix);
-  await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
-  await removePublishedGranule({ prefix: config.stackName,
-    granuleId,
-    collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version) });
+  const collectionId = constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version);
 
-  await Promise.all([
-    deleteFolder(config.bucket, testDataFolder),
-    deleteQueue(queues.sourceQueueUrl),
-    deleteQueue(queues.deadLetterQueueUrl),
-    sns().send(new DeleteTopicCommand({ TopicArn: cnmResponseStream })),
-    cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
-    cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
+  await safeStep('delete collection execution', async () => {
+    const { body } = await getExecutions({
+      prefix: config.stackName,
+      query: { collectionId },
+    });
+    const executionArns = JSON.parse(body).results.map((e) => e.arn);
+    await Promise.all(executionArns.map((eArn) =>
+      deleteExecution({ prefix: config.stackName, executionArn: eArn })));
+  });
+  await safeStep('delete rules', async () => {
+    console.log(`\nDeleting rule ${ruleOverride.name}`);
+    const rules = await readJsonFilesFromDir(ruleDirectory);
+    await deleteRules(config.stackName, config.bucket, rules, ruleSuffix);
+  });
+
+  await safeStep('delete granule', async () => {
+    await removePublishedGranule({ prefix: config.stackName,
+      granuleId,
+      collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version) });
+  });
+
+  await Promise.allSettled([
+    safeStep('delete test data folder', () => deleteFolder(config.bucket, testDataFolder)),
+    safeStep('delete source queue', () => deleteQueue(queues.sourceQueueUrl)),
+    safeStep('delete dead letter queue', () => deleteQueue(queues.deadLetterQueueUrl)),
+    safeStep('delete sns topic', () => sns().send(new DeleteTopicCommand({ TopicArn: cnmResponseStream }))),
+    safeStep('cleanup collections', () => cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix)),
+    safeStep('cleanup providers', () => cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix)),
   ]);
 }
 

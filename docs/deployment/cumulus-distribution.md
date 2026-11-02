@@ -16,9 +16,9 @@ If you need to access our quick reference materials while setting up or continui
 
 The Cumulus Distribution API is included in the main [Cumulus](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus_distribution) repo. It is available as part of the `terraform-aws-cumulus.zip` archive in the [latest release](https://github.com/nasa/cumulus/releases).
 
-These steps assume you're using the [Cumulus Deployment Template](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/main.tf) but they can also be used for custom deployments.
+**Deprecated**. This deployment process is replaced by a new deployment framework in NASA environments.
 
-To configure a deployment to use Cumulus Distribution:
+To configure a [Cumulus Template Deploy](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/main.tf) deployment to use Cumulus Distribution:
 
  1. Remove or comment the "Thin Egress App Settings" in the [Cumulus Template Deploy](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/main.tf) and enable the "Cumulus Distribution Settings".
  2. Delete or comment the contents of [thin_egress_app.tf](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/thin_egress_app.tf) and the corresponding Thin Egress App outputs in [outputs.tf](https://github.com/nasa/cumulus-template-deploy/blob/master/cumulus-tf/outputs.tf). These are not necessary for a Cumulus Distribution deployment.

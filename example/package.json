@@ -5,7 +5,7 @@
   "private": true,
   "main": "index.js",
   "engines": {
-    "node": ">=22.21.1"
+    "node": "^22.23.4"
   },
   "ava": {
     "files": [
@@ -47,6 +47,7 @@
     "@aws-sdk/client-ecs": "^3.993.0",
     "@aws-sdk/client-lambda": "^3.993.0",
     "@aws-sdk/client-sns": "^3.993.0",
+    "@aws-sdk/client-sqs": "^3.993.0",
     "@aws-sdk/client-sts": "^3.993.0",
     "@cumulus/api": "22.4.3",
     "@cumulus/api-client": "22.4.3",
@@ -62,6 +63,7 @@
     "@cumulus/hello-world": "22.4.3",
     "@cumulus/ingest": "22.4.3",
     "@cumulus/integration-tests": "22.4.3",
+    "@cumulus/logger": "22.4.3",
     "@cumulus/message": "22.4.3",
     "@cumulus/move-granules": "22.4.3",
     "@cumulus/parse-pdr": "22.4.3",

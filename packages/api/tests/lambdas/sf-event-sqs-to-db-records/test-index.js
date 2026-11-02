@@ -41,6 +41,7 @@ const { createSqsQueues, getSqsQueueMessageCounts } = require('../../../lib/test
 const {
   writeRecords,
 } = require('../../../lambdas/sf-event-sqs-to-db-records');
+const { getLogPrefix } = require('../../../lib/utils');
 
 const {
   handler,
@@ -712,3 +713,108 @@ test.serial(
     );
   }
 );
+
+test('getLogPrefix() returns [Unknown Context] if cumulusMessage is falsy', (t) => {
+  t.is(getLogPrefix(null), '[Unknown Context]');
+  t.is(getLogPrefix(undefined), '[Unknown Context]');
+});
+
+test('getLogPrefix() returns Unknown values if fields are missing in an empty message', (t) => {
+  const message = {};
+  t.is(getLogPrefix(message), '[GranuleId: UnknownGranuleId - ExecutionId: UnknownExecutionId]');
+});
+
+test('getLogPrefix() extracts execution_name and uses UnknownGranuleId if granules array is empty', (t) => {
+  const message = {
+    cumulus_meta: { execution_name: 'test-execution-123' },
+    payload: { granules: [] },
+  };
+  t.is(getLogPrefix(message), '[GranuleId: UnknownGranuleId - ExecutionId: test-execution-123]');
+});
+
+test('getLogPrefix() extracts explicit granuleId directly on the granule object', (t) => {
+  const message = {
+    cumulus_meta: { execution_name: 'test-execution-123' },
+    payload: {
+      granules: [
+        { granuleId: 'explicit-granule-456' },
+      ],
+    },
+  };
+  t.is(getLogPrefix(message), '[GranuleId: explicit-granule-456 - ExecutionId: test-execution-123]');
+});
+
+test('getLogPrefix() falls back to extracting from files using "fileName" if granuleId is missing and file type is "data"', (t) => {
+  const message = {
+    cumulus_meta: { execution_name: 'test-execution-123' },
+    payload: {
+      granules: [
+        {
+          files: [
+            { type: 'metadata', fileName: 'meta.xml' },
+            { type: 'data', fileName: 'data-file.hdf' },
+          ],
+        },
+      ],
+    },
+  };
+  t.is(getLogPrefix(message), '[GranuleId: data-file.hdf - ExecutionId: test-execution-123]');
+});
+
+test('getLogPrefix() falls back to extracting from files using "name" if granuleId and fileName are missing', (t) => {
+  const message = {
+    cumulus_meta: { execution_name: 'test-execution-123' },
+    payload: {
+      granules: [
+        {
+          files: [
+            { type: 'data', name: 'data-name-fallback.hdf' },
+          ],
+        },
+      ],
+    },
+  };
+  t.is(getLogPrefix(message), '[GranuleId: data-name-fallback.hdf - ExecutionId: test-execution-123]');
+});
+
+test('getLogPrefix() returns UnknownGranuleId if granuleId is missing and no data file is found', (t) => {
+  const message = {
+    cumulus_meta: { execution_name: 'test-execution-123' },
+    payload: {
+      granules: [
+        {
+          files: [
+            { type: 'metadata', fileName: 'meta.xml' },
+          ],
+        },
+      ],
+    },
+  };
+  t.is(getLogPrefix(message), '[GranuleId: UnknownGranuleId - ExecutionId: test-execution-123]');
+});
+
+test('getLogPrefix() uses the first valid granuleId when multiple granules exist', (t) => {
+  const message = {
+    cumulus_meta: { execution_name: 'test-execution-123' },
+    payload: {
+      granules: [
+        { granuleId: 'first-granule' },
+        { granuleId: 'second-granule' },
+      ],
+    },
+  };
+  t.is(getLogPrefix(message), '[GranuleId: first-granule - ExecutionId: test-execution-123]');
+});
+
+test('getLogPrefix() skips invalid granules and finds the first valid one', (t) => {
+  const message = {
+    cumulus_meta: { execution_name: 'test-execution-123' },
+    payload: {
+      granules: [
+        { files: [{ type: 'metadata', fileName: 'skip-me' }] },
+        { granuleId: 'valid-granule' },
+      ],
+    },
+  };
+  t.is(getLogPrefix(message), '[GranuleId: valid-granule - ExecutionId: test-execution-123]');
+});

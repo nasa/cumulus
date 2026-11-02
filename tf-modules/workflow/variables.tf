@@ -21,12 +21,13 @@ variable "system_bucket" {
 }
 
 variable "workflow_config" {
-  description = "Configuration object with ARNs for workflow integration (Role ARN for executing workflows and Lambda ARNs to trigger on workflow execution)"
+  description = "Configuration block containing ARNs for workflow orchestration, resource roles, and integration hooks (Step Functions event SQS queue, semaphore management Lambda, IAM state machine execution role, SQS message remover Lambda, and the dedicated stack event bus name)."
   type = object({
     sf_event_sqs_to_db_records_sqs_queue_arn = string
     sf_semaphore_down_lambda_function_arn    = string
     state_machine_role_arn                   = string
     sqs_message_remover_lambda_function_arn  = string
+    event_bus_name                           = string
   })
 }
 

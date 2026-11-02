@@ -377,6 +377,7 @@ variable "archive_api_users" {
     "npauzenga",
     "reweeden",
     "terrafirma13",
+    "treuter",
     "yliu10"
   ]
 }
@@ -445,7 +446,7 @@ variable "rds_admin_access_secret_arn" {
 variable "async_operation_image_version" {
   description = "docker image version to use for Cumulus async operations tasks"
   type        = string
-  default     = "58"
+  default     = "60"
 }
 
 variable "cumulus_process_activity_version" {
@@ -645,6 +646,12 @@ variable "cumulus_iceberg_api_image_version" {
 
 variable "cumulus_iceberg_api_image_repository_url" {
   description = "The repository URL of the Cumulus Iceberg API image to use"
+  type        = string
+  default     = null
+}
+
+variable "cross_account_test_sqs_arn" {
+  description = "The cross account SQS ARN used for cross account SQS triggering"
   type        = string
   default     = null
 }
