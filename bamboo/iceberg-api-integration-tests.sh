@@ -16,9 +16,24 @@ export FAKE_AUTH=true
 export TOKEN_SECRET=test-secret-12345
 export NODE_ENV=test
 
+cleanup() {
+  local exit_code=$?
+
+  if [[ -n "${SERVER_PID:-}" ]] && kill -0 "$SERVER_PID" 2>/dev/null; then
+    echo "*** Shutting down server"
+    kill "$SERVER_PID"
+  fi
+
+  if [[ $exit_code -ne 0 ]]; then
+    echo "*** Script failed. Server logs:"
+    cat iceberg-server-debug.log
+  fi
+}
+
 echo "*** Starting Server"
 node packages/api/app/iceberg-index.js > iceberg-server-debug.log 2>&1 &
 SERVER_PID=$!
+trap cleanup EXIT
 
 echo "*** Waiting for server health check on port ${PORT}..."
 MAX_ATTEMPTS=45
@@ -36,7 +51,3 @@ done
 
 echo "*** Running Iceberg API integration test (AVA)"
 ./node_modules/.bin/ava packages/api/tests/docker/test-iceberg-api.js --timeout=5m
-
-# Cleanup
-echo "*** Shutting down server"
-kill $SERVER_PID

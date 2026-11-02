@@ -35,8 +35,8 @@ const reconciliationReportsIcebergRouter = require('../endpoints/iceberg-reconci
 // - list of pdrs (GET /pdrs)
 // - list of rules (GET /rules)
 // - list of executions (GET /executions)
-// - list of async-operations (GET /async-operations)
-// - list of reconciliation-reports (GET /reconciliation-reports)
+// - list of asyncOperations (GET /asyncOperations)
+// - list of reconciliationReports (GET /reconciliationReports)
 // - stats endpoints
 
 // granules list endpoint
@@ -57,11 +57,11 @@ router.use('/pdrs', ensureAuthorized, pdrsIcebergRouter);
 // rules list endpoint
 router.use('/rules', ensureAuthorized, rulesIcebergRouter);
 
-// async-operations list endpoint
-router.use('/async-operations', ensureAuthorized, asyncOperationsIcebergRouter);
+// asyncOperations list endpoint
+router.use('/asyncOperations', ensureAuthorized, asyncOperationsIcebergRouter);
 
-// reconciliation-reports list endpoint
-router.use('/reconciliation-reports', ensureAuthorized, reconciliationReportsIcebergRouter);
+// reconciliationReports list endpoint
+router.use('/reconciliationReports', ensureAuthorized, reconciliationReportsIcebergRouter);
 
 // stats endpoint (includes GET /stats and GET /stats/aggregate/:type?)
 router.use('/stats', ensureAuthorized, stats);

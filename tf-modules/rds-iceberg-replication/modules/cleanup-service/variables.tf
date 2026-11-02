@@ -80,7 +80,7 @@ variable "ecs_cluster" {
   })
 }
 
-variable "older_than_minutes" {
+variable "snapshot_older_than_minutes" {
   description = "Expire snapshots older than this many minutes"
   type        = number
   default     = 120

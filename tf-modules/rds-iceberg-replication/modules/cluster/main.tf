@@ -33,9 +33,7 @@ resource "aws_ecs_cluster" "default" {
   tags = var.tags
 }
 
-data "aws_iam_policy" "ECSInfrastructure" {
-  arn = "arn:aws:iam::aws:policy/service-role/AmazonECSInfrastructureRolePolicyForVolumes"
-}
+data "aws_caller_identity" "current" {}
 
 resource "aws_security_group_rule" "efs_nfs_inbound" {
   type                     = "ingress"

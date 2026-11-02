@@ -8,6 +8,9 @@ const SQS = require('@cumulus/aws-client/SQS');
 const { getProvider } = require('@cumulus/api-client/providers');
 const { buildQueueMessageFromTemplate } = require('@cumulus/message/Build');
 const { joinCollectionProviderToTemplateCmrMeta } = require('@cumulus/ingest/queue');
+const workflows = require('@cumulus/common/workflows');
+const s3Utils = require('@cumulus/aws-client/S3');
+
 const Logger = require('@cumulus/logger');
 const logger = new Logger({ sender: '@cumulus/api/lambdas/sf-scheduler' });
 
@@ -35,17 +38,20 @@ const getApiCollection = (collection) => {
  * A consumer should be configured for this queue to start executions for
  * the queued message.
  *
- * @param {Object} event - lambda input message
+ * @param {object} event - lambda input message
  * @returns {Promise}
  */
 async function handleScheduleEvent(event) {
-  const [providerRecord, collection] = await Promise.all([
+  const [providerRecord, collection, messageTemplate] = await Promise.all([
     getApiProvider(event.provider),
     getApiCollection(event.collection),
+    s3Utils.getJsonS3Object(
+      process.env.system_bucket,
+      workflows.templateKey(process.env.stackName)
+    ),
   ]);
 
   const provider = providerRecord ? JSON.parse(providerRecord.body) : undefined;
-  const messageTemplate = get(event, 'template');
   const queueUrl = get(event, 'queueUrl', process.env.defaultSchedulerQueueUrl);
   const workflowDefinition = get(event, 'definition');
   const workflow = {

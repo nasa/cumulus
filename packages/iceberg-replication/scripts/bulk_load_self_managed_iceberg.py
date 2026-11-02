@@ -566,8 +566,8 @@ def process_table(cfg, catalog, table_name, replace=False, compact=False):  # no
         props = {
             "format-version": "2",
             "table_format": "iceberg",
-            "write.parquet.target-file-size-bytes": "1073741824",
-            "write.target-file-size-bytes": "1073741824",
+            "write.parquet.target-file-size-bytes": "536870912",
+            "write.target-file-size-bytes": "536870912",
             "write.delete.mode": "merge-on-read",
             "write.update.mode": "merge-on-read",
             "write.upsert.enabled": "true" if primary_key_id else "false",

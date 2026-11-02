@@ -8,6 +8,7 @@ const { sqs } = require('../services');
 const {
   createQueue,
   getQueueNameFromUrl,
+  getQueueOwnerAccountFromUrl,
   parseSQSMessageBody,
   sqsQueueExists,
   sendSQSMessage,
@@ -76,6 +77,14 @@ test('getQueueNameFromUrl extracts queue name from a queue URL', (t) => {
   const queueUrl = `https://sqs.us-east-2.amazonaws.com/123456789012/${queueName}`;
   const extractedName = getQueueNameFromUrl(queueUrl);
   t.is(extractedName, queueName);
+});
+
+test('getQueueNameFromUrl extracts queue owner account ID from a queue URL', (t) => {
+  const queueOwnerAccount = '123456789012';
+  const queueName = 'MyQueue';
+  const queueUrl = `https://sqs.us-east-2.amazonaws.com/${queueOwnerAccount}/${queueName}`;
+  const extractedOwnerAccount = getQueueOwnerAccountFromUrl(queueUrl);
+  t.is(extractedOwnerAccount, queueOwnerAccount);
 });
 
 test('sendSQSMessage logs errors', async (t) => {

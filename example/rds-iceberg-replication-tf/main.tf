@@ -60,6 +60,7 @@ module "rds_iceberg_replication" {
   snapshot_table_include_list       = var.snapshot_table_include_list
   snapshot_cleanup_interval_minutes = var.snapshot_cleanup_interval_minutes
   snapshot_older_than_minutes       = var.snapshot_older_than_minutes
+  orphan_older_than_days            = var.orphan_older_than_days
   snapshot_retain_last              = var.snapshot_retain_last
   tags                              = merge(var.tags, { Deployment = var.prefix })
 }

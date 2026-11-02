@@ -52,11 +52,9 @@ def create_spark(warehouse, region, jars_dir):
 def expire_table(spark, namespace, table, older_than_minutes, retain_last):
     """Expire the snapshots for a table."""
     full_table = f"{namespace}.{table}"
-
-    log(f"Expiring snapshots for {full_table}")
-
     cutoff = datetime.now(UTC) - timedelta(minutes=older_than_minutes)
     cutoff_str = cutoff.strftime("%Y-%m-%d %H:%M:%S.%f")
+    log(f"Expiring snapshots older than {cutoff_str} for {full_table}")
 
     spark.sql(f"""
         CALL glue.system.expire_snapshots(
@@ -77,7 +75,7 @@ def main():
     parser.add_argument("--warehouse", required=True)
     parser.add_argument("--region", required=True)
     parser.add_argument("--jars-dir", required=True)
-    parser.add_argument("--older-than-minutes", type=int, default=60)
+    parser.add_argument("--snapshot-older-than-minutes", type=int, default=60)
     parser.add_argument("--retain-last", type=int, default=2)
 
     args = parser.parse_args()
@@ -86,18 +84,18 @@ def main():
 
     spark = create_spark(args.warehouse, args.region, args.jars_dir)
 
-    log(f"Starting snapshot expiration for {len(tables)} table(s)")
+    log(f"Starting cleanup for {len(tables)} table(s)")
 
     for table in tables:
         expire_table(
             spark,
             args.namespace,
             table,
-            args.older_than_minutes,
+            args.snapshot_older_than_minutes,
             args.retain_last,
         )
 
-    log("Snapshot expiration complete")
+    log("Table cleanup complete")
 
     spark.stop()
 

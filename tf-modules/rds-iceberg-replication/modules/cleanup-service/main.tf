@@ -36,7 +36,7 @@ resource "aws_ecs_task_definition" "iceberg_cleanup" {
         "--warehouse", "s3://${var.iceberg_s3_bucket}/warehouse",
         "--region", var.region,
         "--jars-dir", "./scripts/jars",
-        "--older-than-minutes", tostring(var.older_than_minutes),
+        "--snapshot-older-than-minutes", tostring(var.snapshot_older_than_minutes),
         "--retain-last", tostring(var.retain_last)
       ]
       environment = [

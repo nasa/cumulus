@@ -16,6 +16,7 @@ locals {
     sf_semaphore_down_lambda_function_arn    = module.ingest.sf_semaphore_down_lambda_function_arn
     state_machine_role_arn                   = module.ingest.step_role_arn
     sqs_message_remover_lambda_function_arn  = module.ingest.sqs_message_remover_lambda_function_arn
+    event_bus_name                           = aws_cloudwatch_event_bus.cumulus_event_bus.name
   }
 }
 
