@@ -28,8 +28,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-5815**
   - Re-enabling Github Pages publishing in bamboo config files
 - **CUMULUS-5660**
-  - Mitigated vulnerabilties discovered in bamboo-CI build
-  - Added audit-ci.json whitelist for https://github.com/advisories/GHSA-vfj7-8cjw-p6xm vulnerability where no safer package version is available
+  - Mitigated vulnerabilties discovered in bamboo-CI build.
+  - Added audit-ci.json whitelist for https://github.com/advisories/GHSA-vfj7-8cjw-p6xm vulnerability where no safer package version is available.
 
 ### Added
 
