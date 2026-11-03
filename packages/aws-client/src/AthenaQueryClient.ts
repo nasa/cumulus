@@ -59,6 +59,12 @@ export class AthenaQueryClient {
     }
   }
 
+  /**
+   * Get data from Athena and rerutn it as proper formatted Array of objects
+   *
+   * @param sqlQuery - The SQL query string
+   * @returns Array of Objects
+   */
   async query(sqlQuery: string): Promise<MappedData | undefined> {
     const queryExecutionId = await this.startQueryExecution(sqlQuery);
 
@@ -66,6 +72,12 @@ export class AthenaQueryClient {
     return response;
   }
 
+  /**
+   * Start Query Execution
+   *
+   * @param sqlQuery - The SQL query string
+   * @returns QueryExecutionId - unique ID of the query run from request
+   */
   async startQueryExecution(sqlQuery: string): Promise<string> {
     const queryExecutionInput = {
       QueryString: sqlQuery,
@@ -89,6 +101,12 @@ export class AthenaQueryClient {
     return QueryExecutionId;
   }
 
+  /**
+   * Start Query Execution
+   *
+   * @param queryExecutionId - unique ID of the query run from request
+   * @returns Array of Objects
+   */
   private async waitForQueryAndGetData(queryExecutionId: string): Promise<MappedData | undefined> {
     const runCheck = async () => {
       const response = await this.client.send(
@@ -131,6 +149,12 @@ export class AthenaQueryClient {
     });
   }
 
+  /**
+   * Get query execution result
+   *
+   * @param QueryExecutionId - Id of a query which we sent to Athena
+   * @returns Array of Objects
+   */
   private async getQueryResults(QueryExecutionId: string): Promise<MappedData> {
     const data = [] as MappedData;
     let response = await this.client.send(new GetQueryResultsCommand({
@@ -157,6 +181,12 @@ export class AthenaQueryClient {
     return data;
   }
 
+  /**
+   * Map data returned from Athena in rows, with each row an object with columns/keys and values.
+   *
+   * @param - Data in rows returned from Athena Query, in the ResultSet format
+   * @returns Array of rows of data as MappedObjects <columnName: stringValue>
+   */
   public mapData(
     data: ResultSet | undefined,
     dataColumns?: string[]
