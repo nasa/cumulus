@@ -95,7 +95,7 @@ repos:
 # Configuration for pre-commit
 default_language_version:
   python: python3.12
-  node: 22.21.1
+  node: 22.23.4
 
 # Global exclude pattern (some hooks may need individual excludes too)
 exclude: |

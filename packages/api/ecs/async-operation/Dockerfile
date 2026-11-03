@@ -1,4 +1,4 @@
-FROM amazon/aws-lambda-nodejs:22
+FROM public.ecr.aws/lambda/nodejs:22.2026.10.29.11
 
 USER root
 RUN dnf install -y unzip shadow-utils

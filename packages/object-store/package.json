@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/object-store",
-  "version": "22.4.2",
+  "version": "22.4.3",
   "description": "Utilities for managing object stores",
   "keywords": [
     "GIBS",
@@ -8,7 +8,7 @@
     "NASA"
   ],
   "engines": {
-    "node": ">=22.21.1"
+    "node": "^22.23.4"
   },
   "publishConfig": {
     "access": "public"
@@ -42,6 +42,6 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "22.4.2"
+    "@cumulus/aws-client": "22.4.3"
   }
 }
