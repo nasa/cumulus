@@ -138,7 +138,7 @@ export class AthenaQueryClient {
     }));
 
     let nextToken = response?.NextToken?.toString() || '';
-    data.push(...(await this.mapData(response.ResultSet)));
+    data.push(...this.mapData(response.ResultSet));
     let dataColumns = [] as string[];
     if (response?.ResultSet?.ResultSetMetadata?.ColumnInfo !== undefined) {
       dataColumns = Object.keys(response.ResultSet?.ResultSetMetadata?.ColumnInfo[0]);
@@ -152,7 +152,7 @@ export class AthenaQueryClient {
       }));
       nextToken = response?.NextToken?.toString() || '';
       // eslint-disable-next-line no-await-in-loop
-      data.push(...await this.mapData(response.ResultSet, dataColumns));
+      data.push(...this.mapData(response.ResultSet, dataColumns));
     }
     return data;
   }
