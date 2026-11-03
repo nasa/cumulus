@@ -40,6 +40,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Provisioned a dedicated custom event bus per stack and updated the Cumulus workflow event rule and targets to use it.
   - Provisioned a EventBridge rule on the default event bus to automatically route all Step
     Function execution events matching the stack prefix to the dedicated custom event bus.
+- **CSD-369**
+  - Implemented POST `/granules/bulkRemoveFromCmr` API endpoint to support bulk removal of granules from CMR without deleting the granules themselves.
+  - Added a corresponding `bulkRemoveFromCmr` function to `@cumulus/api-client`.
 
 ### Changed
 
