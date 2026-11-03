@@ -157,7 +157,7 @@ export class AthenaQueryClient {
     return data;
   }
 
-  mapData(
+  public mapData(
     data: ResultSet | undefined,
     dataColumns?: string[]
   ): MappedData {
@@ -172,7 +172,7 @@ export class AthenaQueryClient {
 
     data.Rows.forEach((item, i) => {
       if (i === 0 && dataColumns === undefined) return;
-      if (item.Data === undefined) return;
+      if (!item.Data) return;
 
       const mappedObject: MappedObject = {};
       item.Data.forEach((datum, j) => {
