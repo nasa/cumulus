@@ -57,7 +57,7 @@ First, copy the tag you created for DockerHub with the name of the image that
 is expected for ECR:
 
 ```shell
-docker tag cumuluss/async-operation:<build-number> <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/async_operations:<build-number>
+docker tag cumuluss/async-operation:<build-number> <AWS_ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/async_operations:<build-number>
 ```
 
 Then you will need to follow the [AWS documentation to log in to ECR for your account from the command line](https://docs.aws.amazon.com/AmazonECR/latest/userguide/getting-started-cli.html#cli-authenticate-registry).
@@ -65,7 +65,7 @@ Then you will need to follow the [AWS documentation to log in to ECR for your ac
 Lastly, you can push the image to ECR in the AWS account:
 
 ```shell
-docker push <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/async_operations:<build-number>
+docker push <AWS_ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/async_operations:<build-number>
 ```
 
 ## Updating the Cumulus deployment configuration
