@@ -13,8 +13,9 @@ const {
 } = require('@cumulus/db');
 const { createBucket, deleteS3Buckets } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
+const { CMR } = require('@cumulus/cmr-client');
 
-const { sns, sqs } = require('@cumulus/aws-client/services');
+const { sns, sqs, secretsManager } = require('@cumulus/aws-client/services');
 const {
   SubscribeCommand,
   DeleteTopicCommand,
@@ -36,6 +37,13 @@ test.before(async (t) => {
 
   // create a fake bucket
   await createBucket(process.env.system_bucket);
+
+  // Store a fake CMR password, needed by getCmrSettings()
+  process.env.cmr_password_secret_name = randomString();
+  await secretsManager().createSecret({
+    Name: process.env.cmr_password_secret_name,
+    SecretString: randomString(),
+  });
 
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
@@ -73,6 +81,10 @@ test.afterEach(async (t) => {
 });
 
 test.after.always(async (t) => {
+  await secretsManager().deleteSecret({
+    SecretId: process.env.cmr_password_secret_name,
+    ForceDeleteWithoutRecovery: true,
+  });
   await destroyLocalTestDb({
     knex: t.context.knex,
     knexAdmin: t.context.knexAdmin,
@@ -195,6 +207,78 @@ test.serial('ensure bulkGranuleRemoveFromCmr passes correct cmr_provider to unpu
   t.teardown(() => deleteS3Buckets([
     granule.s3Buckets.protected.name,
     granule.s3Buckets.public.name,
+  ]));
+});
+
+test.serial('bulkGranuleRemoveFromCmr calls the real CMR client for each published granule', async (t) => {
+  const { knex } = t.context;
+
+  const [collectionPgRecord] = await new CollectionPgModel().create(
+    knex, fakeCollectionRecordFactory()
+  );
+
+  // Give each granule a distinct cmr_link so we can verify each one is individually
+  // passed through to the (stubbed) CMR client.
+  const cmrLink1 = `https://cmr.example.com/granule/${randomId('granule')}`;
+  const cmrLink2 = `https://cmr.example.com/granule/${randomId('granule')}`;
+
+  const granules = await Promise.all([
+    createGranuleAndFiles({
+      dbClient: knex,
+      granuleParams: {
+        published: true,
+        cmrLink: cmrLink1,
+        collection_cumulus_id: collectionPgRecord.cumulus_id,
+      },
+      writeDynamo: false,
+    }),
+    createGranuleAndFiles({
+      dbClient: knex,
+      granuleParams: {
+        published: true,
+        cmrLink: cmrLink2,
+        collection_cumulus_id: collectionPgRecord.cumulus_id,
+      },
+      writeDynamo: false,
+    }),
+  ]);
+
+  const granuleIds = granules.map((g) => g.newPgGranule.granule_id);
+  const expectedTitleByCmrLink = {
+    [cmrLink1]: `title-for-${cmrLink1}`,
+    [cmrLink2]: `title-for-${cmrLink2}`,
+  };
+
+  const cmrMetadataStub = sinon.stub(CMR.prototype, 'getGranuleMetadata')
+    .callsFake((cmrLink) => Promise.resolve({ title: expectedTitleByCmrLink[cmrLink] }));
+  const cmrDeleteStub = sinon.stub(CMR.prototype, 'deleteGranule').resolves();
+  t.teardown(() => {
+    cmrMetadataStub.restore();
+    cmrDeleteStub.restore();
+  });
+
+  const results = await bulkGranuleRemoveFromCmr({ granules: granuleIds });
+
+  t.deepEqual(results.sort(), granuleIds.sort());
+  t.is(cmrMetadataStub.callCount, 2);
+  t.is(cmrDeleteStub.callCount, 2);
+  [cmrLink1, cmrLink2].forEach((cmrLink) => {
+    const matchingCall = cmrDeleteStub.getCalls().find(
+      (call) => call.args[0] === expectedTitleByCmrLink[cmrLink]
+    );
+    t.truthy(matchingCall, `expected deleteGranule to be called for ${cmrLink}`);
+  });
+
+  const granulePgModel = new GranulePgModel();
+  await Promise.all(granuleIds.map(async (granuleId) => {
+    const updated = await granulePgModel.get(knex, { granule_id: granuleId });
+    t.false(updated.published);
+    t.falsy(updated.cmr_link);
+  }));
+
+  t.teardown(() => deleteS3Buckets([
+    granules[0].s3Buckets.protected.name,
+    granules[0].s3Buckets.public.name,
   ]));
 });
 
