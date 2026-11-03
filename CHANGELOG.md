@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [v22.4.4] 2026-11-2
 
-## Fixed
+### Fixed
 
 - **CUMULUS-5830**
   - Patching a critical NodeJS runtime vulnerability.
