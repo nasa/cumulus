@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## Fixed
 
 - **CUMULUS-5830**
-  - Patch backport hotfix release patching a critical NodeJS runtime vulnerability.
+  - Patching a critical NodeJS runtime vulnerability.
   - As a result of the node vuln, updated the AsyncOperation container to new version 60, `cumuluss/async-operation:60`.  Users should update their reference to `async-operation` with the new version.
 
 ## [v22.4.3] 2026-10-02
