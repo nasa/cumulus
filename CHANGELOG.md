@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **CUMULUS-5307**
+  - Migrated from LocalStack to MiniStack 1.5.34-full
+
 ### Fixed
 
 - **CUMULUS-5830**
