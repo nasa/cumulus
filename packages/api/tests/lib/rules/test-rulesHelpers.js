@@ -162,7 +162,7 @@ test.before(async (t) => {
         Handler: 'index.handler',
         Runtime: 'nodejs16.x',
       }));
-      process.env[name] = lambdaCreated.FunctionName;
+      process.env[name] = lambdaCreated.FunctionArn;
     })
   );
   eventLambdas = [process.env.messageConsumer, process.env.KinesisInboundEventLogger];
@@ -649,7 +649,7 @@ test('rulesHelpers.lookupProviderInEvent returns undefined for empty case', (t) 
 });
 
 test.serial('deleteKinesisEventSource deletes a kinesis event source', async (t) => {
-  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:stream/${randomId('kinesis')}`;
   const {
     rulePgModel,
     testKnex,
@@ -698,7 +698,7 @@ test.serial('deleteKinesisEventSource deletes a kinesis event source', async (t)
 });
 
 test.serial('deleteKinesisEventSources deletes all kinesis event sources', async (t) => {
-  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:stream/${randomId('kinesis')}`;
   const {
     rulePgModel,
     testKnex,
@@ -746,7 +746,7 @@ test.serial('deleteKinesisEventSources deletes all kinesis event sources', async
 });
 
 test.serial('deleteKinesisEventSources throws when deleteKinesisEventSource throws', async (t) => {
-  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:stream/${randomId('kinesis')}`;
   const {
     testKnex,
   } = t.context;
@@ -777,7 +777,7 @@ test.serial('deleteKinesisEventSources throws when deleteKinesisEventSource thro
 });
 
 test.serial('deleteKinesisEventSources does not throw when deleteKinesisEventSource throws a ResourceNotFoundException', async (t) => {
-  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:stream/${randomId('kinesis')}`;
   const {
     testKnex,
   } = t.context;
@@ -944,7 +944,7 @@ test.serial('deleteRuleResources correctly deletes resources for scheduled rule'
 });
 
 test.serial('deleteRuleResources correctly deletes resources for kinesis rule', async (t) => {
-  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:stream/${randomId('kinesis')}`;
   const {
     rulePgModel,
     testKnex,
@@ -1057,7 +1057,7 @@ test.serial('deleteRuleResources does nothing when the rule is an SQS rule', asy
 });
 
 test.serial('deleteRuleResources does not delete event source mappings if they exist for other rules', async (t) => {
-  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:stream/${randomId('kinesis')}`;
   const {
     rulePgModel,
     testKnex,
@@ -1171,12 +1171,14 @@ test.serial('deleteRuleResources() removes SNS source mappings and permissions',
   t.false(subExists2);
   t.false(hasLambdaPermission2);
 
-  await t.throwsAsync(
-    awsServices.lambda().send(new GetPolicyCommand({
-      FunctionName: process.env.messageConsumer,
-    })),
-    { name: 'ResourceNotFoundException' }
-  );
+  const finalPolicyResult = await awsServices.lambda().send(new GetPolicyCommand({
+    FunctionName: process.env.messageConsumer,
+  }));
+  const finalPolicy = JSON.parse(finalPolicyResult.Policy);
+  const targetSid = getSnsTriggerPermissionId(ruleWithTrigger);
+  const permissionStillExists = finalPolicy.Statement.some((s) => s.Sid === targetSid);
+  t.false(permissionStillExists, 'The SNS trigger permission statement should have been removed');
+
   t.teardown(() => rulePgModel.delete(testKnex, newPgRule));
 });
 
@@ -1217,7 +1219,7 @@ test.serial('deleteRuleResources() removes kinesis source mappings', async (t) =
     testKnex,
   } = t.context;
 
-  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:stream/${randomId('kinesis')}`;
 
   const params = {
     rule: {
@@ -1233,7 +1235,7 @@ test.serial('deleteRuleResources() removes kinesis source mappings', async (t) =
   const kinesisRule = fakeRuleFactoryV2(params);
 
   // create rule trigger and rule
-  kinesisRule.rule.value = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis1')}`;
+  kinesisRule.rule.value = `arn:aws:kinesis:us-east-1:000000000000:stream/${randomId('kinesis1')}`;
   const ruleWithTrigger = await createRuleTrigger(kinesisRule);
   const pgRule = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, testKnex);
   await rulePgModel.create(testKnex, pgRule);
@@ -1573,7 +1575,7 @@ test('Creating a rule trigger for a onetime rule with a DISABLED state is DISABL
 });
 
 test.serial('Creating rule triggers for a kinesis type rule adds event mappings', async (t) => {
-  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:stream/${randomId('kinesis')}`;
   const kinesisRule = fakeRuleFactoryV2({
     workflow,
     state: 'ENABLED',
@@ -1600,7 +1602,7 @@ test.serial('Creating rule triggers for a kinesis type rule adds event mappings'
 });
 
 test.serial('Repeatedly creating rule triggers for a kinesis type rule utilizes the same event mappings', async (t) => {
-  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:stream/${randomId('kinesis')}`;
   const kinesisRule = fakeRuleFactoryV2({
     workflow,
     state: 'ENABLED',
@@ -1629,7 +1631,7 @@ test.serial('Repeatedly creating rule triggers for a kinesis type rule utilizes 
 });
 
 test.serial('Recreating rule triggers for a kinesis type rule over a disabled rule utilizes the same event mappings', async (t) => {
-  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:stream/${randomId('kinesis')}`;
   const kinesisRule = fakeRuleFactoryV2({
     workflow,
     state: 'ENABLED',
@@ -2117,7 +2119,7 @@ test.serial('Updating a rule trigger with an invalid rule type throws an error',
 
 // update rule resources tests
 test.serial('Updating a kinesis type rule workflow does not affect value or event source mappings', async (t) => {
-  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:stream/${randomId('kinesis')}`;
   const { testKnex } = t.context;
   const kinesisRule = fakeRuleFactoryV2({
     workflow,
@@ -2163,8 +2165,8 @@ test.serial('Updating a kinesis type rule workflow does not affect value or even
 });
 
 test.serial('Updating a kinesis type rule workflow with new arn updates event source mappings', async (t) => {
-  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
-  const updatedKinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:stream/${randomId('kinesis')}`;
+  const updatedKinesisArn = `arn:aws:kinesis:us-east-1:000000000000:stream/${randomId('kinesis')}`;
   const { testKnex } = t.context;
   const kinesisRule = fakeRuleFactoryV2({
     workflow,
