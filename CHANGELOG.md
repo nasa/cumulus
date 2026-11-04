@@ -8,16 +8,29 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [v22.4.4] 2026-11-03
 
+Please not ethat changes in `v22.4.4` may not yet be released in future versions as this is a backport and patch release on the 22.4.x series of releaes.  Updates that are included in the future will have a corresponding Changelog entry in future releases
+
 ### Fixed
 - **CUMULUS-5830**
   - Upgraded node references to patch a critical Node2Shell vulnerability in NodeJS.  Upgraded to a patched version
   - As a result of node vuln, updated the AsyncOperation container to new version 60, `cumuluss/async-operation:60`.  Users should update their reference to `async-operation` with the new version.
 
+- **CUMULUS-5660**
+  - Mitigated vulnerabilties discovered in bamboo-CI build
+
+- **CUMULUS-5677**
+  - Update several Node and Python dependencies due to Snyk findings/sercurity vulnerabilities
+
+- **CUMULUS-5271**
+  - Update zod and adding typescript Node dependencies due to Snyk findings/sercurity vulnerabilities
+
+- **CUMULUS-5765**
+  - Update package vulnerabilities (follows-redirects, certifi)
+
 ## [v22.4.3] 2026-10-02
 
 ### Fixed
-- **CUMULUS-5288**
-  - Fixed an issue where scheduled rule creation was failing due to the inclusion of the workflow template, creating a too large payload for EventBridge.  The workflow template is no longer included in the EventBridge scheduled event, and is instead pulled in by the ScheduleSF lambda at the time the event is triggered.  This large reduction in EventBridge event size will make it very unlikely for scheduled events to be too big.
+
 - **CUMULUS-5636**
   - Resolved an issue found in G2 load testing where the cmr-client library was caching an outdated token in warm lambdas.  Previously, an instance of the CMR class was cached and persisted in a warm lambda execution environment.  This cache contained the token and was only refreshed when the lambda was initially called.  This update changes so we update the token with each invocation.
   - Upgraded node-forge to ^1.4.0 to mitigate High-severity vulnerability.
