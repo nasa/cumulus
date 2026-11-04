@@ -105,7 +105,7 @@ test.before(async (t) => {
         Handler: 'index.handler',
         Runtime: 'nodejs16.x',
       }));
-      process.env[name] = lambdaCreated.FunctionName;
+      process.env[name] = lambdaCreated.FunctionArn;
     })
   );
 
@@ -547,7 +547,7 @@ test('POST creates a rule', async (t) => {
 
   newRule.rule = {
     type: 'kinesis',
-    value: `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`,
+    value: `arn:aws:kinesis:us-east-1:000000000000:stream/${randomId('kinesis')}`,
   };
 
   await collectionPgModel.create(
@@ -621,7 +621,7 @@ test.serial('post() creates Kinesis rule with trigger information in PostgreSQL'
     pgCollection,
   } = t.context;
 
-  const kinesisArn1 = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis1_')}`;
+  const kinesisArn1 = `arn:aws:kinesis:us-east-1:000000000000:stream/${randomId('kinesis1_')}`;
 
   const rule = fakeRuleFactoryV2({
     state: 'ENABLED',

@@ -93,10 +93,10 @@ echo 'Elasticsearch status is green'
 # Update Elasticsearch config to stop complaining about running out of disk space
 $docker_command "curl -XPUT 'http://127.0.0.1:9200/_cluster/settings' -d \@/$UNIT_TEST_BUILD_DIR/bamboo/elasticsearch.config"
 
-# Lambda seems to be the last service that's started up by Localstack
+# Wait for the MiniStack gateway port to accept connections
 while ! $docker_command 'nc -z 127.0.0.1 4566'; do
-  echo 'Waiting for Localstack Lambda service to start'
+  echo 'Waiting for MiniStack service to start'
   docker ps -a
   sleep 2
 done
-echo 'Localstack Lambda service is started'
+echo 'MiniStack service is started'
