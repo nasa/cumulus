@@ -92,8 +92,8 @@ export function localStackAwsClientOptions<T>(
     endpoint: getLocalstackEndpoint(serviceIdentifier),
     ...options,
     credentials: {
-      accessKeyId: 'my-access-key-id',
-      secretAccessKey: 'my-secret-access-key',
+      accessKeyId: 'test',
+      secretAccessKey: 'test',
       ...options.credentials,
     },
   };
