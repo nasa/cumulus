@@ -108,6 +108,7 @@ const unpublishGranule = async ({
         // for the update. also, `undefined` is not a valid SQL value, it
         // should be `null` instead
         cmr_link: trx.raw('DEFAULT'),
+        updated_at: new Date(),
       },
       ['*']
     );
