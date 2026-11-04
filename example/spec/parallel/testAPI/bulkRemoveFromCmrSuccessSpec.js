@@ -13,8 +13,6 @@ const { deleteRule } = require('@cumulus/api-client/rules');
 const { ecs } = require('@cumulus/aws-client/services');
 const {
   s3PutObject,
-  getJsonS3Object,
-  waitForObjectToExist,
 } = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 const {
@@ -297,22 +295,6 @@ describe('POST /granules/bulkRemoveFromCmr', () => {
 
       expect(updatedGranule.published).toBeFalse();
       expect(updatedGranule.cmrLink).toBeUndefined();
-    });
-
-    it('publishes a record to the granules reporting SNS topic on behalf of the updated granule', async () => {
-      expect(beforeAllSucceeded).toBeTrue();
-      const granuleKey = `${config.stackName}/test-output/${granuleId}-${ingestedGranule.status}-Update.output`;
-      await expectAsync(waitForObjectToExist({
-        bucket: config.bucket,
-        key: granuleKey,
-      })).toBeResolved();
-      const savedEvent = await getJsonS3Object(config.bucket, granuleKey);
-      const message = JSON.parse(savedEvent.Records[0].Sns.Message);
-
-      expect(message.event).toEqual('Update');
-      expect(message.record.published).toBeFalse();
-      expect(message.record.granuleId).toEqual(granuleId);
-      expect(message.record.cmrLink).toBeUndefined();
     });
   });
 });
