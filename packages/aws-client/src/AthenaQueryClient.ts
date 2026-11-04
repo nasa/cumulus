@@ -72,7 +72,7 @@ export class AthenaQueryClient {
    * @param sqlQuery - The SQL query string
    * @returns QueryExecutionId - unique ID of the query run from request
    */
-  private async startQueryExecution(sqlQuery: string) {
+  private async startQueryExecution(sqlQuery: string): Promise<string> {
     const queryExecutionInput = {
       QueryString: sqlQuery,
       QueryExecutionContext: {
@@ -101,7 +101,7 @@ export class AthenaQueryClient {
    * @param queryExecutionId - unique ID of the query run from request
    * @returns Array of Objects
    */
-  private async waitForQueryAndGetData(queryExecutionId: string) {
+  private async waitForQueryAndGetData(queryExecutionId: string): Promise<MappedData> {
     const getQuery = async () => {
       const response = await this.client.send(
         new GetQueryExecutionCommand({ QueryExecutionId: queryExecutionId })
@@ -134,7 +134,7 @@ export class AthenaQueryClient {
    * @param QueryExecutionId - Id of a query which we sent to Athena
    * @returns Array of Objects
    */
-  private async getQueryResults(queryExecutionId: string) {
+  private async getQueryResults(queryExecutionId: string): Promise<MappedData> {
     const data = [] as MappedData;
     let nextToken = '';
     let response: GetQueryResultsCommandOutput;
