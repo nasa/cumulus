@@ -14,9 +14,9 @@ import {
   ResultConfiguration,
   ResultReuseConfiguration,
   GetQueryResultsCommandOutput,
+  ColumnInfo,
 } from '@aws-sdk/client-athena';
 
-import isNil from 'lodash/isNil';
 import Logger from '@cumulus/logger';
 
 const log = new Logger({ sender: 'aws-client/AthenaQueryClient' });
@@ -30,7 +30,7 @@ interface AthenaQueryClientConfig {
   resultReuseConfiguration?: ResultReuseConfiguration;
 }
 
-type MappedObject = { [index: string]: string };
+type MappedObject = { [index: string]: string | undefined };
 type MappedData = Array<MappedObject>;
 
 export class AthenaQueryClient {
@@ -135,8 +135,8 @@ export class AthenaQueryClient {
    * @returns Array of Objects
    */
   private async getQueryResults(queryExecutionId: string): Promise<MappedData> {
-    const data = [] as MappedData;
-    let nextToken = '';
+    const resultData: MappedData = [];
+    let nextToken: string | undefined;
     let response: GetQueryResultsCommandOutput;
     let firstResponse = true;
     do {
@@ -145,12 +145,11 @@ export class AthenaQueryClient {
         QueryExecutionId: queryExecutionId,
         NextToken: nextToken,
       }));
-      nextToken = response?.NextToken?.toString() || '';
-      // eslint-disable-next-line no-await-in-loop
-      data.push(...this.formatResultSet(response.ResultSet, firstResponse));
+      nextToken = response.NextToken;
+      resultData.push(...this.formatResultSet(response.ResultSet, firstResponse));
       firstResponse = false;
-    } while (nextToken !== '');
-    return data;
+    } while (nextToken);
+    return resultData;
   }
 
   /**
@@ -161,23 +160,17 @@ export class AthenaQueryClient {
    */
   private formatResultSet(
     data: ResultSet | undefined,
-    firstResponse?: boolean
+    firstResponse: boolean = false
   ): MappedData {
     const mappedData: MappedData = [];
-    if (data === undefined || data.Rows === undefined || data.Rows.length === 0) return mappedData;
-    const columns = Object.keys((data.ResultSetMetadata?.ColumnInfo ?? [])[0]);
-
-    data.Rows.forEach((item, i) => {
+    const columnInfo: ColumnInfo[] = data?.ResultSetMetadata?.ColumnInfo || [];
+    data?.Rows?.forEach((item, i) => {
       if (i === 0 && firstResponse) return;
       if (!item.Data) return;
 
       const mappedObject: MappedObject = {};
       item.Data.forEach((datum, j) => {
-        if (isNil(datum.VarCharValue)) {
-          mappedObject[columns[j]] = '';
-        } else {
-          mappedObject[columns[j]] = datum.VarCharValue;
-        }
+        mappedObject[columnInfo[j].Name || ''] = datum.VarCharValue;
       });
       mappedData.push(mappedObject);
     });

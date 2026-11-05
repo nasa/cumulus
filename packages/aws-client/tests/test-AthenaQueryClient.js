@@ -83,11 +83,24 @@ test.serial('formatResultSet returns data in the expected format', (t) => {
       ResultSetMetadata: {
         ColumnInfo: [
           {
-            bucket: 'string',
-            key: 'string',
-            version_id: 'string',
-            is_latest: 'boolean',
-            is_delete_marker: 'boolean',
+            Name: 'bucket',
+            Type: 'string',
+          },
+          {
+            Name: 'key',
+            Type: 'string',
+          },
+          {
+            Name: 'version_id',
+            Type: 'string',
+          },
+          {
+            Name: 'is_latest',
+            Type: 'boolean',
+          },
+          {
+            Name: 'is_delete_marker',
+            Type: 'boolean',
           },
         ],
       },
@@ -102,7 +115,7 @@ test.serial('formatResultSet returns data in the expected format', (t) => {
         { Data: [
           { VarCharValue: testBucket },
           { VarCharValue: testKey },
-          {},
+          { VarCharValue: '' },
           { VarCharValue: true },
           { VarCharValue: false },
         ] },
@@ -266,11 +279,24 @@ test.serial('query() initiates a query, waits for it to finish, and returns the 
       ResultSetMetadata: {
         ColumnInfo: [
           {
-            bucket: 'string',
-            key: 'string',
-            version_id: 'string',
-            is_latest: 'boolean',
-            is_delete_marker: 'boolean',
+            Name: 'bucket',
+            Type: 'string',
+          },
+          {
+            Name: 'key',
+            Type: 'string',
+          },
+          {
+            Name: 'version_id',
+            Type: 'string',
+          },
+          {
+            Name: 'is_latest',
+            Type: 'boolean',
+          },
+          {
+            Name: 'is_delete_marker',
+            Type: 'boolean',
           },
         ],
       },
@@ -288,7 +314,7 @@ test.serial('query() initiates a query, waits for it to finish, and returns the 
           Data: [
             { VarCharValue: testBucket },
             { VarCharValue: testKey },
-            {},
+            { VarCharValue: '' },
             { VarCharValue: true },
             { VarCharValue: false },
           ],
@@ -660,11 +686,24 @@ test.serial('query() collects data while NextToken is not null and returns the m
       ResultSetMetadata: {
         ColumnInfo: [
           {
-            bucket: 'string',
-            key: 'string',
-            version_id: 'string',
-            is_latest: 'boolean',
-            is_delete_marker: 'boolean',
+            Name: 'bucket',
+            Type: 'string',
+          },
+          {
+            Name: 'key',
+            Type: 'string',
+          },
+          {
+            Name: 'version_id',
+            Type: 'string',
+          },
+          {
+            Name: 'is_latest',
+            Type: 'boolean',
+          },
+          {
+            Name: 'is_delete_marker',
+            Type: 'boolean',
           },
         ],
       },
@@ -682,7 +721,7 @@ test.serial('query() collects data while NextToken is not null and returns the m
           Data: [
             { VarCharValue: testBucket },
             { VarCharValue: testKey1 },
-            {},
+            { VarCharValue: '' },
             { VarCharValue: true },
             { VarCharValue: true },
           ],
@@ -691,7 +730,7 @@ test.serial('query() collects data while NextToken is not null and returns the m
           Data: [
             { VarCharValue: testBucket },
             { VarCharValue: testKey2 },
-            {},
+            { VarCharValue: '' },
             { VarCharValue: false },
             { VarCharValue: false },
           ],
@@ -707,11 +746,24 @@ test.serial('query() collects data while NextToken is not null and returns the m
       ResultSetMetadata: {
         ColumnInfo: [
           {
-            bucket: 'string',
-            key: 'string',
-            version_id: 'string',
-            is_latest: 'boolean',
-            is_delete_marker: 'boolean',
+            Name: 'bucket',
+            Type: 'string',
+          },
+          {
+            Name: 'key',
+            Type: 'string',
+          },
+          {
+            Name: 'version_id',
+            Type: 'string',
+          },
+          {
+            Name: 'is_latest',
+            Type: 'boolean',
+          },
+          {
+            Name: 'is_delete_marker',
+            Type: 'boolean',
           },
         ],
       },
@@ -720,7 +772,7 @@ test.serial('query() collects data while NextToken is not null and returns the m
           Data: [
             { VarCharValue: testBucket },
             { VarCharValue: testKey3 },
-            {},
+            { VarCharValue: '' },
             { VarCharValue: true },
             { VarCharValue: true },
           ],
@@ -729,7 +781,7 @@ test.serial('query() collects data while NextToken is not null and returns the m
           Data: [
             { VarCharValue: testBucket },
             { VarCharValue: testKey4 },
-            {},
+            { VarCharValue: '' },
             { VarCharValue: false },
             { VarCharValue: false },
           ],
@@ -744,11 +796,24 @@ test.serial('query() collects data while NextToken is not null and returns the m
       ResultSetMetadata: {
         ColumnInfo: [
           {
-            bucket: 'string',
-            key: 'string',
-            version_id: 'string',
-            is_latest: 'boolean',
-            is_delete_marker: 'boolean',
+            Name: 'bucket',
+            Type: 'string',
+          },
+          {
+            Name: 'key',
+            Type: 'string',
+          },
+          {
+            Name: 'version_id',
+            Type: 'string',
+          },
+          {
+            Name: 'is_latest',
+            Type: 'boolean',
+          },
+          {
+            Name: 'is_delete_marker',
+            Type: 'boolean',
           },
         ],
       },
@@ -757,7 +822,7 @@ test.serial('query() collects data while NextToken is not null and returns the m
           Data: [
             { VarCharValue: testBucket },
             { VarCharValue: testKey5 },
-            {},
+            { VarCharValue: '' },
             { VarCharValue: true },
             { VarCharValue: true },
           ],
@@ -766,7 +831,7 @@ test.serial('query() collects data while NextToken is not null and returns the m
           Data: [
             { VarCharValue: testBucket },
             { VarCharValue: testKey6 },
-            {},
+            { VarCharValue: '' },
             { VarCharValue: false },
             { VarCharValue: false },
           ],
