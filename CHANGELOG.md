@@ -13,6 +13,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-5830**
   - Upgraded node references to patch the critical Node2Shell vulnerability in NodeJS.  Upgraded to a patched version
   - As a result of node vuln, updated the AsyncOperation container to new version 61, `cumuluss/async-operation:61`.  Users should update their reference to `async-operation` with the new version.
+- **CUMULUS-5859**
+  - Fixes unit test failures resulting from upgrading ajv 6 to 8.
+  - strict: false matches how @cumulus/api configures ajv 8, and keeps ajv 6's behaviour of ignoring unknown keywords in task schemas.
 
 ## [v21.3.5] 2026-06-02
 
