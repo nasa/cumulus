@@ -15,6 +15,10 @@ Please not ethat changes in `v22.4.4` may not yet be released in future versions
   - Upgraded node references to patch a critical Node2Shell vulnerability in NodeJS.  Upgraded to a patched version
   - As a result of node vuln, updated the AsyncOperation container to new version 60, `cumuluss/async-operation:60`.  Users should update their reference to `async-operation` with the new version.
 
+- **CUMULUS-5859**
+  - Fixes unit test failures resulting from upgrading ajv 6 to 8.
+  - strict: false matches how @cumulus/api configures ajv 8, and keeps ajv 6's behaviour of ignoring unknown keywords in task schemas.
+
 - **CUMULUS-5660**
   - Mitigated vulnerabilties discovered in bamboo-CI build
 
