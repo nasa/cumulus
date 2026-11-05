@@ -1,0 +1,36 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "plugins": ["./tools/nx/task-schemas-plugin.js"],
+  "namedInputs": {
+    "sharedGlobals": [
+      "{workspaceRoot}/tsconfig.json",
+      "{workspaceRoot}/tsconfig.base.json"
+    ],
+    "default": [
+      "{projectRoot}/**/*",
+      "!{projectRoot}/dist/**/*",
+      "!{projectRoot}/.generated/**/*",
+      "!{projectRoot}/.venv/**/*",
+      "!{projectRoot}/**/__pycache__/**/*",
+      "!{projectRoot}/.pytest_cache/**/*",
+      "!{projectRoot}/.ruff_cache/**/*",
+      "!{projectRoot}/.mypy_cache/**/*",
+      "sharedGlobals"
+    ]
+  },
+  "targetDefaults": {
+    "build": {
+      "dependsOn": ["^build", "schemas"],
+      "inputs": ["default", "^default", "{projectRoot}/.generated/schemas/**/*"],
+      "outputs": ["{projectRoot}/dist"],
+      "cache": true
+    },
+    "package": {
+      "dependsOn": ["build"],
+      "inputs": ["default", "^default"],
+      "outputs": ["{projectRoot}/dist"],
+      "cache": true
+    }
+  },
+  "analytics": false
+}
