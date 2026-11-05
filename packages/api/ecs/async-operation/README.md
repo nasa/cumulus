@@ -75,3 +75,14 @@ This step should also be done as part of the release process. Once you have buil
 to match the new `<build-number>`.
 
 You should also update the `async_operation_image_version` in [`variables.tf` for our example Cumulus deployment](../../../../example/cumulus-tf/variables.tf) that is used to pull the images from ECR.
+
+## Async Operation Statuses
+Async Operations have a status that is output and stored in the Postgres database and can be viewed there or via the Cumulus Dashboard.  These status are as follows:
+
+`RUNNER_FAILED`: Occurs if the parent ECS runner erors out due to a failure to fetch the lambda function or the ECS runner failed to fetch the lambda payload.
+
+`RUNNING`: Occurs when an ECS async operation was successfully started.
+
+`SUCCEEDED`: Occurs whenever a the lambda task completes regardless of lambda task output.  This can occur even if the output of the lambda contains error messages that were output gracefully by the lambda task, like if a bulk operation coplete with errors in the output.  The wrapper completed execution and the 'SUCCEEDED' status is written.
+
+`TASK_FAILED` : When the lambda task being run inside the ECS task errors out or event payload fetch fails.
