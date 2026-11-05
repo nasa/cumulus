@@ -1,13 +1,13 @@
 {
   "name": "@cumulus/launchpad-auth",
-  "version": "22.4.3",
+  "version": "22.4.4",
   "description": "Utilities for authentication with Launchpad",
   "keywords": [
     "CUMULUS",
     "NASA"
   ],
   "engines": {
-    "node": ">=22.21.1"
+    "node": "^22.23.4"
   },
   "publishConfig": {
     "access": "public"
@@ -40,8 +40,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "22.4.3",
-    "@cumulus/logger": "22.4.3",
+    "@cumulus/aws-client": "22.4.4",
+    "@cumulus/logger": "22.4.4",
     "got": "^11.8.5",
     "lodash": "^4.18.1",
     "p-retry": "^4.2.0",

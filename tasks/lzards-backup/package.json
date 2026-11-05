@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/lzards-backup",
-  "version": "22.4.3",
+  "version": "22.4.4",
   "description": "Run LZARDS backup",
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
@@ -12,7 +12,7 @@
     "directory": "tasks/lzards-backup"
   },
   "engines": {
-    "node": ">=22.21.1"
+    "node": "^22.23.4"
   },
   "main": "dist/index.js",
   "directories": {
@@ -46,20 +46,20 @@
     "failFast": true
   },
   "dependencies": {
-    "@cumulus/api-client": "22.4.3",
-    "@cumulus/aws-client": "22.4.3",
-    "@cumulus/common": "22.4.3",
+    "@cumulus/api-client": "22.4.4",
+    "@cumulus/aws-client": "22.4.4",
+    "@cumulus/common": "22.4.4",
     "@cumulus/cumulus-message-adapter-js": "2.4.0",
-    "@cumulus/db": "22.4.3",
-    "@cumulus/distribution-utils": "22.4.3",
-    "@cumulus/launchpad-auth": "22.4.3",
-    "@cumulus/logger": "22.4.3",
-    "@cumulus/lzards-api-client": "22.4.3",
-    "@cumulus/message": "22.4.3",
+    "@cumulus/db": "22.4.4",
+    "@cumulus/distribution-utils": "22.4.4",
+    "@cumulus/launchpad-auth": "22.4.4",
+    "@cumulus/logger": "22.4.4",
+    "@cumulus/lzards-api-client": "22.4.4",
+    "@cumulus/message": "22.4.4",
     "got": "^11.8.5"
   },
   "devDependencies": {
-    "@cumulus/schemas": "22.4.3",
-    "@cumulus/types": "22.4.3"
+    "@cumulus/schemas": "22.4.4",
+    "@cumulus/types": "22.4.4"
   }
 }

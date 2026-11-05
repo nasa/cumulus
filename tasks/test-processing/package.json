@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/test-processing",
-  "version": "22.4.3",
+  "version": "22.4.4",
   "description": "Fake processing task used for integration tests",
   "main": "index.js",
   "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/test-processing",
@@ -13,7 +13,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=22.21.1"
+    "node": "^22.23.4"
   },
   "scripts": {
     "build": "../../node_modules/.bin/webpack",
@@ -24,8 +24,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "22.4.3",
+    "@cumulus/aws-client": "22.4.4",
     "@cumulus/cumulus-message-adapter-js": "2.4.0",
-    "@cumulus/integration-tests": "22.4.3"
+    "@cumulus/integration-tests": "22.4.4"
   }
 }

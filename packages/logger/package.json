@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/logger",
-  "version": "22.4.3",
+  "version": "22.4.4",
   "description": "A log library for use on Cumulus",
   "keywords": [
     "GIBS",
@@ -8,7 +8,7 @@
     "NASA"
   ],
   "engines": {
-    "node": ">=22.21.1"
+    "node": "^22.23.4"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
