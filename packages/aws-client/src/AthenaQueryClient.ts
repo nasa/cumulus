@@ -114,7 +114,10 @@ export class AthenaQueryClient {
       if (state === QueryExecutionState.QUEUED || state === QueryExecutionState.RUNNING) {
         throw new Error(`Query ${queryExecutionId} is still processing...`);
       }
-      throw new pRetry.AbortError(`Unable to retrieve data from query with status of ${state}`);
+      const reason = response.QueryExecution?.Status?.StateChangeReason || 'No reason provided';
+      const errorMessage = `Unable to retrieve data from query ${queryExecutionId}. Status: ${state}. Reason: ${reason}`;
+      log.debug(errorMessage);
+      throw new pRetry.AbortError(errorMessage);
     };
 
     return await pRetry(getQuery, {

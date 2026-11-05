@@ -442,7 +442,7 @@ test.serial('query() throws when getQueryExecution returns with a CANCELLED stat
 
   await t.throwsAsync(
     t.context.client.query(getDataQuery),
-    { message: 'Unable to retrieve data from query with status of CANCELLED' }
+    { message: 'Unable to retrieve data from query 3456-qrst-7890-uvwx. Status: CANCELLED. Reason: No reason provided' }
   );
 });
 
@@ -554,7 +554,7 @@ test.serial('query() throws when getQueryExecution returns with a FAILED state',
 
   await t.throwsAsync(
     t.context.client.query(getDataQuery),
-    { message: 'Unable to retrieve data from query with status of FAILED' }
+    { message: 'Unable to retrieve data from query 3456-qrst-7890-uvwx. Status: FAILED. Reason: some failure reason' }
   );
 });
 
