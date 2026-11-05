@@ -38,6 +38,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-5660**
   - Mitigated vulnerabilties discovered in bamboo-CI build.
   - Added audit-ci.json whitelist for https://github.com/advisories/GHSA-vfj7-8cjw-p6xm vulnerability where no safer package version is available.
+- **CUMULUS-5859**
+  - Fixes unit test failures resulting from upgrading ajv 6 to 8.
+  - strict: false matches how @cumulus/api configures ajv 8, and keeps ajv 6's behaviour of ignoring unknown keywords in task schemas.
 
 ### Added
 
