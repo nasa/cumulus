@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-4954**
+  - Added `AthenaQueryClient` to `packages/aws-client` that can interact with and run queries in Athena.
+
 ### Changed
 
 - **CUMULUS-5307**
@@ -41,8 +46,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- **CUMULUS-4954**
-  - Added `AthenaQueryClient` to `packages/aws-client` that can interact with and run queries in Athena.
 - **CUMULUS-5443**
   - Adding integration test to validate the ability to use cross account SQS queues to trigger workflows.
     Due to infra complexity of cross account targeting and multiple lambdas that would poll the same cross-account

@@ -131,7 +131,7 @@ export class AthenaQueryClient {
   /**
    * Get query execution result
    *
-   * @param QueryExecutionId - Id of a query which we sent to Athena
+   * @param queryExecutionId - Id of a query which we sent to Athena
    * @returns Array of Objects
    */
   private async getQueryResults(queryExecutionId: string): Promise<MappedData> {
@@ -155,7 +155,8 @@ export class AthenaQueryClient {
   /**
    * Map data returned from Athena in rows, with each row an object with columns/keys and values.
    *
-   * @param - Data in rows returned from Athena Query, in the ResultSet format
+   * @param data - Data in rows returned from Athena Query, in the ResultSet format
+   * @param firstResponse - denotes if data is from first response
    * @returns Array of rows of data as MappedObjects <columnName: stringValue>
    */
   private formatResultSet(
