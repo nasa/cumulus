@@ -25,6 +25,9 @@
       "outputs": ["{projectRoot}/dist"],
       "cache": true
     },
+    "test": {
+      "dependsOn": ["build"]
+    },
     "package": {
       "dependsOn": ["build"],
       "inputs": ["default", "^default"],

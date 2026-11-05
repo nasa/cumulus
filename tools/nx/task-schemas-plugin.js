@@ -7,9 +7,8 @@ const createNodesV2 = [
     files.flatMap((file) => {
       const root = dirname(file);
       const pkg = JSON.parse(readFileSync(join(context.workspaceRoot, file), 'utf-8'));
-      const usesGenerator = Object.values(pkg.scripts || {})
-        .some((s) => s.includes('generate-task-schemas'));
-      if (!usesGenerator || !existsSync(join(context.workspaceRoot, root, 'schemas'))) {
+      const consumesGenerated = ((pkg.scripts || {}).build || '').includes('.generated/schemas');
+      if (!consumesGenerated || !existsSync(join(context.workspaceRoot, root, 'schemas'))) {
         return [];
       }
       return [[file, {
