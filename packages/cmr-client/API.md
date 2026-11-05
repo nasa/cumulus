@@ -25,7 +25,7 @@ CMR search, without loading them all into memory at once.  Handles paging.</p>
 ## CMR
 A class to simplify requests to the CMR
 
-**Kind**: global class  
+**Kind**: global class
 
 * [CMR](#CMR)
     * [new CMR()](#new_CMR_new)
@@ -55,7 +55,7 @@ A class to simplify requests to the CMR
 ### new CMR()
 The constructor for the CMR class
 
-**Example**  
+**Example**
 ```js
 const { CMR } = require('@cumulus/cmr-client');
 
@@ -83,21 +83,21 @@ Applies a freshly-fetched token to this instance, so a warm singleton doesn't
 keep using a token that's since been refreshed elsewhere (e.g. in S3). Other
 config fields are static task config and are left as set at construction time.
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
 <a name="CMR+getCmrPassword"></a>
 
 ### cmrClient.getCmrPassword() ⇒ <code>Promise.&lt;string&gt;</code>
 Get the CMR password, from the AWS secret if set, else return the password
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Promise.&lt;string&gt;</code> - - the CMR password  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Promise.&lt;string&gt;</code> - - the CMR password
 <a name="CMR+getToken"></a>
 
 ### cmrClient.getToken() ⇒ <code>Promise.&lt;(string\|undefined)&gt;</code>
 The method for getting the token
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Promise.&lt;(string\|undefined)&gt;</code> - the token  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Promise.&lt;(string\|undefined)&gt;</code> - the token
 <a name="CMR+checkRefreshLaunchpadToken"></a>
 
 ### cmrClient.checkRefreshLaunchpadToken() ⇒ <code>Promise.&lt;void&gt;</code>
@@ -106,8 +106,8 @@ This function is called when a 401 launchpad auth error is encountered when usin
 token for cmr calls. It calls refreshLaunchpadToken and stores the refreshPromise
 so other calls that want to get a launchpad token know that a process is already doing that.
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Promise.&lt;void&gt;</code> - refresh promise  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Promise.&lt;void&gt;</code> - refresh promise
 <a name="CMR+refreshLaunchpadToken"></a>
 
 ### cmrClient.refreshLaunchpadToken() ⇒ <code>Promise.&lt;void&gt;</code>
@@ -116,8 +116,8 @@ calls getValidLaunchpadToken which creates a lock file in S3 at the token's loca
 other processes that a token recreation is in progress, fetches a new token from launchpad,
 stores it as a part of the CMR singleton class, and then uses that one for calls
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Promise.&lt;void&gt;</code> - refresh promise  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Promise.&lt;void&gt;</code> - refresh promise
 <a name="CMR+withCmrLaunchpadTokenRefreshRetry"></a>
 
 ### cmrClient.withCmrLaunchpadTokenRefreshRetry(operation, operationDescription) ⇒ <code>Promise</code>
@@ -128,8 +128,8 @@ Retries on any error. Regardless of how the operation fails, the
 final error is wrapped in a CMRCallFailedError with the original error
 preserved as `cause`.
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Promise</code> - - result of CMR function call  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Promise</code> - - result of CMR function call
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -141,8 +141,8 @@ preserved as `cause`.
 ### cmrClient.getWriteHeaders(params) ⇒ <code>Object</code>
 Return object containing CMR request headers for PUT / POST / DELETE
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Object</code> - CMR headers object  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Object</code> - CMR headers object
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -156,8 +156,8 @@ Return object containing CMR request headers for PUT / POST / DELETE
 ### cmrClient.getReadHeaders(params) ⇒ <code>Object</code>
 Return object containing CMR request headers for GETs
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Object</code> - CMR headers object  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Object</code> - CMR headers object
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -169,8 +169,8 @@ Return object containing CMR request headers for GETs
 ### cmrClient.ingestCollection(xml, provider) ⇒ <code>Promise.&lt;Object&gt;</code>
 Adds a collection record to the CMR
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -182,8 +182,8 @@ Adds a collection record to the CMR
 ### cmrClient.ingestGranule(xml, provider, cmrRevisionId) ⇒ <code>Promise.&lt;Object&gt;</code>
 Adds a granule record to the CMR
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -196,8 +196,8 @@ Adds a granule record to the CMR
 ### cmrClient.ingestUMMGranule(ummgMetadata, provider, cmrRevisionId) ⇒ <code>Promise.&lt;Object&gt;</code>
 Adds/Updates UMMG json metadata in the CMR
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - to the CMR response object.  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - to the CMR response object.
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -210,8 +210,8 @@ Adds/Updates UMMG json metadata in the CMR
 ### cmrClient.deleteCollection(datasetID, provider) ⇒ <code>Promise.&lt;Object&gt;</code>
 Deletes a collection record from the CMR
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -223,8 +223,8 @@ Deletes a collection record from the CMR
 ### cmrClient.deleteGranule(granuleUR, provider) ⇒ <code>Promise.&lt;Object&gt;</code>
 Deletes a granule record from the CMR
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -236,8 +236,8 @@ Deletes a granule record from the CMR
 ### cmrClient.searchCollections(params, provider, [format]) ⇒ <code>Promise.&lt;Object&gt;</code>
 Search in collections
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -250,8 +250,8 @@ Search in collections
 ### cmrClient.searchGranules(params, provider, [format]) ⇒ <code>Promise.&lt;Object&gt;</code>
 Search in granules
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Promise.&lt;Object&gt;</code> - the CMR response
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -264,8 +264,8 @@ Search in granules
 ### cmrClient.getGranuleMetadata(cmrLink) ⇒ <code>Object</code>
 Get the granule metadata from CMR using the cmrLink
 
-**Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Object</code> - - metadata as a JS object, null if not found  
+**Kind**: instance method of [<code>CMR</code>](#CMR)
+**Returns**: <code>Object</code> - - metadata as a JS object, null if not found
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -277,22 +277,22 @@ Get the granule metadata from CMR using the cmrLink
 Creates a new CMR singleton instance if one does not already exist; if one
 does, refreshes it with the given params (e.g. a freshly-fetched token) and returns it
 
-**Kind**: static method of [<code>CMR</code>](#CMR)  
-**Returns**: [<code>CMR</code>](#CMR) - - the existing or newly made CMR instance  
+**Kind**: static method of [<code>CMR</code>](#CMR)
+**Returns**: [<code>CMR</code>](#CMR) - - the existing or newly made CMR instance
 <a name="CMR.resetInstance"></a>
 
 ### CMR.resetInstance()
 Resets the CMR singleton instance to undefined, only used for testing with
 suites that create multiple instances in sequence.
 
-**Kind**: static method of [<code>CMR</code>](#CMR)  
+**Kind**: static method of [<code>CMR</code>](#CMR)
 <a name="CMRSearchConceptQueue"></a>
 
 ## CMRSearchConceptQueue
 A class to efficiently list all of the concepts (collections/granules) from
 CMR search, without loading them all into memory at once.  Handles paging.
 
-**Kind**: global class  
+**Kind**: global class
 
 * [CMRSearchConceptQueue](#CMRSearchConceptQueue)
     * [new CMRSearchConceptQueue(params)](#new_CMRSearchConceptQueue_new)
@@ -313,7 +313,7 @@ The constructor for the CMRSearchConceptQueue class
 | [params.searchParams] | <code>URLSearchParams</code> | <code>{}</code> | the search parameters |
 | params.format | <code>string</code> |  | the result format |
 
-**Example**  
+**Example**
 ```js
 const { CMRSearchConceptQueue } = require('@cumulus/cmr-client');
 
@@ -333,7 +333,7 @@ View the next item in the queue
 This does not remove the object from the queue.  When there are no more
 items in the queue, returns 'null'.
 
-**Kind**: instance method of [<code>CMRSearchConceptQueue</code>](#CMRSearchConceptQueue)  
+**Kind**: instance method of [<code>CMRSearchConceptQueue</code>](#CMRSearchConceptQueue)
 <a name="CMRSearchConceptQueue+shift"></a>
 
 ### cmrSearchConceptQueue.shift()
@@ -341,13 +341,13 @@ Remove the next item from the queue
 
 When there are no more items in the queue, returns `null`.
 
-**Kind**: instance method of [<code>CMRSearchConceptQueue</code>](#CMRSearchConceptQueue)  
+**Kind**: instance method of [<code>CMRSearchConceptQueue</code>](#CMRSearchConceptQueue)
 <a name="providerParams"></a>
 
 ## providerParams()
 Shim to correctly add a default provider_short_name to the input searchParams
 
-**Kind**: global function  
+**Kind**: global function
 
 ---
 
