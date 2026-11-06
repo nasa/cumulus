@@ -150,7 +150,7 @@ async function addGranules(granules, knexClient) {
         executionCreatedAt,
       });
 
-      if (newGranule.files.length > 0) {
+      if (newGranule.files?.length > 0) {
         await filePgModel.insert(knex, newGranule.files.map((file) => {
           const translatedFile = translateApiFiletoPostgresFile(file);
           translatedFile.granule_cumulus_id = upsertedGranule[0].cumulus_id;
