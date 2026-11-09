@@ -69,6 +69,31 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-5615**
   - Removed deprecated documentation. Cumulus Template Deploy is no longer supported and mentions have been noted appropriately.
 
+## [v22.4.4] 2026-11-03
+
+Please note that changes in `v22.4.4` may not yet be released in future versions as this is a backport and patch release on the 22.4.x series of releaes.  Updates that are included in the future will have a corresponding Changelog entry in future releases
+
+### Fixed
+- **CUMULUS-5830**
+  - Upgraded node references to patch a critical Node2Shell vulnerability in NodeJS.  Upgraded to a patched version
+  - As a result of node vuln, updated the AsyncOperation container to new version 60, `cumuluss/async-operation:60`.  Users should update their reference to `async-operation` with the new version.
+
+- **CUMULUS-5859**
+  - Fixes unit test failures resulting from upgrading ajv 6 to 8.
+  - strict: false matches how @cumulus/api configures ajv 8, and keeps ajv 6's behaviour of ignoring unknown keywords in task schemas.
+
+- **CUMULUS-5660**
+  - Mitigated vulnerabilties discovered in bamboo-CI build
+
+- **CUMULUS-5677**
+  - Update several Node and Python dependencies due to Snyk findings/sercurity vulnerabilities
+
+- **CUMULUS-5271**
+  - Update zod and adding typescript Node dependencies due to Snyk findings/sercurity vulnerabilities
+
+- **CUMULUS-5765**
+  - Update package vulnerabilities (follows-redirects, certifi)
+
 ## [v22.4.3] 2026-10-02
 
 ### Fixed
@@ -10183,7 +10208,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v22.4.3...HEAD
+[Unreleased]: https://github.com/nasa/cumulus/compare/v22.4.4...HEAD
+[v22.4.4]: https://github.com/nasa/cumulus/compare/v22.4.3...v22.4.4
 [v22.4.3]: https://github.com/nasa/cumulus/compare/v22.4.2...v22.4.3
 [v22.4.2]: https://github.com/nasa/cumulus/compare/v22.4.1...v22.4.2
 [v22.4.1]: https://github.com/nasa/cumulus/compare/v22.4.0...v22.4.1
