@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **CUMULUS-4954**
+  - Added `AthenaQueryClient` to `packages/aws-client` that can interact with and run queries in Athena.
+
 ### Changed
 
 - **CUMULUS-5307**
