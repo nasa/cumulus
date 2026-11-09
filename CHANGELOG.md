@@ -13,6 +13,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-5839**
+  - Removed the unused backup and restore commands from `@cumulus/api/bin/cli.js`.
+
+### Fixed
+
 - **CUMULUS-5830**
   - Upgraded node references to patch the critical Node2Shell vulnerability in NodeJS.  Upgraded to a patched version
   - As a result of node vuln, updated the AsyncOperation container to new version 60, `cumuluss/async-operation:60`.  Users should update their reference to `async-operation` with the new version.
