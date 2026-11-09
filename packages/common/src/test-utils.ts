@@ -78,7 +78,7 @@ async function validateJSON(
 ) {
   const schemaName = path.basename(schemaFilename).split('.')[0];
   const schema = await fs.readFile(schemaFilename, 'utf8').then(JSON.parse);
-  const ajv = new Ajv();
+  const ajv = new Ajv({ strict: false });
   const valid = <boolean>ajv.validate(schema, data);
   if (!valid) {
     const message = `${schemaName} validation failed: ${ajv.errorsText()}`;
