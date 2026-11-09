@@ -8,6 +8,9 @@ For the full documentation of the API see <https://nasa.github.io/cumulus-api>.
 
 ## Development
 
+Local infrastructure emulation is powered by an emulated AWS environment (such as MiniStack) along
+with other local services (such as postgres) for the configuration steps detailed below.
+
 ### Running the API locally
 
 To run the API locally using Localstack for AWS services without Earthdata authentication required:
@@ -79,16 +82,8 @@ A command line interface is available to provide some additional API functionali
 
 ## Running Tests
 
-Running tests for message-consumer depends on localstack. Once you have installed localstack, start it:
-
 ```bash
-localstack start
-```
-
-Then you can run tests locally via:
-
-```bash
-LOCALSTACK_HOST=localhost IS_LOCAL=true npm run test
+  npm run test
 ```
 
 ## About Cumulus

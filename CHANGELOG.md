@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **CUMULUS-5307**
+  - Migrated from LocalStack to MiniStack 1.5.34-full
+
+### Fixed
+
+- **CUMULUS-5839**
+  - Removed the unused backup and restore commands from `@cumulus/api/bin/cli.js`.
+
 ## [v22.5.0] 2026-11-03
 
 ### Fixed
