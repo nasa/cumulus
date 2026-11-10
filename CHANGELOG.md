@@ -11,6 +11,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-5307**
   - Migrated from LocalStack to MiniStack 1.5.34-full
 
+- **CUMULUS-5733**
+  - Adding documentation explaining each async_operation statuses
+
 ### Fixed
 
 - **CUMULUS-5839**
