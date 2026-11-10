@@ -13,6 +13,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-5690**
+  - Renamed folder version-22.5.0 to version-v22.5.0 to be consistent with other versions under website/versioned_docs directory.
+
 - **CUMULUS-5307**
   - Migrated from LocalStack to MiniStack 1.5.34-full
 
