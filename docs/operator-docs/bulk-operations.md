@@ -88,3 +88,15 @@ The [Cumulus API documentation](https://nasa.github.io/cumulus-api/#list-async-o
 The Cumulus Dashboard also includes an Operations monitoring page, where operations and their status are visible:
 
 ![Screenshot of Cumulus Dashboard Operations Page showing 5 operations and their status, ID, description, type and creation timestamp](../assets/cd_operations_page.png)
+
+## Async Operation Statuses
+
+Async Operations have a status that is output and stored in the Postgres database and can be viewed there or via the Cumulus Dashboard.  These status are as follows:
+
+`RUNNER_FAILED`: Occurs if the parent ECS runner erors out due to a failure to fetch the lambda function or the ECS runner failed to fetch or delete the lambda payload.
+
+`RUNNING`: Occurs when an ECS async operation was successfully started.
+
+`SUCCEEDED`: Occurs whenever a the lambda task completes regardless of lambda task output.  This can occur even if the output of the lambda contains error messages that were output gracefully by the lambda task, like if a bulk operation coplete with errors in the output.  The wrapper completed execution and the 'SUCCEEDED' status is written.
+
+`TASK_FAILED` : When the lambda task being run inside the ECS task errors out, or a failure occurs from parsing the lambda payload.
