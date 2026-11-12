@@ -72,7 +72,6 @@ Deploying a version of Cumulus with this feature enabled will result in the foll
 * CMR - Exported CMR metadata will now have UMMG/XML appropriate metadata populating the `ProducerGranuleId` in workflows that make use of the `Update Granules CMR Metadata File Links` task.   For more information/specifics see the [task README](https://github.com/nasa/cumulus/blob/master/tasks/update-granules-cmr-metadata-file-links/README.md)
 * Metrics - Granule objects newly ingested/updated will have the `producerGranuleId` field populated
 * Lzards - Granules ingested using the updated task component will now have `producerGranuleId` field populated as part of the LZARDS metadata.
-* Orca - no impacts, pending Orca updates that make use of the new field
 
 ## Migration From Prior Versions
 
