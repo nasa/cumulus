@@ -76,6 +76,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Adding CI deploying config to support treuter's CI stack
 - **CUMULUS-5369**
   - Added empty string default to iceberg_admin variable.  This prevents build failures as SSM parameters cannot have an empty/null value on deploy.
+- **CSD-369**
+  - Implemented POST `/granules/bulkRemoveFromCmr` API endpoint to support bulk removal of granules from CMR without deleting the granules themselves.
+  - Added a corresponding `bulkRemoveFromCmr` function to `@cumulus/api-client`.
 
 ### Changed
 
