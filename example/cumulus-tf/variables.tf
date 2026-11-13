@@ -637,21 +637,3 @@ variable "cross_account_test_sqs_arn" {
   type        = string
   default     = null
 }
-
-## ORCA Variables Definitions
-
-variable "orca_db_user_password" {
-  description = "Password for RDS orca database user authentication"
-  type        = string
-}
-
-variable "orca_default_bucket" {
-  type        = string
-  description = "Default ORCA S3 Glacier bucket to use."
-}
-
-variable "orca_dlq_subscription_email" {
-  type        = string
-  description = "The email to notify users when messages are received in dead letter SQS queue due to orca restore failure."
-  default     = "test@email.com"
-}
