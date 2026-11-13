@@ -239,7 +239,6 @@ export const reconciliationReportsIcebergSql = (tableName: string = 'reconciliat
             'Granule Not Found',
             'Internal',
             'Inventory',
-            'ORCA Backup'
         )),
     CONSTRAINT reconciliation_reports_status_check
         CHECK (status IN ('Generated', 'Pending', 'Failed'))

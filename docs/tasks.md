@@ -152,24 +152,6 @@ Move granule files from staging to final location
 
 ---
 
-### [@cumulus/orca-copy-to-archive-adapter](https://github.com/nasa/cumulus/tree/master/tasks/orca-copy-to-archive-adapter)
-
-Adapter to invoke orca copy-to-archive lambda
-
-- Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/orca-copy-to-archive-adapter/schemas).
-- Resources: [npm](https://npmjs.com/package/@cumulus/orca-copy-to-archive-adapter) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/orca-copy-to-archive-adapter)
-
----
-
-### [@cumulus/orca-recovery-adapter](https://github.com/nasa/cumulus/tree/master/tasks/orca-recovery-adapter)
-
-Adapter to invoke orca recovery workflow
-
-- Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/orca-recovery-adapter/schemas).
-- Resources: [npm](https://npmjs.com/package/@cumulus/orca-recovery-adapter) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/orca-recovery-adapter)
-
----
-
 ### [@cumulus/parse-pdr](https://github.com/nasa/cumulus/tree/master/tasks/parse-pdr)
 
 Download and Parse a given PDR

@@ -8,7 +8,6 @@
 const router = require('express-promise-router')();
 const Logger = require('@cumulus/logger');
 const { GranuleIcebergSearch } = require('@cumulus/db/duckdb');
-const { addOrcaRecoveryStatus } = require('../lib/orca');
 
 const log = new Logger({ sender: '@cumulus/api/iceberg-granules' });
 
@@ -21,7 +20,7 @@ const log = new Logger({ sender: '@cumulus/api/iceberg-granules' });
  */
 async function list(req, res) {
   log.debug(`list query ${JSON.stringify(req.query)}`);
-  const { getRecoveryStatus, ...queryStringParameters } = req.query;
+  const queryStringParameters = req.query;
 
   let result;
   try {
@@ -39,12 +38,7 @@ async function list(req, res) {
     });
   }
 
-  let finalResult = result;
-  if (getRecoveryStatus === 'true') {
-    finalResult = await addOrcaRecoveryStatus(result);
-  }
-
-  return res.send(finalResult);
+  return res.send(result);
 }
 
 // Only expose the list endpoint for Iceberg API

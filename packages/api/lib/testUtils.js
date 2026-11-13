@@ -374,25 +374,6 @@ function fakeDeadLetterMessageFactory(params = {}) {
     stateMachineArn: '123:1234',
   };
 }
-function fakeOrcaGranuleFactory(options = {}) {
-  return {
-    providerId: randomId('providerId'),
-    collectionId: 'fakeCollection___v1',
-    id: randomId('id'),
-    createdAt: Date.now(),
-    ingestDate: Date.now(),
-    lastUpdate: Date.now(),
-    files: [
-      {
-        name: randomId('name'),
-        cumulusArchiveLocation: randomId('cumulusArchiveLocation'),
-        orcaArchiveLocation: randomId('orcaArchiveLocation'),
-        keyPath: randomId('keyPath'),
-      },
-    ],
-    ...options,
-  };
-}
 
 const setAuthorizedOAuthUsers = (users) =>
   putJsonS3Object(process.env.system_bucket, authorizedOAuthUsersKey(), users);
@@ -640,7 +621,6 @@ module.exports = {
   fakeRuleFactoryV2,
   fakeFileFactory,
   fakeProviderFactory,
-  fakeOrcaGranuleFactory,
   fakeReconciliationReportFactory,
   getSqsQueueMessageCounts,
   getWorkflowList,

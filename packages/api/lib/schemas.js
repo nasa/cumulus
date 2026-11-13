@@ -435,7 +435,6 @@ module.exports.reconciliationReport = {
         'Granule Not Found',
         'Internal',
         'Inventory',
-        'ORCA Backup',
       ],
     },
     status: {

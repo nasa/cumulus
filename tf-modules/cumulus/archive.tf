@@ -49,8 +49,6 @@ module "archive" {
   lambda_timeouts       = var.lambda_timeouts
   lambda_memory_sizes   = var.lambda_memory_sizes
 
-  orca_api_uri = var.orca_api_uri
-
   saml_entity_id                  = var.saml_entity_id
   saml_assertion_consumer_service = var.saml_assertion_consumer_service
   saml_idp_login                  = var.saml_idp_login

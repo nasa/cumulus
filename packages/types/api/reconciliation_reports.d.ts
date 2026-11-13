@@ -1,5 +1,5 @@
 export type ReconciliationReportType =
-  'Granule Inventory' | 'Granule Not Found' | 'Internal' | 'Inventory' | 'ORCA Backup';
+  'Granule Inventory' | 'Granule Not Found' | 'Internal' | 'Inventory';
 export type ReconciliationReportStatus = 'Generated' | 'Pending' | 'Failed';
 
 export interface ApiReconciliationReport {

@@ -24,6 +24,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-5839**
   - Removed the unused backup and restore commands from `@cumulus/api/bin/cli.js`.
 
+### Removed
+
+- **CUMULUS-5730**
+  - deprecated `ORCA` tooling.  Removed all terraform, related code, and tests as part of the deprecation.
+
 ## [v22.5.0] 2026-11-03
 
 ### Fixed

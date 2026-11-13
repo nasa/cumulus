@@ -30,16 +30,6 @@ function cmrGranuleSearchParams(recReportParams) {
   return [];
 }
 
-/**
- * @param {string} dateable - any input valid for a JS Date contstructor.
- * @returns {number | undefined} - primitive value of input date string or undefined, if
- *                     input string not convertable.
- */
-function dateToValue(dateable) {
-  const primitiveDate = new Date(dateable).valueOf();
-  return !Number.isNaN(primitiveDate) ? primitiveDate : undefined;
-}
-
 function dateStringToDateOrNull(dateable) {
   const date = new Date(dateable);
   return !Number.isNaN(date.valueOf()) ? date : undefined;
@@ -108,22 +98,6 @@ function convertToDBGranuleSearchParams(params) {
 }
 
 /**
- *
- * @param {Object} params - request params to convert to orca params
- * @returns {Object} object of desired parameters formatted for orca
- */
-function convertToOrcaGranuleSearchParams(params) {
-  const { collectionIds, granuleIds, providers, startTimestamp, endTimestamp } = params;
-  return removeNilProperties({
-    startTimestamp: dateToValue(startTimestamp),
-    endTimestamp: dateToValue(endTimestamp) || Date.now(),
-    collectionId: collectionIds,
-    granuleId: granuleIds,
-    providerId: providers,
-  });
-}
-
-/**
  * create initial report header
  *
  * @param {EnhancedNormalizedRecReportParams} recReportParams - params
@@ -184,7 +158,6 @@ module.exports = {
   cmrGranuleSearchParams,
   convertToDBCollectionSearchObject,
   convertToDBGranuleSearchParams,
-  convertToOrcaGranuleSearchParams,
   filterDBCollections,
   initialReportHeader,
 };

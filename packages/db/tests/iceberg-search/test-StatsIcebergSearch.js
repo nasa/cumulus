@@ -36,7 +36,7 @@ test.before(async (t) => {
 
   const statuses = ['queued', 'failed', 'completed', 'running'];
   const errors = [{ Error: 'UnknownError' }, { Error: 'CumulusMessageAdapterError' }, { Error: 'IngestFailure' }, { Error: 'CmrFailure' }, {}];
-  const reconReportTypes = ['Granule Inventory', 'Granule Not Found', 'Inventory', 'ORCA Backup'];
+  const reconReportTypes = ['Granule Inventory', 'Granule Not Found', 'Inventory'];
   const reconReportStatuses = ['Generated', 'Pending', 'Failed'];
 
   const collections = range(20).map((num) => fakeCollectionRecordFactory({
@@ -298,7 +298,6 @@ test.serial('StatsIcebergSearch aggregate filters Reconciliation Reports correct
     { key: 'Granule Inventory', count: 6 },
     { key: 'Granule Not Found', count: 6 },
     { key: 'Inventory', count: 6 },
-    { key: 'ORCA Backup', count: 6 },
   ];
   t.is(results.meta.count, 24);
   t.deepEqual(results.count, expectedResponse);

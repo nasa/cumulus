@@ -7,7 +7,6 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const sortBy = require('lodash/sortBy');
 const {
   convertToDBCollectionSearchObject,
-  convertToOrcaGranuleSearchParams,
   filterDBCollections,
 } = require('../../lib/reconciliationReport');
 const { fakeCollectionFactory } = require('../../lib/testUtils');
@@ -29,31 +28,6 @@ test('dateToValue converts a string representation to a primitive date.', (t) =>
 test('dateToValue returns undefined for any string that cannot be converted to a date.', (t) => {
   const testStrings = ['startTime', '20170713 20:40:00', '20170713T204000'];
   testStrings.map((testVal) => t.is(dateToValue(testVal), undefined));
-});
-
-test('convertToOrcaGranuleSearchParams returns correct search object.', (t) => {
-  const startTimestamp = '2010-01-01T00:00:00.000Z';
-  const endTimestamp = '2011-10-01T12:00:00.000Z';
-  const testObj = {
-    startTimestamp,
-    endTimestamp,
-    anotherKey: 'anything',
-    anotherKey2: 'they are ignored',
-    collectionIds: 'testcollectionId',
-    granuleIds: ['testgranuleId'],
-    providers: ['provider1', 'provider2'],
-  };
-
-  const expected = {
-    startTimestamp: 1262304000000,
-    endTimestamp: 1317470400000,
-    collectionId: testObj.collectionIds,
-    granuleId: testObj.granuleIds,
-    providerId: testObj.providers,
-  };
-
-  const actual = convertToOrcaGranuleSearchParams(testObj);
-  t.deepEqual(actual, expected);
 });
 
 test('convertToDBCollectionSearchParams returns correct search object with collectionIds.', (t) => {

@@ -55,10 +55,6 @@ const { moveGranule, getFilesExistingAtLocation } = require('../lib/granules');
 const { reingestGranule, applyWorkflow } = require('../lib/ingest');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const {
-  addOrcaRecoveryStatus,
-  getOrcaRecoveryStatusByGranuleIdAndCollection,
-} = require('../lib/orca');
-const {
   validateBulkGranulesRequest,
   getFunctionNameFromRequestContext,
 } = require('../lib/request');
@@ -107,14 +103,11 @@ function _createNewGranuleDateValue() {
  */
 async function list(req, res) {
   log.debug(`list query ${JSON.stringify(req.query)}`);
-  const { getRecoveryStatus, ...queryStringParameters } = req.query;
+  const queryStringParameters = req.query;
 
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const result = await dbSearch.query();
 
-  if (getRecoveryStatus === 'true') {
-    return res.send(await addOrcaRecoveryStatus(result));
-  }
   return res.send(result);
 }
 
@@ -1076,7 +1069,6 @@ async function get(req, res) {
     collectionPgModel = new CollectionPgModel(),
     granulePgModel = new GranulePgModel(),
   } = req.testContext || {};
-  const { getRecoveryStatus } = req.query;
   const granuleId = req.params.granuleId;
   const collectionId = req.params.collectionId;
 
@@ -1113,10 +1105,7 @@ async function get(req, res) {
     knexOrTransaction: knex,
   });
 
-  const recoveryStatus =
-    getRecoveryStatus === 'true'
-      ? await getOrcaRecoveryStatusByGranuleIdAndCollection(granuleId, collectionId)
-      : undefined;
+  const recoveryStatus = undefined;
   return res.send({ ...result, recoveryStatus });
 }
 
@@ -1131,7 +1120,6 @@ async function get(req, res) {
  */
 async function getByGranuleId(req, res) {
   const { knex = await getKnexClient() } = req.testContext || {};
-  const { getRecoveryStatus } = req.query;
   const granuleId = req.params.granuleId;
 
   let granule;
@@ -1154,11 +1142,7 @@ async function getByGranuleId(req, res) {
     knexOrTransaction: knex,
   });
 
-  const recoveryStatus
-    = getRecoveryStatus === 'true'
-      ? await getOrcaRecoveryStatusByGranuleIdAndCollection(granuleId, result.collectionId)
-      : undefined;
-  return res.send({ ...result, recoveryStatus });
+  return res.send({ ...result });
 }
 
 const BulkOperationsPayloadSchema = z.object({
