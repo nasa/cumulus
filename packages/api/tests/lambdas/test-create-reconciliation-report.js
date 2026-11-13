@@ -41,7 +41,6 @@ const {
   ProviderPgModel,
   ReconciliationReportPgModel,
   translateApiCollectionToPostgresCollection,
-  translateApiFiletoPostgresFile,
   translateApiGranuleToPostgresGranule,
   translatePostgresReconReportToApiReconReport,
 } = require('@cumulus/db');
@@ -49,7 +48,6 @@ const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 
 const {
   fakeGranuleFactoryV2,
-  fakeOrcaGranuleFactory,
 } = require('../../lib/testUtils');
 const {
   handler: unwrappedHandler,
@@ -58,7 +56,6 @@ const {
   reconciliationReportForCollections,
 } = require('../../lambdas/create-reconciliation-report');
 const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEvent');
-const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
 
 // Call normalize event on all input events before calling the handler.
 const handler = (event) => unwrappedHandler(normalizeEvent(event));
@@ -1867,100 +1864,6 @@ test.serial('Creates a valid Granule Inventory report', async (t) => {
   t.is(reportRows.length, 10);
 });
 
-test.serial('A valid ORCA Backup reconciliation report is generated', async (t) => {
-  const { knex, collectionPgModel, granulePgModel, providerPgModel, filePgModel } = t.context;
-  const collection = fakeCollectionRecordFactory({
-    name: 'fakeCollection',
-    version: 'v2',
-  });
-
-  await collectionPgModel.create(knex, collection);
-  const collectionId = constructCollectionId(collection.name, collection.version);
-
-  const matchingCumulusGran = {
-    ...fakeGranuleFactoryV2(),
-    granuleId: randomId('matchingGranId'),
-    collectionId,
-    provider: 'fakeProvider2',
-    files: [
-      {
-        bucket: 'cumulus-fake-bucket2',
-        fileName: 'fakeFileName2.hdf',
-        key: 'fakePath2/fakeFileName2.hdf',
-      },
-    ],
-  };
-
-  const matchingOrcaGran = {
-    ...fakeOrcaGranuleFactory(),
-    providerId: matchingCumulusGran.provider,
-    collectionId: matchingCumulusGran.collectionId,
-    id: matchingCumulusGran.granuleId,
-    files: [
-      {
-        name: 'fakeFileName2.hdf',
-        cumulusArchiveLocation: 'cumulus-fake-bucket2',
-        orcaArchiveLocation: 'orca-bucket2',
-        keyPath: 'fakePath2/fakeFileName2.hdf',
-      },
-    ],
-  };
-
-  await providerPgModel.create(
-    knex,
-    fakeProviderRecordFactory({ name: matchingCumulusGran.provider })
-  );
-  const pgGranule = await translateApiGranuleToPostgresGranule({
-    dynamoRecord: matchingCumulusGran,
-    knexOrTransaction: knex,
-  });
-  const pgGranuleRecord = await granulePgModel.create(knex, pgGranule);
-  await Promise.all(
-    matchingCumulusGran.files.map((file) =>
-      filePgModel.create(knex, {
-        ...translateApiFiletoPostgresFile(file),
-        granule_cumulus_id: pgGranuleRecord[0].cumulus_id,
-        collection_cumulus_id: pgGranuleRecord[0].collection_cumulus_id,
-      }))
-  );
-
-  const searchOrcaStub = sinon.stub(ORCASearchCatalogQueue.prototype, 'searchOrca');
-  searchOrcaStub.resolves({ anotherPage: false, granules: [matchingOrcaGran] });
-  t.teardown(() => searchOrcaStub.restore());
-
-  const event = {
-    systemBucket: t.context.systemBucket,
-    stackName: t.context.stackName,
-    reportType: 'ORCA Backup',
-    reportName: randomId('reportName'),
-    collectionId,
-    startTimestamp: moment.utc().subtract(1, 'hour').format(),
-    endTimestamp: moment.utc().add(1, 'hour').format(),
-  };
-
-  const reportRecord = await handler(event);
-  ORCASearchCatalogQueue.prototype.searchOrca.restore();
-  t.is(reportRecord.status, 'Generated');
-  t.is(reportRecord.name, event.reportName);
-  t.is(reportRecord.type, event.reportType);
-
-  const report = await fetchCompletedReport(reportRecord);
-  t.truthy(report.granules);
-  t.is(report.status, 'SUCCESS');
-  t.is(report.error, undefined);
-  t.is(report.reportType, 'ORCA Backup');
-  t.is(report.granules.okCount, 1);
-  t.is(report.granules.cumulusCount, 1);
-  t.is(report.granules.orcaCount, 1);
-  t.is(report.granules.okFilesCount, 1);
-  t.is(report.granules.cumulusFilesCount, 1);
-  t.is(report.granules.orcaFilesCount, 1);
-  t.is(report.granules.conflictFilesCount, 0);
-  t.is(report.granules.onlyInCumulus.length, 0);
-  t.is(report.granules.onlyInOrca.length, 0);
-  t.is(report.granules.withConflicts.length, 0);
-});
-
 test.serial('Inventory reconciliation report JSON is formatted', async (t) => {
   const dataBuckets = range(2).map(() => randomId('bucket'));
   await Promise.all(dataBuckets.map((bucket) =>
@@ -2039,53 +1942,6 @@ test.serial('Inventory reconciliation report JSON is formatted', async (t) => {
 
   t.true(!unformattedReportString.includes('\n')); // validate unformatted report is on a single line
   t.is(formattedReport, JSON.stringify(unformattedReportObj, undefined, 2));
-});
-
-test.serial('When there is an error for an ORCA backup report, it throws', async (t) => {
-  const dataBuckets = [randomId('bucket')];
-  await Promise.all(dataBuckets.map((bucket) =>
-    createBucket(bucket)
-      .then(() => t.context.bucketsToCleanup.push(bucket))));
-
-  // Write the buckets config to S3
-  await storeBucketsConfigToS3(
-    dataBuckets,
-    t.context.systemBucket,
-    t.context.stackName
-  );
-
-  const searchOrcaStub = sinon.stub(ORCASearchCatalogQueue.prototype, 'searchOrca');
-  searchOrcaStub.throws(new Error('ORCA error'));
-  t.teardown(() => searchOrcaStub.restore());
-
-  const reportName = randomId('reportName');
-  const event = {
-    systemBucket: t.context.systemBucket,
-    stackName: t.context.stackName,
-    reportType: 'ORCA Backup',
-    reportName,
-    startTimestamp: moment.utc().subtract(1, 'hour').format(),
-    endTimestamp: moment.utc().add(1, 'hour').format(),
-  };
-
-  await t.throwsAsync(
-    handler(event),
-    { message: 'ORCA error' }
-  );
-
-  const reportPgRecord = await t.context.reconciliationReportPgModel.get(
-    t.context.knex, { name: reportName }
-  );
-  // reconciliation report lambda outputs the translated API version, not the PG version, so
-  // it should be translated for comparison
-  const reportApiRecord = translatePostgresReconReportToApiReconReport(reportPgRecord);
-  t.is(reportApiRecord.status, 'Failed');
-  t.is(reportApiRecord.type, event.reportType);
-
-  const reportKey = `${t.context.stackName}/reconciliation-reports/${reportName}.json`;
-  const report = await getJsonS3Object(t.context.systemBucket, reportKey);
-  t.is(report.status, 'Failed');
-  t.is(report.reportType, event.reportType);
 });
 
 test.serial('Internal reconciliation report type throws an error', async (t) => {

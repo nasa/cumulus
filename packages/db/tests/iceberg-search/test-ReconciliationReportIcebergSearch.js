@@ -22,7 +22,7 @@ const {
 test.before(async (t) => {
   t.context.knexBuilder = knex({ client: 'pg' });
 
-  const reconReportTypes = ['Granule Inventory', 'Granule Not Found', 'Inventory', 'ORCA Backup'];
+  const reconReportTypes = ['Granule Inventory', 'Granule Not Found', 'Inventory'];
   const reconReportStatuses = ['Generated', 'Pending', 'Failed'];
   t.context.reconReportSearchTimestamp = 1704100000000;
   t.context.reportBucket = cryptoRandomString({ length: 8 });
