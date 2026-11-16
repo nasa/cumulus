@@ -27,7 +27,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - **CUMULUS-5730**
-  - deprecated `ORCA` tooling.  Removed all terraform, related code, and tests as part of the deprecation.
+  - deprecated `ORCA` tooling.  Removed all terraform, related code, and tests as part of the deprecation.  The only remaining part is a stub empty "orca" module in the integration tests.  This is enable CI to cleanly delete existing Orca infra resources on any branch that will pick up changes.  After this has percolated through system, the stub module with no related resources will be removed.
 
 ## [v22.5.0] 2026-11-03
 
