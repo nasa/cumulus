@@ -208,7 +208,7 @@ def test_get_cnm_r_keeps_cnm_s_provider(cnm_s, granule):
 
 @freeze_time("2026-01-01 20:50:35Z")
 def test_get_default_cnm_r_error_missing_provider(cnm_s):
-    """Test that get_default_cnm_r_error 
+    """Test that get_default_cnm_r_error
        falls back correctly when provider is missing."""
     gen = CnmGenerator()
 
