@@ -208,7 +208,8 @@ def test_get_cnm_r_keeps_cnm_s_provider(cnm_s, granule):
 
 @freeze_time("2026-01-01 20:50:35Z")
 def test_get_default_cnm_r_error_missing_provider(cnm_s):
-    """Test that get_default_cnm_r_error falls back correctly when provider is missing."""
+    """Test that get_default_cnm_r_error 
+       falls back correctly when provider is missing."""
     gen = CnmGenerator()
 
     # Remove provider from cnm_s
@@ -216,8 +217,7 @@ def test_get_default_cnm_r_error_missing_provider(cnm_s):
     cnm_s_no_provider.pop("provider", None)
 
     result = gen.get_default_cnm_r_error(
-        cnm_s=cnm_s_no_provider, 
-        cause="message from cause"
+        cnm_s=cnm_s_no_provider, cause="message from cause"
     )
 
     # Should fall back to the "Unknown/Missing" string
