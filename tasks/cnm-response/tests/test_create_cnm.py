@@ -160,6 +160,7 @@ def test_http_uri_generator():
         == "http://distribution-uri:9000/DEV/protected-bucket/foo/bar/granule_id.nc"
     )
 
+
 @freeze_time("2026-01-01 20:50:35Z")
 def test_get_cnm_r_extracts_provider_from_granule(cnm_s, granule):
     """Test that missing provider in cnm_s is backfilled by granule provider."""
