@@ -58,6 +58,10 @@ class CnmGenerator:
                 granule.get("producerGranuleId") or granule.get("granuleId")
             )
 
+            if "provider" not in cnm_r:
+                if granule and granule.get("provider"):
+                    cnm_r["provider"] = granule["provider"]
+
             if (concept_id := granule.get("cmrConceptId")) and (
                 cmr_link := granule.get("cmrLink")
             ):
