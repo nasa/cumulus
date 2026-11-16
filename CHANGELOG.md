@@ -19,6 +19,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-5307**
   - Migrated from LocalStack to MiniStack 1.5.34-full
 
+- **CUMULUS-5883**
+  - Updated CNM-R task to include fall-back logic for the Provider field when it doesn't exist in the original CNM-S message.
+
 ### Fixed
 
 - **CUMULUS-5839**
