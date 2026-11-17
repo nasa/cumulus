@@ -80,9 +80,9 @@ test.before(async (t) => {
     updated_at: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))),
   }));
 
-  const reconReports = range(24).map((num) => fakeReconciliationReportRecordFactory({
+  const reconReports = range(21).map((num) => fakeReconciliationReportRecordFactory({
     cumulus_id: num,
-    type: reconReportTypes[(num % 4)],
+    type: reconReportTypes[(num % 3)],
     status: reconReportStatuses[(num % 3)],
     created_at: (new Date(2024 + (num % 6), (num % 12), (num % 30))),
     updated_at: (new Date(2024 + (num % 6), (num % 12), ((num + 1) % 29))),
@@ -295,11 +295,11 @@ test.serial('StatsIcebergSearch aggregate filters Reconciliation Reports correct
   const AggregateSearch = new StatsIcebergSearch({ queryStringParameters }, 'reconciliationReport', connection);
   const results = await AggregateSearch.aggregate(knex);
   const expectedResponse = [
-    { key: 'Granule Inventory', count: 6 },
-    { key: 'Granule Not Found', count: 6 },
-    { key: 'Inventory', count: 6 },
+    { key: 'Granule Inventory', count: 7 },
+    { key: 'Granule Not Found', count: 7 },
+    { key: 'Inventory', count: 7 },
   ];
-  t.is(results.meta.count, 24);
+  t.is(results.meta.count, 21);
   t.deepEqual(results.count, expectedResponse);
 
   queryStringParameters = {
@@ -309,11 +309,11 @@ test.serial('StatsIcebergSearch aggregate filters Reconciliation Reports correct
   const AggregateSearch2 = new StatsIcebergSearch({ queryStringParameters }, 'reconciliationReport', connection);
   const results2 = await AggregateSearch2.aggregate(knex);
   const expectedResponse2 = [
-    { key: 'Failed', count: 8 },
-    { key: 'Generated', count: 8 },
-    { key: 'Pending', count: 8 },
+    { key: 'Failed', count: 7 },
+    { key: 'Generated', count: 7 },
+    { key: 'Pending', count: 7 },
   ];
-  t.is(results2.meta.count, 24);
+  t.is(results2.meta.count, 21);
   t.deepEqual(results2.count, expectedResponse2);
 });
 
