@@ -55,6 +55,30 @@ export class GranuleSearch extends BaseSearch {
       pdrs: pdrsTable,
     } = TableNames;
     const countQuery = this.baseCountQuery(knex);
+    const collectionSubqueryForCount = this.collectionSubqueryForCount();
+
+    if (collectionSubqueryForCount === 'single') {
+      const { collectionName, collectionVersion } = this.dbQueryParameters.term ?? {};
+      countQuery.where(
+        `${this.tableName}.${collectionCumulusIdColumn}`,
+        '=',
+        knex({ c: collectionsTable })
+          .select('c.cumulus_id')
+          .where('c.name', collectionName)
+          .where('c.version', collectionVersion)
+      );
+    } else if (collectionSubqueryForCount === 'multiple') {
+      const { collectionName = [], collectionVersion = [] } = this.dbQueryParameters.terms ?? {};
+      const collectionPairs = collectionName
+        .map((name, index) => [name, collectionVersion[index]])
+        .filter(([, version]) => version !== undefined);
+      countQuery.whereIn(
+        `${this.tableName}.${collectionCumulusIdColumn}`,
+        knex({ c: collectionsTable })
+          .select('c.cumulus_id')
+          .whereIn(['c.name', 'c.version'], collectionPairs)
+      );
+    }
 
     const searchQuery = knex(this.tableName)
       .select(`${this.tableName}.*`)
@@ -66,7 +90,7 @@ export class GranuleSearch extends BaseSearch {
       })
       .innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
 
-    if (this.searchCollection()) {
+    if (this.searchCollection() && !collectionSubqueryForCount) {
       countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
     }
 
@@ -84,6 +108,99 @@ export class GranuleSearch extends BaseSearch {
       searchQuery.leftJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
     }
     return { countQuery, searchQuery };
+  }
+
+  /**
+   * Use a collection ID subquery for count queries scoped to exactly one
+   * collection. Other collection filters retain the join-based behavior.
+   */
+  protected collectionSubqueryForCount(): 'single' | 'multiple' | undefined {
+    const { term = {}, terms = {}, not = {} } = this.dbQueryParameters;
+    const hasSingleCollection = Boolean(
+      term.collectionName
+      && term.collectionVersion
+      && !terms.collectionName
+      && !terms.collectionVersion
+      && !not.collectionName
+      && !not.collectionVersion
+    );
+
+    if (hasSingleCollection) return 'single';
+
+    const collectionNames = terms.collectionName ?? [];
+    const collectionVersions = terms.collectionVersion ?? [];
+    const hasCollectionPairs = collectionNames.length > 0
+      && collectionNames.length === collectionVersions.length
+      && !term.collectionName
+      && !term.collectionVersion
+      && !not.collectionName
+      && !not.collectionVersion;
+
+    return hasCollectionPairs ? 'multiple' : undefined;
+  }
+
+  /**
+   * Keep collection name/version filters on the result query while the count
+   * query uses the scalar collection ID subquery created in buildBasicQuery.
+   */
+  protected buildTermQuery(params: {
+    countQuery?: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const { countQuery, searchQuery, dbQueryParameters = this.dbQueryParameters } = params;
+    if (!countQuery || this.collectionSubqueryForCount() !== 'single') {
+      super.buildTermQuery(params);
+      return;
+    }
+
+    const { term = {}, ...otherParameters } = dbQueryParameters;
+    const { collectionName, collectionVersion, ...countTerm } = term;
+    super.buildTermQuery({
+      countQuery,
+      searchQuery,
+      dbQueryParameters: {
+        ...otherParameters,
+        term: countTerm,
+      },
+    });
+    searchQuery
+      .where(`${TableNames.collections}.name`, collectionName)
+      .where(`${TableNames.collections}.version`, collectionVersion);
+  }
+
+  /**
+   * Keep collection name/version terms on the result query while the count
+   * query uses the collection ID IN subquery created in buildBasicQuery.
+   */
+  protected buildTermsQuery(params: {
+    countQuery?: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const { countQuery, searchQuery, dbQueryParameters = this.dbQueryParameters } = params;
+    if (!countQuery || this.collectionSubqueryForCount() !== 'multiple') {
+      super.buildTermsQuery(params);
+      return;
+    }
+
+    const { terms = {}, ...otherParameters } = dbQueryParameters;
+    const { collectionName = [], collectionVersion = [], ...countTerms } = terms;
+    super.buildTermsQuery({
+      countQuery,
+      searchQuery,
+      dbQueryParameters: {
+        ...otherParameters,
+        terms: countTerms,
+      },
+    });
+    const collectionPairs = collectionName
+      .map((name, index) => [name, collectionVersion[index]])
+      .filter(([, version]) => version !== undefined);
+    searchQuery.whereIn(
+      [`${TableNames.collections}.name`, `${TableNames.collections}.version`],
+      collectionPairs
+    );
   }
 
   /**

@@ -1209,6 +1209,51 @@ test('GranuleSearch prepends collection_cumulus_id to sort order for single coll
   t.true(sql.includes('order by "granules"."collection_cumulus_id" asc, "granules"."updated_at" desc'));
 });
 
+test('GranuleSearch uses a collection ID subquery for a single collection count query', (t) => {
+  const { knex } = t.context;
+  const dbSearch = new GranuleSearch({
+    queryStringParameters: {
+      collectionId: t.context.collectionId,
+      status: 'completed',
+      beginningDateTime__from: '2025-12-30T00:02:20.000000Z',
+      beginningDateTime__to: '2026-04-29T00:02:20.000000Z',
+    },
+  });
+  const { countQuery, searchQuery } = dbSearch.buildSearch(knex);
+  const countSql = countQuery.toSQL().sql;
+  const searchSql = searchQuery.toSQL().sql;
+
+  t.false(countSql.includes('inner join "collections"'));
+  t.true(countSql.includes('"granules"."collection_cumulus_id" = (select "c"."cumulus_id" from "collections" as "c"'));
+  t.true(countSql.includes('"granules"."status" = ?'));
+  t.true(countSql.includes('"granules"."beginning_date_time" >= ?'));
+  t.true(countSql.includes('"granules"."beginning_date_time" <= ?'));
+  t.true(searchSql.includes('inner join "collections"'));
+  t.true(searchSql.includes('"collections"."name" = ?'));
+  t.true(searchSql.includes('"collections"."version" = ?'));
+});
+
+test('GranuleSearch uses paired collection ID subquery for multi-collection count queries', (t) => {
+  const { knex } = t.context;
+  const dbSearch = new GranuleSearch({
+    queryStringParameters: {
+      collectionId__in: [t.context.collectionId, t.context.collectionId2].join(','),
+    },
+  });
+  const { countQuery } = dbSearch.buildSearch(knex);
+  const { sql, bindings } = countQuery.toSQL();
+
+  t.false(sql.includes('inner join "collections"'));
+  t.true(sql.includes('"granules"."collection_cumulus_id" in (select "c"."cumulus_id" from "collections" as "c"'));
+  t.true(sql.includes('("c"."name", "c"."version") in ((?, ?), (?, ?))'));
+  t.deepEqual(bindings.slice(0, 4), [
+    t.context.collectionName,
+    t.context.collectionVersion,
+    'testCollection2',
+    'v2',
+  ]);
+});
+
 test('GranuleSearch prepends collection_cumulus_id to sort order for multi-collection queries', (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
