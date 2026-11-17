@@ -36,6 +36,16 @@ function dateStringToDateOrNull(dateable) {
 }
 
 /**
+ * @param {string} dateable - any input valid for a JS Date contstructor.
+ * @returns {number | undefined} - primitive value of input date string or undefined, if
+ * input string not convertable.
+ */
+function dateToValue(dateable) {
+  const primitiveDate = new Date(dateable).valueOf();
+  return !Number.isNaN(primitiveDate) ? primitiveDate : undefined;
+}
+
+/**
  * convertToDBCollectionSearchObject      - Creates Postgres search object from
  *                                          InternalRecReport Parameters
  * @param {Object} params                 - request params to convert to database params
@@ -160,4 +170,5 @@ module.exports = {
   convertToDBGranuleSearchParams,
   filterDBCollections,
   initialReportHeader,
+  dateToValue,
 };
