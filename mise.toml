@@ -6,5 +6,4 @@ terraform = "1.17.1"
 dagger = "0.21.11"
 
 [tasks.bootstrap]
-description = "Install node dependencies (Nx is available after this)"
 run = "npm install --ignore-scripts --loglevel error"
