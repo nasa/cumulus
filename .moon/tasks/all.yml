@@ -1,0 +1,34 @@
+$schema: 'https://moonrepo.dev/schemas/tasks.json'
+
+# Tasks inherited by every project registered in .moon/workspace.yml.
+
+fileGroups:
+  sources:
+    - 'src/**/*'
+    - 'package.json'
+    - 'tsconfig.json'
+  tests:
+    - 'tests/**/*'
+  config:
+    - '/tsconfig.json'
+    - '/tsconfig.base.json'
+
+tasks:
+  build:
+    command: 'tsc'
+    inputs:
+      - '@group(sources)'
+      - '@group(config)'
+    outputs:
+      - 'dist'
+    deps:
+      - '^:build'
+
+  test:
+    command: 'ava'
+    inputs:
+      - '@group(sources)'
+      - '@group(tests)'
+      - '@group(config)'
+    deps:
+      - '~:build'

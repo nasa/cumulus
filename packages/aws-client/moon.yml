@@ -1,0 +1,28 @@
+$schema: 'https://moonrepo.dev/schemas/project.json'
+
+dependsOn:
+  - 'checksum'
+  - 'errors'
+  - 'logger'
+  - 'types'
+
+project:
+  title: '@cumulus/aws-client'
+  description: 'description of project'
+
+tasks:
+  build:
+    options:
+      mergeOutputs: 'replace'
+    outputs:
+      - '*.js'
+      - '*.d.ts'
+      - 'lib/*.js'
+      - 'lib/*.d.ts'
+      - 'tsconfig.tsbuildinfo'
+
+  test:
+    env:
+      LOCALSTACK_HOST: '127.0.0.1'
+    options:
+      runInCI: false

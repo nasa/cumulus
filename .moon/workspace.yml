@@ -1,0 +1,8 @@
+$schema: 'https://moonrepo.dev/schemas/workspace.json'
+
+projects:
+  errors: 'packages/errors'
+  logger: 'packages/logger'
+  checksum: 'packages/checksum'
+  types: 'packages/types'
+  aws-client: 'packages/aws-client'

@@ -1,0 +1,11 @@
+$schema: 'https://moonrepo.dev/schemas/toolchains.json'
+
+javascript:
+  packageManager: 'npm'
+  inferTasksFromScripts: false
+  installDependencies: false
+
+node:
+  version: '22.23.4'
+
+npm: {}
