@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "plugins": ["./tools/nx/task-schemas-plugin.js"],
+  "defaultBase": "apconrad/nx-demo",
   "namedInputs": {
     "sharedGlobals": [
       "{workspaceRoot}/tsconfig.json",
