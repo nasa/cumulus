@@ -27,7 +27,8 @@
       "cache": true
     },
     "test": {
-      "dependsOn": ["build"]
+      "dependsOn": ["build"],
+      "cache": true
     },
     "package": {
       "dependsOn": ["build"],
