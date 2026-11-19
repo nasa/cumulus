@@ -427,6 +427,7 @@
           "task_config": {
             "cnm": "{$.meta.cnm}",
             "distribution_endpoint": "{$.meta.distribution_endpoint}",
+            "provider_id": "{$.meta.provider.id}",
             "exception": "{$.exception}",
             "responseArns": ["{$.meta.cnmResponseStream}"],
             "cumulus_message": {
@@ -480,6 +481,7 @@
           "task_config": {
             "cnm": "{$.meta.cnm}",
             "distribution_endpoint": "{$.meta.distribution_endpoint}",
+            "provider_id": "{$.meta.provider.id}",
             "exception": "{$.exception}",
             "responseArns": ["{$.meta.cnmResponseStream}"],
             "cumulus_message": {
