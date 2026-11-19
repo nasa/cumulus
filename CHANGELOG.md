@@ -22,6 +22,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-5733**
   - Adding documentation explaining each async_operation statuses
 
+- **CUMULUS-5885**
+  - Updated API granule search to support pruning of partitions when one or more collection name and versions are specified.
+
 ### Fixed
 
 - **CUMULUS-5839**
