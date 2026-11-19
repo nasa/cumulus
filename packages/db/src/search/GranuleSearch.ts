@@ -55,7 +55,6 @@ export class GranuleSearch extends BaseSearch {
       pdrs: pdrsTable,
     } = TableNames;
     const countQuery = this.baseCountQuery(knex);
-
     const searchQuery = knex(this.tableName)
       .select(`${this.tableName}.*`)
       .select({
@@ -65,8 +64,34 @@ export class GranuleSearch extends BaseSearch {
         pdrName: `${pdrsTable}.name`,
       })
       .innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+    const collectionSubqueryType = this.collectionSubqueryType();
 
-    if (this.searchCollection()) {
+    if (collectionSubqueryType === 'single') {
+      const { collectionName, collectionVersion } = this.dbQueryParameters.term ?? {};
+      [countQuery, searchQuery].forEach((query) => query.where(
+        `${this.tableName}.${collectionCumulusIdColumn}`,
+        '=',
+        knex({ c: collectionsTable })
+          .select('c.cumulus_id')
+          .where('c.name', collectionName)
+          .where('c.version', collectionVersion)
+      ));
+    } else if (collectionSubqueryType === 'multiple') {
+      const { collectionName = [], collectionVersion = [] } = this.dbQueryParameters.terms ?? {};
+      const collectionPairs = collectionName
+        .map((name, index) => [name, collectionVersion[index]])
+        .filter(([, version]) => version !== undefined);
+      [countQuery, searchQuery].forEach((query) => query.whereIn(
+        `${this.tableName}.${collectionCumulusIdColumn}`,
+        (subquery) => {
+          subquery.select('c.cumulus_id')
+            .from({ c: collectionsTable })
+            .whereIn(['c.name', 'c.version'], collectionPairs);
+        }
+      ));
+    }
+
+    if (this.searchCollection() && !collectionSubqueryType) {
       countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
     }
 
@@ -84,6 +109,91 @@ export class GranuleSearch extends BaseSearch {
       searchQuery.leftJoin(pdrsTable, `${this.tableName}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
     }
     return { countQuery, searchQuery };
+  }
+
+  /**
+   * Use a collection ID subquery for count queries scoped to exactly one
+   * collection. Other collection filters retain the join-based behavior.
+   */
+  protected collectionSubqueryType(): 'single' | 'multiple' | undefined {
+    const { term = {}, terms = {}, not = {} } = this.dbQueryParameters;
+    const hasSingleCollection = Boolean(
+      term.collectionName
+      && term.collectionVersion
+      && !terms.collectionName
+      && !terms.collectionVersion
+      && !not.collectionName
+      && !not.collectionVersion
+    );
+
+    if (hasSingleCollection) return 'single';
+
+    const collectionNames = terms.collectionName ?? [];
+    const collectionVersions = terms.collectionVersion ?? [];
+    const hasCollectionPairs = collectionNames.length > 0
+      && collectionNames.length === collectionVersions.length
+      && !term.collectionName
+      && !term.collectionVersion
+      && !not.collectionName
+      && !not.collectionVersion;
+
+    return hasCollectionPairs ? 'multiple' : undefined;
+  }
+
+  /**
+  * Apply single-collection filters through the collection ID subquery on both
+  * queries; the results query still joins collections for projected fields.
+   */
+  protected buildTermQuery(params: {
+    countQuery?: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const { countQuery, searchQuery, dbQueryParameters = this.dbQueryParameters } = params;
+    if (this.collectionSubqueryType() !== 'single') {
+      super.buildTermQuery(params);
+      return;
+    }
+
+    const { term = {}, ...otherParameters } = dbQueryParameters;
+    const { collectionName, collectionVersion, ...countTerm } = term;
+    super.buildTermQuery({
+      countQuery,
+      searchQuery,
+      dbQueryParameters: {
+        ...otherParameters,
+        term: countTerm,
+      },
+    });
+  }
+
+  /**
+  * Apply multi-collection filters through the collection ID IN subquery on
+  * both queries; the results query still joins collections for projected fields.
+   */
+  protected buildTermsQuery(params: {
+    countQuery?: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const { countQuery, searchQuery, dbQueryParameters = this.dbQueryParameters } = params;
+    if (this.collectionSubqueryType() !== 'multiple') {
+      super.buildTermsQuery(params);
+      return;
+    }
+
+    const { terms = {}, ...otherParameters } = dbQueryParameters;
+    const countTerms = { ...terms };
+    delete countTerms.collectionName;
+    delete countTerms.collectionVersion;
+    super.buildTermsQuery({
+      countQuery,
+      searchQuery,
+      dbQueryParameters: {
+        ...otherParameters,
+        terms: countTerms,
+      },
+    });
   }
 
   /**
