@@ -28,18 +28,24 @@ class CnmGenerator:
 
     def get_cnm_r(
         self,
+        config,
         cnm_s: dict,
         exception: str,
         granule: dict | None = None,
     ) -> dict:
         """Create a CNM-R message from a CNM-S message.
 
+        :param config: the config extracted from the CMA.
         :param cnm_s: the CNM-S message to generate a response for.
         :param exception: the workflow exception message.
         :param granule: the granule object from the payload if any.
         :return: the CNM-R message
         """
         cnm_r = copy.deepcopy(cnm_s)
+
+        if "provider" not in cnm_r:
+            if config and config.get("provider_id"):
+                cnm_r["provider"] = config["provider_id"]
 
         response = _get_response(exception)
         if granule is not None and response["status"] == "SUCCESS":
