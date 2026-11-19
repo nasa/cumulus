@@ -83,9 +83,11 @@ export class GranuleSearch extends BaseSearch {
         .filter(([, version]) => version !== undefined);
       [countQuery, searchQuery].forEach((query) => query.whereIn(
         `${this.tableName}.${collectionCumulusIdColumn}`,
-        knex({ c: collectionsTable })
-          .select('c.cumulus_id')
-          .whereIn(['c.name', 'c.version'], collectionPairs)
+        (subquery) => {
+          subquery.select('c.cumulus_id')
+            .from({ c: collectionsTable })
+            .whereIn(['c.name', 'c.version'], collectionPairs);
+        }
       ));
     }
 
