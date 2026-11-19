@@ -39,6 +39,7 @@ def lambda_adapter(event: dict, context) -> dict:
         cnm_s = config["cnm"] or input
         logger.info(f"Generating response for CNM-S: {cnm_s}")
         cnm_r = cnm_generator.get_cnm_r(
+            config,
             cnm_s=cnm_s,
             exception=config["exception"],
             granule=granule,
