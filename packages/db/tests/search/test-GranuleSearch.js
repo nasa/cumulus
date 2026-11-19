@@ -1260,6 +1260,29 @@ test('GranuleSearch uses paired collection ID subquery for multi-collection quer
   ]);
 });
 
+test('GranuleSearch uses join-based filtering for collectionId__not queries', (t) => {
+  const { knex } = t.context;
+  const dbSearch = new GranuleSearch({
+    queryStringParameters: {
+      collectionId__not: t.context.collectionId,
+    },
+  });
+  const { countQuery, searchQuery } = dbSearch.buildSearch(knex);
+  const { sql: countSql, bindings: countBindings } = countQuery.toSQL();
+  const { sql: searchSql, bindings: searchBindings } = searchQuery.toSQL();
+
+  t.true(countSql.includes('inner join "collections"'));
+  t.true(countSql.includes('where not "collections"."name" = ? and not "collections"."version" = ?'));
+  t.false(countSql.includes('"granules"."collection_cumulus_id" = (select'));
+  t.false(countSql.includes('"granules"."collection_cumulus_id" in (select'));
+  t.true(searchSql.includes('inner join "collections"'));
+  t.true(searchSql.includes('where not "collections"."name" = ? and not "collections"."version" = ?'));
+  t.false(searchSql.includes('"granules"."collection_cumulus_id" = (select'));
+  t.false(searchSql.includes('"granules"."collection_cumulus_id" in (select'));
+  t.deepEqual(countBindings, [t.context.collectionName, t.context.collectionVersion]);
+  t.deepEqual(searchBindings.slice(0, 2), [t.context.collectionName, t.context.collectionVersion]);
+});
+
 test('GranuleSearch prepends collection_cumulus_id to sort order for multi-collection queries', (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
