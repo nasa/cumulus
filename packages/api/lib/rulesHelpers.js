@@ -264,6 +264,32 @@ async function deleteKinesisEventSource(knex, rule, eventType, id) {
 // @typedef { typeof deleteKinesisEventSource } deleteKinesisEventSource
 
 /**
+ * Determine whether an event source mapping belongs to this deployment, i.e. is one
+ * of the mappings between the given Kinesis stream and this stack's Lambda function
+ *
+ * @param {string} uuid           - event source mapping UUID
+ * @param {string} functionName   - this stack's Lambda function name
+ * @param {string} eventSourceArn - Kinesis stream ARN
+ * @returns {Promise<boolean>} true if the mapping belongs to this deployment
+ */
+async function isEventSourceMappingOwnedByStack(uuid, functionName, eventSourceArn) {
+  let marker;
+  do {
+    // eslint-disable-next-line no-await-in-loop
+    const { EventSourceMappings = [], NextMarker } = await lambda().send(
+      new ListEventSourceMappingsCommand({
+        FunctionName: functionName,
+        EventSourceArn: eventSourceArn,
+        Marker: marker,
+      })
+    );
+    if (EventSourceMappings.some((mapping) => mapping.UUID === uuid)) return true;
+    marker = NextMarker;
+  } while (marker);
+  return false;
+}
+
+/**
  * Delete event source mappings for all mappings in the kinesisSourceEvents
  *
  * @param {Knex} knex       - DB client
@@ -297,9 +323,27 @@ async function deleteKinesisEventSources(knex, rule, testContext = {
       rule,
       kinesisLambda.eventType,
       kinesisLambda.type
-    ).catch((error) => {
+    ).catch(async (error) => {
       log.error(`Error deleting eventSourceMapping for ${rule.name}: ${error}`);
-      if (error.name !== 'ResourceNotFoundException') throw error;
+      // The mapping no longer exists; nothing to delete
+      if (error.name === 'ResourceNotFoundException') return;
+
+      // Lambda returns AccessDeniedException both for a mapping UUID that belongs to another
+      // AWS account (e.g. a rule migrated from another Cumulus deployment) and for a genuine
+      // IAM denial. Skip the former, since it is not ours to delete; rethrow the latter.
+      if (error.name === 'AccessDeniedException') {
+        const uuid = kinesisLambda.type[kinesisLambda.eventType];
+        const isOwned = await isEventSourceMappingOwnedByStack(
+          uuid,
+          kinesisLambda.name,
+          rule.rule.value
+        );
+        if (!isOwned) {
+          log.warn(`Skipping deletion of eventSourceMapping ${uuid} for ${rule.name}: it does not belong to function ${kinesisLambda.name}`);
+          return;
+        }
+      }
+      throw error;
     }));
   return await Promise.all(deleteEventPromises);
 }

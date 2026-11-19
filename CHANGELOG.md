@@ -24,6 +24,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-5548**
+  - Updated `deleteKinesisEventSources` in `@cumulus/api/lib/rulesHelpers.js` to skip, instead of
+    fail on, a Kinesis event source mapping that Lambda reports as `AccessDeniedException` when the
+    mapping does not belong to this deployment. Lambda returns this for a mapping UUID owned by
+    another AWS account, such as on a rule migrated from another Cumulus deployment. Updating or
+    deleting such a rule through the API or dashboard previously failed with `UnknownError`.
+    An `AccessDeniedException` for one of the deployment's own mappings is still raised as an error.
 - **CUMULUS-5839**
   - Removed the unused backup and restore commands from `@cumulus/api/bin/cli.js`.
 

@@ -10,7 +10,9 @@ const sinon = require('sinon');
 const {
   CreateFunctionCommand,
   AddPermissionCommand,
+  DeleteEventSourceMappingCommand,
   GetPolicyCommand,
+  ListEventSourceMappingsCommand,
   RemovePermissionCommand,
 } = require('@aws-sdk/client-lambda');
 const { mockClient } = require('aws-sdk-client-mock');
@@ -1955,4 +1957,83 @@ test('DELETE deletes a rule', async (t) => {
 
   t.is(dbRecords.length, 0);
   t.is(message, 'Record deleted');
+});
+
+// A kinesis rule migrated from another Cumulus deployment can reference event source
+// mappings owned by another AWS account; Lambda rejects deleting those with
+// AccessDeniedException (CUMULUS-5548).
+const createKinesisRuleWithForeignEventSourceMappings = async (t) => {
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:stream/${randomId('kinesis')}`;
+  const [pgRule] = await t.context.rulePgModel.create(
+    t.context.testKnex,
+    fakeRuleRecordFactory({
+      workflow,
+      type: 'kinesis',
+      enabled: false,
+      value: kinesisArn,
+      arn: randomId('foreign-arn'),
+      log_event_arn: randomId('foreign-log-event-arn'),
+    }),
+    '*'
+  );
+  return pgRule;
+};
+
+const mockLambdaDeleteEventSourceMappingAccessDenied = (t) => {
+  const accessDeniedError = new Error('UnknownError');
+  accessDeniedError.name = 'AccessDeniedException';
+  const mockLambdaClient = mockClient(awsServices.lambda()).onAnyCommand().rejects();
+  mockLambdaClient.on(DeleteEventSourceMappingCommand).rejects(accessDeniedError);
+  // This deployment's own mappings for the stream do not include the rule's UUIDs
+  mockLambdaClient.on(ListEventSourceMappingsCommand).resolves({ EventSourceMappings: [] });
+  t.teardown(() => mockLambdaClient.restore());
+  return mockLambdaClient;
+};
+
+test.serial('DELETE deletes a kinesis rule whose event source mappings belong to another account', async (t) => {
+  const pgRule = await createKinesisRuleWithForeignEventSourceMappings(t);
+  const mockLambdaClient = mockLambdaDeleteEventSourceMappingAccessDenied(t);
+
+  const response = await request(app)
+    .delete(`/rules/${pgRule.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response.body.message, 'Record deleted');
+  t.false(await t.context.rulePgModel.exists(t.context.testKnex, { name: pgRule.name }));
+  t.is(mockLambdaClient.commandCalls(DeleteEventSourceMappingCommand).length, 2);
+});
+
+test.serial('DELETE fails and keeps the rule when deleting its own kinesis event source mapping is denied', async (t) => {
+  const pgRule = await createKinesisRuleWithForeignEventSourceMappings(t);
+  const mockLambdaClient = mockLambdaDeleteEventSourceMappingAccessDenied(t);
+  // The mappings belong to this deployment, so the AccessDeniedException is a real IAM denial
+  mockLambdaClient.on(ListEventSourceMappingsCommand).resolves({
+    EventSourceMappings: [{ UUID: pgRule.arn }, { UUID: pgRule.log_event_arn }],
+  });
+
+  const response = await request(app)
+    .delete(`/rules/${pgRule.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`);
+
+  t.not(response.status, 200);
+  t.true(await t.context.rulePgModel.exists(t.context.testKnex, { name: pgRule.name }));
+});
+
+test.serial('PATCH updates a kinesis rule whose event source mappings belong to another account', async (t) => {
+  const pgRule = await createKinesisRuleWithForeignEventSourceMappings(t);
+  const mockLambdaClient = mockLambdaDeleteEventSourceMappingAccessDenied(t);
+
+  await request(app)
+    .patch(`/rules/${pgRule.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ name: pgRule.name, state: 'ENABLED' })
+    .expect(200);
+
+  const updatedPgRule = await t.context.rulePgModel.get(t.context.testKnex, { name: pgRule.name });
+  t.true(updatedPgRule.enabled);
+  t.is(mockLambdaClient.commandCalls(DeleteEventSourceMappingCommand).length, 2);
 });
