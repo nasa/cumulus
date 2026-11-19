@@ -2022,6 +2022,32 @@ test.serial('DELETE fails and keeps the rule when deleting its own kinesis event
   t.true(await t.context.rulePgModel.exists(t.context.testKnex, { name: pgRule.name }));
 });
 
+test.serial('PUT updates a kinesis rule whose event source mappings belong to another account', async (t) => {
+  const pgRule = await createKinesisRuleWithForeignEventSourceMappings(t);
+  const mockLambdaClient = mockLambdaDeleteEventSourceMappingAccessDenied(t);
+
+  // The dashboard's edit page sends the complete rule, including the stored mapping UUIDs
+  const originalApiRule = await translatePostgresRuleToApiRule(pgRule, t.context.testKnex);
+  const updatedWorkflow = randomId('updated-workflow');
+  const updateRule = {
+    ...originalApiRule,
+    workflow: updatedWorkflow,
+    state: 'ENABLED',
+  };
+
+  await request(app)
+    .put(`/rules/${pgRule.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updateRule)
+    .expect(200);
+
+  const updatedPgRule = await t.context.rulePgModel.get(t.context.testKnex, { name: pgRule.name });
+  t.true(updatedPgRule.enabled);
+  t.is(updatedPgRule.workflow, updatedWorkflow);
+  t.is(mockLambdaClient.commandCalls(DeleteEventSourceMappingCommand).length, 2);
+});
+
 test.serial('PATCH updates a kinesis rule whose event source mappings belong to another account', async (t) => {
   const pgRule = await createKinesisRuleWithForeignEventSourceMappings(t);
   const mockLambdaClient = mockLambdaDeleteEventSourceMappingAccessDenied(t);
