@@ -37,6 +37,7 @@ module.exports = {
     cleanExecutions: './lambdas/cleanExecutions.js',
     createReconciliationReport: './lambdas/create-reconciliation-report.js',
     distribution: './app/distribution.js',
+    exportTable: './lambdas/export-table.js',
     manualConsumer: './lambdas/manual-consumer.js',
     messageConsumer: './lambdas/message-consumer.js',
     payloadLogger: './lambdas/payload-logger.js',

@@ -20,6 +20,8 @@ const Logger = require('@cumulus/logger');
 const { removeNilProperties } = require('@cumulus/common/util');
 
 const { isBadRequestError } = require('../lib/errors');
+const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
+const { startExportOperation } = require('../lib/startExport');
 const log = new Logger({ sender: '@cumulus/api/providers' });
 
 /**
@@ -202,15 +204,33 @@ async function del(req, res) {
   }
 }
 
+/**
+ * Start an AsyncOperation that will export matching providers to a
+ * gzipped CSV file
+ *
+ * @param {Request} req - express request object
+ * @param {Response} res - express response object
+ * @returns {Promise<unknown>} the promise of express response object
+ */
+async function exportProviders(req, res) {
+  return await startExportOperation({ resourceType: 'provider', req, res });
+}
+
 // express routes
 router.get('/:id', get);
 router.put('/:id', put);
 router.delete('/:id', del);
 router.post('/', post);
+router.post(
+  '/export',
+  exportProviders,
+  asyncOperationEndpointErrorHandler
+);
 router.get('/', list);
 
 module.exports = {
   del,
+  exportProviders,
   post,
   put,
   router,

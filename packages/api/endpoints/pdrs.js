@@ -13,6 +13,8 @@ const {
 const { errorify, RecordDoesNotExist } = require('@cumulus/errors');
 const { PdrSearch } = require('@cumulus/db');
 const Logger = require('@cumulus/logger');
+const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
+const { startExportOperation } = require('../lib/startExport');
 
 const log = new Logger({ sender: '@cumulus/api/pdrs' });
 
@@ -86,11 +88,29 @@ async function del(req, res) {
   return res.send({ detail: 'Record deleted' });
 }
 
+/**
+ * Start an AsyncOperation that will export matching PDRs to a
+ * gzipped CSV file
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function exportPdrs(req, res) {
+  return await startExportOperation({ resourceType: 'pdr', req, res });
+}
+
 router.get('/:pdrName', get);
 router.get('/', list);
 router.delete('/:pdrName', del);
+router.post(
+  '/export',
+  exportPdrs,
+  asyncOperationEndpointErrorHandler
+);
 
 module.exports = {
   del,
+  exportPdrs,
   router,
 };

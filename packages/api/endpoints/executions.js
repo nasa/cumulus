@@ -24,6 +24,7 @@ const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const { zodParser } = require('../src/zod-utils');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const startAsyncOperation = require('../lib/startAsyncOperation');
+const { startExportOperation } = require('../lib/startExport');
 const { isBadRequestError } = require('../lib/errors');
 const { getGranulesForPayload } = require('../lib/granules');
 const { returnCustomValidationErrors } = require('../lib/endpoints');
@@ -408,7 +409,24 @@ async function bulkArchiveExecutions(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
+/**
+ * Start an AsyncOperation that will export matching executions to a
+ * gzipped CSV file
+ *
+ * @param {Request} req - express request object
+ * @param {Response} res - express response object
+ * @returns {Promise<unknown>} the promise of express response object
+ */
+async function exportExecutions(req, res) {
+  return await startExportOperation({ resourceType: 'execution', req, res });
+}
+
 router.post('/bulkArchive', bulkArchiveExecutions);
+router.post(
+  '/export',
+  exportExecutions,
+  asyncOperationEndpointErrorHandler
+);
 router.post('/search-by-granules', validateGranuleExecutionRequest, searchByGranules);
 router.post('/workflows-by-granules', validateGranuleExecutionRequest, workflowsByGranules);
 router.post(
@@ -427,4 +445,5 @@ module.exports = {
   router,
   bulkArchiveExecutions,
   bulkDeleteExecutionsByCollection,
+  exportExecutions,
 };

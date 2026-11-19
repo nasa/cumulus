@@ -28,6 +28,8 @@ const {
 const { isBadRequestError } = require('../lib/errors');
 const { validateCollection } = require('../lib/utils');
 const insertMMTLinks = require('../lib/mmt');
+const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
+const { startExportOperation } = require('../lib/startExport');
 
 const log = new Logger({ sender: '@cumulus/api/collections' });
 
@@ -260,16 +262,34 @@ async function del(req, res) {
   return res.send({ message: 'Record deleted' });
 }
 
+/**
+ * Start an AsyncOperation that will export matching collections to a
+ * gzipped CSV file
+ *
+ * @param {Request} req - express request object
+ * @param {Response} res - express response object
+ * @returns {Promise<unknown>} the promise of express response object
+ */
+async function exportCollections(req, res) {
+  return await startExportOperation({ resourceType: 'collection', req, res });
+}
+
 // express routes
 router.get('/:name/:version', get);
 router.put('/:name/:version', put);
 router.delete('/:name/:version', del);
 router.post('/', post);
+router.post(
+  '/export',
+  exportCollections,
+  asyncOperationEndpointErrorHandler
+);
 router.get('/', list);
 router.get('/active', activeList);
 
 module.exports = {
   del,
+  exportCollections,
   post,
   put,
   router,

@@ -40,6 +40,7 @@ locals {
     databaseCredentialSecretArn      = var.rds_user_access_secret_arn
     DeadLetterProcessingLambda       = aws_lambda_function.process_dead_letter_archive.arn
     DISTRIBUTION_ENDPOINT            = var.distribution_url
+    ExportTableLambda                = aws_lambda_function.export_table.arn
     distributionApiId                = var.distribution_api_id
     dynamoTableNameString            = local.dynamo_table_namestring
     dynamoTableNamesParameterName    = aws_ssm_parameter.dynamo_table_names.name

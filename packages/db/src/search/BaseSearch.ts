@@ -191,6 +191,22 @@ abstract class BaseSearch {
   }
 
   /**
+   * Build and return the raw search query (no count query, no execution).
+   *
+   * Intended for callers (e.g. streaming/export jobs) that need to
+   * apply this search's full filter vocabulary (term/terms/not/range/exists/
+   * infix/prefix/sort) to a Knex query they will page through themselves,
+   * rather than running `query()` which loads the whole result set at once.
+   *
+   * @param knex - DB client
+   * @returns Knex query builder for the search's result set
+   */
+  public getSearchQuery(knex: Knex): Knex.QueryBuilder {
+    const { searchQuery } = this.buildSearch(knex);
+    return searchQuery;
+  }
+
+  /**
    * Get metadata template for query result
    *
    * @returns metadata template

@@ -68,6 +68,7 @@ module.exports.asyncOperation = {
         'Dead-Letter Processing',
         'DLA Migration',
         'ES Index',
+        'Export Table',
         'Kinesis Replay',
         'Migration Count Report',
         'Reconciliation Report',

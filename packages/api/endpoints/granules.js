@@ -40,6 +40,7 @@ const { zodParser } = require('../src/zod-utils');
 
 const { chooseTargetExecution } = require('../lib/executions');
 const startAsyncOperation = require('../lib/startAsyncOperation');
+const { startExportOperation } = require('../lib/startExport');
 const {
   createGranuleFromApi,
   updateGranuleFromApi,
@@ -1386,7 +1387,24 @@ async function bulkArchiveGranules(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
+/**
+ * Start an AsyncOperation that will export matching granules to a
+ * gzipped CSV file
+ *
+ * @param {Request} req - express request object
+ * @param {Response} res - express response object
+ * @returns {Promise<unknown>} the promise of express response object
+ */
+async function exportGranules(req, res) {
+  return await startExportOperation({ resourceType: 'granule', req, res });
+}
+
 router.post('/bulkArchive', bulkArchiveGranules);
+router.post(
+  '/export',
+  exportGranules,
+  asyncOperationEndpointErrorHandler
+);
 router.get('/:collectionId/:granuleId', get);
 router.get('/files/get_collection_and_granule_id/:bucket/:key', getFileGranuleAndCollectionByBucketAndKey);
 router.get('/:granuleId', getByGranuleId);
@@ -1434,6 +1452,7 @@ module.exports = {
   bulkPatch,
   bulkPatchGranuleCollection,
   bulkArchiveGranules,
+  exportGranules,
   getFileGranuleAndCollectionByBucketAndKey,
   router,
 };
