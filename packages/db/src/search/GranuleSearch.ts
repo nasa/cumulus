@@ -55,31 +55,6 @@ export class GranuleSearch extends BaseSearch {
       pdrs: pdrsTable,
     } = TableNames;
     const countQuery = this.baseCountQuery(knex);
-    const collectionSubqueryForCount = this.collectionSubqueryForCount();
-
-    if (collectionSubqueryForCount === 'single') {
-      const { collectionName, collectionVersion } = this.dbQueryParameters.term ?? {};
-      countQuery.where(
-        `${this.tableName}.${collectionCumulusIdColumn}`,
-        '=',
-        knex({ c: collectionsTable })
-          .select('c.cumulus_id')
-          .where('c.name', collectionName)
-          .where('c.version', collectionVersion)
-      );
-    } else if (collectionSubqueryForCount === 'multiple') {
-      const { collectionName = [], collectionVersion = [] } = this.dbQueryParameters.terms ?? {};
-      const collectionPairs = collectionName
-        .map((name, index) => [name, collectionVersion[index]])
-        .filter(([, version]) => version !== undefined);
-      countQuery.whereIn(
-        `${this.tableName}.${collectionCumulusIdColumn}`,
-        knex({ c: collectionsTable })
-          .select('c.cumulus_id')
-          .whereIn(['c.name', 'c.version'], collectionPairs)
-      );
-    }
-
     const searchQuery = knex(this.tableName)
       .select(`${this.tableName}.*`)
       .select({
@@ -89,8 +64,32 @@ export class GranuleSearch extends BaseSearch {
         pdrName: `${pdrsTable}.name`,
       })
       .innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+    const collectionSubqueryType = this.collectionSubqueryType();
 
-    if (this.searchCollection() && !collectionSubqueryForCount) {
+    if (collectionSubqueryType === 'single') {
+      const { collectionName, collectionVersion } = this.dbQueryParameters.term ?? {};
+      [countQuery, searchQuery].forEach((query) => query.where(
+        `${this.tableName}.${collectionCumulusIdColumn}`,
+        '=',
+        knex({ c: collectionsTable })
+          .select('c.cumulus_id')
+          .where('c.name', collectionName)
+          .where('c.version', collectionVersion)
+      ));
+    } else if (collectionSubqueryType === 'multiple') {
+      const { collectionName = [], collectionVersion = [] } = this.dbQueryParameters.terms ?? {};
+      const collectionPairs = collectionName
+        .map((name, index) => [name, collectionVersion[index]])
+        .filter(([, version]) => version !== undefined);
+      [countQuery, searchQuery].forEach((query) => query.whereIn(
+        `${this.tableName}.${collectionCumulusIdColumn}`,
+        knex({ c: collectionsTable })
+          .select('c.cumulus_id')
+          .whereIn(['c.name', 'c.version'], collectionPairs)
+      ));
+    }
+
+    if (this.searchCollection() && !collectionSubqueryType) {
       countQuery.innerJoin(collectionsTable, `${this.tableName}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
     }
 
@@ -114,7 +113,7 @@ export class GranuleSearch extends BaseSearch {
    * Use a collection ID subquery for count queries scoped to exactly one
    * collection. Other collection filters retain the join-based behavior.
    */
-  protected collectionSubqueryForCount(): 'single' | 'multiple' | undefined {
+  protected collectionSubqueryType(): 'single' | 'multiple' | undefined {
     const { term = {}, terms = {}, not = {} } = this.dbQueryParameters;
     const hasSingleCollection = Boolean(
       term.collectionName
@@ -140,8 +139,8 @@ export class GranuleSearch extends BaseSearch {
   }
 
   /**
-   * Keep collection name/version filters on the result query while the count
-   * query uses the scalar collection ID subquery created in buildBasicQuery.
+  * Apply single-collection filters through the collection ID subquery on both
+  * queries; the results query still joins collections for projected fields.
    */
   protected buildTermQuery(params: {
     countQuery?: Knex.QueryBuilder,
@@ -149,7 +148,7 @@ export class GranuleSearch extends BaseSearch {
     dbQueryParameters?: DbQueryParameters,
   }) {
     const { countQuery, searchQuery, dbQueryParameters = this.dbQueryParameters } = params;
-    if (!countQuery || this.collectionSubqueryForCount() !== 'single') {
+    if (this.collectionSubqueryType() !== 'single') {
       super.buildTermQuery(params);
       return;
     }
@@ -164,14 +163,11 @@ export class GranuleSearch extends BaseSearch {
         term: countTerm,
       },
     });
-    searchQuery
-      .where(`${TableNames.collections}.name`, collectionName)
-      .where(`${TableNames.collections}.version`, collectionVersion);
   }
 
   /**
-   * Keep collection name/version terms on the result query while the count
-   * query uses the collection ID IN subquery created in buildBasicQuery.
+  * Apply multi-collection filters through the collection ID IN subquery on
+  * both queries; the results query still joins collections for projected fields.
    */
   protected buildTermsQuery(params: {
     countQuery?: Knex.QueryBuilder,
@@ -179,13 +175,15 @@ export class GranuleSearch extends BaseSearch {
     dbQueryParameters?: DbQueryParameters,
   }) {
     const { countQuery, searchQuery, dbQueryParameters = this.dbQueryParameters } = params;
-    if (!countQuery || this.collectionSubqueryForCount() !== 'multiple') {
+    if (this.collectionSubqueryType() !== 'multiple') {
       super.buildTermsQuery(params);
       return;
     }
 
     const { terms = {}, ...otherParameters } = dbQueryParameters;
-    const { collectionName = [], collectionVersion = [], ...countTerms } = terms;
+    const countTerms = { ...terms };
+    delete countTerms.collectionName;
+    delete countTerms.collectionVersion;
     super.buildTermsQuery({
       countQuery,
       searchQuery,
@@ -194,13 +192,6 @@ export class GranuleSearch extends BaseSearch {
         terms: countTerms,
       },
     });
-    const collectionPairs = collectionName
-      .map((name, index) => [name, collectionVersion[index]])
-      .filter(([, version]) => version !== undefined);
-    searchQuery.whereIn(
-      [`${TableNames.collections}.name`, `${TableNames.collections}.version`],
-      collectionPairs
-    );
   }
 
   /**
