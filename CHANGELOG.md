@@ -27,6 +27,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-5690**
+  - Fixed missing "v" in website versions for v22.5.0.
+- **CUMULUS-5548**
+  - Fixed a 400 `UnknownError` when updating or deleting a Kinesis rule migrated from a Cumulus
+    deployment in another AWS account. Event source mappings that belong to another account are
+    now skipped instead of failing the request. No action is required.
 - **CUMULUS-5839**
   - Removed the unused backup and restore commands from `@cumulus/api/bin/cli.js`.
 
