@@ -264,8 +264,8 @@ async function deleteKinesisEventSource(knex, rule, eventType, id) {
 // @typedef { typeof deleteKinesisEventSource } deleteKinesisEventSource
 
 /**
- * Determine whether an event source mapping belongs to this deployment, i.e. is one
- * of the mappings between the given Kinesis stream and this stack's Lambda function
+ * Determine whether an event source mapping belongs to this deployment, i.e. is the
+ * mapping between the given Kinesis stream and this stack's Lambda function
  *
  * @param {string} uuid           - event source mapping UUID
  * @param {string} functionName   - this stack's Lambda function name
@@ -273,24 +273,29 @@ async function deleteKinesisEventSource(knex, rule, eventType, id) {
  * @returns {Promise<boolean>} true if the mapping belongs to this deployment
  */
 async function isEventSourceMappingOwnedByStack(uuid, functionName, eventSourceArn) {
-  let marker;
-  do {
-    // eslint-disable-next-line no-await-in-loop
-    const { EventSourceMappings = [], NextMarker } = await lambda().send(
-      new ListEventSourceMappingsCommand({
-        FunctionName: functionName,
-        EventSourceArn: eventSourceArn,
-        Marker: marker,
-      })
-    );
-    if (EventSourceMappings.some((mapping) => mapping.UUID === uuid)) return true;
-    marker = NextMarker;
-  } while (marker);
-  return false;
+  // A function can have at most one mapping per Kinesis stream, so no pagination is needed
+  const { EventSourceMappings = [] } = await lambda().send(
+    new ListEventSourceMappingsCommand({
+      FunctionName: functionName,
+      EventSourceArn: eventSourceArn,
+    })
+  );
+  return EventSourceMappings.some((mapping) => mapping.UUID === uuid);
 }
 
 /**
  * Delete event source mappings for all mappings in the kinesisSourceEvents
+ *
+ * A mapping that no longer exists (ResourceNotFoundException) is skipped.
+ *
+ * A mapping that Lambda refuses to delete with AccessDeniedException is skipped if it does
+ * not belong to this deployment. This happens when a rules database is migrated from a
+ * Cumulus deployment in another AWS account: migrated Kinesis rules keep the source
+ * deployment's `rule.arn`/`rule.logEventArn` mapping UUIDs, which this account cannot
+ * delete. Skipping them lets those rules be updated and deleted. Ingestion is unaffected,
+ * since incoming records are matched to rules by stream ARN, not by mapping UUID.
+ * AccessDeniedException for one of this deployment's own mappings is a genuine IAM
+ * permission problem and is rethrown.
  *
  * @param {Knex} knex       - DB client
  * @param {RuleRecord} rule - the rule item
@@ -325,12 +330,9 @@ async function deleteKinesisEventSources(knex, rule, testContext = {
       kinesisLambda.type
     ).catch(async (error) => {
       log.error(`Error deleting eventSourceMapping for ${rule.name}: ${error}`);
-      // The mapping no longer exists; nothing to delete
       if (error.name === 'ResourceNotFoundException') return;
 
-      // Lambda returns AccessDeniedException both for a mapping UUID that belongs to another
-      // AWS account (e.g. a rule migrated from another Cumulus deployment) and for a genuine
-      // IAM denial. Skip the former, since it is not ours to delete; rethrow the latter.
+      // Skip a mapping owned by another AWS account; rethrow a genuine IAM denial
       if (error.name === 'AccessDeniedException') {
         const uuid = kinesisLambda.type[kinesisLambda.eventType];
         const isOwned = await isEventSourceMappingOwnedByStack(

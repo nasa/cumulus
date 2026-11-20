@@ -28,23 +28,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - **CUMULUS-5548**
-  - Fixed updating and deleting Kinesis rules that were migrated from another Cumulus deployment.
-  - **Use case:** after a rules database is migrated into a deployment in a different AWS
-    account, migrated Kinesis rules can keep the `rule.arn` and `rule.logEventArn` event source
-    mapping UUIDs created by the source deployment. When such a rule is updated (`PUT` or
-    `PATCH /rules/{name}`, including **Edit** in the dashboard) or deleted, Cumulus first
-    deletes the rule's existing event source mappings. Lambda rejects deleting a mapping owned
-    by another account with `AccessDeniedException`. Because Cumulus ignored only
-    `ResourceNotFoundException`, the request failed with a 400 `UnknownError` and the rule
-    could be neither updated nor deleted.
-  - **Fix:** when deleting a mapping returns `AccessDeniedException`, `deleteKinesisEventSources`
-    in `@cumulus/api/lib/rulesHelpers.js` now checks whether the mapping is one of this
-    deployment's mappings for the rule's stream. If it is not, the mapping is skipped with a
-    warning and the update or delete completes. If it is, the error is still raised, so a
-    genuine IAM permission problem is not hidden.
-  - No action is required. Affected rules can be updated or deleted as normal once this release
-    is deployed. Ingestion is not affected: incoming Kinesis records are matched to rules by
-    stream ARN, not by the stored mapping UUIDs.
+  - Fixed a 400 `UnknownError` when updating or deleting a Kinesis rule migrated from a Cumulus
+    deployment in another AWS account. Event source mappings that belong to another account are
+    now skipped instead of failing the request. No action is required.
 - **CUMULUS-5839**
   - Removed the unused backup and restore commands from `@cumulus/api/bin/cli.js`.
 
