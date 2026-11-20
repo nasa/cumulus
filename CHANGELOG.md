@@ -22,8 +22,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-5733**
   - Adding documentation explaining each async_operation statuses
 
+- **CUMULUS-5885**
+  - Updated API granule search to support pruning of partitions when one or more collection name and versions are specified.
+
 ### Fixed
 
+- **CUMULUS-5690**
+  - Fixed missing "v" in website versions for v22.5.0.
+- **CUMULUS-5548**
+  - Fixed a 400 `UnknownError` when updating or deleting a Kinesis rule migrated from a Cumulus
+    deployment in another AWS account. Event source mappings that belong to another account are
+    now skipped instead of failing the request. No action is required.
 - **CUMULUS-5839**
   - Removed the unused backup and restore commands from `@cumulus/api/bin/cli.js`.
 
