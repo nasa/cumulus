@@ -757,3 +757,33 @@ test('bulkArchiveGranules calls the callback with the expected object and return
     callback,
   }));
 });
+
+test('bulkRemoveFromCmr calls the callback with the expected object', async (t) => {
+  const body = {
+    granules: [t.context.granuleId],
+  };
+
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: '/granules/bulkRemoveFromCmr',
+      body: JSON.stringify(body),
+    },
+    expectedStatusCodes: 202,
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(expected, configObject);
+  };
+
+  await t.notThrowsAsync(granulesApi.bulkRemoveFromCmr({
+    prefix: t.context.testPrefix,
+    body,
+    callback,
+  }));
+});
