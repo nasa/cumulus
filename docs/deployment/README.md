@@ -259,7 +259,7 @@ $ aws dynamodb create-table \
 
 ---
 
-## Configure the PostgreSQL Database
+## Configure the PostgreSQL Database (Optional)
 
 Cumulus requires a [PostgreSQL compatible database](../deployment/postgres-database-deployment.md) cluster deployed to AWS. We suggest utilizing [RDS](https://docs.aws.amazon.com/rds/index.html). For further guidance about what type of RDS database to use, please [see the guide on choosing and configuring your RDS database](./choosing_configuring_rds.md).
 

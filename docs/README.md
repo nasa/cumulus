@@ -23,6 +23,7 @@ This documentation includes both guidelines, examples, and source code docs. It 
 * Cumulus API Documentation - [here](https://nasa.github.io/cumulus-api)
 * Cumulus Developer Documentation - [here](https://github.com/nasa/cumulus) - READMEs throughout the main repository.
 * Data Cookbooks - [here](data-cookbooks/about-cookbooks.md)
+* Cumulus Examples: - [here] (example/)
 
 ### Auxiliary Guides
 

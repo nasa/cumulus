@@ -1,5 +1,6 @@
 # generate_files
 
+
 This lambda is used to generate 'random' MOD09GQ-like granules with fake data in batches of 100 and upload them to a target bucket/path.
 
 ## Usage
@@ -18,3 +19,7 @@ aws s3 sync --dry-run --delete . s3://{bucket}/{path}
 ## Collection
 
 A sample collection is included for ease of testing/setup in `./sample-collection`.   That collection has been used with the  `DiscoverGranules->IngestGranule` workflows
+
+
+## Alternatives
+For an alternative method of seeding database records, see: (lambdas/granule-seed/README.md)
