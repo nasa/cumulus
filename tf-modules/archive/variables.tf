@@ -258,12 +258,6 @@ variable "oauth_user_group" {
   default = "N/A"
 }
 
-variable "orca_api_uri" {
-  description = "ORCA API gateway URL. Excludes the resource path"
-  type        = string
-  default     = null
-}
-
 variable "private_archive_api_gateway" {
   type    = bool
   default = true

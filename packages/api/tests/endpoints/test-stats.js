@@ -80,7 +80,7 @@ test.before(async (t) => {
 
   const statuses = ['queued', 'failed', 'completed', 'running'];
   const errors = [{ Error: 'UnknownError' }, { Error: 'CumulusMessageAdapterError' }, { Error: 'IngestFailure' }, { Error: 'CmrFailure' }, {}];
-  const reconReportTypes = ['Granule Inventory', 'Granule Not Found', 'Inventory', 'ORCA Backup'];
+  const reconReportTypes = ['Granule Inventory', 'Granule Not Found', 'Inventory'];
   const reconReportStatuses = ['Generated', 'Pending', 'Failed'];
 
   const collections = range(20).map((num) => fakeCollectionRecordFactory({
@@ -99,8 +99,8 @@ test.before(async (t) => {
     duration: num + (num / 10),
   }));
 
-  const reconReports = range(24).map((num) => fakeReconciliationReportRecordFactory({
-    type: reconReportTypes[num % 4],
+  const reconReports = range(21).map((num) => fakeReconciliationReportRecordFactory({
+    type: reconReportTypes[num % 3],
     status: reconReportStatuses[num % 3],
     created_at: (new Date(2024 + (num % 6), (num % 12), (num % 30))),
     updated_at: (new Date(2024 + (num % 6), (num % 12), ((num + 1) % 29))),
@@ -285,13 +285,12 @@ test('GET /stats/aggregate with type `reconciliationReports` and field `type` re
     .expect(200);
 
   const expectedCount = [
-    { key: 'Granule Inventory', count: 6 },
-    { key: 'Granule Not Found', count: 6 },
-    { key: 'Inventory', count: 6 },
-    { key: 'ORCA Backup', count: 6 },
+    { key: 'Granule Inventory', count: 7 },
+    { key: 'Granule Not Found', count: 7 },
+    { key: 'Inventory', count: 7 },
   ];
 
-  t.is(response.body.meta.count, 24);
+  t.is(response.body.meta.count, 21);
   t.deepEqual(response.body.count, expectedCount);
 });
 
@@ -303,11 +302,11 @@ test('GET /stats/aggregate with type `reconciliationReports` and field `status` 
     .expect(200);
 
   const expectedCount = [
-    { key: 'Failed', count: 8 },
-    { key: 'Generated', count: 8 },
-    { key: 'Pending', count: 8 },
+    { key: 'Failed', count: 7 },
+    { key: 'Generated', count: 7 },
+    { key: 'Pending', count: 7 },
   ];
 
-  t.is(response.body.meta.count, 24);
+  t.is(response.body.meta.count, 21);
   t.deepEqual(response.body.count, expectedCount);
 });

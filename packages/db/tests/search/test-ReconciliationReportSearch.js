@@ -24,7 +24,7 @@ test.before(async (t) => {
   t.context.knexAdmin = knexAdmin;
   t.context.knex = knex;
   t.context.reconciliationReportPgModel = new ReconciliationReportPgModel();
-  const reconReportTypes = ['Granule Inventory', 'Granule Not Found', 'Inventory', 'ORCA Backup'];
+  const reconReportTypes = ['Granule Inventory', 'Granule Not Found', 'Inventory'];
   const reconReportStatuses = ['Generated', 'Pending', 'Failed'];
   t.context.reconReportSearchTimestamp = 1704100000000;
   t.context.reportBucket = cryptoRandomString({ length: 8 });
@@ -32,7 +32,7 @@ test.before(async (t) => {
 
   const reconReports = range(50).map((num) => fakeReconciliationReportRecordFactory({
     name: `fakeReconReport-${num + 1}`,
-    type: reconReportTypes[num % 4],
+    type: reconReportTypes[Math.floor(num / 3) % 3],
     status: reconReportStatuses[num % 3],
     location: `s3://fakeBucket${t.context.reportBucket}/fakeKey${t.context.reportKey}`,
     updated_at: new Date(t.context.reconReportSearchTimestamp + (num % 2)),
@@ -65,8 +65,8 @@ test('ReconciliationReportSearch returns the correct response for a basic query'
     createdAt: t.context.reconReportSearchTimestamp,
   };
 
-  const expectedResponse10 = {
-    name: 'fakeReconReport-10',
+  const expectedResponse4 = {
+    name: 'fakeReconReport-4',
     type: 'Granule Not Found',
     status: 'Generated',
     location: `s3://fakeBucket${t.context.reportBucket}/fakeKey${t.context.reportKey}`,
@@ -75,7 +75,7 @@ test('ReconciliationReportSearch returns the correct response for a basic query'
   };
 
   t.deepEqual(response.results[0], expectedResponse1);
-  t.deepEqual(response.results[9], expectedResponse10);
+  t.deepEqual(response.results[3], expectedResponse4);
 });
 
 test('ReconciliationReportSearch supports page and limit params', async (t) => {
@@ -143,9 +143,9 @@ test('ReconciliationReportSearch supports sorting', async (t) => {
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
-  t.true(response.results[0].type < response.results[15].type);
-  t.true(response.results[16].type < response.results[30].type);
-  t.true(response.results[31].type < response.results[45].type);
+  t.true(response.results[0].type < response.results[18].type);
+  t.true(response.results[17].type < response.results[35].type);
+  t.true(response.results[34].type < response.results[49].type);
 });
 
 test('ReconciliationReportSearch supports term search for string fields', async (t) => {
@@ -203,8 +203,8 @@ test('ReconciliationReportSearch supports search for multiple fields', async (t)
 
   const dbSearch = new ReconciliationReportSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
-  t.is(response.meta.count, 4);
-  t.is(response.results?.length, 4);
+  t.is(response.meta.count, 5);
+  t.is(response.results?.length, 5);
   t.true(response.results?.every((report) =>
     report.type === 'Inventory' && report.status === 'Failed'));
 });

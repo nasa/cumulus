@@ -38,7 +38,6 @@ const {
   translatePostgresReconReportToApiReconReport,
 } = require('@cumulus/db');
 const { createGranuleInventoryReport } = require('./reports/granule-inventory-report');
-const { createOrcaBackupReconciliationReport } = require('./reports/orca-backup-reconciliation-report');
 const { filenamify } = require('../lib/utils');
 const {
   cmrGranuleSearchParams,
@@ -991,8 +990,6 @@ async function processRequest(params) {
       throw new Error('Internal Reconciliation Reports are no longer valid');
     } else if (reportType === 'Granule Inventory') {
       await createGranuleInventoryReport(recReportParams);
-    } else if (reportType === 'ORCA Backup') {
-      await createOrcaBackupReconciliationReport(recReportParams);
     } else if (['Inventory', 'Granule Not Found'].includes(reportType)) {
       // reportType is in ['Inventory', 'Granule Not Found']
       await createReconciliationReport(recReportParams);

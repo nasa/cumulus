@@ -60,7 +60,6 @@ test('ReconciliationReportPgModel.upsert() overwrites a reconciliation report re
 
   const updatedReconciliationReport = {
     ...reconciliationReportRecord,
-    type: 'ORCA Backup',
     status: 'Failed',
   };
 
