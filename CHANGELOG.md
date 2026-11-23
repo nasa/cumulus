@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 Please note that changes in `v22.4.5` may not yet be released in future versions as this is a backport and patch release on the 22.4.x series of releaes.  Updates that are included in the future will have a corresponding Changelog entry in future releases
 
 - **CUMULUS-5885**
-  - Updated API granule search to support pruning of partitions when one or more collection name and versions are specified.
+  - Updated API granule search to support pruning of partitions when one or more collection name and versions are specified in query.
 
 ## [v22.4.4] 2026-11-03
 
