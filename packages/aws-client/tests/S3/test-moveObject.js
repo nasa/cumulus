@@ -86,9 +86,7 @@ test('moveObject() deletes the source file', async (t) => {
 });
 
 test('moveObject() moves a 0 byte file', async (t) => {
-  // This test doesn't really prove anything since Localstack does not behave exactly like S3.
-  // However, if Localstack fixes multipart upload handling to match real S3 behavior, this will
-  // be a useful test.
+  // This test doesn't prove anything since MiniStack allows multipart upload for 0 byte file
   const { sourceBucket, destinationBucket } = t.context;
 
   const sourceKey = randomId('source-key');

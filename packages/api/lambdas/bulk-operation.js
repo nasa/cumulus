@@ -46,6 +46,20 @@ const log = new Logger({ sender: '@cumulus/bulk-operation' });
  */
 
 /**
+ * Payload for bulk removal of granules from CMR.
+ * Extends GranuleExecutionPayload with bulk-remove-from-cmr-specific options.
+ *
+ * @typedef {GranuleExecutionPayload & {
+ *   concurrency?: number,
+ *   maxDbConnections?: number,
+ * }} BulkGranuleRemoveFromCmrPayload
+ * @property {number} [concurrency] - Granule concurrency for the bulk operations.
+ *   Defaults to 10
+ * @property {number} [maxDbConnections] - Maximum number of PostgreSQL connections allocated
+ *   to Knex. Defaults to `concurrency`.
+ */
+
+/**
  * Payload for bulk workflow application to granules.
  * Extends GranuleExecutionPayload with bulk-specific options.
  *
@@ -216,6 +230,69 @@ async function bulkGranuleDelete(
 }
 
 /**
+ * Bulk remove granules from CMR based on either a list of granules (IDs) or the
+ * query response from ES using the provided query and index. Unlike `bulkGranuleDelete`, the
+ * granule record itself is not removed from Cumulus -- only its CMR metadata is removed and
+ * `published` is set to `false`.
+ *
+ * @param {BulkGranuleRemoveFromCmrPayload} payload
+ * @param {RemoveGranuleFromCmrFn} [removeGranuleFromCmrFunction] - used for test mocking
+ * @param {Function} [unpublishGranuleFunc] - Optional function to remove the
+ * granule from CMR. Useful for testing.
+ * @returns {Promise<unknown>}
+ */
+async function bulkGranuleRemoveFromCmr(
+  payload,
+  removeGranuleFromCmrFunction,
+  unpublishGranuleFunc = unpublishGranule
+) {
+  const concurrency = payload.concurrency || 10;
+  const dbPoolMax = payload.maxDbConnections || concurrency;
+  process.env.dbMaxPool = `${dbPoolMax}`;
+  const knex = await getKnexClient();
+
+  const results = [];
+  const granulePgModel = new GranulePgModel();
+  const collectionPgModel = new CollectionPgModel();
+  for await (
+    const granuleBatch of getGranulesForPayload(payload)
+  ) {
+    log.info(`Processing batch of ${granuleBatch.length} granules, for ${JSON.stringify(granuleBatch)}`);
+    const batchResults = await pMap(
+      granuleBatch,
+      async (granuleId) => {
+        try {
+          const pgGranule = await granulePgModel.get(knex, { granule_id: granuleId });
+          const pgCollection = await collectionPgModel.get(
+            knex, { cumulus_id: pgGranule.collection_cumulus_id }
+          );
+          await unpublishGranuleFunc({
+            knex,
+            pgGranuleRecord: pgGranule,
+            pgCollection: pgCollection,
+            removeGranuleFromCmrFunction,
+          });
+          return granuleId;
+        } catch (error) {
+          if (error instanceof RecordDoesNotExist) {
+            log.info(error.message);
+            return { granuleId, error: 'RecordDoesNotExist' };
+          }
+          log.error(`Granule ${granuleId} encountered an error`, error);
+          return { granuleId, error: String(error) };
+        }
+      },
+      {
+        concurrency,
+        stopOnError: false,
+      }
+    );
+    results.push(...batchResults);
+  }
+  return results;
+}
+
+/**
  * Bulk apply workflow to either a list of granules (IDs) or to a list of responses from
  * ES using the provided query and index.
  *
@@ -326,7 +403,8 @@ async function bulkGranuleReingest(
  *
  * @param {Object} event - The event object.
  * @param {string} event.type - The type of the bulk operation. This can be one of the following:
- * 'BULK_GRANULE', 'BULK_GRANULE_DELETE', 'BULK_GRANULE_REINGEST', 'BULK_EXECUTION_DELETE'.
+ * 'BULK_GRANULE', 'BULK_GRANULE_DELETE', 'BULK_GRANULE_REMOVE_FROM_CMR', 'BULK_GRANULE_REINGEST',
+ * 'BULK_EXECUTION_DELETE'.
  * @param {Object} event.payload - The payload for the bulk operation. The structure of this object
  * depends on the type of the bulk operation.
  * @param {Function} [event.applyWorkflowHandler] - The handler function for applying workflow.
@@ -350,6 +428,10 @@ async function handler(event) {
     /** @type {BulkGranuleDeletePayload} */
     return await bulkGranuleDelete(event.payload);
   }
+  if (event.type === 'BULK_GRANULE_REMOVE_FROM_CMR') {
+    /** @type {BulkGranuleRemoveFromCmrPayload} */
+    return await bulkGranuleRemoveFromCmr(event.payload);
+  }
   if (event.type === 'BULK_GRANULE_REINGEST') {
     return await bulkGranuleReingest(
       /** @type {BulkGranuleReingestPayload} */ (event.payload),
@@ -366,5 +448,6 @@ async function handler(event) {
 module.exports = {
   applyWorkflowToGranules,
   bulkGranuleDelete,
+  bulkGranuleRemoveFromCmr,
   handler,
 };

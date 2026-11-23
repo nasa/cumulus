@@ -74,8 +74,6 @@ test.serial('handler replicates file to target bucket in the same region', async
   t.is(output.length, 1);
 });
 
-// note: localstack doesn't fail the request even target region is not set,
-// so this can not replace the real test in AWS
 test.serial('handler replicates file to target bucket in the different region', async (t) => {
   process.env.TARGET_REGION = t.context.targetRegion;
   process.env.TARGET_BUCKET = t.context.targetBucket;

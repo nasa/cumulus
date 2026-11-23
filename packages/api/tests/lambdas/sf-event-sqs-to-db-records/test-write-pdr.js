@@ -462,7 +462,7 @@ test.serial('writePdr() does not publish an SNS message if pdr_sns_topic_arn is 
       executionCumulusId: executionCumulusId,
       knex,
     }),
-    { message: /Invalid parameter: TopicArn/ }
+    { message: /Topic does not exist:/ }
   );
   const { Messages } = await sqs().send(
     new ReceiveMessageCommand({ QueueUrl, WaitTimeSeconds: 10 })

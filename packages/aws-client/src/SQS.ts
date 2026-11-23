@@ -44,7 +44,7 @@ export const getQueueUrlByName = async (queueName: string) => {
 };
 
 /**
- * Create an SQS Queue.  Properly handles localstack queue URLs
+ * Create an SQS Queue
  */
 export async function createQueue(QueueName: string, Attributes?: Record<string, string>) {
   const command = new CreateQueueCommand({

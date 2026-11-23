@@ -1291,6 +1291,74 @@ async function bulkDelete(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
+const BulkRemoveFromCmrPayloadSchema = z.object({
+  knexDebug: z.boolean().optional(),
+  concurrency: z.number().int().positive().optional(),
+  maxDbConnections: z.number().int().positive().optional(),
+  batchSize: z.number().int().positive().optional(),
+}).catchall(z.unknown());
+
+const parseBulkRemoveFromCmrPayload = zodParser('Bulk remove from CMR payload', BulkRemoveFromCmrPayloadSchema);
+
+/**
+ * Start an AsyncOperation that will perform a bulk granule removal from CMR
+ *
+ * @param {Request} req - express request object
+ * @param {Response} res - express response object
+ * @returns {Promise<unknown>} the promise of express response object
+ */
+async function bulkRemoveFromCmr(req, res) {
+  const payload = parseBulkRemoveFromCmrPayload(req.body);
+  if (isError(payload)) {
+    return returnCustomValidationErrors(res, payload);
+  }
+
+  const concurrency = payload.concurrency || 10;
+
+  const maxDbConnections = payload.maxDbConnections || concurrency;
+
+  const asyncOperationId = uuidv4();
+  const asyncOperationEvent = {
+    asyncOperationId,
+    cluster: process.env.EcsCluster,
+    callerLambdaName: getFunctionNameFromRequestContext(req),
+    lambdaName: process.env.BulkOperationLambda,
+    description: 'Bulk granule removal from CMR',
+    operationType: 'Bulk Granule Remove From CMR', // this value is set on an ENUM field, so cannot change
+    payload: {
+      type: 'BULK_GRANULE_REMOVE_FROM_CMR',
+      payload: { ...payload, concurrency, maxDbConnections },
+      envVars: {
+        cmr_client_id: process.env.cmr_client_id,
+        CMR_ENVIRONMENT: process.env.CMR_ENVIRONMENT,
+        cmr_oauth_provider: process.env.cmr_oauth_provider,
+        cmr_password_secret_name: process.env.cmr_password_secret_name,
+        cmr_provider: process.env.cmr_provider,
+        cmr_username: process.env.cmr_username,
+        granule_sns_topic_arn: process.env.granule_sns_topic_arn,
+        KNEX_DEBUG: payload.knexDebug ? 'true' : 'false',
+        launchpad_api: process.env.launchpad_api,
+        launchpad_certificate: process.env.launchpad_certificate,
+        launchpad_passphrase_secret_name:
+          process.env.launchpad_passphrase_secret_name,
+        METRICS_ES_HOST: process.env.METRICS_ES_HOST,
+        METRICS_ES_PASS: process.env.METRICS_ES_PASS,
+        METRICS_ES_USER: process.env.METRICS_ES_USER,
+        stackName: process.env.stackName,
+        system_bucket: process.env.system_bucket,
+      },
+    },
+  };
+
+  log.debug(
+    `About to invoke lambda to start async operation ${asyncOperationId}`
+  );
+  await startAsyncOperation.invokeStartAsyncOperationLambda(
+    asyncOperationEvent
+  );
+  return res.status(202).send({ id: asyncOperationId });
+}
+
 const BulkReingestPayloadSchema = z.object({
   knexDebug: z.boolean().optional(),
   concurrency: z.number().int().positive().optional(),
@@ -1418,6 +1486,12 @@ router.post(
   bulkReingest,
   asyncOperationEndpointErrorHandler
 );
+router.post(
+  '/bulkRemoveFromCmr',
+  validateBulkGranulesRequest,
+  bulkRemoveFromCmr,
+  asyncOperationEndpointErrorHandler
+);
 router.delete('/:granuleId', delByGranuleId);
 router.delete('/:collectionId/:granuleId', del);
 
@@ -1426,6 +1500,7 @@ module.exports = {
   bulkChangeCollection,
   bulkOperations,
   bulkReingest,
+  bulkRemoveFromCmr,
   del,
   create,
   put,

@@ -1209,6 +1209,80 @@ test('GranuleSearch prepends collection_cumulus_id to sort order for single coll
   t.true(sql.includes('order by "granules"."collection_cumulus_id" asc, "granules"."updated_at" desc'));
 });
 
+test('GranuleSearch uses a collection ID subquery for single collection queries', (t) => {
+  const { knex } = t.context;
+  const dbSearch = new GranuleSearch({
+    queryStringParameters: {
+      collectionId: t.context.collectionId,
+      status: 'completed',
+      beginningDateTime__from: '2025-12-30T00:02:20.000000Z',
+      beginningDateTime__to: '2026-04-29T00:02:20.000000Z',
+    },
+  });
+  const { countQuery, searchQuery } = dbSearch.buildSearch(knex);
+  const countSql = countQuery.toSQL().sql;
+  const searchSql = searchQuery.toSQL().sql;
+
+  t.false(countSql.includes('inner join "collections"'));
+  t.true(countSql.includes('"granules"."collection_cumulus_id" = (select "c"."cumulus_id" from "collections" as "c"'));
+  t.true(countSql.includes('"granules"."status" = ?'));
+  t.true(countSql.includes('"granules"."beginning_date_time" >= ?'));
+  t.true(countSql.includes('"granules"."beginning_date_time" <= ?'));
+  t.true(searchSql.includes('inner join "collections"'));
+  t.true(searchSql.includes('"granules"."collection_cumulus_id" = (select "c"."cumulus_id" from "collections" as "c"'));
+  t.false(searchSql.includes('"collections"."name" = ?'));
+  t.false(searchSql.includes('"collections"."version" = ?'));
+});
+
+test('GranuleSearch uses paired collection ID subquery for multi-collection queries', (t) => {
+  const { knex } = t.context;
+  const dbSearch = new GranuleSearch({
+    queryStringParameters: {
+      collectionId__in: [t.context.collectionId, t.context.collectionId2].join(','),
+    },
+  });
+  const { countQuery, searchQuery } = dbSearch.buildSearch(knex);
+  const { sql, bindings } = countQuery.toSQL();
+  const searchSql = searchQuery.toSQL().sql;
+
+  t.false(sql.includes('inner join "collections"'));
+  t.true(sql.includes('"granules"."collection_cumulus_id" in (select "c"."cumulus_id" from "collections" as "c"'));
+  t.true(sql.includes('("c"."name", "c"."version") in ((?, ?), (?, ?))'));
+  t.true(searchSql.includes('"granules"."collection_cumulus_id" in (select "c"."cumulus_id" from "collections" as "c"'));
+  t.true(searchSql.includes('("c"."name", "c"."version") in ((?, ?), (?, ?))'));
+  t.true(searchSql.includes('inner join "collections"'));
+  t.false(searchSql.includes('("collections"."name", "collections"."version") in'));
+  t.deepEqual(bindings.slice(0, 4), [
+    t.context.collectionName,
+    t.context.collectionVersion,
+    'testCollection2',
+    'v2',
+  ]);
+});
+
+test('GranuleSearch uses join-based filtering for collectionId__not queries', (t) => {
+  const { knex } = t.context;
+  const dbSearch = new GranuleSearch({
+    queryStringParameters: {
+      collectionId__not: t.context.collectionId,
+    },
+  });
+  const { countQuery, searchQuery } = dbSearch.buildSearch(knex);
+  const { sql: countSql, bindings: countBindings } = countQuery.toSQL();
+  const { sql: searchSql, bindings: searchBindings } = searchQuery.toSQL();
+
+  t.true(countSql.includes('inner join "collections"'));
+  t.true(countSql.includes('where not "collections"."name" = ? and not "collections"."version" = ?'));
+  t.false(countSql.includes('"granules"."collection_cumulus_id" = (select'));
+  t.false(countSql.includes('"granules"."collection_cumulus_id" in (select'));
+  t.true(searchSql.includes('inner join "collections"'));
+  t.true(searchSql.includes('where not "collections"."name" = ? and not "collections"."version" = ?'));
+  t.false(searchSql.includes('"granules"."collection_cumulus_id" = (select'));
+  t.false(searchSql.includes('"granules"."collection_cumulus_id" in (select'));
+  t.deepEqual(countBindings, [t.context.collectionName, t.context.collectionVersion]);
+  t.deepEqual(searchBindings.slice(0, 2), [t.context.collectionName, t.context.collectionVersion]);
+});
+
 test('GranuleSearch prepends collection_cumulus_id to sort order for multi-collection queries', (t) => {
   const { knex } = t.context;
   const queryStringParameters = {

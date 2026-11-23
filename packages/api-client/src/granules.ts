@@ -772,6 +772,41 @@ export const bulkDeleteGranules = async (params: {
   });
 };
 
+/**
+ * POST /granules/bulkRemoveFromCmr
+ *
+ * @param params - params
+ * @param params.prefix - the prefix configured for the stack
+ * @param params.body - body to pass the API lambda
+ * @param params.callback - async function to invoke the api lambda
+ *                          that takes a prefix / user payload.  Defaults
+ *                          to cumulusApiClient.invokeApifunction to invoke the
+ *                          api lambda
+ * @returns - the response from the callback
+ */
+export const bulkRemoveFromCmr = async (params: {
+  prefix: string,
+  body: unknown,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  /* istanbul ignore next */
+  const { prefix, body, callback = invokeApi } = params;
+
+  return await callback({
+    prefix: prefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      path: '/granules/bulkRemoveFromCmr',
+      body: JSON.stringify(body),
+    },
+    expectedStatusCodes: 202,
+  });
+};
+
 export const getFileGranuleAndCollectionByBucketAndKey = async (params: {
   prefix: string,
   bucket: string,
