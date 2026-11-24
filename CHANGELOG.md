@@ -101,6 +101,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-5615**
   - Removed deprecated documentation. Cumulus Template Deploy is no longer supported and mentions have been noted appropriately.
 
+## [v22.4.5] 2026-11-23
+
+### Changed
+
+Please note that changes in `v22.4.5` may not yet be released in future versions as this is a backport and patch release on the 22.4.x series of releaes.  Updates that are included in the future will have a corresponding Changelog entry in future releases
+
+- **CUMULUS-5885**
+  - Updated API granule search to support pruning of partitions when one or more collection name and versions are specified in query.
+
 ## [v22.4.4] 2026-11-03
 
 Please note that changes in `v22.4.4` may not yet be released in future versions as this is a backport and patch release on the 22.4.x series of releaes.  Updates that are included in the future will have a corresponding Changelog entry in future releases
@@ -10242,7 +10251,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 [Unreleased]: https://github.com/nasa/cumulus/compare/v22.5.1...HEAD
 [v22.5.1]: https://github.com/nasa/cumulus/compare/v22.5.0...v22.5.1
-[v22.5.0]: https://github.com/nasa/cumulus/compare/v22.4.4...v22.5.0
+[v22.5.0]: https://github.com/nasa/cumulus/compare/v22.4.5...v22.5.0
+[v22.4.5]: https://github.com/nasa/cumulus/compare/v22.4.4...v22.4.5
 [v22.4.4]: https://github.com/nasa/cumulus/compare/v22.4.3...v22.4.4
 [v22.4.3]: https://github.com/nasa/cumulus/compare/v22.4.2...v22.4.3
 [v22.4.2]: https://github.com/nasa/cumulus/compare/v22.4.1...v22.4.2
