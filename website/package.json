@@ -1,12 +1,12 @@
 {
   "name": "@cumulus/website",
-  "version": "22.5.0",
+  "version": "22.5.1",
   "description": "The Cumulus website",
   "license": "Apache-2.0",
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
-    "build": "docusaurus build",
+    "build": "NODE_OPTIONS='--max-old-space-size=8192' docusaurus build",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
     "clear": "docusaurus clear",
