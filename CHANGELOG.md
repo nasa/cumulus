@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [v22.5.1] 2026-11-23
+
 ### Added
 
 - **CUMULUS-4954**
@@ -22,8 +24,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-5733**
   - Adding documentation explaining each async_operation statuses
 
+- **CUMULUS-5885**
+  - Updated API granule search to support pruning of partitions when one or more collection name and versions are specified.
+
 ### Fixed
 
+- **CUMULUS-5690**
+  - Fixed missing "v" in website versions for v22.5.0.
+- **CUMULUS-5548**
+  - Fixed a 400 `UnknownError` when updating or deleting a Kinesis rule migrated from a Cumulus
+    deployment in another AWS account. Event source mappings that belong to another account are
+    now skipped instead of failing the request. No action is required.
 - **CUMULUS-5839**
   - Removed the unused backup and restore commands from `@cumulus/api/bin/cli.js`.
 
@@ -84,6 +95,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Adding CI deploying config to support treuter's CI stack
 - **CUMULUS-5369**
   - Added empty string default to iceberg_admin variable.  This prevents build failures as SSM parameters cannot have an empty/null value on deploy.
+- **CSD-369**
+  - Implemented POST `/granules/bulkRemoveFromCmr` API endpoint to support bulk removal of granules from CMR without deleting the granules themselves.
+  - Added a corresponding `bulkRemoveFromCmr` function to `@cumulus/api-client`.
 
 ### Changed
 
@@ -91,6 +105,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated cma-js dependency to 2.5.0
 - **CUMULUS-5615**
   - Removed deprecated documentation. Cumulus Template Deploy is no longer supported and mentions have been noted appropriately.
+
+## [v22.4.5] 2026-11-23
+
+### Changed
+
+Please note that changes in `v22.4.5` may not yet be released in future versions as this is a backport and patch release on the 22.4.x series of releaes.  Updates that are included in the future will have a corresponding Changelog entry in future releases
+
+- **CUMULUS-5885**
+  - Updated API granule search to support pruning of partitions when one or more collection name and versions are specified in query.
 
 ## [v22.4.4] 2026-11-03
 
@@ -10231,8 +10254,10 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[Unreleased]: https://github.com/nasa/cumulus/compare/v22.5.0...HEAD
-[v22.5.0]: https://github.com/nasa/cumulus/compare/v22.4.4...v22.5.0
+[Unreleased]: https://github.com/nasa/cumulus/compare/v22.5.1...HEAD
+[v22.5.1]: https://github.com/nasa/cumulus/compare/v22.5.0...v22.5.1
+[v22.5.0]: https://github.com/nasa/cumulus/compare/v22.4.5...v22.5.0
+[v22.4.5]: https://github.com/nasa/cumulus/compare/v22.4.4...v22.4.5
 [v22.4.4]: https://github.com/nasa/cumulus/compare/v22.4.3...v22.4.4
 [v22.4.3]: https://github.com/nasa/cumulus/compare/v22.4.2...v22.4.3
 [v22.4.2]: https://github.com/nasa/cumulus/compare/v22.4.1...v22.4.2

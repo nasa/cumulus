@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = "==3.12.*"
 
 [[package]]
@@ -107,7 +107,7 @@ wheels = [
 
 [[package]]
 name = "cnm-to-cma"
-version = "22.5.0"
+version = "22.5.1"
 source = { virtual = "." }
 dependencies = [
     { name = "cumulus-message-adapter-python" },

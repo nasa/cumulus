@@ -317,6 +317,60 @@ test('bulk operation lambda throws error for unknown event type', async (t) => {
   }));
 });
 
+test.serial('bulk operation BULK_GRANULE_REMOVE_FROM_CMR leaves already-unpublished granules in Postgres', async (t) => {
+  // handler() does not forward a removeGranuleFromCmrFunction override, so granules used here
+  // must already be unpublished (no cmr_link) to avoid making a real call out to CMR.
+  const granulePgModel = new GranulePgModel();
+
+  const granules = await Promise.all([
+    createGranuleAndFiles({
+      dbClient: t.context.knex,
+      granuleParams: { published: false },
+    }),
+    createGranuleAndFiles({
+      dbClient: t.context.knex,
+      granuleParams: { published: false },
+    }),
+  ]);
+
+  const s3Buckets = granules[0].s3Buckets;
+  const apiGranuleId1 = granules[0].newPgGranule.granule_id;
+  const apiGranuleId2 = granules[1].newPgGranule.granule_id;
+
+  const granuleIds = [apiGranuleId1, apiGranuleId2];
+
+  const results = await bulkOperation.handler({
+    type: 'BULK_GRANULE_REMOVE_FROM_CMR',
+    envVars,
+    payload: {
+      granules: granuleIds,
+    },
+  });
+
+  t.deepEqual(
+    results.sort(),
+    granuleIds.sort()
+  );
+
+  // Granules should still exist in Postgres, and remain unpublished
+  const pgCollectionCumulusId1 = granules[0].newPgGranule.collection_cumulus_id;
+  const pgCollectionCumulusId2 = granules[1].newPgGranule.collection_cumulus_id;
+
+  t.true(await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: apiGranuleId1, collection_cumulus_id: pgCollectionCumulusId1 }
+  ));
+  t.true(await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: apiGranuleId2, collection_cumulus_id: pgCollectionCumulusId2 }
+  ));
+
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
+});
+
 // This test must run for the following tests to pass
 test.serial('bulk operation lambda sets env vars provided in payload', async (t) => {
   const granule = fakeGranuleFactoryV2();

@@ -11,6 +11,7 @@ export type AsyncOperationType =
   | 'Bulk Granule Archive'
   | 'Bulk Granule Delete'
   | 'Bulk Granule Reingest'
+  | 'Bulk Granule Remove From CMR'
   | 'Data Migration'
   | 'Dead-Letter Processing'
   | 'DLA Migration'

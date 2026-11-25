@@ -808,6 +808,79 @@ test.serial('deleteKinesisEventSources does not throw when deleteKinesisEventSou
   t.deepEqual(deleteResult, [undefined, undefined]);
 });
 
+// Lambda returns AccessDeniedException both for an event source mapping UUID owned by
+// another AWS account (e.g. on a rule migrated from another Cumulus deployment) and for
+// a genuine IAM denial (CUMULUS-5548)
+class AccessDeniedException extends Error {
+  constructor(...args) {
+    super(...args);
+    this.name = 'AccessDeniedException';
+  }
+}
+
+const buildKinesisRuleWithMappingUuids = () => fakeRuleFactoryV2({
+  rule: {
+    type: 'kinesis',
+    value: `arn:aws:kinesis:us-east-1:000000000000:stream/${randomId('kinesis')}`,
+    arn: randomId('arn-uuid'),
+    logEventArn: randomId('log-event-arn-uuid'),
+  },
+  state: 'ENABLED',
+  provider: null,
+  collection: null,
+});
+
+const deleteKinesisEventSourceThrowsAccessDenied = {
+  // eslint-disable-next-line require-await
+  deleteKinesisEventSourceMethod: async () => {
+    throw new AccessDeniedException('UnknownError');
+  },
+};
+
+test.serial('deleteKinesisEventSources skips mappings that do not belong to this deployment when deleteKinesisEventSource throws an AccessDeniedException', async (t) => {
+  const kinesisRule = buildKinesisRuleWithMappingUuids();
+  const lambdaMock = mockClient(awsServices.lambda());
+  lambdaMock.onAnyCommand().rejects();
+  lambdaMock.on(ListEventSourceMappingsCommand).resolves({
+    EventSourceMappings: [{ UUID: randomId('some-other-uuid') }],
+  });
+  t.teardown(() => lambdaMock.restore());
+
+  const deleteResult = await deleteKinesisEventSources(
+    t.context.testKnex,
+    kinesisRule,
+    deleteKinesisEventSourceThrowsAccessDenied
+  );
+
+  t.deepEqual(deleteResult, [undefined, undefined]);
+  const listCalls = lambdaMock.commandCalls(ListEventSourceMappingsCommand);
+  t.is(listCalls.length, 2);
+  t.deepEqual(
+    listCalls.map((call) => call.args[0].input.FunctionName).sort(),
+    [process.env.KinesisInboundEventLogger, process.env.messageConsumer].sort()
+  );
+  t.true(listCalls.every((call) => call.args[0].input.EventSourceArn === kinesisRule.rule.value));
+});
+
+test.serial('deleteKinesisEventSources throws when deleteKinesisEventSource throws an AccessDeniedException for a mapping that belongs to this deployment', async (t) => {
+  const kinesisRule = buildKinesisRuleWithMappingUuids();
+  const lambdaMock = mockClient(awsServices.lambda());
+  lambdaMock.onAnyCommand().rejects();
+  lambdaMock.on(ListEventSourceMappingsCommand).resolves({
+    EventSourceMappings: [{ UUID: kinesisRule.rule.arn }, { UUID: kinesisRule.rule.logEventArn }],
+  });
+  t.teardown(() => lambdaMock.restore());
+
+  await t.throwsAsync(
+    deleteKinesisEventSources(
+      t.context.testKnex,
+      kinesisRule,
+      deleteKinesisEventSourceThrowsAccessDenied
+    ),
+    { name: 'AccessDeniedException' }
+  );
+});
+
 test.serial('isEventSourceMappingShared returns true if a rule shares an event source with another rule', async (t) => {
   const {
     rulePgModel,
