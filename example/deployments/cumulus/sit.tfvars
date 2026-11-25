@@ -1,8 +1,4 @@
 buckets = {
-  glacier = {
-    name = "cumulus-sit-orca-glacier"
-    type = "orca"
-  },
   internal = {
     name = "cumulus-sit-internal"
     type = "internal"
@@ -48,5 +44,3 @@ saml_idp_login              = "https://auth.launchpad-sbx.nasa.gov/affwebservice
 saml_launchpad_metadata_url = "https://auth.launchpad-sbx.nasa.gov/unauth/metadata/launchpad-sbx.idp.xml"
 
 thin_egress_jwt_secret_name = "cumulus_sit_jwt_tea_secret"
-
-orca_default_bucket = "cumulus-sit-orca-glacier"

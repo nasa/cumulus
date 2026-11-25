@@ -20,11 +20,7 @@ buckets = {
   protected-2 = {
     name = "cumulus-sit-protected-2"
     type = "protected"
-  },
-  glacier = {
-    name = "cumulus-sit-orca-glacier"
-    type = "orca"
-  },
+  }
   dashboard = {
     name = "cumulus-sit-dashboard"
     type = "dashboard"
