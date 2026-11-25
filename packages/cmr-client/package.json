@@ -46,7 +46,7 @@
     "lodash": "^4.18.1",
     "public-ip": "^3.0.0",
     "xml2js": "0.5.0",
-    "zod": "^3.20.2"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "moment": "^2.30.1",
