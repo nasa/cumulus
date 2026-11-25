@@ -60,6 +60,7 @@ test('ReconciliationReportPgModel.upsert() overwrites a reconciliation report re
 
   const updatedReconciliationReport = {
     ...reconciliationReportRecord,
+    type: 'Granule Inventory',
     status: 'Failed',
   };
 

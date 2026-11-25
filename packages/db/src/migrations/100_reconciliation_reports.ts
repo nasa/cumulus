@@ -38,7 +38,9 @@ export const up = async (knex: Knex): Promise<void> => {
       'Granule Inventory',
       'Granule Not Found',
       'Internal',
-      'Inventory'    ]));
+      'Inventory',
+      'ORCA Backup'
+    ]));
   `);
 
   await knex.raw(`
