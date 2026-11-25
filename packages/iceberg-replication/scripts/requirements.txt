@@ -11,7 +11,7 @@ pyarrow
 pyiceberg[pyiceberg-core,glue,s3]
 
 # PySpark
-pyspark==3.5.7
+pyspark==3.5.8
 
 # HTTP
 requests
