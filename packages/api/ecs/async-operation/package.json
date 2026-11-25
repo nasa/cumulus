@@ -40,7 +40,7 @@
     "p-retry": "^2.0.0"
   },
   "engines": {
-    "node": ">=22.21.1"
+    "node": "^22.23.4"
   },
   "private": true
 }

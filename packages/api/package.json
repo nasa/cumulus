@@ -4,7 +4,7 @@
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
-    "node": ">=22.21.1"
+    "node": "^22.23.4"
   },
   "scripts": {
     "build-lambda-zips": "for x in $(ls dist); do (cd dist/${x} && rm -f lambda.zip && find . | xargs node ../../../../bin/zip.js lambda.zip && echo zipped ${x}); done",
@@ -90,7 +90,7 @@
     "got": "^11.8.5",
     "hsts": "^2.1.0",
     "is-valid-hostname": "1.0.2",
-    "js-yaml": "^3.13.1",
+    "js-yaml": "^3.15.1",
     "json2csv": "^4.5.1",
     "jsonpath-plus": "^10.0.0",
     "jsonwebtoken": "^9.0.0",
@@ -116,10 +116,11 @@
     "url-join": "^4.0.0",
     "uuid": "^11.1.1",
     "xml2js": "0.5.0",
-    "zod": "^3.20.2"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@cumulus/test-data": "21.3.5",
+    "@ljharb/tsconfig": "^0.2.3",
     "aws-sdk-client-mock": "^3.0.1",
     "proxyquire": "^2.1.3"
   }

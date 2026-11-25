@@ -306,7 +306,7 @@ test.serial('POST /granules/bulkReingest returns a 400 when maxDbConnections is 
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /Expected number, received string at maxDbConnections/);
+    .expect(400, /expected number, received string at maxDbConnections/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
@@ -324,7 +324,7 @@ test.serial('POST /granules/bulkReingest returns a 400 when concurrency is not a
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /Expected number, received string at concurrency/);
+    .expect(400, /expected number, received string at concurrency/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
@@ -342,7 +342,7 @@ test.serial('POST /granules/bulkReingest returns a 400 when batchSize is not an 
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /Expected number, received string at batchSize/);
+    .expect(400, /expected number, received string at batchSize/);
 
   t.true(asyncOperationStartStub.notCalled);
 });

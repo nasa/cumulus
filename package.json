@@ -80,7 +80,7 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "engines": {
-    "node": ">=22.21.1"
+    "node": "^22.23.4"
   },
   "bin": {
     "build-tasks-doc": "./bin/build-tasks-doc.js"
@@ -93,7 +93,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "archiver": "^6.0.2",
+    "archiver": "^8.0.0",
     "crypto-js": "^4.2.0",
     "fs-extra": "^9.0.0"
   },
@@ -145,12 +145,12 @@
     "jasmine": "^3.1.0",
     "jasmine-console-reporter": "^2.0.1",
     "jasmine-reporters": "^2.3.2",
-    "js-yaml": "^3.13.1",
+    "js-yaml": "^3.15.1",
     "jsdoc-to-markdown": "7.1.1",
     "latest-version": "^9.0.0",
     "lerna": "^9.0.5",
     "lodash": "^4.18.1",
-    "markdownlint-cli": "^0.47.0",
+    "markdownlint-cli": "^0.49.1",
     "md5": "^2.2.1",
     "mime-types": "^2.1.22",
     "moment": "^2.30.1",
@@ -171,7 +171,7 @@
     "retry": "^0.12.0",
     "rewire": "^6.0.0",
     "semver": "^5.5.0",
-    "simple-git": "^3.7.0",
+    "simple-git": "^4.0.2",
     "sinon": "^9.0.2",
     "snake-camel": "^1.0.6",
     "ssh2-streams": "^0.4.8",
@@ -179,7 +179,7 @@
     "supertest": "^7.0.0",
     "tough-cookie": "~4.0.0",
     "tsc-watch": "^4.2.8",
-    "typescript": "~4.8.3",
+    "typescript": "^5.9.3",
     "uuid": "^11.1.1",
     "webpack": "^5.58.1",
     "webpack-cli": "^4.9.0",
@@ -187,16 +187,26 @@
   },
   "overrides": {
     "axios@1": "^1.14.0",
+    "brace-expansion@1": "^1.1.18",
+    "brace-expansion@2": "^2.1.4",
+    "brace-expansion@5": "^5.0.9",
+    "follow-redirects": "^1.16.1",
+    "form-data": "^4.0.4",
+    "js-yaml": "^3.15.1",
     "lodash@4": "^4.18.1",
     "lodash-es@4": "^4.18.1",
     "minimatch@3": "^3.1.5",
     "minimatch@7": "^7.4.9",
-    "minimatch@10": "^10.2.4",
-    "form-data": "^4.0.4",
+    "minimatch@9": "^9.0.9",
+    "minimatch@10": "^10.2.6",
     "request": {
       "qs": "^6.14.1"
     },
     "serialize-javascript": "^7.0.3",
+    "smol-toml": "^1.7.1",
+    "nx": {
+      "smol-toml": "^1.7.1"
+    },
     "tar": "^7.5.8"
   },
   "private": true

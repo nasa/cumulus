@@ -318,7 +318,7 @@ test.serial('POST /granules/bulk returns 400 when no workflowName is provided', 
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /workflowName is required at workflowName/);
+    .expect(400, /expected string, received undefined at workflowName/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
@@ -364,7 +364,7 @@ test.serial('POST /granules/bulk returns a 400 when maxDbConnections is not an i
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /Expected number, received string at maxDbConnections/);
+    .expect(400, /expected number, received string at maxDbConnections/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
@@ -384,7 +384,7 @@ test.serial('POST /granules/bulk returns a 400 when concurrency is not an intege
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /Expected number, received string at concurrency/);
+    .expect(400, /expected number, received string at concurrency/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
@@ -404,7 +404,7 @@ test.serial('POST /granules/bulk returns a 400 when batchSize is not an integer'
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /Expected number, received string at batchSize/);
+    .expect(400, /expected number, received string at batchSize/);
 
   t.true(asyncOperationStartStub.notCalled);
 });

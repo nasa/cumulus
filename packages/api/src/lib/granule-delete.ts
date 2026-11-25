@@ -13,7 +13,7 @@ import {
   ProviderPgModel,
 } from '@cumulus/db';
 import { DeletePublishedGranule, errorify } from '@cumulus/errors';
-import { ApiFile } from '@cumulus/types';
+import type { ApiFile } from '@cumulus/types';
 import Logger from '@cumulus/logger';
 const { publishGranuleDeleteSnsMessage } = require('../../lib/publishSnsMessageUtils');
 const FileUtils = require('../../lib/FileUtils');

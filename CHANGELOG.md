@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Bumped `archiver` version and corresponding updates to `bin/zip.js` to address CVE-2026-13149.
+- **CUMULUS-5660**
+  - Mitigated vulnerabilties discovered in bamboo-CI build
+- **CUMULUS-5677**
+  - Update several Node and Python dependencies due to Snyk findings/sercurity vulnerabilities
+- **CUMULUS-5721**
+  - Update zod and adding typescript Node dependencies due to Snyk findings/sercurity vulnerabilities
+- **CUMULUS-5765**
+  - Update package vulnerabilities (follows-redirects, certifi)
+- **CUMULUS-5830**
+  - Upgraded node references to patch the critical Node2Shell vulnerability in NodeJS.  Upgraded to a patched version
+  - As a result of node vuln, updated the AsyncOperation container to new version 61, `cumuluss/async-operation:61`.  Users should update their reference to `async-operation` with the new version.
+- **CUMULUS-5859**
+  - Fixes unit test failures resulting from upgrading ajv 6 to 8.
+  - strict: false matches how @cumulus/api configures ajv 8, and keeps ajv 6's behaviour of ignoring unknown keywords in task schemas.
+
 ## [v21.3.5] 2026-06-02
 
 ### Changed
